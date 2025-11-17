@@ -43,6 +43,6 @@ export default {
     app.component('DynamicTabs', defineAsyncComponent(() => import('../../examples/NavigationPage/DynamicTabs.vue')));
     app.component('DraggableTabs', defineAsyncComponent(() => import('../../examples/NavigationPage/DraggableTabs.vue')));
     // 引入NavigationPage的全局样式
-    import('../../examples/NavigationPage/styles.css');
+    import '../../examples/NavigationPage/styles.css';
   }
 };
