@@ -107,6 +107,16 @@ export default defineConfig({
         items: [
           { text: "vex系列", link: "/steam/vex/" },
           { text: "摄影", link: "/steam/photography/" },
+          { text: "3D打印", link: "/steam/3d-print/" },
+        ]
+      },
+      {
+        text: "信息科技",
+        items: [
+          { text: "键鼠操作", link: "/exammination/keyboard-mouse" },
+          { text: "excel操作", link: "/exammination/excel/" },
+          { text: "python操作", link: "/exammination/python/" },
+          { text: "信息技术教材系列", link: "/exammination/books/" },
         ]
       },
 

@@ -14,6 +14,7 @@ import {
   TkIcon,
   TkLoginPage,
   TkRiskLinkPage,
+  TkPdfViewer,
 } from "@teek/components";
 
 import "../theme-chalk/src/index.scss";
@@ -45,6 +46,7 @@ export default {
     app.component("TkDemoCode", TkDemoCode);
     app.component("TkTitleTag", TkTitleTag);
     app.component("TkIcon", TkIcon);
+    app.component("TkPdfViewer", TkPdfViewer);
 
     if (!isClient) return;
     const { themeConfig } = siteData.value;

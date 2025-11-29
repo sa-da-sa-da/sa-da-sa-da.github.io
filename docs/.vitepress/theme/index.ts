@@ -1,5 +1,5 @@
 import Teek from "vitepress-theme-teek";
-import { defineAsyncComponent } from 'vue';
+import TeekLayoutProvider from "./components/TeekLayoutProvider.vue";
 
 // Teek 本地主题包引用（与 Teek 在线主题包引用 二选一）
 // 当前引入文件为 scss，需要执行 pnpm add sass，如果不想安装额外依赖，可以直接引入 Teek 已经构建好的 css 文件，请看 https://vp.teek.top/styles-plus.html
@@ -35,14 +35,10 @@ import "./styles/code-bg.scss";
 import "./styles/iframe.scss";
 // import "./styles/sidebar-icon.scss";
 
+
+
 export default {
   extends: Teek,
-  enhanceApp({ app }) {
-    // 全局注册NavigationPage的标签页组件
-    app.component('CustomTabs', defineAsyncComponent(() => import('../../examples/NavigationPage/CustomTabs.vue')));
-    app.component('DynamicTabs', defineAsyncComponent(() => import('../../examples/NavigationPage/DynamicTabs.vue')));
-    app.component('DraggableTabs', defineAsyncComponent(() => import('../../examples/NavigationPage/DraggableTabs.vue')));
-    // 引入NavigationPage的全局样式
-    import '../../examples/NavigationPage/styles.css';
-  }
+  Layout: TeekLayoutProvider,
+
 };

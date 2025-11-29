@@ -7,6 +7,7 @@ export * from "./ImageViewer";
 export * from "./InputSlide";
 export * from "./Message";
 export * from "./Pagination";
+export * from "./PdfViewer";
 export * from "./Popover";
 export * from "./Segmented";
 export * from "./TitleTag";
