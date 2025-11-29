@@ -1,8 +1,10 @@
 <script setup lang="ts" name="ConfigSwitch">
 import { TkSegmented, TkMessage, magicIcon, isClient, useCommon } from "vitepress-theme-teek";
-import BaseTemplate from "@teek/components/theme/ThemeEnhance/src/components/BaseTemplate.vue";
+import {
+  TkThemeEnhanceBaseTemplate as BaseTemplate,
+} from "vitepress-theme-teek";
 import { nextTick, ref, watch } from "vue";
-import { useClipboard, useStorage } from "@teek/composables";
+import { useClipboard, useStorage } from "vitepress-theme-teek";
 import {
   teekDocConfig,
   teekBlogConfig,
@@ -43,8 +45,12 @@ const emit = defineEmits<{
 }>();
 
 // 默认文档风格
-const themeStyle = defineModel({ default: "doc" });
-const currentStyle = useStorage("tk:configStyle", "doc");
+// const themeStyle = defineModel({ default: "doc" });
+// const currentStyle = useStorage("tk:configStyle", "doc");
+
+// 默认blog-card风格
+const themeStyle = defineModel({ default: "blog-card" });
+const currentStyle = useStorage("tk:configStyle", "blog-card");
 const teekConfig = ref(teekDocConfig);
 
 const { copy, copied } = useClipboard();
@@ -66,9 +72,8 @@ const update = async (style: string) => {
   const navDom = document.querySelector(".VPNavBar") as HTMLElement;
 
   // 兼容 Teek Banner 样式
-  if (["blog-full", "blog-body", "blog-card"].includes(style) && teekConfig.value.banner?.enabled !== false) {
-    navDom?.classList.add("full-img-nav-bar");
-  } else navDom?.classList.remove("full-img-nav-bar");
+  if (["blog-full", "blog-body", "blog-card"].includes(style)) navDom?.classList.add("full-img-nav-bar");
+  else navDom?.classList.remove("full-img-nav-bar");
 };
 
 watch(themeStyle, update, { immediate: true });

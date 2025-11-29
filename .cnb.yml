@@ -1,0 +1,91 @@
+main:
+  push:
+    "volume-cache":
+      name: 云原生构建
+      runner:
+        cpus: 64
+      imports:	
+        - https://cnb.cool/onedayxyy/secret/-/blob/main/envs.yml
+      docker:
+        image: node:22
+      stages:
+        - name: set env
+          script: echo -n $(date +%s)
+          exports:
+            info: CUSTOM_ENV_START_TIME
+        - name: 🏠️ 设置淘宝源
+          script: |
+            npm config set registry https://registry.npmmirror.com
+        - name: 🖨️ 打印环境
+          script: |
+            npm install -g pnpm && node -v && npm -v && yarn -v && pnpm -v
+        - name: 📦️ 安装依赖
+          script: |
+            pnpm install
+        - name: ⚗️ 编译项目
+          script: |
+            pnpm docs:build
+        - name: 🚚 部署到Pages
+          image: node:22
+          script: >-
+            npx edgeone pages deploy ./docs/.vitepress/dist --name
+            vitepress-theme-teek-one-public --token $EDGEONE_PAGES_API_TOKEN
+
+
+        # #同步仓库到gitee                  
+        # - name: sync to gitee
+        #   image: tencentcom/git-sync
+        #   settings:
+        #     branch: master
+        #     auth_type: https
+        #     username: ${GIT_USERNAME}
+        #     password: ${GIT_ACCESS_TOKEN}
+        #     target_url: https://gitee.com/onlyonexl/vitepress-theme-teek-one-private.git
+        #     # git_email: 'github-actions[bot]@users.noreply.github.com'
+
+        - name: build knowledge base
+          image: cnbcool/knowledge-base
+          settings:
+            embedding_model: bge-m3
+            include: "**/**.md"
+            exclude: ""    
+
+        - name: ⏱️ 计算耗时
+          script: |
+            # 计算耗时
+            end_time=$(date +%s)
+            duration=$((end_time - $CUSTOM_ENV_START_TIME))
+            minutes=$((duration / 60))
+            seconds=$((duration % 60))
+            time_str="${minutes}分${seconds}秒"
+            echo -n ${time_str}
+          exports:
+            info: CUSTOM_ENV_BUILD_TIME
+
+            
+        # - name: 钉钉通知
+        #   image: tencentcom/dingtalk-bot-msg:latest
+        #   settings:
+        #     content: "「Teek-one Blog」发布完成，耗时: ${CUSTOM_ENV_BUILD_TIME}"
+        #     c_type: "text" # 支持: text, markdown, link, actionCard, multiActionCard, feedCard
+        #     secret: $SECRET
+        #     webhook: $WEBHOOK
+        #     isAtAll: false
+        #     debug: false # 新增: 是否启用调试模式
+
+        # - name: 🔔 发布通知  
+        #   image: tencentcom/wecom-message
+        #   settings:
+        #     robot: ${WECOM_BOT}
+        #     msgType: markdown
+        #     content: |
+        #       > **🎉 One Blog 又一次发布成功啦！**   
+        #       > **构建时间:** $CUSTOM_ENV_DATE_INFO 
+        #       > **构建耗时:** ${CUSTOM_ENV_BUILD_TIME}        
+        #       > **构建id:** $CNB_BUILD_ID  
+        #       > **提交id:** $CNB_COMMIT_SHORT            
+        #       > **构建分支:** $CNB_BRANCH
+        #       > **提交信息:** $CNB_COMMIT_MESSAGE_TITLE
+        #       > **提交者:** $CNB_COMMITTER
+        #       > **仓库地址:** [$CNB_REPO_URL_HTTPS]($CNB_REPO_URL_HTTPS)
+        #       > **我的网站:** [onedayxyy.cn](https://onedayxyy.cn/)            

@@ -1,6 +1,6 @@
 <script setup lang="ts" name="ContributeChart">
 import * as echarts from "echarts";
-import { ref, watch, nextTick, computed, useTemplateRef, onMounted } from "vue";
+import { ref, watch, nextTick, computed, onMounted } from "vue";
 import { useData } from "vitepress";
 import { formatDate, usePosts, useIntersectionObserver } from "vitepress-theme-teek";
 
@@ -29,7 +29,7 @@ const contributeList = computed(() => {
   return contributeDays.map((item: string) => [item, contributeObject.value[item]]).reverse();
 });
 
-const chartRef = useTemplateRef("chartRef");
+const chartRef = ref<HTMLElement | null>(null);
 const contributeChart = ref();
 
 const { create } = useIntersectionObserver(

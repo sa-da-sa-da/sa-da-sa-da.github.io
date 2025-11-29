@@ -5,7 +5,7 @@
  */
 
 // 本地 Teek 主题包引用（与 Teek 在线主题包引用 二选一）
-import { defineTeekConfig } from "../../packages/config";
+import { defineTeekConfig } from "vitepress-theme-teek/config";
 
 // Teek 在线主题包引用（需安装 Teek 在线版本）
 // import { defineTeekConfig } from "vitepress-theme-teek/config";
@@ -17,13 +17,7 @@ export const teekConfig = defineTeekConfig({
   loading: false, // 页面加载 Loading 动画配置，如果为 boolean，则控制是否启用，如果为字符串，则指定加载 Loading 动画的文案
   homeCardListPosition: "right", // 首页卡片栏列表位置，当为 left 则在文章列表左侧，当为 right 则在文章列表右侧
   anchorScroll: true, // 是否启用锚点滚动功能，即阅读文章时，自动将 h1 ~ h6 标题添加到地址栏 # 后面
-  // 深色、浅色模式切换时是否开启过渡动画
-  viewTransition: {
-    enabled: true, // 是否启用深浅色切换动画效果
-    mode: "out-in", // 动画模式，out 始终从点击点往全屏扩散，out-in 第一次从点击点往全屏扩散，再次点击从全屏回到点击点
-    duration: 300, // 动画持续时间，当 mode 为 out 时，默认为 300ms，mode 为 out-in 时，默认为 600ms
-    easing: "ease-in", // 缓动函数
-  },
+  viewTransition: true, // 深色、浅色模式切换时是否开启过渡动画
   themeSize: "default", // 站点尺寸，默认为 medium
   // 右下角回到顶部配置
   backTop: {
@@ -341,13 +335,6 @@ export const teekConfig = defineTeekConfig({
       link: "",
     },
   },
-  articleBanner: {
-    enabled: true, // 是否启用单文章页 Banner
-    showCategory: true, // 是否展示分类
-    showTag: true, // 是否展示标签
-    defaultCoverImg: "", // 默认封面图
-    defaultCoverBgColor: "", // 默认封面背景色，优先级低于 defaultCoverImg
-  },
   // 文章信息分析配置，分别作用在首页和文章页
   articleAnalyze: {
     showIcon: true, // 作者、日期、分类、标签、字数、阅读时长、浏览量等文章信息的图标是否显示
@@ -407,12 +394,11 @@ export const teekConfig = defineTeekConfig({
   },
   // 在每个文章页顶部显示 VitePress 容器添加提示，使用场景如添加文章版权声明。
   articleBottomTip: frontmatter => {
-    if (typeof window === "undefined") return;
-
     const hash = false;
     const query = false;
-    const { origin, pathname, search } = window.location;
+    const { origin, pathname, search } = location;
     const url = `${origin}${frontmatter.permalink ?? pathname}${query ? search : ""}${hash ? location.hash : ""}`;
+
     const author = "Teek";
 
     return {
@@ -466,16 +452,9 @@ export const teekConfig = defineTeekConfig({
     autoFrontmatter: true, // 是否启用 autoFrontmatter 插件
     // autoFrontmatter 插件配置项
     autoFrontmatterOption: {
-      permalink: true, // 是否开启生成永久链接
-      recoverTransform: false, // 是否开启同名 key 覆盖
-      categories: true, // 是否开启自动生成 categories
-      coverImg: false, // 是否开启添加文档封面图
-      forceCoverImg: false, // 是否开启强制覆盖封面图
-      coverImgList: [], // 封面图列表
-      // 处理永久链接的规则
-      permalinkRules: [
-        //{ folderName: "01.指南/01.简介/", prefix: "/$path/$uuid", removeLevel: 99 }, // 添加前缀
-      ],
+      permalinkPrefix: "pages", // 自动生成 permalink 的固定前缀，如 pages、pages/demo，默认为 pages
+      categories: true, // 是否自动生成 categories
+      // ...
     },
   },
 });

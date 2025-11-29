@@ -1,12 +1,13 @@
 ---
 title: PDF 组件示例
-date: 2025-11-18
+date: 2025-11-18 08:00:00
 permalink: /exammination/books/pdf-demo
 categories:
   - 信息技术教材系列
 tags:
   - 信息技术
 top: true
+coverImg: https://img.onedayxyy.cn/images/Teek/TeekCover/17.webp
 ---
 
 # PDF 组件示例
