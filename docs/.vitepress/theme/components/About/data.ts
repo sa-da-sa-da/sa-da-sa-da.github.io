@@ -40,11 +40,11 @@ import {
 
 export const profile = {
   title: '你好，我是',
-  name: 'One',
-  desc: '明心静性，爱自己',
+  name: 'sakaay|飒龘',
+  desc: '当以读书通世事',
   avatar: '/img/xyy.webp',//头像
   buttons: [
-    { text: '联系我', link: 'mailto:your@email.com', type: 'primary' },
+    { text: '联系我', link: 'mailto:3206908770@qq.com', type: 'primary' },
     { text: '查看项目', link: '/teek', type: 'default' }
   ],
 };
@@ -52,7 +52,7 @@ export const profile = {
 export const majorSkills = [
   {
     name: "后端与数据库",
-    percent: 95,
+    percent: 75,
     color: "#f25e62",
     tags: [
       { name: "Java", bg: "#ffeaea", color: "#f25e62" },
@@ -66,7 +66,7 @@ export const majorSkills = [
   },
   {
     name: "前端开发",
-    percent: 98,
+    percent: 88,
     color: "#33a474",
     tags: [
       { name: "HTML5", bg: "#eaf6ff", color: "#4298b4" },
@@ -79,7 +79,7 @@ export const majorSkills = [
   },
   {
     name: "前端框架",
-    percent: 95,
+    percent: 85,
     color: "#4298b4",
     tags: [
       { name: "Vue", bg: "#eaf6ff", color: "#4298b4" },
@@ -90,7 +90,7 @@ export const majorSkills = [
   },
   {
     name: "工程化与工具",
-    percent: 93,
+    percent: 83,
     color: "#e4ae3a",
     tags: [
       { name: "Vite", bg: "#fffbe6", color: "#e4ae3a" },

@@ -32,15 +32,15 @@ export const FooterInfo = {
   ],
   copyright: {
     createYear: 2021,
-    suffix: "One Blog",
+    suffix: "sakaay|飒龘 当以读书通世事",
   },
   icpRecord: {
-    name: "陇ICP备2023002645号",
+    name: "豫ICP备2024096633号",
     link: "http://beian.miit.gov.cn/",
   },
   // 网络安全备案信息配置
   securityRecord: {
-    name: "甘公网安备62102702000211号",
+    name: "",
     link: "https://beian.mps.gov.cn/",
   },
   customHtml: ``, // 搭配 ./theme/composables/useRuntime.ts

@@ -30,9 +30,9 @@ import { useTransformByRules, type TransformRule } from "./theme/composables/use
 
 
 const description = [
-  "欢迎来到 sakaay|当以读书通世事",
-  "sakaay|当以读书通世事 是一个基于 VitePress 构建的主题，是在默认主题的基础上进行拓展，支持 VitePress 的所有功能、配置",
-  "sakaay|当以读书通世事 拥有三种典型的知识管理形态：结构化、碎片化、体系化，可以轻松构建一个结构化知识库，适用个人博客、文档站、知识库等场景",
+  "欢迎来到 sakaay|飒龘 当以读书通世事",
+  "sakaay|飒龘 当以读书通世事 是一个基于 VitePress 构建的主题，是在默认主题的基础上进行拓展，支持 VitePress 的所有功能、配置",
+  "sakaay|飒龘 当以读书通世事 拥有三种典型的知识管理形态：结构化、碎片化、体系化，可以轻松构建一个结构化知识库，适用个人博客、文档站、知识库等场景",
 ].toString();
 const CoverImgList = Cover; // 获取封面列表
 // const CoverBgList = Wallpaper; // 获取壁纸列表
@@ -66,7 +66,7 @@ const teekConfig = defineTeekConfig({
     // 博主信息，显示在首页侧边栏
     avatar: "/img/xyy.webp",  //侧边栏个人头像
     shape: "circle-rotate", // 头像风格：square 为方形头像，circle 为圆形头像，circle-rotate 可支持鼠标悬停旋转
-    name: "sakaay", // 侧边栏个人昵称
+    name: "sakaay|飒龘", // 侧边栏个人昵称
     slogan: "当以读书通世事", // 侧边栏个人座右铭
     circleBgImg: "https://img.onedayxyy.cn/images/Teek/TeekBg/14.webp", // 侧边栏个人头像圆形背景图
     circleBgMask: false, // 头像圆形背景图是否显示遮罩层
@@ -151,7 +151,7 @@ const teekConfig = defineTeekConfig({
   // 风险链接提示页
   riskLink: {
     enabled: true, //是否启用风险链接提示功能
-    whitelist: ["https://sakaay.com/", "https://status.onedayxyy.cn/", "https://zdir.onedayxyy.cn/", "https://umami.onedayxyy.cn/", "https://zola.onedayxyy.cn/", "https://img.onedayxyy.cn/", "https://cnb.cool/onedayxyy/vitepress-theme-teek-one-public", "https://one.onedayxyy.cn/", "https://vp.teek.top/", "https://teek.seasir.top/", /https:\/\/github.com/, /https:\/\/giee.com/], // 白名单，匹配到的链接不提示风险
+    whitelist: ["https://*.sakaay.com/", "https://time.sakaay.com/", "https://zdir.onedayxyy.cn/", "https://umami.onedayxyy.cn/", "https://zola.onedayxyy.cn/", "https://img.onedayxyy.cn/", "https://cnb.cool/onedayxyy/vitepress-theme-teek-one-public", "https://one.onedayxyy.cn/", "https://vp.teek.top/", "https://teek.seasir.top/", /https:\/\/github.com/, /https:\/\/giee.com/], // 白名单，匹配到的链接不提示风险
     blacklist: [], // 黑名单，匹配到的链接提示风险
   },
 
@@ -355,7 +355,7 @@ export default defineConfig({
   }),
 
   extends: teekConfig,
-  title: "sakaay|当以读书通世事", //左上角网站名称
+  title: "sakaay|飒龘 当以读书通世事", //左上角网站名称
   description: description,
 
   cleanUrls: true,  //设置为true就是让链接后不默认添加.html

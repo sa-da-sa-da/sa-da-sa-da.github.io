@@ -41,11 +41,13 @@ interface NoticeContent {
 // 公告内容
 const noticeContent: NoticeContent = {
   title: '📢 重要公告',
-  subtitle: '全网最美博客Teek🎉',
-  content: 'Teek~一款简约、唯美、丝滑且强大的VitePress主题博客(知识库&博客二合一) ，正在持续迭代更新，欢迎交流学习！',
+  subtitle: '全网最美博客sakaay🎉',
+  content: 'sakaay~一款简约、唯美、丝滑的博客，融合了高中信息技术、机器人、创客、arduino、3D打印等多个领域的知识，正在持续迭代更新，欢迎交流学习！',
   operationButtonName: '查看详情',
-  operationButtonPath: 'https://vp.teek.top/',
+  operationButtonPath: 'https://sakaay.com/',
 };
+
+
 
 // 判断是否为外链
 const isExternalLink = (): boolean => {

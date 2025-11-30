@@ -46,7 +46,7 @@ const teekBlogCommonConfig: TeekConfig = {
 
   banner: {
     enabled: true,
-    name: "One Blog 🎉", // Banner 标题，默认读取 vitepress 的 title 属性
+    name: "sakaay 当以读书通世事 🎉", // Banner 标题，默认读取 vitepress 的 title 属性
     bgStyle: "fullImg", // Banner 背景风格：pure 为纯色背景，partImg 为局部图片背景，fullImg 为全屏图片背景
     pureBgColor: "#28282d", // Banner 背景色，bgStyle 为 pure 时生效
     imgSrc: Wallpaper, // Banner 图片链接。bgStyle 为 partImg 或 fullImg 时生效

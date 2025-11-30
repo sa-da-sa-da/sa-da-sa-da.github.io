@@ -83,8 +83,8 @@ export const teekConfig = defineTeekConfig({
   },
   // 文章默认的作者信息
   author: {
-    name: "Teeker", // 作者名称
-    link: "https://github.com/Kele-Bingtang", // 点击作者名称后跳转的链接
+    name: "sakaay|飒龘", // 作者名称
+    link: "https://github.com/sa-da-sa-da", // 点击作者名称后跳转的链接
   },
   // 公告配置
   notice: {
@@ -108,7 +108,7 @@ export const teekConfig = defineTeekConfig({
   // 首页 Banner 配置，位于首页顶部
   banner: {
     enabled: true, // 是否启用 Banner
-    name: "Teek", // Banner 标题，默认读取 vitepress 的 title 属性
+    name: "sakaay|飒龘", // Banner 标题，默认读取 vitepress 的 title 属性
     bgStyle: "fullImg", // Banner 背景风格：pure 为纯色背景，partImg 为局部图片背景，fullImg 为全屏图片背景
     pureBgColor: "#28282d", // Banner 背景色，bgStyle 为 pure 时生效
     imgSrc: ["/img/bg1.jpg", "/img/bg2.png"], // Banner 图片链接。bgStyle 为 partImg 或 fullImg 时生效
@@ -179,8 +179,8 @@ export const teekConfig = defineTeekConfig({
   ],
   // 博主信息，显示在首页左边第一个卡片。
   blogger: {
-    name: "天客", // 博主昵称
-    slogan: "朝圣的使徒，正在走向编程的至高殿堂！", // 博主签名
+    name: "sakaay|飒龘", // 博主昵称
+    slogan: "当以读书通世事", // 博主签名
     avatar: "https://testingcf.jsdelivr.net/gh/Kele-Bingtang/static/user/avatar1.png", // 博主头像
     shape: "circle-rotate", // 头像风格：square 为方形头像，circle 为圆形头像，circle-rotate 可支持鼠标悬停旋转，circle-rotate-last 将会持续旋转 59s
     circleBgImg: "/blog/bg4.webp", // 背景图片
@@ -280,12 +280,12 @@ export const teekConfig = defineTeekConfig({
     {
       icon: "mdi:github",
       name: "GitHub",
-      link: "https://github.com/kele-bingtang",
+      link: "https://github.com/sa-da-sa-da",
     },
     {
       icon: "simple-icons:gitee",
       name: "Gitee",
-      link: "https://gitee.com/kele-bingtang",
+      link: "https://gitee.com/sa-da-sa-da",
     },
   ],
   // 页脚信息组配置
@@ -326,7 +326,7 @@ export const teekConfig = defineTeekConfig({
     },
     // ICP 备案信息配置
     icpRecord: {
-      name: "桂ICP备2021009994号",
+      name: "豫ICP备2024096633号",
       link: "http://beian.miit.gov.cn/",
     },
     // 网络安全备案信息配置
@@ -399,7 +399,7 @@ export const teekConfig = defineTeekConfig({
     const { origin, pathname, search } = location;
     const url = `${origin}${frontmatter.permalink ?? pathname}${query ? search : ""}${hash ? location.hash : ""}`;
 
-    const author = "Teek";
+    const author = "sakaay|飒龘";
 
     return {
       type: "tip",

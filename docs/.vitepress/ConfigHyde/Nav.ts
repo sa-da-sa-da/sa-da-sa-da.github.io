@@ -3,6 +3,8 @@ import { telegram } from "../theme/icon/icons";
 import { TeekIcon, VdoingIcon, SSLIcon, BlogIcon } from "./icon/NavIcon";
 export const Nav = [
     { text: "🏡首页", link: "/" },
+    { text: "🔍搜索", link: "/search/" },
+    { text: "⏰时间", link: "https://time.sakaay.com" },
     //教学
     {
       text: '📚教学',
@@ -20,97 +22,89 @@ export const Nav = [
           text: `
             <div style="display: flex; align-items: center; gap: 4px;">
               <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
-              <span>其他</span>
-            </div>
-            `,
-          link: '/teach/other-index/',
-        },
-      ],
-    },
-    //创客
-    { 
-      text: '创客',
-      items: [
-        {
-          text: `
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
-              <span>教学</span>
-            </div>
-            `,
-          link: '/teach',
-        },
-        {
-          text: `
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
               <span>创客</span>
             </div>
             `,
           link: '/steam/steam-index',
-        }
-      ]
-    },
-    // 笔记
-    {
-      text: '📚文档',
-      items: [
-        {
-          text: `
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
-              <span>教学</span>
-            </div>
-            `,
-          link: '/teach',
         },
         {
           text: `
             <div style="display: flex; align-items: center; gap: 4px;">
               <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
-              <span>创客</span>
+              <span>考试</span>
             </div>
             `,
-          link: '/steam/',
-        },
-        {
-          text: `
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
-              <span>运维</span>
-            </div>
-            `,
-          link: '/linux/linux-index',
-        },
-        {
-          text: `
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <img src="/img/nav/前端.svg" alt="" style="width: 16px; height: 16px;">
-              <span>前端</span>
-            </div>
-            `,
-          link: '/qianduan/qianduan-index',
-        },
-                {
-          text: `
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <img src="/img/nav/编程.svg" alt="" style="width: 16px; height: 16px;">
-              <span>编程</span>
-            </div>
-            `,
-          link: '/code/code-index',
-        },
-        {
-          text: `
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <img src="/img/nav/黑客.svg" alt="" style="width: 16px; height: 16px;">
-              <span>黑客</span>
-            </div>
-            `,
-          link: '/hacker/hacker-index',
+          link: '/exammination/exammination-index',
         },
       ],
-    },  
+    },
+
+    //创客
+    // { 
+    //   text: '创客',
+    //   items: [
+    //     {
+    //       text: `
+    //         <div style="display: flex; align-items: center; gap: 4px;">
+    //           <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
+    //           <span>教学</span>
+    //         </div>
+    //         `,
+    //       link: '/teach',
+    //     },
+    //     {
+    //       text: `
+    //         <div style="display: flex; align-items: center; gap: 4px;">
+    //           <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
+    //           <span>创客</span>
+    //         </div>
+    //         `,
+    //       link: '/steam/steam-index',
+    //     }
+    //   ]
+    // },
+    // 笔记
+    // {
+    //   text: '📚文档',
+    //   items: [
+    //     {
+    //       text: `
+    //         <div style="display: flex; align-items: center; gap: 4px;">
+    //           <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
+    //           <span>运维</span>
+    //         </div>
+    //         `,
+    //       link: '/linux/linux-index',
+    //     },
+    //     {
+    //       text: `
+    //         <div style="display: flex; align-items: center; gap: 4px;">
+    //           <img src="/img/nav/前端.svg" alt="" style="width: 16px; height: 16px;">
+    //           <span>前端</span>
+    //         </div>
+    //         `,
+    //       link: '/qianduan/qianduan-index',
+    //     },
+    //             {
+    //       text: `
+    //         <div style="display: flex; align-items: center; gap: 4px;">
+    //           <img src="/img/nav/编程.svg" alt="" style="width: 16px; height: 16px;">
+    //           <span>编程</span>
+    //         </div>
+    //         `,
+    //       link: '/code/code-index',
+    //     },
+    //     {
+    //       text: `
+    //         <div style="display: flex; align-items: center; gap: 4px;">
+    //           <img src="/img/nav/黑客.svg" alt="" style="width: 16px; height: 16px;">
+    //           <span>黑客</span>
+    //         </div>
+    //         `,
+    //       link: '/hacker/hacker-index',
+    //     },
+    //   ],
+    // },
 
     // 专题
     {
@@ -304,7 +298,7 @@ export const Nav = [
     {
       text: '🍷关于',
       items: [
-        { text: '👋关于我', link: '/about/me' },
+        { text: '👋我是 sakaay|飒龘', link: '/about/me' },
         // {
         //   text: `
         //     <div style="display: flex; align-items: center; gap: 4px;">
@@ -314,7 +308,7 @@ export const Nav = [
         //     `,
         //   link: '/about/homepage',
         // },
-        { text: '🎉关于本站', link: '/about/website' },
+        { text: '🎉关于我', link: '/about/website' },
         {
           text: `
             <div style="display: flex; align-items: center; gap: 4px;">

@@ -5,6 +5,6 @@ permalink: /risk-link
 layout: false
 riskLinkPage: true
 logo: /favicon.ico
-name: One Blog
+name: sakaay|飒龘 当以读书通世事
 article: false
 ---

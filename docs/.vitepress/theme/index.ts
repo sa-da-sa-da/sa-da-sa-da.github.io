@@ -7,6 +7,8 @@ import { useData } from "vitepress";
 // import MNavLinks from "./components/MNavLinks.vue"; // 引入导航组件
 import confetti from "./components/Confetti.vue"; //导入五彩纸屑组件
 // import NavIcon from "./components/NavIcon.vue"; //导入导航栏图标
+import SearchPage from './components/SearchPage.vue'; // 引入搜索页面组件
+import SearchLayout from './layouts/SearchLayout.vue'; // 引入搜索布局组件
 
 
 // Teek 在线主题包引用（需安装 Teek 在线版本）
@@ -84,6 +86,8 @@ export default {
     app.component("friend-link", SLink);
 
     app.component("emoji-Shiroki", EmojiShiroki); // ◀️ 注入 Emoji 表情库组件布局
+    app.component("SearchPage", SearchPage); // 注册搜索页面组件
+    app.component("SearchLayout", SearchLayout); // 注册搜索布局组件
 
   
 
@@ -133,6 +137,14 @@ export default {
       // 添加自定义 class 逻辑
       if (frontmatter.value?.layoutClass) {
         props.class = frontmatter.value.layoutClass;
+      }
+
+      // 检查是否为搜索页面路径
+      const isSearchPage = typeof window !== 'undefined' && window.location.pathname === '/search/';
+      
+      // 如果是搜索页面，返回搜索布局
+      if (isSearchPage) {
+        return () => h(SearchLayout);
       }
 
       return () => h(TeekLayoutProvider, props);

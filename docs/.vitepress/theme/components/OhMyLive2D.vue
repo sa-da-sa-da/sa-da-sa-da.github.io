@@ -275,7 +275,7 @@ onMounted(async () => {
 
     oml2d.stopTipsIdle(); //停止空闲消息播放器
 
-    oml2d.tipsMessage(`欢迎访问One Blog，当前版本:${oml2d.version}`, 5000, 10);
+    oml2d.tipsMessage(`欢迎访问sakaay|飒龘 当以读书通世事，当前版本:${oml2d.version}`, 5000, 10);
   });
 
   // 舞台完全滑出事件
