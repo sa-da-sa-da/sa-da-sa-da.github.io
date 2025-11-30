@@ -20,59 +20,50 @@ export const Nav = [
           text: `
             <div style="display: flex; align-items: center; gap: 4px;">
               <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
-              <span>其他</span>
-            </div>
-            `,
-          link: '/teach/other-index/',
-        },
-      ],
-    },
-    //创客
-    { 
-      text: '创客',
-      items: [
-        {
-          text: `
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
-              <span>教学</span>
-            </div>
-            `,
-          link: '/teach',
-        },
-        {
-          text: `
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
               <span>创客</span>
             </div>
             `,
           link: '/steam/steam-index',
-        }
-      ]
+        },
+        {
+          text: `
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
+              <span>考试</span>
+            </div>
+            `,
+          link: '/exammination/exammination-index',
+        },
+      ],
     },
+    //创客
+    // { 
+    //   text: '创客',
+    //   items: [
+    //     {
+    //       text: `
+    //         <div style="display: flex; align-items: center; gap: 4px;">
+    //           <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
+    //           <span>教学</span>
+    //         </div>
+    //         `,
+    //       link: '/teach',
+    //     },
+    //     {
+    //       text: `
+    //         <div style="display: flex; align-items: center; gap: 4px;">
+    //           <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
+    //           <span>创客</span>
+    //         </div>
+    //         `,
+    //       link: '/steam/steam-index',
+    //     }
+    //   ]
+    // },
     // 笔记
     {
       text: '📚文档',
       items: [
-        {
-          text: `
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
-              <span>教学</span>
-            </div>
-            `,
-          link: '/teach',
-        },
-        {
-          text: `
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
-              <span>创客</span>
-            </div>
-            `,
-          link: '/steam/',
-        },
         {
           text: `
             <div style="display: flex; align-items: center; gap: 4px;">
