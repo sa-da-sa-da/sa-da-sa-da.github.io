@@ -13,12 +13,7 @@ export const FooterInfo = {
     
     <a target="_blank" href="https://www.algolia.com/" title="本站搜索服务使用 Algolia"><img alt="Algolia" src="https://img.shields.io/badge/Search-Algolia-3095FA?logo=Algolia"></a>
 
-    <a target="_blank" href="https://www.ucloud.cn/" title="本站部署服务使用 ucloud"><img alt="ucloud" src="https://img.shields.io/badge/Ucloud-Server?logo=alibabacloud&label=Server&color=%23FF6A00"></a> 
-
-    <a target="_blank" href="https://edgeone.ai/zh" title="本站部署服务使用 EdgeOne"><img alt="EdgeOne" src="https://img.shields.io/badge/EdgeOne-CDN?logo=alibabacloud&label=CDN&color=%23FF6A00"></a>
-    
     <a target="_blank" href="https://51.la/" title="本站统计服务使用 51.LA"><img alt="51.LA" src="https://img.shields.io/badge/51.LA-000000?logo=51.LA&label=Count&color=%23FF6A00"></a>
-
     
     <a target="_blank" href="https://nginx.org/" title="本站Nginx反向代理服务 Nginx"><img alt="Nginx" src="https://img.shields.io/badge/Nginx-Proxy?logo=Nginx&label=Proxy"></a>`,
   ],

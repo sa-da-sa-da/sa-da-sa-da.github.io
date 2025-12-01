@@ -6,19 +6,13 @@ export const SocialDate: Social[] = [
     icon: "icon-github",
     iconType: "iconfont",
     name: "GitHub",
-    link: "https://cnb.cool/onedayxyy/vitepress-theme-teek-one-public",
-  },
-  {
-    icon: "icon-gitee2",
-    iconType: "iconfont",
-    name: "Gitee",
-    link: "https://cnb.cool/onedayxyy/vitepress-theme-teek-one-public",
+    link: "https://sa-da-sa-da.github.io/sa-da-sa-da.github.io/",
   },
   {
     icon: "icon-qq",
     iconType: "iconfont",
     name: "QQ",
-    link: "http://wpa.qq.com/msgrd?v=3&uin=2675263825&site=qq&menu=yes",
+    link: "http://wpa.qq.com/msgrd?v=3&uin=3206908770&site=qq&menu=yes",
   },
   {
     icon: "icon-mobile",
