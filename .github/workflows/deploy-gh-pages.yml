@@ -54,6 +54,8 @@ jobs:
         with:
           # 指向构建输出目录
           path: 'docs/.vitepress/dist'
+          # 指定唯一的工件名称，避免与其他步骤冲突
+          name: github-pages
 
       - name: 部署到GitHub Pages
         uses: actions/deploy-pages@v4
