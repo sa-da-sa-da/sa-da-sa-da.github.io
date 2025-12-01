@@ -164,6 +164,17 @@ export const HeadData = [
       gtag('config', 'G-RCSW3T1BEC');
     `
   ],
+  // Cookiebot脚本 - Cookie同意管理
+  [
+    "script",
+    {
+      id: "Cookiebot",
+      src: "https://consent.cookiebot.com/uc.js",
+      "data-cbid": "9b39b411-4d9d-42b0-bc88-cbd35062d568",
+      type: "text/javascript",
+      async: "async"
+    },
+  ],
   // 阿里图标库symbol 引用
   ["script",{src: "https://at.alicdn.com/t/c/font_4686603_33kna2v5qcm.js",defer: "defer",},],  
 ];
