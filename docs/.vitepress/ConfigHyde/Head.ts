@@ -90,14 +90,14 @@ export const HeadData = [
     },
   ],
   // umami统计
-  [
-    "script",
-    {
-      src: "https://umami.onedayxyy.cn/script.js",
-      "data-website-id": "0d806f5d-cffa-41ec-98bf-862b2273ce4a",
-      defer: "defer",
-    },
-  ],
+  // [
+  //   "script",
+  //   {
+  //     src: "https://umami.onedayxyy.cn/script.js",
+  //     "data-website-id": "0d806f5d-cffa-41ec-98bf-862b2273ce4a",
+  //     defer: "defer",
+  //   },
+  // ],
   [
     "noscript",
     {},

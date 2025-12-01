@@ -156,7 +156,7 @@ const fetchWeatherData = async (): Promise<void> => {
   try {
     const API_URL =
       //修改点2:
-      "https://api.nsmao.net/api/weather/query?key=RyIp7eZqhTp2EVxayIR17m7w7O&adcode=150102";  //替换实际自己的API_KEY
+      "https://api.nsmao.net/api/weather/query?key=RyIp7eZqhTp2EVxayIR17m7w7O&adcode=4101";  //替换实际自己的API_KEY
 
     const response = await fetch(API_URL);
 
