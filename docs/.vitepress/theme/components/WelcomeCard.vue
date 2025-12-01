@@ -128,7 +128,7 @@ const fetchIPData = async (): Promise<void> => {
   try {
     const API_URL =
       //修改点1:
-      "https://api.nsmao.net/api/ip/query?key=td0O2FhnA8278CARZT8KlRHgKi";  //替换实际自己的API_KEY
+      "https://api.nsmao.net/api/ip/query?key=RyIp7eZqhTp2EVxayIR17m7w7O";  //替换实际自己的API_KEY
 
     const response = await fetch(API_URL);
 
@@ -156,7 +156,7 @@ const fetchWeatherData = async (): Promise<void> => {
   try {
     const API_URL =
       //修改点2:
-      "https://api.nsmao.net/api/weather/query?key=td0O2FhnA8278CARZT8KlRHgKi";  //替换实际自己的API_KEY
+      "https://api.nsmao.net/api/weather/query?key=RyIp7eZqhTp2EVxayIR17m7w7O";  //替换实际自己的API_KEY
 
     const response = await fetch(API_URL);
 
