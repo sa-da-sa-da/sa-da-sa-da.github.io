@@ -2,7 +2,7 @@
 date: 2025-11-29 23:33:47
 title: 搜索主页
 layout: SearchLayout
-permalink: /search/
+permalink: /nav
 sidebar: false
 article: false
 comment: false
