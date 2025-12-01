@@ -421,7 +421,7 @@ export const teekConfig = defineTeekConfig({
     // 评论区配置项，根据 provider 不同而不同，具体看对应官网的使用介绍
     options: {
       // twikoo 配置，官网：https://twikoo.js.org/
-       envId: "twikoo-git-main-sakays-projects.vercel.app",
+       envId: "https://twikoo-zeabur-production-0dfc.up.railway.app/",
 
       // waline 配置，官网：https://waline.js.org/
       // serverURL: "your serverURL",

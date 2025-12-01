@@ -110,10 +110,10 @@
         <p>留言格式：</p>
         <!-- 示例格式 -->
         <pre ref="messageFormat">
-名称: One
-链接: https://onedayxyy.cn/
+名称: Sakaay
+链接: https://sakaay.com/
 头像: https://img.onedayxyy.cn/images/Teek/Teekwebsite/xyy-logo.webp
-描述: 明心静性，爱自己</pre>
+
         <!-- 评论区插槽 -->
         <!-- 默认为Twikoo评论组件，可通过插槽自定义其他评论系统 -->
         <slot name="comments">

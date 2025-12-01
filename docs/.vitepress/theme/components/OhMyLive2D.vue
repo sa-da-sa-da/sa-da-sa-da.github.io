@@ -136,7 +136,7 @@ onMounted(async () => {
           icon: "icon-about",
           title: "关于",
           onClick: () => {
-            window.open("https://onedayxyy.cn/");
+            window.open("https://sakaay.com/");
           },
         },
         {

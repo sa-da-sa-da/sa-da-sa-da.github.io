@@ -13,7 +13,7 @@ const initTwikoo = async () => {
   if (typeof window !== 'undefined') {
     const twikoo = await import('twikoo')
     twikoo.init({
-      envId: 'https://twikoo.onedayxyy.cn/', // 换成你自己配置的域名
+      envId: 'https://twikoo-zeabur-production-0dfc.up.railway.app/', // 换成你自己配置的域名
       el: '#twikoo'
     })
   }
