@@ -146,6 +146,24 @@ export const HeadData = [
       crossorigin: "anonymous"
     },
   ],
+  // Google分析代码
+  [
+    "script",
+    {
+      async: "async",
+      src: "https://www.googletagmanager.com/gtag/js?id=G-RCSW3T1BEC"
+    },
+  ],
+  [
+    "script",
+    {},
+    `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-RCSW3T1BEC');
+    `
+  ],
   // 阿里图标库symbol 引用
   ["script",{src: "https://at.alicdn.com/t/c/font_4686603_33kna2v5qcm.js",defer: "defer",},],  
 ];
