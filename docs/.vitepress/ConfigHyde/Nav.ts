@@ -35,6 +35,75 @@ export const Nav = [
             </div>
             `,
           link: '/exammination/exammination-index',
+<<<<<<< HEAD
+=======
+        },
+      ],
+    },
+    //创客
+    // { 
+    //   text: '创客',
+    //   items: [
+    //     {
+    //       text: `
+    //         <div style="display: flex; align-items: center; gap: 4px;">
+    //           <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
+    //           <span>教学</span>
+    //         </div>
+    //         `,
+    //       link: '/teach',
+    //     },
+    //     {
+    //       text: `
+    //         <div style="display: flex; align-items: center; gap: 4px;">
+    //           <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
+    //           <span>创客</span>
+    //         </div>
+    //         `,
+    //       link: '/steam/steam-index',
+    //     }
+    //   ]
+    // },
+    // 笔记
+    {
+      text: '📚文档',
+      items: [
+        {
+          text: `
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
+              <span>运维</span>
+            </div>
+            `,
+          link: '/linux/linux-index',
+        },
+        {
+          text: `
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <img src="/img/nav/前端.svg" alt="" style="width: 16px; height: 16px;">
+              <span>前端</span>
+            </div>
+            `,
+          link: '/qianduan/qianduan-index',
+        },
+                {
+          text: `
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <img src="/img/nav/编程.svg" alt="" style="width: 16px; height: 16px;">
+              <span>编程</span>
+            </div>
+            `,
+          link: '/code/code-index',
+        },
+        {
+          text: `
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <img src="/img/nav/黑客.svg" alt="" style="width: 16px; height: 16px;">
+              <span>黑客</span>
+            </div>
+            `,
+          link: '/hacker/hacker-index',
+>>>>>>> 05563a9a09e3bd764930062a8b51848a04b43180
         },
       ],
     },

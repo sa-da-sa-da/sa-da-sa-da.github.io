@@ -62,9 +62,15 @@ import { useData, useRoute } from 'vitepress'
 
 // 统一配置区
 const config = {
+<<<<<<< HEAD
   authorName: 'sakaay|飒龘',
   authorUrl: 'https://sakaay.com/',
   siteName: 'sakaay|飒龘',
+=======
+  authorName: 'sakaay',
+  authorUrl: 'https://sakaay.com/',
+  siteName: 'sakaay',
+>>>>>>> 05563a9a09e3bd764930062a8b51848a04b43180
   siteUrl: 'https://sakaay.com/',
   licenseName: 'CC BY-NC-SA 4.0',
   licenseUrl: 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh'

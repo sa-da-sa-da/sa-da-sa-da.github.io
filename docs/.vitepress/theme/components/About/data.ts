@@ -40,7 +40,11 @@ import {
 
 export const profile = {
   title: '你好，我是',
+<<<<<<< HEAD
   name: 'sakaay|飒龘',
+=======
+  name: 'sakaay',
+>>>>>>> 05563a9a09e3bd764930062a8b51848a04b43180
   desc: '当以读书通世事',
   avatar: '/img/xyy.webp',//头像
   buttons: [
