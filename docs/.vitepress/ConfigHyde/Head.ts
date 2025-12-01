@@ -115,27 +115,27 @@ export const HeadData = [
 
 
 
-   //免费的音乐播放器
-   [
-     "script",
-     {
-       type: "text/javascript",
-       src: "https://cdn.bootcdn.net/ajax/libs/jquery/3.7.1/jquery.min.js",
-       // src: "https://myhkw.cn/player/js/jquery.min.js",
-     },
-   ], 
-   [
-     "script",
-     {
-       type: "text/javascript",
-       id: "myhk",
-       src: "https://myhkw.cn/api/player/176458472645",
-       key: "176458472645",
-       m: "1",
-       lr: "r",
-       defer: "defer",  // 添加defer属性，确保脚本在DOM加载完成后执行
-     },
-   ],
+   // 免费的音乐播放器（已注释）
+   // [
+   //   "script",
+   //   {
+   //     type: "text/javascript",
+   //     src: "https://cdn.bootcdn.net/ajax/libs/jquery/3.7.1/jquery.min.js",
+   //     // src: "https://myhkw.cn/player/js/jquery.min.js",
+   //   },
+   // ], 
+   // [
+   //   "script",
+   //   {
+   //     type: "text/javascript",
+   //     id: "myhk",
+   //     src: "https://myhkw.cn/api/player/176458472645",
+   //     key: "176458472645",
+   //     m: "1",
+   //     lr: "r",
+   //     defer: "defer",  // 添加defer属性，确保脚本在DOM加载完成后执行
+   //   },
+   // ],
 
   // Google广告脚本
   [
@@ -177,4 +177,5 @@ export const HeadData = [
   ],
   // 阿里图标库symbol 引用
   ["script",{src: "https://at.alicdn.com/t/c/font_4686603_33kna2v5qcm.js",defer: "defer",},],  
+  // 不再需要全局的vue-3d-loader和Three.js脚本，因为我们使用了专用的Vue组件
 ];
