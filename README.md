@@ -55,6 +55,28 @@ pnpm install
 pnpm docs:dev
 ```
 
+## GitHub Pages 部署
+
+本项目已配置 GitHub Actions 工作流，可以自动构建并部署到 GitHub Pages。
+
+### 部署步骤
+
+1. **推送代码到 GitHub 仓库**
+   - 将项目代码推送到您的 GitHub 仓库的 `main` 或 `master` 分支
+   - 工作流会自动触发构建和部署过程
+
+2. **配置 GitHub Pages 设置**
+   - 在 GitHub 仓库的 "Settings" → "Pages" 中
+   - 确保 Source 选择为 "GitHub Actions"
+
+3. **查看部署状态**
+   - 在仓库的 "Actions" 标签页中可以查看部署进度
+   - 部署成功后，您可以通过 `https://[用户名].github.io/[仓库名]` 访问网站
+
+### 手动触发部署
+
+您也可以在 GitHub 仓库的 "Actions" 标签页中手动触发工作流运行。
+
 ## License
 
 [MIT](./LICENSE) License © 2025 [Teeker](https://github.com/Kele-Bingtang)

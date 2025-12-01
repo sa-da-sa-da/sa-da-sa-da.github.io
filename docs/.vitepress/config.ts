@@ -4,6 +4,12 @@ import { version } from "vitepress-theme-teek/es/version";
 import { Wallpaper } from "./ConfigHyde/Wallaper"; // 导入Wallaper模块
 import { Cover } from "./ConfigHyde/Cover"; // 导入Wallaper模块
 
+// GitHub Pages部署配置
+const isGitHubPages = true;
+// 替换为您的仓库名称
+const repoName = 'sa-da-sa-da.github.io';
+const basePath = isGitHubPages ? `/${repoName}/` : '/';
+
 import { CommentData } from "./ConfigHyde/Comment"; //导入评论配置
 import { Nav } from "./ConfigHyde/Nav"; // 导入Nav模块
 import { SocialLinks } from "./ConfigHyde/SocialLinks"; //导入社交链接配置
@@ -557,6 +563,9 @@ export default defineConfig({
 
   },
 
+  // GitHub Pages基础路径配置
+  base: basePath,
+  
   transformHtml: (code, id, context) => {
     if (context.page !== "404.md") return code;
     return code.replace("404 | ", "");
