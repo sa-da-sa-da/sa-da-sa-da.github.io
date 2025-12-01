@@ -5,7 +5,7 @@ import { Wallpaper } from "./ConfigHyde/Wallaper"; // 导入Wallaper模块
 import { Cover } from "./ConfigHyde/Cover"; // 导入Wallaper模块
 
 // GitHub Pages部署配置
-const isGitHubPages = false;
+const isGitHubPages = true;
 // 替换为您的仓库名称
 const repoName = 'sa-da-sa-da.github.io';
 const basePath = isGitHubPages ? `/${repoName}/` : '/';
