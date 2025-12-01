@@ -382,7 +382,7 @@ export default defineConfig({
     },
   },
   sitemap: {
-    hostname: "https://onedayxyy.cn",
+    hostname: "https://sakaay.com",
     // transformItems: items => {
     //   const permalinkItemBak: typeof items = [];
     //   // 使用永久链接生成 sitemap

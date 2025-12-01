@@ -2,7 +2,7 @@
 date: 2025-11-29 23:33:47
 title: 搜索主页
 layout: SearchLayout
-permalink: /pages/98e34c
+permalink: /search/
 sidebar: false
 article: false
 comment: false
@@ -10,7 +10,7 @@ articleTopTip: false
 articleBottomTip: false
 copyright: false
 categories:
-  - 
+  -
 coverImg: https://img.onedayxyy.cn/images/Teek/TeekCover/23.webp
 ---
 
