@@ -5,7 +5,7 @@ import { Wallpaper } from "./ConfigHyde/Wallaper"; // 导入Wallaper模块
 import { Cover } from "./ConfigHyde/Cover"; // 导入Wallaper模块
 
 // GitHub Pages部署配置
-const isGitHubPages = true;
+const isGitHubPages = false;
 // 替换为您的仓库名称
 const repoName = 'sa-da-sa-da.github.io';
 const basePath = isGitHubPages ? `/${repoName}/` : '/';
@@ -36,9 +36,9 @@ import { useTransformByRules, type TransformRule } from "./theme/composables/use
 
 
 const description = [
-  "欢迎来到 sakaay|飒龘 当以读书通世事",
-  "sakaay|飒龘 当以读书通世事 是一个基于 VitePress 构建的主题，是在默认主题的基础上进行拓展，支持 VitePress 的所有功能、配置",
-  "sakaay|飒龘 当以读书通世事 拥有三种典型的知识管理形态：结构化、碎片化、体系化，可以轻松构建一个结构化知识库，适用个人博客、文档站、知识库等场景",
+  "欢迎来到 sakaay-飒龘 当以读书通世事",
+  "sakaay-飒龘 当以读书通世事 是一个基于 VitePress 构建的主题，是在默认主题的基础上进行拓展，支持 VitePress 的所有功能、配置",
+  "sakaay-飒龘 当以读书通世事 拥有三种典型的知识管理形态：结构化、碎片化、体系化，可以轻松构建一个结构化知识库，适用个人博客、文档站、知识库等场景",
 ].toString();
 const CoverImgList = Cover; // 获取封面列表
 // const CoverBgList = Wallpaper; // 获取壁纸列表
@@ -361,7 +361,7 @@ export default defineConfig({
   }),
 
   extends: teekConfig,
-  title: "sakaay|飒龘 当以读书通世事", //左上角网站名称
+  title: "sakaay-飒龘 当以读书通世事", //左上角网站名称
   description: description,
 
   cleanUrls: true,  //设置为true就是让链接后不默认添加.html

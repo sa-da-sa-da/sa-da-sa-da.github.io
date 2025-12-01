@@ -35,8 +35,7 @@ export const Nav = [
             </div>
             `,
           link: '/exammination/exammination-index',
-<<<<<<< HEAD
-=======
+
         },
       ],
     },
@@ -103,7 +102,7 @@ export const Nav = [
             </div>
             `,
           link: '/hacker/hacker-index',
->>>>>>> 05563a9a09e3bd764930062a8b51848a04b43180
+
         },
       ],
     },
