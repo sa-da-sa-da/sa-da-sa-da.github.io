@@ -4,7 +4,7 @@
     <div v-show="isTransitioning" class="transition-mask">
       <div class="loader">
         <div class="spinner"></div>
-        <p>Teek is Loading...</p>
+        <p>sakaay is Loading...</p>
       </div>
     </div>
   </Transition>

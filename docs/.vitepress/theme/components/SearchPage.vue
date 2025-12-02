@@ -7,6 +7,19 @@
         <br>
         <div class="date">{{ currentDate }}</div>
         
+        <!-- 壁纸切换按钮 -->
+        <button class="change-bg-btn" @click="toggleWallpaperType" :title="`切换到${wallpaperType.value === 'bing' ? '随机壁纸' : 'Bing每日壁纸'}`">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <!-- 当前壁纸类型提示 -->
+          <div class="wallpaper-type-indicator" v-if="!isWallpaperLoading">
+            {{ wallpaperTypeText }}
+          </div>
+        </button>
       </div>
 
       <!-- 搜索框 -->
@@ -92,6 +105,16 @@ const activeEngine = ref('百度');
 
 // 背景图片
 const currentWallpaper = ref('');
+// 壁纸类型：'bing' 或 'random'
+const wallpaperType = ref<'bing' | 'random'>('random');
+// Bing每日壁纸URL
+const BING_DAILY_WALLPAPER = 'https://api.dujin.org/bing/1920.php';
+// 壁纸加载状态
+const isWallpaperLoading = ref(false);
+// 当前壁纸类型显示文本
+const wallpaperTypeText = computed(() => {
+  return wallpaperType.value === 'bing' ? 'Bing每日壁纸' : '随机壁纸';
+});
 
 // 计算随机壁纸
 const randomWallpaper = computed(() => {
@@ -151,6 +174,48 @@ const switchEngine = (engineName: string) => {
   localStorage.setItem('activeSearchEngine', engineName);
 };
 
+// 切换壁纸类型
+const toggleWallpaperType = () => {
+  wallpaperType.value = wallpaperType.value === 'random' ? 'bing' : 'random';
+  localStorage.setItem('wallpaperType', wallpaperType.value);
+  updateWallpaper();
+};
+
+// 预加载壁纸
+const preloadWallpaper = (url: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(url);
+    img.onerror = () => reject(new Error(`Failed to load wallpaper: ${url}`));
+    img.src = url;
+  });
+};
+
+// 更新壁纸
+const updateWallpaper = async () => {
+  isWallpaperLoading.value = true;
+  try {
+    let newWallpaperUrl;
+    
+    if (wallpaperType.value === 'bing') {
+      // 为Bing壁纸添加时间戳避免缓存
+      newWallpaperUrl = `${BING_DAILY_WALLPAPER}?t=${Date.now()}`;
+    } else {
+      newWallpaperUrl = randomWallpaper.value;
+    }
+    
+    // 预加载壁纸
+    await preloadWallpaper(newWallpaperUrl);
+    currentWallpaper.value = newWallpaperUrl;
+  } catch (error) {
+    console.error('Error loading wallpaper:', error);
+    // 加载失败时回退到随机壁纸
+    currentWallpaper.value = randomWallpaper.value;
+  } finally {
+    isWallpaperLoading.value = false;
+  }
+};
+
 // 更新时间
 const updateTime = () => {
   const now = new Date();
@@ -205,6 +270,12 @@ const loadFromStorage = () => {
     activeEngine.value = savedEngine;
   }
   
+  // 加载壁纸类型偏好
+  const savedWallpaperType = localStorage.getItem('wallpaperType');
+  if (savedWallpaperType === 'bing' || savedWallpaperType === 'random') {
+    wallpaperType.value = savedWallpaperType;
+  }
+  
   // 加载收藏夹
   const savedBookmarks = localStorage.getItem('searchPageBookmarks');
   if (savedBookmarks) {
@@ -225,8 +296,8 @@ onMounted(() => {
   updateTime();
   const timer = setInterval(updateTime, 1000);
   
-  // 设置随机背景壁纸
-  currentWallpaper.value = randomWallpaper.value;
+  // 设置壁纸
+  updateWallpaper();
   
   // 自动聚焦搜索框
   nextTick(() => {
@@ -303,6 +374,67 @@ onMounted(() => {
 .change-bg-btn:hover {
   background: rgba(255, 255, 255, 0.3);
   transform: translateY(-50%) scale(1.1);
+}
+
+.change-bg-btn::after {
+  content: attr(title);
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 10px;
+  padding: 5px 10px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.change-bg-btn:hover::after {
+  opacity: 1;
+}
+
+/* 壁纸类型指示器 */
+.wallpaper-type-indicator {
+  position: absolute;
+  left: 50%;
+  bottom: -30px;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  backdrop-filter: blur(5px);
+  animation: fadeInOut 2s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  20%, 80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+}
+
+/* 加载状态 */
+.search-page.loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 2;
+}
+
+/* 确保按钮在加载时依然可见 */
+.search-container {
+  position: relative;
+  z-index: 1;
 }
 
 .time {

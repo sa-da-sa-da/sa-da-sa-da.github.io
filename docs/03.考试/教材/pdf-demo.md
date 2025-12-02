@@ -18,9 +18,9 @@ coverImg: https://img.onedayxyy.cn/images/Teek/TeekCover/17.webp
 
 下面是一个基本的 PDF 查看器示例，使用了一个公开可用的 PDF 文件：
 
-<ClientOnly>
-  <TkPdfViewer src="https://osscdn.sakaay.com/osssakaa/2022%E7%BA%A7%E4%BF%A1%E6%81%AF%E4%BC%9A%E8%80%83.pdf" />
-</ClientOnly>
+
+  <iframe src="https://osscdn.sakaay.com/osssakaa/2022%E7%BA%A7%E4%BF%A1%E6%81%AF%E4%BC%9A%E8%80%83.pdf" >
+
 
 
 ## 使用说明

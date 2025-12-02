@@ -38,8 +38,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   modelPath: '/tree.obj', // 默认加载tree.obj文件
   fileType: 'obj',
-  width: '100%',
-  height: '400px',
+  width: '600px',
+  height: '600px',
   backgroundColor: '#f8f9fa',
   scale: 1,
   autoRotate: false,
