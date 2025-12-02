@@ -24,6 +24,8 @@
     "vitepress-markdown-timeline": "^1.2.2",
     "vitepress-plugin-auto-frontmatter": "^1.0.11",
     "vitepress-plugin-group-icons": "^1.6.0",
-    "vue": "^3.5.16"
+    "pdfjs-dist": "^5.4.449",
+    "vue-3d-loader": "^2.2.4",
+    "vue-pdf-embed": "^2.1.3"
   }
 }
