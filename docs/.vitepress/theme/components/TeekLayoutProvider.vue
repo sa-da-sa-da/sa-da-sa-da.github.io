@@ -13,7 +13,7 @@ import NotFound from "./404.vue";
 import BannerImgArrow from "./BannerImgArrow.vue"; //导入横幅图片箭头组件
 
 import NoticeContent from "./NoticeContent.vue"; //导入公告组件
-//import GlobalGreet from "./GlobalGreet.vue";  //导入全局问候组件
+import GlobalGreet from "./GlobalGreet.vue";  //导入全局问候组件
 import TitleChange from "./TitleChange.vue" //导入网页标题变化
 import ScrollProgressBar from "./ScrollProgressBar.vue" //导入顶部滚动条组件
 
@@ -22,7 +22,7 @@ import DocFooterCopyright from "./DocFooterCopyright.vue"; //导入文档页脚�
 
 import BackTop from "./BackTop.vue"; //导入回到顶部组件
 import Clock from "./Clock.vue"; // 时钟组件
-// import OhMyLive2D from "./OhMyLive2D.vue"; //导入看板娘组件
+import OhMyLive2D from "./OhMyLive2D.vue"; //导入看板娘组件
 
 
 // @ts-ignore
@@ -97,9 +97,9 @@ const handleConfigSwitch = (config: TeekConfig, style: string) => {
   <Teek.Layout>
     <template #layout-top>
       <!-- 全局问候组件 -->
-      <!-- <GlobalGreet /> -->
+       <GlobalGreet />
       <!-- 看板娘组件 -->
-      <!-- <OhMyLive2D /> -->
+      <OhMyLive2D /> 
       <!-- 顶部滚动条组件 -->
       <ScrollProgressBar />
       <!--网页标题切换组件  -->

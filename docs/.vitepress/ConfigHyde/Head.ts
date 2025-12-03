@@ -240,6 +240,53 @@ export const HeadData = [
             disableAutoTrack: true
           };
           
+          // 添加阻止AI助手图片预览的函数
+          function preventImagePreview() {
+            // 查找AI助手容器中的所有图片
+            const appflowImages = document.querySelectorAll('#appflow-chat-container img');
+            appflowImages.forEach(img => {
+              // 添加点击事件监听器，阻止默认行为和事件冒泡
+              img.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // 确保点击AI助手图片能正确触发AI助手功能
+                const parentElement = img.closest('#appflow-chat-container');
+                if (parentElement) {
+                  const chatButton = parentElement.querySelector('.sc-gqEElc');
+                  if (chatButton) {
+                    // 如果点击的是容器内的图片，模拟点击聊天按钮
+                    chatButton.click();
+                  }
+                }
+              });
+            });
+            
+            // 也处理可能的动态添加的图片
+            const observer = new MutationObserver((mutations) => {
+              mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                  if (node.nodeType === Node.ELEMENT_NODE) {
+                    // 移除TypeScript类型断言，因为这是在JavaScript字符串中
+                    const element = node;
+                    const images = element.querySelectorAll('img');
+                    images.forEach(img => {
+                      img.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      });
+                    });
+                  }
+                });
+              });
+            });
+            
+            // 监视AI助手容器的变化
+            const appflowContainer = document.getElementById('appflow-chat-container');
+            if (appflowContainer) {
+              observer.observe(appflowContainer, { childList: true, subtree: true });
+            }
+          }
+          
           // 添加超时处理
           const initPromise = new Promise((resolve, reject) => {
             // 设置初始化超时
@@ -260,6 +307,8 @@ export const HeadData = [
           // 处理初始化结果
           initPromise.then(() => {
             console.debug('AI助手初始化成功');
+            // 在初始化成功后调用阻止图片预览的函数
+            setTimeout(preventImagePreview, 500);
           }).catch(error => {
             console.warn('AI助手初始化失败:', error.message);
             // 仅在第一次失败后尝试一次重试
@@ -270,6 +319,8 @@ export const HeadData = [
                 try {
                   window.APPFLOW_CHAT_SDK.init(aiConfig);
                   console.debug('AI助手重试初始化成功');
+                  // 在重试初始化成功后也调用阻止图片预览的函数
+                  setTimeout(preventImagePreview, 500);
                 } catch (retryError) {
                   console.warn('AI助手重试初始化失败:', retryError.message);
                 }
