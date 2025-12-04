@@ -57,6 +57,8 @@ import SLink from "./components/SLink/index.vue"; //友链
 import CoupleAlbum from './components/CoupleAlbum/CoupleAlbum.vue'
 import PhotoCard from './components/CoupleAlbum/PhotoCard.vue'
 import ThreeDModelViewer from './components/ThreeDModelViewer.vue'
+import MultipleChoiceQuestion from './components/MultipleChoiceQuestion.vue'
+import FillInTheBlank from './components/FillInTheBlank.vue'
 
 // 引入复制事件（复制后弹窗提示）
 import { useCopyEvent } from "./composables/useCopyEvent.ts";
@@ -88,6 +90,8 @@ export default {
     
     // 注册3D模型查看器组件
     app.component('ThreeDModelViewer', ThreeDModelViewer);
+    app.component('MultipleChoiceQuestion', MultipleChoiceQuestion);
+    app.component('FillInTheBlank', FillInTheBlank);
 
     app.component("emoji-Shiroki", EmojiShiroki); // ◀️ 注入 Emoji 表情库组件布局
     app.component("SearchPage", SearchPage); // 注册搜索页面组件
