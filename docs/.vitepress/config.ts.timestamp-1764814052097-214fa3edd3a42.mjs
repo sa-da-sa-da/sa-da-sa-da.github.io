@@ -501,7 +501,7 @@ var gitee = `<svg t="1743875298298" class="icon" viewBox="0 0 1024 1024" version
 var SocialLinks = [
   {
     icon: { svg: gitee },
-    link: "https://cnb.cool/onedayxyy/vitepress-theme-teek-one-public"
+    link: "https://github.com/sa-da-sa-da"
   }
   // {
   //   icon: { svg: email },

@@ -144,7 +144,7 @@ onMounted(async () => {
           icon: "icon-gitee",
           title: "gitee",
           onClick: () => {
-            window.open("https://cnb.cool/onedayxyy/vitepress-theme-teek-one-public");
+            window.open("https://github.com/sa-da-sa-da");
           },
         },
       ],
