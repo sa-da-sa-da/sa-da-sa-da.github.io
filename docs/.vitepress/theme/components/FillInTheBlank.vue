@@ -245,12 +245,12 @@ const renderQuestionText = () => {
     let count = 0;
     return props.title.replace(/\{blank\}/g, () => {
       count++;
-      return `<span class="blank-placeholder">[第${count}空]</span>`;
+      return `<span class="blank-placeholder">[<u>      第${count}空       </u>]</span>`;
     });
   } else {
     // 如果没有占位符，在末尾添加空格提示
     return props.title + ' ' + blanks.value.map((_, index) => {
-      return `<span class="blank-placeholder">[第${index + 1}空]</span>`;
+      return `<span class="blank-placeholder">[<u>    第${index + 1}空    </u>]</span>`;
     }).join(' ');
   }
 };
