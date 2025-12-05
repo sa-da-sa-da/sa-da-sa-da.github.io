@@ -1,11 +1,13 @@
 ---
 title: PDF 组件示例
-date: 2025-11-18 08:00:00
+date: 2025-11-18 16:00:00
 permalink: /exammination/books/pdf-demo
 categories:
   - 信息技术教材系列
 tags:
   - 信息技术
+coverImg: >-
+  https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201803/37c5fcac05159bab31e2c8d0a3d6f517.jpg
 ---
 
 # PDF 组件示例

@@ -1,9 +1,10 @@
 ---
-date: 2025-10-22 15:10:31
+date: 2025-10-22 23:10:31
 title: friends-links
 categories:
   - guide
-coverImg: https://img.onedayxyy.cn/images/Teek/TeekCover/20.webp
+coverImg: >-
+  http://cdn-hsyq-static.shanhutech.cn/bizhi/staticwp/202503/58027a08072962c94c5b3cc2a5a1e1af--1459684851.jpg
 ---
 # 实现友链页面功能
 

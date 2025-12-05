@@ -146,6 +146,19 @@ export const HeadData = [
       crossorigin: "anonymous"
     },
   ],
+  // Google Funding Choices 脚本 - 用户数据选择同意
+  [
+    "script",
+    {
+      async: "async",
+      src: "https://fundingchoicesmessages.google.com/i/pub-2897720906666216?ers=1"
+    },
+  ],
+  [
+    "script",
+    {},
+    `(function() {function signalGooglefcPresent() {if (!window.frames['googlefcPresent']) {if (document.body) {const iframe = document.createElement('iframe'); iframe.style = 'width: 0; height: 0; border: none; z-index: -1000; left: -1000px; top: -1000px;'; iframe.style.display = 'none'; iframe.name = 'googlefcPresent'; document.body.appendChild(iframe);} else {setTimeout(signalGooglefcPresent, 0);}}}signalGooglefcPresent();})();`
+  ],
   // Google分析代码
   [
     "script",

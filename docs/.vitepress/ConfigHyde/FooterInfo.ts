@@ -30,7 +30,7 @@ export const FooterInfo = {
     suffix: "sakaay|飒龘 当以读书通世事",
   },
   icpRecord: {
-    name: "豫ICP备2024096633号",
+    name: "豫ICP备2024096633号-1",
     link: "http://beian.miit.gov.cn/",
   },
   // 网络安全备案信息配置
