@@ -1,11 +1,12 @@
 ---
 title: vex LemLib的PID整定
-date: 2025-11-06 09:24:35
+date: 2025-11-06 17:24:35
 permalink: /steam/vex/vex-lemllib-pid-tuning
 categories:
   - vex系列
 tags:
   - vex LemLib
+coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/a/201908/22/5d5e7c1591d27.jpg
 ---
 
 ## 引言

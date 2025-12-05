@@ -29,6 +29,7 @@ coverage
 *.sw?
 
 /**/.vitepress/cache/*
+docs/03.考试/在线练习/第11套在线题目.md
 docs/03.考试/在线练习/第12套在线题目.md
 docs/03.考试/在线练习/第13套在线题目.md
 docs/03.考试/在线练习/第14套在线题目.md
