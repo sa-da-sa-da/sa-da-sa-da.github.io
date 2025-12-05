@@ -1,13 +1,14 @@
 ---
 title: 半小时搞定学考中的Python程序设计
-date: 2025-12-05 22:29:00
+date: 2025-12-06 22:29:00
 permalink: /exammination/python/02halfhourpython
 categories:
   - 信息技术教材系列
 tags:
   - 信息技术
 top: true
-coverImg: https://img.onedayxyy.cn/images/Teek/TeekCover/17.webp
+coverImg: >-
+  https://cdn-hsyq-static.shanhutech.cn/bizhi/staticwp/202503/58027a08072962c94c5b3cc2a5a1e1af--1459684851.jpg
 ---
 
 信息技术会考 | Python程序设计，看这一个就够了！（25年新版）

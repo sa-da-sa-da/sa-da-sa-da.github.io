@@ -6,7 +6,6 @@ categories:
   - vex系列
 tags:
   - vex LemLib
-coverImg: https://img.onedayxyy.cn/images/Teek/TeekCover/16.webp
 ---
 
 ## 引言

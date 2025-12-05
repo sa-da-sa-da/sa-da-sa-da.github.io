@@ -6,8 +6,6 @@ categories:
   - 信息技术教材系列
 tags:
   - 信息技术
-top: true
-coverImg: https://img.onedayxyy.cn/images/Teek/TeekCover/17.webp
 ---
 
 # PDF 组件示例

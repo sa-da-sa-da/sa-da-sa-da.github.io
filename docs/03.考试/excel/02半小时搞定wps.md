@@ -7,7 +7,6 @@ categories:
 tags:
   - 信息技术
 top: true
-coverImg: https://img.onedayxyy.cn/images/Teek/TeekCover/17.webp
 ---
 
 半小时搞定学考中的WPS
