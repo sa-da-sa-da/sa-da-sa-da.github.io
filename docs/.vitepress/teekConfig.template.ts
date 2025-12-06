@@ -102,8 +102,8 @@ export const teekConfig = defineTeekConfig({
   // 站点分析配置
   siteAnalytics: [
     { provider: "google", options: { id: "******" } },
-    { provider: "baidu", options: { id: "******" } },
-    { provider: "umami", options: { id: "******", src: "**" } },
+    { provider: "baidu", options: { id: "pub-2897720906666216" } },
+    { provider: "umami", options: { id: "3905b21b-8371-4d6a-ad60-9ba25a86cbf6", src: "https://cloud.umami.is/script.js" } },
   ],
   // 首页 Banner 配置，位于首页顶部
   banner: {

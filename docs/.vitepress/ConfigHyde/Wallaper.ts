@@ -1,7 +1,8 @@
 // 首页壁纸
 
 export const Wallpaper = [
-  "https://api.dujin.org/bing/1920.php",
+  "https://ossaiimages.sakaay.com/ai-image/sakaay/bg-05.mp4",
+ "https://api.dujin.org/bing/1920.php",
   "http://cdn-hsyq-static.shanhutech.cn/bizhi/staticwp/202503/58027a08072962c94c5b3cc2a5a1e1af--1459684851.jpg",
   "http://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201904/6d41dac385290719603572cf2f4121c9.jpg",
   "https://cdn-hsyq-static-bak.shanhutech.cn/a/201911/01/5dbbd5ade0727.jpg",
@@ -47,5 +48,4 @@ export const Wallpaper = [
   "https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201801/5b7a28d1c7ca1c2c32d45a2540a8750f.jpg",
   "https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201707/410b261ac8d01bfec2ff794fb5ac7d8e.jpg",
   "https://cdn-hsyq-static-bak.shanhutech.cn/a/201910/21/5dad8140f0048.jpg",
-
 ];

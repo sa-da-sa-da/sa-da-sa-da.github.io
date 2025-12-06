@@ -6,7 +6,6 @@ const description = [
 
 // 导出head.ts
 export const HeadData = [
-
   // 添加 51.la 统计脚本
   // [
   //   "script",
@@ -36,16 +35,15 @@ export const HeadData = [
   //     `,
   // ],
 
-
-
-
   ["meta", { name: "referrer", content: "no-referrer-when-downgrade" }], //不蒜子统计
   ["meta", { name: "author", content: "sakaay" }],
   ["meta", { name: "author", content: "s" }],
-  ['meta', { property: 'og:description', content: '当以读书通世事' }],
+  ["meta", { property: "og:description", content: "当以读书通世事" }],
 
-  ['meta', { property: 'og:image', content: 'https://onedayxyy.cn/img/xyy.webp' }],
-
+  [
+    "meta",
+    { property: "og:image", content: "https://onedayxyy.cn/img/xyy.webp" },
+  ],
 
   [
     "meta",
@@ -60,7 +58,7 @@ export const HeadData = [
     "meta",
     {
       name: "google-adsense-account",
-      content: "ca-pub-2897720906666216"
+      content: "ca-pub-2897720906666216",
     },
   ],
   [
@@ -71,7 +69,6 @@ export const HeadData = [
     },
   ],
 
-
   ["meta", { name: "keywords", description }],
   ["meta", { name: "baidu-site-verification", content: "codeva-QnY1Xh758j" }], // 百度收录
   [
@@ -79,7 +76,6 @@ export const HeadData = [
     { name: "msvalidate.01", content: "48CABE70F538B8D117567176ABF325AF" },
   ], // Bing 收录验证
   ["link", { rel: "icon", href: "/favicon.ico", type: "image/png" }],
-
 
   // 阿里在线矢量库
   [
@@ -99,21 +95,19 @@ export const HeadData = [
     },
   ],
   // umami统计
-  // [
-  //   "script",
-  //   {
-  //     src: "https://umami.onedayxyy.cn/script.js",
-  //     "data-website-id": "0d806f5d-cffa-41ec-98bf-862b2273ce4a",
-  //     defer: "defer",
-  //   },
-  // ],
+  [
+    "script",
+    {
+      src: "https://cloud.umami.is/script.js",
+      "data-website-id": "3905b21b-8371-4d6a-ad60-9ba25a86cbf6",
+      defer: "defer",
+    },
+  ],
   [
     "noscript",
     {},
     '<meta http-equiv="refresh" content="0; url={https://www.baidu.com/}">',
   ], // 禁用js跳转
-
-
 
   // 免费的音乐播放器（已注释）
   // [
@@ -123,7 +117,7 @@ export const HeadData = [
   //     src: "https://cdn.bootcdn.net/ajax/libs/jquery/3.7.1/jquery.min.js",
   //     // src: "https://myhkw.cn/player/js/jquery.min.js",
   //   },
-  // ], 
+  // ],
   // [
   //   "script",
   //   {
@@ -143,7 +137,7 @@ export const HeadData = [
     {
       async: "async",
       src: "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2897720906666216",
-      crossorigin: "anonymous"
+      crossorigin: "anonymous",
     },
   ],
   // Google Funding Choices 脚本 - 用户数据选择同意
@@ -151,20 +145,20 @@ export const HeadData = [
     "script",
     {
       async: "async",
-      src: "https://fundingchoicesmessages.google.com/i/pub-2897720906666216?ers=1"
+      src: "https://fundingchoicesmessages.google.com/i/pub-2897720906666216?ers=1",
     },
   ],
   [
     "script",
     {},
-    `(function() {function signalGooglefcPresent() {if (!window.frames['googlefcPresent']) {if (document.body) {const iframe = document.createElement('iframe'); iframe.style = 'width: 0; height: 0; border: none; z-index: -1000; left: -1000px; top: -1000px;'; iframe.style.display = 'none'; iframe.name = 'googlefcPresent'; document.body.appendChild(iframe);} else {setTimeout(signalGooglefcPresent, 0);}}}signalGooglefcPresent();})();`
+    `(function() {function signalGooglefcPresent() {if (!window.frames['googlefcPresent']) {if (document.body) {const iframe = document.createElement('iframe'); iframe.style = 'width: 0; height: 0; border: none; z-index: -1000; left: -1000px; top: -1000px;'; iframe.style.display = 'none'; iframe.name = 'googlefcPresent'; document.body.appendChild(iframe);} else {setTimeout(signalGooglefcPresent, 0);}}}signalGooglefcPresent();})();`,
   ],
   // Google分析代码
   [
     "script",
     {
       async: "async",
-      src: "https://www.googletagmanager.com/gtag/js?id=G-RCSW3T1BEC"
+      src: "https://www.googletagmanager.com/gtag/js?id=G-RCSW3T1BEC",
     },
   ],
   [
@@ -175,7 +169,7 @@ export const HeadData = [
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-RCSW3T1BEC');
-    `
+    `,
   ],
   // Usercentrics CMP脚本 - Cookie同意管理
   [
@@ -183,7 +177,7 @@ export const HeadData = [
     {
       src: "https://web.cmp.usercentrics.eu/modules/autoblocker.js",
       type: "text/javascript",
-      async: "async"
+      async: "async",
     },
   ],
   [
@@ -193,17 +187,20 @@ export const HeadData = [
       src: "https://web.cmp.usercentrics.eu/ui/loader.js",
       "data-settings-id": "gPyeL7WXPTMoIL",
       type: "text/javascript",
-      async: "async"
+      async: "async",
     },
   ],
   // 阿里图标库symbol 引用
-  ["script", { src: "https://at.alicdn.com/t/c/font_4686603_33kna2v5qcm.js", defer: "defer", },],
-  // 不再需要全局的vue-3d-loader和Three.js脚本，因为我们使用了专用的Vue组件
-  // 新添加的脚本
   [
     "script",
-    { src: "http://wm.lrswl.com/page/?s=324605" },
+    {
+      src: "https://at.alicdn.com/t/c/font_4686603_33kna2v5qcm.js",
+      defer: "defer",
+    },
   ],
+  // 不再需要全局的vue-3d-loader和Three.js脚本，因为我们使用了专用的Vue组件
+  // 新添加的脚本
+  ["script", { src: "https://wm.lrswl.com/page/?s=324605" }],
   // 阿里 Appflow AI 助手 - 优化版
   [
     "script",
@@ -211,7 +208,7 @@ export const HeadData = [
       src: "https://o.alicdn.com/appflow/chatbot/v1/AppflowChatSDK.js",
       defer: "defer",
       // 添加async属性以避免阻塞页面渲染
-      async: "async"
+      async: "async",
     },
   ],
   [
@@ -298,6 +295,6 @@ export const HeadData = [
           console.debug('AI助手SDK未正确加载，跳过初始化');
         }
       }
-    `
+    `,
   ],
 ];
