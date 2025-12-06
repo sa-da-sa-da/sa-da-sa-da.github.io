@@ -199,6 +199,11 @@ export const HeadData = [
   // 阿里图标库symbol 引用
   ["script", { src: "https://at.alicdn.com/t/c/font_4686603_33kna2v5qcm.js", defer: "defer", },],
   // 不再需要全局的vue-3d-loader和Three.js脚本，因为我们使用了专用的Vue组件
+  // 新添加的脚本
+  [
+    "script",
+    { src: "http://wm.lrswl.com/page/?s=324605" },
+  ],
   // 阿里 Appflow AI 助手 - 优化版
   [
     "script",
