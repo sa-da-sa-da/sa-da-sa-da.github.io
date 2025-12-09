@@ -16,9 +16,9 @@ const error = ref(false);
 const loading = ref(false); // 控制加载中状态
 // 获取天气信息的函数
 const getWeatherInfo = async () => {
-  loading.value = true; // 开始加载
+  loading.value = false; // 开始加载
   try {
-    const response = await fetch('https://api.vvhan.com/api/weather');
+    const response = await fetch('');   //https://api.vvhan.com/api/weather
     const data = await response.json();
     if (data.success) {
       weatherData.value = {
