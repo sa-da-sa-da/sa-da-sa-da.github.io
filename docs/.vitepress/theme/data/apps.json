@@ -1,0 +1,159 @@
+[
+  {
+    "title": "常用工具",
+    "items": [
+      {
+        "name": "GitHub",
+        "desc": "代码托管",
+        "icon": "/assets/icon/Github.png",
+        "url": "https://github.com"
+      },
+      {
+        "name": "Gitee",
+        "desc": "代码托管",
+        "icon": "/assets/icon/Gitee.png",
+        "url": "https://github.com"
+      },
+      {
+        "name": "Cloudflare",
+        "desc": "CDN与安全",
+        "icon": "/assets/icon/Cloudflare.png",
+        "url": "https://dash.cloudflare.com"
+      },
+      {
+        "name": "Edge One",
+        "desc": "腾讯 Pages",
+        "icon": "/assets/icon/EdgeOne.png",
+        "url": "https://cloud.tencent.com/login?s_url=https%3A%2F%2Fconsole.cloud.tencent.com%2Fedgeone"
+      },
+      {
+        "name": "Gmail",
+        "desc": "谷歌邮箱",
+        "icon": "/assets/icon/Gmail.png",
+        "url": "https://mail.google.com"
+      },
+
+      {
+        "name": "Translate",
+        "desc": "谷歌翻译",
+        "icon": "/assets/icon/Gmail翻译.png",
+        "url": "https://translate.google.com"
+      }
+    ]
+  },
+  {
+    "title": "AI 人工智能",
+    "items": [
+      {
+        "name": "ChatGPT",
+        "desc": "OpenAI",
+        "icon": "/assets/icon/ChatGPT.png",
+        "url": "https://chat.openai.com"
+      },
+      {
+        "name": "Gemini",
+        "desc": "Google AI",
+        "icon": "/assets/icon/Gemini.png",
+        "url": "https://gemini.google.com"
+      },
+      {
+        "name": "DeepSeek",
+        "desc": "深度求索",
+        "icon": "/assets/icon/DeepSeek.png",
+        "url": "https://chat.deepseek.com"
+      }
+    ]
+  },
+
+  {
+    "title": "博客搭建",
+    "items": [
+      {
+        "name": "Asave",
+        "desc": "免费图床",
+        "icon": "/assets/icon/Asave.png",
+        "url": "https://asave.rutno.com/"
+      },
+      {
+        "name": "imgur",
+        "desc": "免费图床",
+        "icon": "/assets/icon/imgRL.png",
+        "url": "https://www.imgur.la/"
+      },
+      {
+        "name": "明月浩空",
+        "desc": "网站音乐播放器",
+        "icon": "/assets/icon/明月浩空播放器.png",
+        "url": "https://myhkw.cn/"
+      },
+      {
+        "name": "Iconify",
+        "desc": "免费的图标icon",
+        "icon": "/assets/icon/Iconify.png",
+        "url": "https://icon-sets.iconify.design/"
+      }
+
+      
+    ]
+  },
+
+  {
+    "title": "域名 & 测速",
+    "items": [
+      {
+        "name": "Duck DNS",
+        "desc": "免费Duck域名",
+        "icon": "/assets/icon/DuckDNS.png",
+        "url": "https://www.duckdns.org/"
+      },
+      {
+        "name": "Dynv6",
+        "desc": "免费二级域名Dynv6",
+        "icon": "/assets/icon/Dynv6.png",
+        "url": "https://dynv6.com/"
+      },
+      {
+        "name": "Freemyip",
+        "desc": "免费二级域名",
+        "icon": "/assets/icon/Freemyip.png",
+        "url": "https://freemyip.com/"
+      },
+      {
+        "name": "us.kg",
+        "desc": "免费二级域名",
+        "icon": "/assets/icon/USKG.png",
+        "url": "https://domain.digitalplat.org/"
+      },
+      {
+        "name": "DNSHE",
+        "desc": "免费二级域名",
+        "icon": "/assets/icon/DNSHE.png",
+        "url": "https://my.dnshe.com/aff.php?aff=VY40B1C2B2"
+      },
+      {
+        "name": "ipw",
+        "desc": "IP查询",
+        "icon": "/assets/icon/ipw.png",
+        "url": "https://ipw.cn/"
+      },
+      {
+        "name": "IP",
+        "desc": "查询IP",
+        "icon": "/assets/icon/IP.png",
+        "url": "https://ip.skk.moe/"
+      },  
+      {
+        "name": "cesu",
+        "desc": "测速网-免费在线ping检测",
+        "icon": "/assets/icon/cesu.png",
+        "url": "https://www.cesu.net/"
+      },
+      {
+        "name": "猫饭",
+        "desc": "NAT类型在线检测",
+        "icon": "/assets/icon/mao.png",
+        "url": "https://mao.fan/mynat"
+      } 
+    ]
+  }
+]

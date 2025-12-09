@@ -7,8 +7,11 @@ import { useData } from "vitepress";
 // import MNavLinks from "./components/MNavLinks.vue"; // 引入导航组件
 import confetti from "./components/Confetti.vue"; //导入五彩纸屑组件
 // import NavIcon from "./components/NavIcon.vue"; //导入导航栏图标
-import SearchPage from './components/SearchPage.vue'; // 引入搜索页面组件
-import SearchLayout from './layouts/SearchLayout.vue'; // 引入搜索布局组件
+
+import NavLayout from './layouts/NavLayout.vue'; // 引入导航布局组件
+// 导入导航页相关组件
+import { NavPage } from './components/nav-page/index';
+import NavGrid from './components/nav-page/NavGrid.vue';
 
 
 // Teek 在线主题包引用（需安装 Teek 在线版本）
@@ -94,8 +97,11 @@ export default {
     app.component('FillInTheBlank', FillInTheBlank);
 
     app.component("emoji-Shiroki", EmojiShiroki); // ◀️ 注入 Emoji 表情库组件布局
-    app.component("SearchPage", SearchPage); // 注册搜索页面组件
-    app.component("SearchLayout", SearchLayout); // 注册搜索布局组件
+    app.component("NavLayout", NavLayout); // 注册导航布局组件
+    
+    // 注册导航页组件
+    app.component('NavPage', NavPage);
+    app.component('NavGrid', NavGrid);
 
   
 
@@ -140,21 +146,17 @@ export default {
           }
 
       const props: Record<string, any> = {};
-      const { frontmatter } = useData();
+      const { frontmatter, page } = useData();
 
       // 添加自定义 class 逻辑
       if (frontmatter.value?.layoutClass) {
         props.class = frontmatter.value.layoutClass;
       }
 
-      // 检查是否为搜索页面路径
-      const isSearchPage = typeof window !== 'undefined' && window.location.pathname === '/search/';
-      
-      // 如果是搜索页面，返回搜索布局
-      if (isSearchPage) {
-        return () => h(SearchLayout);
-      }
 
+   
+
+      // 对于其他所有页面，包括导航页面，都使用默认布局
       return () => h(TeekLayoutProvider, props);
     },
   }),
