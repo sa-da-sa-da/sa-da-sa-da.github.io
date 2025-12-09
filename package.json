@@ -7,8 +7,7 @@
   "scripts": {
     "docs:dev": "vitepress dev docs",
     "docs:build": "node --max-old-space-size=131072 node_modules/vitepress/bin/vitepress.js build docs",
-    "docs:preview": "vitepress preview docs",
-    "deploy": "wrangler deploy"
+    "docs:preview": "vitepress preview docs"
   },
   "cloudflare": {
 		"label": "Vite React Template",
