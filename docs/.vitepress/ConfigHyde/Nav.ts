@@ -4,7 +4,7 @@ import { TeekIcon, VdoingIcon, SSLIcon, BlogIcon } from "./icon/NavIcon";
 export const Nav = [
     { text: "🏡首页", link: "/" },
     { text: "🔍搜索", link: "/nav" },
-    { text: "⏰时间", link: "https://time.sakaay.com" },
+    { text: "⏰时间", link: "/time" },
     //教学
     {
       text: '📚教学',

@@ -8,14 +8,19 @@ const { theme } = useData()
 const pageConfig = computed(() => {
   const config = theme.value.startPage || {}
   return {
-    title: config.title || '导航页',
-    bgImage: config.bgImage || ''
+    title: config.title || '',
+    bgImage: 'https://ossaiimages.sakaay.com/ai-image/sakaay/bg-01.mp4' // 直接使用视频背景URL
   }
 })
 
 // 计算背景样式
 const wrapperStyle = computed(() => {
-  return pageConfig.value.bgImage ? { backgroundImage: `url(${pageConfig.value.bgImage})` } : {}
+  const bgImage = pageConfig.value.bgImage
+  if (bgImage && bgImage.endsWith('.mp4')) {
+    // 如果是视频，需要特殊处理，这里我们会在模板中使用video标签
+    return {}
+  }
+  return bgImage ? { backgroundImage: `url(${bgImage})` } : {}
 })
 
 // --- 状态定义 ---
@@ -41,7 +46,7 @@ const engines = {
     name: 'Bing', 
     url: 'https://www.bing.com/search?q=', 
     placeholder: '微软 Bing 搜索...'
-  }
+  }, 
 }
 
 const currentEngine = computed(() => engines[currentEngineKey.value])
@@ -84,7 +89,15 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="start-page-wrapper" :style="wrapperStyle">
+  <div class="start-page-wrapper">
+    <!-- 视频背景 --->
+    <video v-if="pageConfig.bgImage && pageConfig.bgImage.endsWith('.mp4')" class="bg-video"
+      :src="pageConfig.bgImage"
+      autoplay
+      muted
+      loop
+      playsinline
+    />
     <div class="scroll-container">
       <div class="content-box">
         <div class="info-header">
@@ -141,6 +154,18 @@ onUnmounted(() => {
   background-repeat: no-repeat;
   background-color: #0f172a;
   position: relative;
+}
+
+/* 视频背景样式 */
+.bg-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  opacity: 0.8;
 }
 
 .start-page-wrapper::before {
