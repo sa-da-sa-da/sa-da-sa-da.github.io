@@ -7,8 +7,19 @@
   "scripts": {
     "docs:dev": "vitepress dev docs",
     "docs:build": "node --max-old-space-size=131072 node_modules/vitepress/bin/vitepress.js build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "deploy": "wrangler deploy",
   },
+  "cloudflare": {
+		"label": "Vite React Template",
+		"products": [
+			"Workers"
+		],
+		"categories": [],
+		"preview_icon_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/532a5378-9717-4964-385b-5fafd2160200/public",
+		"preview_image_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/ec7f4be5-d1d6-4e94-0851-126341745400/preview",
+		"publish": true
+	},
   "devDependencies": {
     "echarts": "^5.6.0",
     "nprogress-v2": "^1.1.10",
