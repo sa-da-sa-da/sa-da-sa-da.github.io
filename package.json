@@ -7,8 +7,7 @@
   "scripts": {
     "docs:dev": "vitepress dev docs",
     "docs:build": "node --max-old-space-size=131072 node_modules/vitepress/bin/vitepress.js build docs",
-    "docs:preview": "vitepress preview docs",
-    "deploy": "wrangler pages publish docs/.vitepress/dist --project-name=sa-da-sa-da.github.io"
+    "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
     "echarts": "^5.6.0",
