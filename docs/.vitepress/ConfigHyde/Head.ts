@@ -200,7 +200,7 @@ export const HeadData = [
   ],
   // 不再需要全局的vue-3d-loader和Three.js脚本，因为我们使用了专用的Vue组件
   // 新添加的脚本
-  ["script", { src: "https://wm.lrswl.com/page/?s=324605" }],
+
   // 阿里 Appflow AI 助手 - 优化版
   [
     "script",
