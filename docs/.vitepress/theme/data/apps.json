@@ -1,5 +1,63 @@
 [
   {
+    "title": "自建服务",
+    "items": [
+      {
+        "name": "AI生图",
+        "desc": "基于千问IMAGE模型的AI生图和图像编辑应用",
+        "icon": "/assets/icon/AI生图.png",
+        "url": "https://aitu.sakaay.com"
+      },
+      {
+        "name": "E编程",
+        "desc": "基于阿里云千问大模型的AI辅助青少年编程的工具",
+        "icon": "/assets/icon/E编程.png",
+        "url": "https://e.sakaay.com"
+      },
+      {
+        "name": "AI知识库",
+        "desc": "谷歌翻译",
+        "icon": "/assets/icon/Gmail翻译.png",
+        "url": "https://xa.sakaay.com/welcome"
+      },
+      {
+        "name": "Zfile网盘",
+        "desc": "基于千问大模型的AI知识库",
+        "icon": "/assets/icon/AI知识库.png",
+        "url": "https://zf.sakaay.com"
+      }
+    ]
+  },
+  {
+    "title": "创客",
+    "items": [
+      {
+        "name": "DFROBOT",
+        "desc": "DFROBOT 创客社区",
+        "icon": "🔧",
+        "url": "https://mc.dfrobot.com.cn/"
+      },
+      {
+        "name": "PROS",
+        "desc": "普渡大学机器人操作系统",
+        "icon": "📚",
+        "url": "https://pros.cs.purdue.edu/"
+      },
+      {
+        "name": "世界机器人大赛",
+        "desc": "世界机器人大赛官网",
+        "icon": "🔧",
+        "url": "https://www.worldrobotconference.com/"
+      },
+      {
+        "name": "航天创新",
+        "desc": "青少年航天创新大赛",
+        "icon": "📚",
+        "url": "https://nysic.declare.htgjjl.com/index.aspx?"
+      }
+    ]
+  },
+  {
     "title": "常用工具",
     "items": [
       {
@@ -92,8 +150,6 @@
         "icon": "/assets/icon/Iconify.png",
         "url": "https://icon-sets.iconify.design/"
       }
-
-      
     ]
   },
 
@@ -141,7 +197,7 @@
         "desc": "查询IP",
         "icon": "/assets/icon/IP.png",
         "url": "https://ip.skk.moe/"
-      },  
+      },
       {
         "name": "cesu",
         "desc": "测速网-免费在线ping检测",
@@ -153,7 +209,7 @@
         "desc": "NAT类型在线检测",
         "icon": "/assets/icon/mao.png",
         "url": "https://mao.fan/mynat"
-      } 
+      }
     ]
   }
 ]
