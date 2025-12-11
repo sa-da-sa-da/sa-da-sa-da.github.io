@@ -5,25 +5,25 @@
       {
         "name": "AI生图",
         "desc": "基于千问IMAGE模型的AI生图和图像编辑应用",
-        "icon": "/assets/icon/AI生图.png",
+        "icon": "🤖",
         "url": "https://aitu.sakaay.com"
       },
       {
-        "name": "E编程",
+        "name": "AI编程",
         "desc": "基于阿里云千问大模型的AI辅助青少年编程的工具",
-        "icon": "/assets/icon/E编程.png",
+        "icon": "🤖",
         "url": "https://e.sakaay.com"
       },
       {
         "name": "AI知识库",
         "desc": "谷歌翻译",
-        "icon": "/assets/icon/Gmail翻译.png",
+        "icon": "🤖",
         "url": "https://xa.sakaay.com/welcome"
       },
       {
         "name": "Zfile网盘",
         "desc": "基于千问大模型的AI知识库",
-        "icon": "/assets/icon/AI知识库.png",
+        "icon": "🤖",
         "url": "https://zf.sakaay.com"
       }
     ]
