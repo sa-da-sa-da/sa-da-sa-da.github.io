@@ -5,26 +5,115 @@
       {
         "name": "AI生图",
         "desc": "基于千问IMAGE模型的AI生图和图像编辑应用",
-        "icon": "🤖",
+        "icon": "🎨",
         "url": "https://aitu.sakaay.com"
       },
       {
         "name": "AI编程",
         "desc": "基于阿里云千问大模型的AI辅助青少年编程的工具",
-        "icon": "🤖",
+        "icon": "💻",
         "url": "https://e.sakaay.com"
       },
       {
         "name": "AI知识库",
         "desc": "谷歌翻译",
-        "icon": "🤖",
+        "icon": "📚",
         "url": "https://xa.sakaay.com/welcome"
       },
       {
         "name": "Zfile网盘",
         "desc": "基于千问大模型的AI知识库",
-        "icon": "🤖",
+        "icon": "☁️",
         "url": "https://zf.sakaay.com"
+      }
+    ]
+  },
+  {
+    "title": "工作事务",
+    "items": [
+      {
+        "name": "郑州教育信息网",
+        "desc": "郑州教育信息网",
+        "icon": "🏫",
+        "url": "https://www.zzedu.net.cn/"
+      },
+      {
+        "name": "河南专技在线",
+        "desc": "河南专技在线",
+        "icon": "📖",
+        "url": "https://hnzj.ghlearning.com/"
+      },
+      {
+        "name": "豫教通",
+        "desc": "豫教通",
+        "icon": "📘",
+        "url": "https://basic.henan.smartedu.cn/"
+      },
+      {
+        "name": "国家智慧公共服务平台",
+        "desc": "国家智慧公共服务平台",
+        "icon": "🌐",
+        "url": "https://www.smartedu.cn/"
+      },
+      {
+        "name": "继续教育",
+        "desc": "继续教育",
+        "icon": "🎓",
+        "url": "https://www.hnzjgl.gov.cn/"
+      },
+      {
+        "name": "河南教师教育网",
+        "desc": "河南教师教育网",
+        "icon": "👩‍🏫",
+        "url": "https://www.hateacher.cn/"
+      },
+      {
+        "name": "学科网",
+        "desc": "学科网",
+        "icon": "📑",
+        "url": "https://www.zxxk.com/"
+      },
+      {
+        "name": "智学网",
+        "desc": "智学网",
+        "icon": "📊",
+        "url": "https://www.zhixue.com/login.html"
+      },
+      {
+        "name": "正确云",
+        "desc": "正确云",
+        "icon": "✅",
+        "url": "https://www.zhixue.com/login.html"
+      },
+      {
+        "name": "全国教师管理系统",
+        "desc": "全国教师管理系统",
+        "icon": "👨‍💼",
+        "url": "http://jiaoshi.jyt.henan.gov.cn/全国教师管理"
+      },
+      {
+        "name": "郑州市教育科研服务平台",
+        "desc": "郑州市教育科研服务平台",
+        "icon": "🔬",
+        "url": "https://www.zzedu.net.cn/zzjyky/"
+      },
+      {
+        "name": "百度文库（内网）",
+        "desc": "百度文库（内网）",
+        "icon": "📄",
+        "url": "https://wenku.baidu.com/"
+      },
+      {
+        "name": "知网（内网）",
+        "desc": "知网（内网）",
+        "icon": "📰",
+        "url": "https://cfed.cnki.net/"
+      },
+      {
+        "name": "u空间(在家办公)",
+        "desc": "u空间(在家办公)",
+        "icon": "🏠",
+        "url": "https://uws.ruijie.com.cn/#/Download"
       }
     ]
   },
