@@ -166,7 +166,7 @@ const teekBlogCommonConfig: TeekConfig = {
 export const teekBlogConfig: TeekConfig = {
   ...teekBlogCommonConfig,
   banner: {
-    name: "🎉 One",
+    name: "🎉 sakaay",
     description: "故事由我书写，旅程由你见证，传奇由她聆听 —— 来自 Young Kbt",
     bgStyle: "partImg",
   },
@@ -176,7 +176,7 @@ export const teekBlogConfig: TeekConfig = {
 export const teekBlogParkConfig: TeekConfig = {
   ...teekBlogCommonConfig,
   banner: {
-    name: "🎉 One",
+    name: "🎉 sakaay",
     bgStyle: "partImg",
     imgSrc: ["/blog/bg1.webp", "/blog/bg2.webp", "/blog/bg3.webp"],
     description: [
@@ -195,7 +195,7 @@ export const teekBlogFullConfig: TeekConfig = {
     coverImgMode: "full",
   },
   banner: {
-    name: "🎉 One",
+    name: "🎉 sakaay",
     bgStyle: "fullImg",
     imgSrc: ["/blog/bg1.webp", "/blog/bg2.webp", "/blog/bg3.webp"],
     description: [
