@@ -62,6 +62,7 @@ import PhotoCard from './components/CoupleAlbum/PhotoCard.vue'
 import ThreeDModelViewer from './components/ThreeDModelViewer.vue'
 import MultipleChoiceQuestion from './components/MultipleChoiceQuestion.vue'
 import FillInTheBlank from './components/FillInTheBlank.vue'
+import PythonEditor from './components/PythonEditor.vue'
 
 // 引入复制事件（复制后弹窗提示）
 import { useCopyEvent } from "./composables/useCopyEvent.ts";
@@ -95,6 +96,7 @@ export default {
     app.component('ThreeDModelViewer', ThreeDModelViewer);
     app.component('MultipleChoiceQuestion', MultipleChoiceQuestion);
     app.component('FillInTheBlank', FillInTheBlank);
+    app.component('PythonEditor', PythonEditor);
 
     app.component("emoji-Shiroki", EmojiShiroki); // ◀️ 注入 Emoji 表情库组件布局
     app.component("NavLayout", NavLayout); // 注册导航布局组件

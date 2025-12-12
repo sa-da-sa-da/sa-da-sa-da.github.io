@@ -1,0 +1,40 @@
+{
+  "hello-world": {
+    "id": "hello-world",
+    "title": "Hello World示例",
+    "description": "最简单的Python程序示例",
+    "code": "# 打印Hello World\nprint(\"Hello, World!\")\n\n# 打印当前Python版本\nimport sys\nprint(f\"Python版本: {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}\")"
+  },
+  "basic-calculation": {
+    "id": "basic-calculation",
+    "title": "基础数学计算",
+    "description": "演示基本的数学运算和格式化输出",
+    "code": "# 基础数学计算示例\n\n# 定义两个变量\na = 10\nb = 3\n\n# 执行各种数学运算\nprint(f\"{a} + {b} = {a + b}\")\nprint(f\"{a} - {b} = {a - b}\")\nprint(f\"{a} * {b} = {a * b}\")\nprint(f\"{a} / {b} = {a / b}\")  # 除法，结果为浮点数\nprint(f\"{a} // {b} = {a // b}\")  # 整除，结果为整数\nprint(f\"{a} % {b} = {a % b}\")  # 取模，求余数\nprint(f\"{a} ** {b} = {a ** b}\")  # 幂运算"
+  },
+  "conditional-statements": {
+    "id": "conditional-statements",
+    "title": "条件判断练习",
+    "description": "演示if-elif-else条件语句的使用",
+    "code": "# 条件判断练习\n\n# 获取用户输入（将从预设输入中获取）\nnumber = int(input(\"请输入一个整数: \"))\n\n# 使用条件语句判断数字的性质\nif number > 0:\n    print(f\"{number} 是正数\")\nelif number < 0:\n    print(f\"{number} 是负数\")\nelse:\n    print(f\"{number} 是零\")\n\n# 判断是否为偶数或奇数\nif number % 2 == 0:\n    print(f\"{number} 是偶数\")\nelse:\n    print(f\"{number} 是奇数\")",
+    "inputs": ["42"]
+  },
+  "loop-examples": {
+    "id": "loop-examples",
+    "title": "循环结构练习",
+    "description": "演示for和while循环的使用以及列表操作",
+    "code": "# 循环结构练习\n\n# 使用for循环遍历列表\nfruits = ['苹果', '香蕉', '橙子', '葡萄']\nprint(\"水果列表:\")\nfor i, fruit in enumerate(fruits, 1):\n    print(f\"{i}. {fruit}\")\n\n# 使用while循环计算1到10的和\nsum_numbers = 0\ncount = 1\nprint(\"\\n计算1到10的和:\")\nwhile count <= 10:\n    sum_numbers += count\n    print(f\"当前加: {count}, 累计: {sum_numbers}\")\n    count += 1\n\nprint(f\"\\n1到10的总和是: {sum_numbers}\")"
+  },
+  "function-example": {
+    "id": "function-example",
+    "title": "函数定义与调用",
+    "description": "演示如何定义函数、传递参数和返回值",
+    "code": "# 函数定义与调用示例\n\n# 定义一个计算阶乘的函数\ndef factorial(n):\n    \"\"\"\n    计算并返回n的阶乘\n    n! = n * (n-1) * (n-2) * ... * 1\n    \"\"\"\n    if n <= 1:\n        return 1\n    else:\n        return n * factorial(n-1)\n\n# 定义一个计算斐波那契数列的函数\ndef fibonacci(n):\n    \"\"\"\n    计算斐波那契数列的第n个数\n    斐波那契数列: 1, 1, 2, 3, 5, 8, 13, ...\n    \"\"\"\n    if n <= 0:\n        return 0\n    elif n == 1:\n        return 1\n    else:\n        return fibonacci(n-1) + fibonacci(n-2)\n\n# 调用函数并显示结果\nnum = int(input(\"请输入一个正整数: \"))\nprint(f\"{num}的阶乘是: {factorial(num)}\")\nprint(f\"斐波那契数列第{num}个数是: {fibonacci(num)}\")",
+    "inputs": ["6"]
+  },
+  "list-operations": {
+    "id": "list-operations",
+    "title": "列表操作练习",
+    "description": "演示Python列表的常见操作和方法",
+    "code": "# 列表操作练习\n\n# 创建一个列表\nnumbers = [3, 1, 4, 1, 5, 9, 2, 6, 5]\nprint(f\"原始列表: {numbers}\")\n\n# 排序操作\nsorted_numbers = sorted(numbers)\nprint(f\"排序后的列表: {sorted_numbers}\")\n\n# 反转列表\nnumbers.reverse()\nprint(f\"反转后的列表: {numbers}\")\n\n# 列表操作方法\nnumbers.append(3)\nprint(f\"添加元素3后: {numbers}\")\n\nnumbers.remove(1)  # 移除第一个出现的1\nprint(f\"移除第一个1后: {numbers}\")\n\n# 列表推导式\nsquares = [x ** 2 for x in sorted_numbers]\nprint(f\"平方数列表: {squares}\")\n\n# 筛选偶数\nevens = [x for x in numbers if x % 2 == 0]\nprint(f\"偶数列表: {evens}\")"
+  }
+}
