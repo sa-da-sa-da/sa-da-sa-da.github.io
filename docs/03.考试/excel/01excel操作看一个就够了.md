@@ -1,5 +1,5 @@
 ---
-title: excel操作看一个就够了
+title: 【视频】excel操作看一个就够了
 date: 2025-12-06 07:10:00
 permalink: /exammination/excel/01excelwhattodo
 categories:

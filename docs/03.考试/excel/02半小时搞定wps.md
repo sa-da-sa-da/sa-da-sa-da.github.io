@@ -1,5 +1,5 @@
 ---
-title: 半小时搞定学考中的WPS
+title: 【视频】半小时搞定学考中的WPS
 date: 2025-12-06 07:06:00
 permalink: /exammination/excel/02halfhourwps
 categories:

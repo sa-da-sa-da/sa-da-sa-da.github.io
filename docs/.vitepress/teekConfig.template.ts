@@ -255,7 +255,7 @@ export const teekConfig = defineTeekConfig({
     readingTime: true, // 是否开启文章页的阅读时长统计
     // 访问量、访客数统计配置
     statistics: {
-      provider: "busuanzi", // 网站流量统计提供商
+      provider: "umami", // 网站流量统计提供商
       siteView: true, // 是否开启首页的访问量和排名统计
       pageView: true, // 是否开启文章页的浏览量统计
       tryRequest: false, // 如果请求网站流量统计接口失败，是否重试
@@ -273,7 +273,7 @@ export const teekConfig = defineTeekConfig({
       },
     ],
     // 自定义额外信息
-    appendInfo: [{ key: "index", label: "站点作者", value: "Teeker" }],
+    appendInfo: [{ key: "index", label: "站点作者", value: "sakaay" }],
   },
   // 社交信息配置，通常为一个社交图标，点击后将会跳转到社交软件的个人主页
   social: [
@@ -322,7 +322,7 @@ export const teekConfig = defineTeekConfig({
     copyright: {
       show: true, // 是否显示博客版权
       createYear: 2021, // 创建年份
-      suffix: "天客 Blog", // 后缀
+      suffix: "sakaay", // 后缀
     },
     // ICP 备案信息配置
     icpRecord: {

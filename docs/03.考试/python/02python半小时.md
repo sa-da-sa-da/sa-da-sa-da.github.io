@@ -1,5 +1,5 @@
 ---
-title: 半小时搞定学考中的Python程序设计
+title: 【视频】半小时搞定学考中的Python程序设计
 date: 2025-12-06 22:29:00
 permalink: /exammination/python/02halfhourpython
 categories:

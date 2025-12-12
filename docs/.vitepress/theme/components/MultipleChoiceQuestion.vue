@@ -33,7 +33,7 @@
       </div>
       
       <!-- 选项列表 -->
-      <div class="options-list">
+      <div class="options-list" :class="optionsLayoutClass">
         <div 
           v-for="(option, index) in options" 
           :key="index" 
@@ -169,6 +169,31 @@ const isCorrect = computed(() => {
          props.correctOptions.every(index => selectedOptions.value.includes(index));
 });
 
+// 计算属性：根据选项内容长度决定布局方式
+const optionsLayoutClass = computed(() => {
+  // 计算所有选项内容的总长度
+  const totalLength = props.options.reduce((sum, option) => {
+    // 去除HTML标签，只计算纯文本长度
+    const text = option.replace(/<[^>]+>/g, '');
+    return sum + text.length;
+  }, 0);
+  
+  // 计算平均选项长度
+  const averageLength = totalLength / props.options.length;
+  
+  // 根据平均长度决定布局
+  if (averageLength > 50) {
+    // 长内容：竖排（每个选项占一行）
+    return 'vertical-layout';
+  } else if (averageLength > 20) {
+    // 中等长度：两行布局
+    return 'two-row-layout';
+  } else {
+    // 短内容：智能网格布局（根据容器宽度自动调整）
+    return 'grid-layout';
+  }
+});
+
 // 获取选项标签（A, B, C, D...）
 const getOptionLabel = (index: number): string => {
   return String.fromCharCode(65 + index);
@@ -290,21 +315,42 @@ const resetQuestion = () => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* 选项列表 */
+/* 选项列表基础样式 */
 .options-list {
   margin-bottom: 20px;
+  gap: 12px;
+}
+
+/* 智能网格布局 - 短内容时使用 */
+.options-list.grid-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+}
+
+/* 两行布局 - 中等长度内容时使用 */
+.options-list.two-row-layout {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* 竖排布局 - 长内容时使用 */
+.options-list.vertical-layout {
+  display: flex;
+  flex-direction: column;
 }
 
 .option-item {
   display: flex;
   align-items: flex-start;
   padding: 12px 15px;
-  margin-bottom: 10px;
   border: 1px solid var(--c-border);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
   background-color: var(--c-bg);
+  /* 允许选项内容自然换行 */
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .option-item:hover {
