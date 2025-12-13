@@ -9,7 +9,7 @@ const pageConfig = computed(() => {
   const config = theme.value.startPage || {}
   return {
     title: config.title || '',
-    bgImage: 'https://ossaiimages.sakaay.com/ai-image/sakaay/bg-01.mp4' // 直接使用视频背景URL
+    bgImage: 'https://img.sakaay.com/d/img/sakaay/bg-01.mp4' // 直接使用视频背景URL
   }
 })
 

@@ -2,6 +2,7 @@
 title: 喂饭级教程！ComfyUI本地部署
 date: 2025-12-14 01:24:35
 permalink: /steam/AI/ComfyUI
+titleTag: 推荐
 categories:
   - AI系列
 tags:

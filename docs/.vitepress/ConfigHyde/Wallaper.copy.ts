@@ -1,7 +1,7 @@
 // 首页壁纸
 
 export const Wallpaper = [
-  "https://ossaiimages.sakaay.com/ai-image/sakaay/bg-05.mp4",
+  "https://img.sakaay.com/d/img/sakaay/bg-05.mp4",
  "https://api.dujin.org/bing/1920.php",
   "http://cdn-hsyq-static.shanhutech.cn/bizhi/staticwp/202503/58027a08072962c94c5b3cc2a5a1e1af--1459684851.jpg",
   "http://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201904/6d41dac385290719603572cf2f4121c9.jpg",

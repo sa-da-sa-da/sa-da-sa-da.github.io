@@ -160,7 +160,7 @@ onUnmounted(() => {
 
 .custom-bg {
   /* 背景图 */
-  background-image: url('https://ossaiimages.sakaay.com/ai-image/sakaay/bg-05.mp4');
+  background-image: url('https://img.sakaay.com/d/img/sakaay/bg-05.mp4');
 }
 
 .site-title {

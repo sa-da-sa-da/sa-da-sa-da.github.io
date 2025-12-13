@@ -2,6 +2,7 @@
 title: 喂饭级教程！解决生图新体验：ComfyUI本地部署Zimage模型
 date: 2025-12-14 01:24:35
 permalink: /steam/AI/ComfyUI-Zimage
+titleTag: 推荐
 categories:
   - AI系列
   - Zimage模型
