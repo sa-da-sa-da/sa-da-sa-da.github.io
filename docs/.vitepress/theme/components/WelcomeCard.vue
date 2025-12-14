@@ -131,12 +131,11 @@ const fetchIPData = async (): Promise<void> => {
       "https://api.nsmao.net/api/ipip/query?key=RyIp7eZqhTp2EVxayIR17m7w7O";  //替换实际自己的API_KEY
 
     const response = await fetch(API_URL);
-
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-
     const result = await response.json();
+    //console.log('原始IP API响应数据:', result); // 打印原始数据以便调试
 
     if (result.code === 200 && result.data) {
       ipData.value = result.data;
@@ -146,7 +145,7 @@ const fetchIPData = async (): Promise<void> => {
       throw new Error(result.msg || "IP数据获取失败");
     }
   } catch (error) {
-    console.error("获取IP数据失败:", error);
+   // console.error("获取IP数据失败:", error);
     ipData.value = null;
   }
 };
@@ -154,10 +153,13 @@ const fetchIPData = async (): Promise<void> => {
 // 获取天气数据
 const fetchWeatherData = async (): Promise<void> => {
   try {
-    const API_URL =""
-      //修改点2:
-      //"https://api.nsmao.net/api/weather/query?key=RyIp7eZqhTp2EVxayIR17m7w7O&adcode=4101";  //替换实际自己的API_KEY
-
+    // 根据IP数据中的城市信息获取天气，如果没有则使用默认城市
+    const city = ipData.value?.city || ipData.value?.district || "郑州";
+    
+    // 使用v1.nsuuu.com的天气API
+    const API_KEY = "b3aee99a0620305b";
+    const API_URL = `https://v1.nsuuu.com/api/weatherDetails?key=${API_KEY}&city=${encodeURIComponent(city)}`;
+    
     const response = await fetch(API_URL);
 
     if (!response.ok) {
@@ -165,11 +167,32 @@ const fetchWeatherData = async (): Promise<void> => {
     }
 
     const result = await response.json();
+    //console.log('原始天气API响应数据:', result); // 打印原始数据以便调试
 
+    // 检查API响应格式并适配到我们的数据结构
     if (result.code === 200 && result.data) {
-      weatherData.value = result.data;
+      // 适配API返回数据到WeatherData接口
+      const apiData = result.data;
+      // 获取当前天气数据（使用real_time_weather数组中的第一个元素）
+      const currentWeather = apiData.data && apiData.data.length > 0 && 
+                            apiData.data[0].real_time_weather && 
+                            apiData.data[0].real_time_weather.length > 0 
+                            ? apiData.data[0].real_time_weather[0] 
+                            : null;
+      
+      weatherData.value = {
+        province: ipData.value?.prov || "",
+        city: apiData.city || ipData.value?.city || "",
+        district: ipData.value?.district || "",
+        update_time: new Date().toLocaleString(), // 使用当前时间作为更新时间
+        weather: currentWeather?.weather || "未知",
+        temperature: Number(currentWeather?.temperature || 0),
+        wind_direction: currentWeather?.wind_dir || "未知",
+        wind_power: "未知", // API响应中没有直接提供风力等级
+        humidity: Number(currentWeather?.humidity?.replace('%', '') || "0")
+      };
     } else {
-      throw new Error(result.msg || "天气数据获取失败");
+      throw new Error(result.message || result.msg || "天气数据获取失败");
     }
   } catch (error) {
     console.error("获取天气数据失败:", error);
@@ -178,8 +201,10 @@ const fetchWeatherData = async (): Promise<void> => {
 };
 
 // 组件挂载时获取IP和天气数据
-onMounted(() => {
-  fetchIPData();
+onMounted(async () => {
+  // 先获取IP数据
+  await fetchIPData();
+  // 然后根据IP数据获取对应的天气数据
   fetchWeatherData();
 });
 
