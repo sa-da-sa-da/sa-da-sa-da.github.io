@@ -8,6 +8,8 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+pictures/
+pic/
 .DS_Store
 dist
 dist-ssr
@@ -28,7 +30,6 @@ coverage
 *.sln
 *.sw?
 
-
 /**/.vitepress/cache/*
 /**/.vitepress/dist/*
 docs/填空题组件示例.md
@@ -37,5 +38,8 @@ docs/01.指南
 docs/02.创客/编程系列/Python编程题目示例.md
 docs/02.创客/编程系列/Python在线编辑器示例.md
 docs/02.创客/编程系列/Python在线编辑器JSON数据示例.md
-/pictures/
+pictures/sakaay/
+pictures/img-functions/
+
+
 

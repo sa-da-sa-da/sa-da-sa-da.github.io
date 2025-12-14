@@ -1,5 +1,0 @@
-branch:
-  - buttons:
-      - name: 构建＆部署
-        description: 自定义按钮触发构建＆部署
-        event: web_trigger
