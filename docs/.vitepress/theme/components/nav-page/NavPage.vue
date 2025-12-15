@@ -27,7 +27,7 @@ const wrapperStyle = computed(() => {
 const timeStr = ref('00:00:00')
 const dateStr = ref('')
 const searchText = ref('')
-const currentEngineKey = ref('google') 
+const currentEngineKey = ref('bing') 
 const isMenuOpen = ref(false)
 
 // --- 搜索引擎配置 ---

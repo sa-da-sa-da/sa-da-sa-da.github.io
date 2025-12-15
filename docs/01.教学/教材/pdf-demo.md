@@ -1,7 +1,7 @@
 ---
 title: PDF 组件示例
 date: 2025-11-18 16:00:00
-permalink: /exammination/books/pdf-demo
+permalink: /teach/6zpfj
 categories:
   - 信息技术教材系列
 tags:
