@@ -8,13 +8,13 @@ export const Nav = [
     { text: "📚编程", link: "/program" },
     //教学
     {
-      text: '📚教学',
+      text: '📚学习',
       items: [
         {
           text: `
             <div style="display: flex; align-items: center; gap: 4px;">
               <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
-              <span>教学</span>
+              <span>学习</span>
             </div>
             `,
           link: '/teach/teach-index/',
