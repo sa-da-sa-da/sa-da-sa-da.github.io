@@ -356,7 +356,7 @@ export default defineConfig({
   }),
 
   extends: teekConfig,
-  title: "sakaay-飒龘 当以读书通世事", //左上角网站名称
+  title: "当以读书通世事", //左上角网站名称
   description: description,
 
   cleanUrls: true,  //设置为true就是让链接后不默认添加.html
