@@ -189,13 +189,13 @@
     ]
   },
   {
-    "title": "AI 人工智能",
+    "title": "常用工具",
     "items": [
       {
-        "name": "ChatGPT",
-        "desc": "OpenAI",
-        "icon": "/assets/icon/ChatGPT.png",
-        "url": "https://chat.openai.com"
+        "name": "CleverPDF",
+        "desc": "PDF 转换工具",
+        "icon": "https://www.cleverpdf.com/cn/favicon.ico",
+        "url": "https://www.cleverpdf.com/cn"
       },
       {
         "name": "Gemini",
