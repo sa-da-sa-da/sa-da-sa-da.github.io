@@ -198,10 +198,10 @@
         "url": "https://www.cleverpdf.com/cn"
       },
       {
-        "name": "Gemini",
-        "desc": "Google AI",
-        "icon": "/assets/icon/Gemini.png",
-        "url": "https://gemini.google.com"
+        "name": "BookStack",
+        "desc": "书架",
+        "icon": "🔧",
+        "url": "https://bookstack.cn"
       },
       {
         "name": "DeepSeek",
