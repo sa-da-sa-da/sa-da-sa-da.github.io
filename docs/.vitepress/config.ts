@@ -10,8 +10,6 @@ import { CommentData } from "./ConfigHyde/Comment"; //导入评论配置
 import { Nav } from "./ConfigHyde/Nav"; // 导入Nav模块
 import { SocialLinks } from "./ConfigHyde/SocialLinks"; //导入社交链接配置
 
-
-
 import {
   groupIconMdPlugin,
   groupIconVitePlugin,
@@ -25,11 +23,10 @@ import { HeadData } from "./ConfigHyde/Head"; // 导入 HeadData 导入和类型
 import { createRewrites } from "vitepress-theme-teek/config";
 
 import AutoFrontmatter, { FileInfo } from "vitepress-plugin-auto-frontmatter";
-import { useTransformByRules, type TransformRule } from "./theme/composables/useTransform";
-
-
-
-
+import {
+  useTransformByRules,
+  type TransformRule,
+} from "./theme/composables/useTransform";
 
 const description = [
   "欢迎来到 sakaay-飒龘 当以读书通世事",
@@ -38,7 +35,6 @@ const description = [
 ].toString();
 const CoverImgList = Cover; // 获取封面列表
 // const CoverBgList = Wallpaper; // 获取壁纸列表
-
 
 const teekConfig = defineTeekConfig({
   // // 首页顶部按 F11 开启壁纸模式
@@ -52,10 +48,9 @@ const teekConfig = defineTeekConfig({
   loading: false, // 启用 Loading 动画，为 false 则关闭 Loading 动画
   // loading: "正在加载中...", // 修改 Loading 文案
 
-
   themeEnhance: {
     themeColor: {
-      defaultColorName: "ep-blue",   //默认主题色为蓝色
+      defaultColorName: "ep-blue", //默认主题色为蓝色
     },
   },
 
@@ -66,7 +61,7 @@ const teekConfig = defineTeekConfig({
   // author: { name: "Teeker", link: "https://github.com/Kele-Bingtang" },
   blogger: {
     // 博主信息，显示在首页侧边栏
-    avatar: "/img/xyy.webp",  //侧边栏个人头像
+    avatar: "/img/xyy.webp", //侧边栏个人头像
     shape: "circle-rotate", // 头像风格：square 为方形头像，circle 为圆形头像，circle-rotate 可支持鼠标悬停旋转
     name: "sakaay|飒龘", // 侧边栏个人昵称
     slogan: "当以读书通世事", // 侧边栏个人座右铭
@@ -82,7 +77,6 @@ const teekConfig = defineTeekConfig({
     },
   },
 
-
   // 分类卡片
   category: {
     enabled: true, // 是否启用分类卡片
@@ -97,7 +91,6 @@ const teekConfig = defineTeekConfig({
     autoPage: false, // 是否自动翻页
     pageSpeed: 4000, // 翻页间隔时间，单位：毫秒。autoPage 为 true 时生效
   },
-
 
   // 精选文章卡片
   topArticle: {
@@ -134,7 +127,6 @@ const teekConfig = defineTeekConfig({
   //   appendInfo: [{ key: "index", label: "序号", value: "One" }],
   // },
 
-
   // 布蒜子统计分析
   // docAnalysis: {
   //   createTime: "2025-02-26",
@@ -152,12 +144,14 @@ const teekConfig = defineTeekConfig({
   // 风险链接提示页
   riskLink: {
     enabled: true, //是否启用风险链接提示功能
-    whitelist: ["https://*.sakaay.com/", "https://time.sakaay.com/", /https:\/\/github.com/, /https:\/\/giee.com/], // 白名单，匹配到的链接不提示风险
+    whitelist: [
+      "https://*.sakaay.com/",
+      "https://time.sakaay.com/",
+      /https:\/\/github.com/,
+      /https:\/\/giee.com/,
+    ], // 白名单，匹配到的链接不提示风险
     blacklist: [], // 黑名单，匹配到的链接提示风险
   },
-
-
-
 
   // articleBottomTip: () => {
   //   return {
@@ -176,13 +170,13 @@ const teekConfig = defineTeekConfig({
   backTop: {
     enabled: true, // 是否启动回到顶部功能
     content: "icon", // 回到顶部按钮的显示内容，可选配置 progress | icon
-    done: TkMessage => TkMessage.success("返回顶部成功"), // 回到顶部后的回调
+    done: (TkMessage) => TkMessage.success("返回顶部成功"), // 回到顶部后的回调
   },
 
   //右下角滚动滚动到评论区配置。
   toComment: {
     enabled: true, // 是否启动滚动到评论区功能
-    done: TkMessage => TkMessage.success("已抵达评论区"), // 滚动到评论区后的回调
+    done: (TkMessage) => TkMessage.success("已抵达评论区"), // 滚动到评论区后的回调
   },
 
   // 新版代码块配置
@@ -195,7 +189,7 @@ const teekConfig = defineTeekConfig({
   },
 
   post: {
-    showCapture: false,  //关闭自动摘要
+    showCapture: false, //关闭自动摘要
   },
 
   articleShare: { enabled: true },
@@ -220,7 +214,6 @@ const teekConfig = defineTeekConfig({
     //   className: "h1-bottom-info",
     // },
   },
-
 
   // 超过半年的文章自动提示文章内容可能已过时
   articleTopTip: (frontmatter) => {
@@ -248,7 +241,6 @@ const teekConfig = defineTeekConfig({
     // options: CommentData,
   },
 
-
   // // 公告
   // notice: {
   //   enabled: true, // 是否启用公告功能
@@ -262,12 +254,9 @@ const teekConfig = defineTeekConfig({
   //   position: "center", // 公告弹框出现位置
   // },
 
-
-
   vitePlugins: {
     permalink: true,
     sidebar: true,
-
 
     sidebarOption: {
       initItems: false, //这条命令注释后，才会让文档和目录的样式保持一致
@@ -286,7 +275,7 @@ const teekConfig = defineTeekConfig({
     // 自动格式formatter插件 添加文章封面图
     autoFrontmatterOption: {
       // exclude: { title: true, date: true }, // 排除自动生成字段
-      transform: frontmatter => {
+      transform: (frontmatter) => {
         // 如果文件本身存在了 coverImg，则不生成
         if (frontmatter.coverImg) return;
 
@@ -296,7 +285,9 @@ const teekConfig = defineTeekConfig({
 
         const transformResult = { ...frontmatter, coverImg };
 
-        return Object.keys(transformResult).length ? transformResult : undefined;
+        return Object.keys(transformResult).length
+          ? transformResult
+          : undefined;
       },
     },
   },
@@ -307,7 +298,8 @@ const teekConfig = defineTeekConfig({
       md.use(groupIconMdPlugin); // 代码组图标插件
     },
     demo: {
-      githubUrl: "https://github.com/Kele-Bingtang/vitepress-theme-teek/blob/master/docs",
+      githubUrl:
+        "https://github.com/Kele-Bingtang/vitepress-theme-teek/blob/master/docs",
     },
   },
   siteAnalytics: [
@@ -324,7 +316,6 @@ const teekConfig = defineTeekConfig({
       },
     },
   ],
-
 
   // 赞赏在文章下方
   appreciation: {
@@ -352,14 +343,14 @@ const teekConfig = defineTeekConfig({
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   rewrites: createRewrites({
-    srcDir: 'docs',
+    srcDir: "docs",
   }),
 
   extends: teekConfig,
   title: "当以读书通世事", //左上角网站名称
   description: description,
 
-  cleanUrls: true,  //设置为true就是让链接后不默认添加.html
+  cleanUrls: true, //设置为true就是让链接后不默认添加.html
 
   lastUpdated: true,
   lang: "zh-CN",
@@ -396,17 +387,17 @@ export default defineConfig({
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     // logo: "/teek-logo-mini.svg",
-    logo: "/favicon.ico",   //网站logo
+    logo: "/favicon.ico", //网站logo
     darkModeSwitchLabel: "主题",
     sidebarMenuLabel: "菜单",
     returnToTopLabel: "返回顶部",
     // lastUpdatedText: "上次更新时间",
     lastUpdated: {
-      text: '最后更新于',
+      text: "最后更新于",
       formatOptions: {
-        dateStyle: 'full',
-        timeStyle: 'medium'
-      }
+        dateStyle: "full",
+        timeStyle: "medium",
+      },
     },
     outline: {
       level: [2, 4],
@@ -417,12 +408,9 @@ export default defineConfig({
       next: "下一页",
     },
 
-    nav: Nav, // 导航栏配置    
+    nav: Nav, // 导航栏配置
     // socialLinks: [{ icon: "github", link: "https://github.com/Kele-Bingtang/vitepress-theme-teek" }],
     socialLinks: SocialLinks, // 社交链接配置
-
-
-
 
     // search: {
     //   provider: "local",
@@ -430,57 +418,56 @@ export default defineConfig({
 
     // algolia搜索
     search: {
-      provider: 'algolia',
+      provider: "algolia",
       options: {
-        appId: '6AC1N60WH4',
-        apiKey: '90f7d1ece3094d290fe42fcaf6cdfd3c',
-        indexName: 'onedayxyy',
+        appId: "6AC1N60WH4",
+        apiKey: "90f7d1ece3094d290fe42fcaf6cdfd3c",
+        indexName: "onedayxyy",
         locales: {
           root: {
-            placeholder: '搜索文档',
+            placeholder: "搜索文档",
             translations: {
               button: {
-                buttonText: '搜索文档',
-                buttonAriaLabel: '搜索文档'
+                buttonText: "搜索文档",
+                buttonAriaLabel: "搜索文档",
               },
               modal: {
                 searchBox: {
-                  resetButtonTitle: '清除查询条件',
-                  resetButtonAriaLabel: '清除查询条件',
-                  cancelButtonText: '取消',
-                  cancelButtonAriaLabel: '取消'
+                  resetButtonTitle: "清除查询条件",
+                  resetButtonAriaLabel: "清除查询条件",
+                  cancelButtonText: "取消",
+                  cancelButtonAriaLabel: "取消",
                 },
                 startScreen: {
-                  recentSearchesTitle: '搜索历史',
-                  noRecentSearchesText: '没有搜索历史',
-                  saveRecentSearchButtonTitle: '保存至搜索历史',
-                  removeRecentSearchButtonTitle: '从搜索历史中移除',
-                  favoriteSearchesTitle: '收藏',
-                  removeFavoriteSearchButtonTitle: '从收藏中移除'
+                  recentSearchesTitle: "搜索历史",
+                  noRecentSearchesText: "没有搜索历史",
+                  saveRecentSearchButtonTitle: "保存至搜索历史",
+                  removeRecentSearchButtonTitle: "从搜索历史中移除",
+                  favoriteSearchesTitle: "收藏",
+                  removeFavoriteSearchButtonTitle: "从收藏中移除",
                 },
                 errorScreen: {
-                  titleText: '无法获取结果',
-                  helpText: '你可能需要检查你的网络连接'
+                  titleText: "无法获取结果",
+                  helpText: "你可能需要检查你的网络连接",
                 },
                 footer: {
-                  selectText: '选择',
-                  navigateText: '切换',
-                  closeText: '关闭',
-                  searchByText: '搜索提供者'
+                  selectText: "选择",
+                  navigateText: "切换",
+                  closeText: "关闭",
+                  searchByText: "搜索提供者",
                 },
                 noResultsScreen: {
-                  noResultsText: '无法找到相关结果',
-                  suggestedQueryText: '你可以尝试查询',
-                  reportMissingResultsText: '你认为该查询应该有结果？',
-                  reportMissingResultsLinkText: '点击反馈'
+                  noResultsText: "无法找到相关结果",
+                  suggestedQueryText: "你可以尝试查询",
+                  reportMissingResultsText: "你认为该查询应该有结果？",
+                  reportMissingResultsLinkText: "点击反馈",
                 },
               },
             },
           },
         },
-      }
+      },
     },
-
 
     editLink: {
       text: "在 GitHub 上编辑此页",
@@ -511,7 +498,6 @@ export default defineConfig({
         recoverTransform: true, // false 只添加不存在的字段
         // 返回一个新的 frontmatter 或只返回 undefined，如果返回 {}，则清空 MD 文件本身存在的 frontmatter
         transform: (frontMatter: Record<string, any>, fileInfo: FileInfo) => {
-
           // 定义需要处理的所有规则（可扩展多个）
           const rules: TransformRule[] = [
             // { folderName: "95.Teek", prefix: "/teek" }, // 添加前缀
@@ -522,19 +508,27 @@ export default defineConfig({
             // { folderName: "01.前端/01.vite/", prefix: "/testa/$uuid5/$uuid1/$uuid10/$uuid99", removeLevel: 99}, // 清空前缀并且添加前缀使用随机数
             { folderName: "01.教学", prefix: "/teach/$uuid5", removeLevel: 99 },
             { folderName: "02.创客", prefix: "/steam/$uuid5", removeLevel: 99 },
-            { folderName: "10.运维", prefix: "/linux/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
-            { folderName: "20.前端", prefix: "/qianduan/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
-            { folderName: "30.编程", prefix: "/code/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
-            { folderName: "35.黑客", prefix: "/hacker/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
-            { folderName: "40.专题", prefix: "/zhuanti/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
+            // { folderName: "10.运维", prefix: "/linux/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
+            // { folderName: "20.前端", prefix: "/qianduan/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
+            // { folderName: "30.编程", prefix: "/code/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
+            //{ folderName: "35.黑客", prefix: "/hacker/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
+            //{ folderName: "40.专题", prefix: "/zhuanti/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
             { folderName: "50.工具", prefix: "/tools/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
             { folderName: "60.生活", prefix: "/life/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
-            { folderName: "70.精神小屋", prefix: "/love/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
+            {
+              folderName: "70.精神小屋",
+              prefix: "/love/$uuid5",
+              removeLevel: 99,
+            }, // 清空前缀并且添加前缀使用随机数
             { folderName: "80.娱乐", prefix: "/yule/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
-            { folderName: "85.兴趣", prefix: "/xingqu/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
+            {
+              folderName: "85.兴趣",
+              prefix: "/xingqu/$uuid5",
+              removeLevel: 99,
+            }, // 清空前缀并且添加前缀使用随机数
             { folderName: "90.关于", prefix: "/about/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
-            { folderName: "100.Teek", prefix: "/teek/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
-            { folderName: "110.hugo-teek", prefix: "/hugo-teek/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
+            // { folderName: "100.Teek", prefix: "/teek/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
+            //{ folderName: "110.hugo-teek", prefix: "/hugo-teek/$uuid5", removeLevel: 99 }, // 清空前缀并且添加前缀使用随机数
             // { folderName: "105.博客搭建", prefix: "/blog/$uuid5", removeLevel: 99}, // 清空前缀并且添加前缀使用随机数
             // { folderName: "40.专题/10.博客搭建/45.静态站点构建器", prefix: "/zhuanti/$uuid5", removeLevel: 99}, // 清空前缀并且添加前缀使用随机数
             // { folderName: "40.专题/10.博客搭建/45.静态站点构建器", prefix: "/zhuanti", clear: true }, // 清空前缀并且添加前缀使用随机数
@@ -553,17 +547,14 @@ export default defineConfig({
                           : undefined;*/
         },
       }),
-
     ],
-
   },
 
   // GitHub Pages基础路径配置
-  base: '/',
-  
+  base: "/",
+
   transformHtml: (code, id, context) => {
     if (context.page !== "404.md") return code;
     return code.replace("404 | ", "");
   },
-
 });
