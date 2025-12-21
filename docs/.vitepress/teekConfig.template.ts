@@ -417,7 +417,7 @@ export const teekConfig = defineTeekConfig({
   },
   // 评论配置，目前内置 Giscus、Twikoo、Waline、Artalk 四种评论插件
   comment: {
-    provider: "giscus", // 评论区提供者
+    provider: "Twikoo", // 评论区提供者
     // 评论区配置项，根据 provider 不同而不同，具体看对应官网的使用介绍
     options: {
       // twikoo 配置，官网：https://twikoo.js.org/

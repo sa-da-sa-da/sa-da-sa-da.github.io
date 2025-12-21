@@ -237,8 +237,10 @@ const teekConfig = defineTeekConfig({
   //   options: CommentData,
   // },
   comment: {
-    provider: "render",
-    // options: CommentData,
+    provider: "Twikoo",
+    options: {
+      envId: "https://twikoo-zeabur-production-0dfc.up.railway.app/",
+    },
   },
 
   // // 公告
@@ -498,6 +500,11 @@ export default defineConfig({
         recoverTransform: true, // false 只添加不存在的字段
         // 返回一个新的 frontmatter 或只返回 undefined，如果返回 {}，则清空 MD 文件本身存在的 frontmatter
         transform: (frontMatter: Record<string, any>, fileInfo: FileInfo) => {
+          // 如果frontmatter已经包含permalink，则跳过处理，保留手动设置的permalink
+          if (frontMatter.permalink) {
+            return;
+          }
+          
           // 定义需要处理的所有规则（可扩展多个）
           const rules: TransformRule[] = [
             // { folderName: "95.Teek", prefix: "/teek" }, // 添加前缀
