@@ -206,9 +206,12 @@ export const teekBlogFullConfig: TeekConfig = {
     descStyle: "types",
   },
   comment: {
-    provider: "Twikoo",
+    provider: "giscus",
     options: {
-      envId: "https://twikoo-zeabur-production-0dfc.up.railway.app/",
+      repo: "Kele-Bingtang/vitepress-theme-teek",
+      repoId: "R_kgDONpVfBA",
+      category: "Announcements",
+      categoryId: "DIC_kwDONpVfBM4Cm3v9",
     },
   },
 };
