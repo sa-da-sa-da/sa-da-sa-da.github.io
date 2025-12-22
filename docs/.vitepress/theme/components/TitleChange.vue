@@ -40,3 +40,7 @@ onBeforeUnmount(() => {
     clearTimeout(titleTimer.value)
 })
 </script>
+
+<template>
+    <!-- 这个组件没有可见内容，仅用于功能实现 -->
+</template>

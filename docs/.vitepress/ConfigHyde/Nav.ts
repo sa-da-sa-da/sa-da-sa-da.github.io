@@ -37,6 +37,15 @@ export const Nav = [
             `,
         link: "/steam/steam-index",
       },
+      {
+        text: `
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <img src="/img/nav/linux.svg" alt="" style="width: 16px; height: 16px;">
+              <span>图说网络</span>
+            </div>
+            `,
+        link: "/network/network-index",
+      },
     ],
   },
   //创客
@@ -313,6 +322,21 @@ export const Nav = [
                 </div>
                 `,
             link: "/xingqu/reading",
+          },
+        ],
+      },
+      // 文创
+      {
+        text: "文创",
+        items: [
+          {
+            text: `
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <img src="/img/nav/相册.svg" alt="" style="width: 16px; height: 16px;">
+                  <span>校园文创产品</span>
+                </div>
+                `,
+            link: "/culture",
           },
         ],
       },

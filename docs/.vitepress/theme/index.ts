@@ -7,6 +7,9 @@ import { useData } from "vitepress";
 // import MNavLinks from "./components/MNavLinks.vue"; // 引入导航组件
 import confetti from "./components/Confetti.vue"; //导入五彩纸屑组件
 // import NavIcon from "./components/NavIcon.vue"; //导入导航栏图标
+// 导入产品展示组件
+import ProductGrid from "./components/ProductGrid.vue";
+import ProductDetail from "./components/ProductDetail.vue";
 
 import NavLayout from './layouts/NavLayout.vue'; // 引入导航布局组件
 // 导入导航页相关组件
@@ -104,6 +107,10 @@ export default {
     // 注册导航页组件
     app.component('NavPage', NavPage);
     app.component('NavGrid', NavGrid);
+    
+    // 注册产品展示组件
+    app.component('ProductGrid', ProductGrid);
+    app.component('ProductDetail', ProductDetail);
 
   
 

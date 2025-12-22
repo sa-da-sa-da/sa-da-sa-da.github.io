@@ -9,7 +9,7 @@ const router = useRouter()
 
 // 判断是否为导航页
 const isNavPage = computed(() => {
-  return page.value.path?.startsWith('/nav') || page.value.path?.includes('/nav-page')
+  return page.value.path?.startsWith('/nav') || page.value.path?.includes('/nav-page') || page.value.path?.startsWith('/culture')
 })
 
 
@@ -52,7 +52,7 @@ onUnmounted(() => {
 <template>
   <div class="vp-app teek-layout">
     <!-- 顶部导航栏 -->
-    <header class="vp-header">
+    <header class="vp-header" v-if="!isNavPage">
       <div class="container">
         <!-- Logo -->
         <div class="logo">
