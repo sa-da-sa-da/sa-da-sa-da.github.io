@@ -27,7 +27,7 @@
           v-for="(image, index) in images" 
           :key="index" 
           :src="image" 
-          :alt="`题目图片 ${index + 1}`" 
+          :alt="`题目图片${index + 1}`" 
           class="question-image"
         >
       </div>
