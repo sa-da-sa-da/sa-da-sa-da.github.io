@@ -35,8 +35,8 @@ export const FooterInfo = {
   },
   // 网络安全备案信息配置
   securityRecord: {
-    name: "",
-    link: "https://beian.mps.gov.cn/",
+    name: "豫公网安备41010702003985号",
+    link: "https://beian.mps.gov.cn/#/query/webSearch?code=41010702003985",
   },
   customHtml: ``, // 搭配 ./theme/composables/useRuntime.ts
 };
