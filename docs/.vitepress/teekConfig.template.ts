@@ -331,8 +331,8 @@ export const teekConfig = defineTeekConfig({
     },
     // 网络安全备案信息配置
     securityRecord: {
-      name: "",
-      link: "",
+      name: "豫公网安备41010702003985号",
+      link: "https://beian.mps.gov.cn/#/query/webSearch?code=41010702003985",
     },
   },
   // 文章信息分析配置，分别作用在首页和文章页
