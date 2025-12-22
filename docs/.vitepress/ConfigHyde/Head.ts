@@ -75,7 +75,7 @@ export const HeadData = [
     "meta",
     { name: "msvalidate.01", content: "48CABE70F538B8D117567176ABF325AF" },
   ], // Bing 收录验证
-  ["link", { rel: "icon", href: "/favicon.ico", type: "image/png" }],
+  ["link", { rel: "icon", href: "https://img.sakaay.com/d/img/favicon.ico", type: "image/png" }],
 
   // 阿里在线矢量库
   [

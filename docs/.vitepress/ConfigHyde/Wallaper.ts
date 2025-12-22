@@ -90,7 +90,6 @@ export const Wallpaper = [
   "https://img.sakaay.com/d/img/bz/81f1d613a2a4f2f02a8232388646c4.avif",
   "https://img.sakaay.com/d/img/bz/88499da4f58d9c63d2a2e1b8e078b3.avif",
   "https://img.sakaay.com/d/img/bz/683f9459eaf7d58ab8c8bd2bbf82821.avif",
-  "https://img.sakaay.com/d/img/bz/18ed5075d2c80611fbac6ed1d34a.avif",
   "https://img.sakaay.com/d/img/bz/9d19ea8fa2ccca012bb8ac333e7166.avif",
   "https://img.sakaay.com/d/img/bz/3ad41747f7933acd1d62083f557df1f.avif",
   "https://img.sakaay.com/d/img/bz/4cef9399c4e60eece66d228f9b3706b.avif",

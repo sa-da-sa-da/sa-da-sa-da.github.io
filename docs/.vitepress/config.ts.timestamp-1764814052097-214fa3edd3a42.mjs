@@ -598,7 +598,7 @@ var HeadData = [
     { name: "msvalidate.01", content: "48CABE70F538B8D117567176ABF325AF" }
   ],
   // Bing 收录验证
-  ["link", { rel: "icon", href: "/favicon.ico", type: "image/png" }],
+  ["link", { rel: "icon", href: "https://img.sakaay.com/d/img/favicon.ico", type: "image/png" }],
   // 阿里在线矢量库
   [
     "link",
@@ -1238,7 +1238,7 @@ var config_default = defineConfig({
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     // logo: "/teek-logo-mini.svg",
-    logo: "/favicon.ico",
+    logo: "https://img.sakaay.com/d/img/favicon.ico",
     //网站logo
     darkModeSwitchLabel: "\u4E3B\u9898",
     sidebarMenuLabel: "\u83DC\u5355",
