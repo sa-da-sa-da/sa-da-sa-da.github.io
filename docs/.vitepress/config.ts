@@ -372,7 +372,7 @@ export default defineConfig({
     },
   },
   sitemap: {
-    hostname: "https://sakaay.com",
+    hostname: "https://www.sakaay.com",
     // transformItems: items => {
     //   const permalinkItemBak: typeof items = [];
     //   // 使用永久链接生成 sitemap
