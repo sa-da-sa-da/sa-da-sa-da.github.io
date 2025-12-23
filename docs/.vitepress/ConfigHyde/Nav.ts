@@ -3,9 +3,16 @@ import { telegram } from "../theme/icon/icons";
 import { TeekIcon, VdoingIcon, SSLIcon, BlogIcon } from "./icon/NavIcon";
 export const Nav = [
   { text: "🏡首页", link: "/" },
-  { text: "🔍搜索", link: "/nav" },
-  { text: "⏰时间", link: "/time" },
-  { text: "📚编程", link: "/program" },
+  { text: "📚快捷", 
+    items: [
+      { text: "校园文创", link: "/culture" },
+      { text: "🔍搜索", link: "/nav" },
+      { text: "⏰时间", link: "/time" },
+      { text: "📚编程", link: "/program" },
+
+    ],
+  },
+
   //教学
   {
     text: "📚学习",
