@@ -16,9 +16,11 @@ import NavLayout from './layouts/NavLayout.vue'; // 引入导航布局组件
 import { NavPage } from './components/nav-page/index';
 import NavGrid from './components/nav-page/NavGrid.vue';
 
-// 导入Vue Google AdSense
-import VueGoogleAdsense from 'vue-google-adsense'
-// 修正导入方式，移除不存在的命名导入
+// 导入自定义GoogleAd组件
+import GoogleAd from "./components/GoogleAd.vue";
+
+// 移除不兼容的vue-google-adsense库导入
+// import VueGoogleAdsense from 'vue-google-adsense'
 
 
 // Teek 在线主题包引用（需安装 Teek 在线版本）
@@ -99,16 +101,45 @@ export default {
     // 注册全局组件
     app.component("friend-link", SLink);
     
-    // 注册Google AdSense插件
-    app.use(VueGoogleAdsense, {
-      adClient: 'ca-pub-2897720906666216', // 替换为您的AdSense发布商ID
-      adSlot: '4340179531', // 默认广告位ID
-      pageLevelAds: true, // 启用页面级广告
-      autoLoad: true // 自动加载广告
-    })
+    // 移除不兼容的Google AdSense插件注册代码
+    // app.use(VueGoogleAdsense, {
+    //   adClient: 'ca-pub-2897720906666216', // 替换为您的AdSense发布商ID
+    //   adSlot: '4340179531', // 默认广告位ID
+    //   pageLevelAds: true, // 启用页面级广告
+    //   autoLoad: true // 自动加载广告
+    // })
     
-    // 移除对不存在组件的注册
-    // 如需使用AdSense，建议创建自定义组件或使用其他库
+    // 如需使用AdSense，建议创建自定义组件或使用其他与Vue 3兼容的库
+    
+    // 注册自定义GoogleAd组件
+    app.component("GoogleAd", GoogleAd);
+    // 创建ins别名，便于在文章中使用
+    app.component("ins", {
+      extends: GoogleAd,
+      props: {
+        dataAdClient: {
+          type: String,
+          default: 'ca-pub-2897720906666216'
+        },
+        dataAdSlot: {
+          type: String,
+          default: '4340179531'
+        },
+        dataAdFormat: {
+          type: String,
+          default: 'auto'
+        }
+      },
+      setup(props) {
+        // 将data-*属性映射到组件props
+        return {
+          adClient: props.dataAdClient,
+          adSlot: props.dataAdSlot,
+          adFormat: props.dataAdFormat,
+          isInArticle: true
+        };
+      }
+    });
     
     // 注册3D模型查看器组件
     app.component('ThreeDModelViewer', ThreeDModelViewer);
