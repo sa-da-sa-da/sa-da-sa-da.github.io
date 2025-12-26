@@ -11,6 +11,13 @@ import confetti from "./components/Confetti.vue"; //导入五彩纸屑组件
 import ProductGrid from "./components/ProductGrid.vue";
 import ProductDetail from "./components/ProductDetail.vue";
 
+// 导入广告组件
+import AdSense from "./components/AdSense/index";
+import PostListAdInjector from "./components/PostListAdInjector.vue";
+import ArticleListTest from "./components/ArticleListTest.vue";
+import ArticlePostListAdInjector from "./components/ArticlePostListAdInjector.vue";
+import ArticleContentAdInjector from "./components/ArticleContentAdInjector.vue";
+
 import NavLayout from './layouts/NavLayout.vue'; // 引入导航布局组件
 // 导入导航页相关组件
 import { NavPage } from './components/nav-page/index';
@@ -86,6 +93,13 @@ export default {
     // 注册组件
     // app.component("MNavLinks", MNavLinks); // 注册导航组件
     app.component("confetti", confetti); // 注册五彩纸屑组件
+
+    // 注册广告相关组件
+    app.component("AdSense", AdSense);
+    app.component("PostListAdInjector", PostListAdInjector);
+    app.component("ArticleListTest", ArticleListTest);
+    app.component("ArticlePostListAdInjector", ArticlePostListAdInjector);
+    app.component("ArticleContentAdInjector", ArticleContentAdInjector);
 
     app.component('CoupleAlbum', CoupleAlbum) // 注册情侣相册组件
     app.component('PhotoCard', PhotoCard)
