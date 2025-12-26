@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useData } from 'vitepress'
 import NavGrid from './NavGrid.vue'
 
@@ -29,6 +29,7 @@ const dateStr = ref('')
 const searchText = ref('')
 const currentEngineKey = ref('bing') 
 const isMenuOpen = ref(false)
+const adScriptLoaded = ref(false)
 
 // --- 搜索引擎配置 ---
 const engines = {
@@ -66,6 +67,35 @@ const handleSearch = () => {
   window.open(target, '_blank')
 }
 
+// 加载广告脚本
+const loadAdScript = () => {
+  if (typeof window === 'undefined' || adScriptLoaded.value) return
+  
+  try {
+    // 创建广告脚本
+    const script = document.createElement('script')
+    script.async = true
+    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2897720906666216'
+    script.crossOrigin = 'anonymous'
+    
+    // 脚本加载完成后标记
+    script.onload = () => {
+      adScriptLoaded.value = true
+      nextTick(() => {
+        // 初始化广告单元
+        if (window.adsbygoogle) {
+          window.adsbygoogle = window.adsbygoogle || []
+          window.adsbygoogle.push({})
+        }
+      })
+    }
+    
+    document.head.appendChild(script)
+  } catch (error) {
+    console.error('Failed to load ad script:', error)
+  }
+}
+
 // 更新时间
 let timer = null
 const updateTime = () => {
@@ -81,6 +111,9 @@ onMounted(() => {
   updateTime()
   timer = setInterval(updateTime, 1000)
   document.addEventListener('click', closeMenu)
+  
+  // 加载广告脚本
+  loadAdScript()
 })
 onUnmounted(() => {
   if (timer) clearInterval(timer)
@@ -128,8 +161,28 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- 第一个广告单元 -->
+        <div class="ad-unit" v-if="adScriptLoaded">
+          <ins class="adsbygoogle"
+               style="display:block"
+               data-ad-client="ca-pub-2897720906666216"
+               data-ad-slot="7966054610"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+        </div>
+
         <div class="nav-grid-wrapper">
           <NavGrid />
+        </div>
+
+        <!-- 第二个广告单元 -->
+        <div class="ad-unit" v-if="adScriptLoaded">
+          <ins class="adsbygoogle"
+               style="display:block"
+               data-ad-format="fluid"
+               data-ad-layout-key="-6j+cs-g-49+kk"
+               data-ad-client="ca-pub-2897720906666216"
+               data-ad-slot="3199691592"></ins>
         </div>
       </div>
     </div>
@@ -193,6 +246,16 @@ onUnmounted(() => {
   padding: 40px 20px 20px 20px;
   display: flex; flex-direction: column; gap: 40px;
   color: #fff;
+}
+
+/* 广告单元样式 */
+.ad-unit {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+  z-index: 11;
+  position: relative;
 }
 
 /* 头部信息 */
@@ -351,6 +414,10 @@ onUnmounted(() => {
   
   .search-container {
     width: 95%;
+  }
+  
+  .ad-unit {
+    margin: 15px 0;
   }
 }
 </style>
