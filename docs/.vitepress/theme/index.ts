@@ -91,6 +91,11 @@ const loadGoogleAds = () => {
 };
 
 
+import DefaultTheme from 'vitepress/theme';
+import { h } from 'vue';
+// 导入 GoogleAd 组件
+import GoogleAd from './components/GoogleAd.vue';
+
 export default {
   extends: Teek,
   async enhanceApp({ app, router }) {
@@ -111,6 +116,7 @@ export default {
     app.component('MultipleChoiceQuestion', MultipleChoiceQuestion);
     app.component('FillInTheBlank', FillInTheBlank);
     app.component('PythonEditor', PythonEditor);
+    app.component('GoogleAd', GoogleAd); // 注册GoogleAd组件
 
     app.component("emoji-Shiroki", EmojiShiroki); // ◀️ 注入 Emoji 表情库组件布局
     app.component("NavLayout", NavLayout); // 注册导航布局组件

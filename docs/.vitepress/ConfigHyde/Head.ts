@@ -201,29 +201,6 @@ export const HeadData = [
   // 不再需要全局的vue-3d-loader和Three.js脚本，因为我们使用了专用的Vue组件
   // 新添加的脚本 
   // Google广告代码已移至GoogleAd组件中，不再需要在此处添加
+  // 移除全局广告脚本和广告位，改为按需加载
   ["script", { async: "", customElement: "amp-ad", src: "https://cdn.ampproject.org/v0/amp-ad-0.1.js" }],
-  [
-    "script",
-    {
-      async: "async",
-      src: "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2897720906666216",
-      crossorigin: "anonymous",
-    },
-  ],
-  [
-    "ins",
-    {
-      class: "adsbygoogle",
-      style: "display:block",
-      "data-ad-format": "fluid",
-      "data-ad-layout-key": "-ii+7-14-2d+99",
-      "data-ad-client": "ca-pub-2897720906666216",
-      "data-ad-slot": "2668661755",
-    },
-  ],
-  [
-    "script",
-    {},
-    `(adsbygoogle = window.adsbygoogle || []).push({});`,
-  ],
 ];
