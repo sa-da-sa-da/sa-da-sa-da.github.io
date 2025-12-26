@@ -15,7 +15,9 @@ export const FooterInfo = {
 
     <a target="_blank" href="https://51.la/" title="本站统计服务使用 51.LA"><img alt="51.LA" src="https://img.shields.io/badge/51.LA-000000?logo=51.LA&label=Count&color=%23FF6A00"></a>
     
-    <a target="_blank" href="https://nginx.org/" title="本站Nginx反向代理服务 Nginx"><img alt="Nginx" src="https://img.shields.io/badge/Nginx-Proxy?logo=Nginx&label=Proxy"></a>`,
+    <a target="_blank" href="https://nginx.org/" title="本站Nginx反向代理服务 Nginx"><img alt="Nginx" src="https://img.shields.io/badge/Nginx-Proxy?logo=Nginx&label=Proxy"></a>
+
+   `
   ],
   theme: {
     name: `Theme By Teek@${version}-2025.10.19`,
@@ -38,5 +40,5 @@ export const FooterInfo = {
     name: "豫公网安备41010702003985号",
     link: "https://beian.mps.gov.cn/#/query/webSearch?code=41010702003985",
   },
-  customHtml: ``, // 搭配 ./theme/composables/useRuntime.ts
+  customHtml: `<a href="/privacy" class="privacy-link">隐私政策</a>`, // 搭配 ./theme/composables/useRuntime.ts
 };

@@ -146,9 +146,12 @@ onUnmounted(() => {
     </main>
 
     <!-- 页脚 -->
-    <footer class="vp-footer" v-if="!isNavPage">
+    <footer class="vp-footer">
       <div class="container">
         <p>&copy; {{ new Date().getFullYear() }} Teek Docs</p>
+        <p class="footer-links">
+          <RouterLink to="/privacy" class="privacy-link">隐私政策</RouterLink>
+        </p>
       </div>
     </footer>
   </div>
@@ -183,4 +186,20 @@ onUnmounted(() => {
 
 .VPNav, .VPFooter, .VPLocalNav { display: none !important; }
 .VPContent { padding: 0 !important; }
+/* 添加页脚链接样式 */
+.footer-links {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.privacy-link {
+  color: var(--vp-c-text-2);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.privacy-link:hover {
+  color: var(--vp-c-brand);
+  text-decoration: underline;
+}
 </style>
