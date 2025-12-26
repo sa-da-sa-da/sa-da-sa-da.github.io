@@ -296,15 +296,15 @@ export const Nav = [
                 `,
             link: "/love/wenan",
           },
-          {
-            text: `
-                <div style="display: flex; align-items: center; gap: 4px;">
-                  <img src="/img/nav/合唱.svg" alt="" style="width: 16px; height: 16px;">
-                  <span>资源获取</span>
-                </div>
-                `,
-            link: "/love/resource",
-          },
+          // {
+          //   text: `
+          //       <div style="display: flex; align-items: center; gap: 4px;">
+          //         <img src="" alt="" style="width: 16px; height: 16px;">
+          //         <span>资源获取</span>
+          //       </div>
+          //       `,
+          //   link: "/love/resource",
+          // },
           // { text: "💖情侣空间", link: "https://fxj.onedayxyy.cn/" },
         ],
       },
