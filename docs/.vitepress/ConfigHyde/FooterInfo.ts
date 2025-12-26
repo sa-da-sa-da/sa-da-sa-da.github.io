@@ -3,7 +3,7 @@ import { version } from "vitepress-theme-teek/es/version"; // 导入版本号
 
 export const FooterInfo = {
   topMessage: [
-    `<span><img alt="VitePress" src="https://liuyuyang.net/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fanimals.65eaf6e3.webp&w=750&q=75"><span/>`,
+    `<span><img alt="VitePress" src="./img/animals.png"><span/>`,
   
     `<a target="_blank" href="https://vitepress.dev/" title="本站框架基于 VitePress_v1.6.3" ><img alt="VitePress" src="https://img.shields.io/badge/Frame-VitePress-4868C2?logo=vitepress&amp;logoColor=fff" ></a>
 
