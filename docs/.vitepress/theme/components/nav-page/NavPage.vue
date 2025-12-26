@@ -3,6 +3,14 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useData } from 'vitepress'
 import NavGrid from './NavGrid.vue'
 
+// --- Props 定义 ---
+const props = defineProps({
+  display: {
+    type: Boolean,
+    default: true // 默认显示广告
+  }
+})
+
 // --- 配置读取 ---
 const { theme } = useData()
 const pageConfig = computed(() => {
@@ -27,27 +35,27 @@ const wrapperStyle = computed(() => {
 const timeStr = ref('00:00:00')
 const dateStr = ref('')
 const searchText = ref('')
-const currentEngineKey = ref('bing') 
+const currentEngineKey = ref('bing')
 const isMenuOpen = ref(false)
 const adScriptLoaded = ref(false)
 
 // --- 搜索引擎配置 ---
 const engines = {
-  baidu: { 
-    name: '百度', 
-    url: 'https://www.baidu.com/s?wd=', 
+  baidu: {
+    name: '百度',
+    url: 'https://www.baidu.com/s?wd=',
     placeholder: '百度一下...'
   },
-  google: { 
-    name: 'Google', 
-    url: 'https://www.google.com/search?q=', 
+  google: {
+    name: 'Google',
+    url: 'https://www.google.com/search?q=',
     placeholder: 'Google Search...'
   },
-  bing: { 
-    name: 'Bing', 
-    url: 'https://www.bing.com/search?q=', 
+  bing: {
+    name: 'Bing',
+    url: 'https://www.bing.com/search?q=',
     placeholder: '微软 Bing 搜索...'
-  }, 
+  },
 }
 
 const currentEngine = computed(() => engines[currentEngineKey.value])
@@ -70,31 +78,78 @@ const handleSearch = () => {
 // 加载广告脚本
 const loadAdScript = () => {
   if (typeof window === 'undefined' || adScriptLoaded.value) return
-  
+
   try {
     // 创建广告脚本
     const script = document.createElement('script')
     script.async = true
     script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2897720906666216'
     script.crossOrigin = 'anonymous'
-    
+
     // 脚本加载完成后标记
     script.onload = () => {
       adScriptLoaded.value = true
-      nextTick(() => {
-        // 初始化广告单元
-        if (window.adsbygoogle) {
-          window.adsbygoogle = window.adsbygoogle || []
-          window.adsbygoogle.push({})
-        }
-      })
+      // 延迟初始化广告，确保容器已经渲染
+      setTimeout(() => {
+        initAdsIfVisible()
+      }, 500)
     }
-    
+
     document.head.appendChild(script)
   } catch (error) {
     console.error('Failed to load ad script:', error)
   }
 }
+
+// 响应式数据
+const mounted = ref(false);
+const showAd = ref(props.display);
+const retryCount = ref(0); // 重试计数
+const MAX_RETRY_COUNT = 5; // 最大重试次数
+
+// 智能初始化广告函数，检查容器宽度并添加重试机制
+const initAdsIfVisible = () => {
+  if (typeof window === 'undefined' || !window.adsbygoogle) return;
+
+  try {
+    // 获取所有广告容器
+    const adContainers = document.querySelectorAll('.ad-unit');
+    let hasValidContainer = false;
+
+    // 检查每个广告容器的宽度
+    adContainers.forEach(container => {
+      const containerWidth = container.clientWidth;
+      // 只有当容器宽度大于0时才初始化广告
+      if (containerWidth > 0) {
+        hasValidContainer = true;
+      }
+    });
+
+    // 如果有有效的广告容器，才初始化广告
+    if (hasValidContainer) {
+      window.adsbygoogle = window.adsbygoogle || [];
+      window.adsbygoogle.push({});
+      retryCount.value = 0; // 重置重试计数
+    } else if (retryCount.value < MAX_RETRY_COUNT) {
+      // 容器宽度为0，但未达到最大重试次数
+      retryCount.value++;
+      // 指数退避策略：重试间隔逐渐增加
+      const delay = 500 * Math.pow(2, retryCount.value - 1);
+      console.log(`广告容器宽度为0，${delay}ms后第${retryCount.value}次重试`);
+      setTimeout(initAdsIfVisible, delay);
+    } else {
+      // 达到最大重试次数，放弃重试
+      console.warn(`广告初始化已达到最大重试次数(${MAX_RETRY_COUNT})，放弃重试`);
+    }
+  } catch (error) {
+    // 出错时也尝试重试，但有最大重试限制
+    console.error('初始化广告时出错:', error);
+    if (retryCount.value < MAX_RETRY_COUNT) {
+      retryCount.value++;
+      setTimeout(initAdsIfVisible, 1000);
+    }
+  }
+};
 
 // 更新时间
 let timer = null
@@ -111,7 +166,7 @@ onMounted(() => {
   updateTime()
   timer = setInterval(updateTime, 1000)
   document.addEventListener('click', closeMenu)
-  
+
   // 加载广告脚本
   loadAdScript()
 })
@@ -124,13 +179,8 @@ onUnmounted(() => {
 <template>
   <div class="start-page-wrapper" :style="wrapperStyle">
     <!-- 背景处理 -->
-    <video v-if="pageConfig.bgImage && pageConfig.bgImage.endsWith('.mp4')" class="bg-video"
-      :src="pageConfig.bgImage"
-      autoplay
-      muted
-      loop
-      playsinline
-    />
+    <video v-if="pageConfig.bgImage && pageConfig.bgImage.endsWith('.mp4')" class="bg-video" :src="pageConfig.bgImage"
+      autoplay muted loop playsinline />
     <div class="scroll-container">
       <div class="content-box">
         <div class="info-header">
@@ -150,43 +200,46 @@ onUnmounted(() => {
               </div>
               <div class="engine-dropdown" v-if="isMenuOpen">
                 <div v-for="(eng, key) in engines" :key="key" class="dropdown-item"
-                     :class="{ active: key === currentEngineKey }" @click.stop="selectEngine(key)">
+                  :class="{ active: key === currentEngineKey }" @click.stop="selectEngine(key)">
                   {{ eng.name }}
                 </div>
               </div>
             </div>
             <input type="text" class="search-input" v-model="searchText" @keyup.enter="handleSearch"
-                   :placeholder="currentEngine.placeholder" />
+              :placeholder="currentEngine.placeholder" />
+
+           
+
             <button class="search-btn" @click="handleSearch">搜索</button>
           </div>
+          
         </div>
+        
+        <!-- 第一个广告单元 - 放在两侧 -->
+        <div class="ad-container">
+          <div class="ad-unit-side left" v-if="adScriptLoaded">
+            <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216"
+              data-ad-slot="7966054610" data-ad-format="auto" data-full-width-responsive="true"></ins>
+          </div>
 
-        <!-- 第一个广告单元 -->
-        <div class="ad-unit" v-if="adScriptLoaded">
-          <ins class="adsbygoogle"
-               style="display:block"
-               data-ad-client="ca-pub-2897720906666216"
-               data-ad-slot="7966054610"
-               data-ad-format="auto"
-               data-full-width-responsive="true"></ins>
+          <div class="ad-unit-side right" v-if="adScriptLoaded">
+            <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216"
+              data-ad-slot="7966054610" data-ad-format="auto" data-full-width-responsive="true"></ins>
+          </div>
         </div>
-
+ <!-- 第二个广告单元 - 移动到输入框和按钮之间 -->
+            <div class="ad-unit-inline" v-if="adScriptLoaded">
+              <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216"
+                data-ad-slot="3199691592" data-ad-format="fluid" data-ad-layout-key="-6j+cs-g-49+kk"></ins>
+            </div>
         <div class="nav-grid-wrapper">
           <NavGrid />
-        </div>
-
-        <!-- 第二个广告单元 -->
-        <div class="ad-unit" v-if="adScriptLoaded">
-          <ins class="adsbygoogle"
-               style="display:block"
-               data-ad-format="fluid"
-               data-ad-layout-key="-6j+cs-g-49+kk"
-               data-ad-client="ca-pub-2897720906666216"
-               data-ad-slot="3199691592"></ins>
         </div>
       </div>
     </div>
   </div>
+  <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="4281684534"
+    data-ad-format="auto" data-full-width-responsive="true"></ins>
 </template>
 
 <style scoped>
@@ -201,7 +254,8 @@ onUnmounted(() => {
 /* 背景容器 - 改为相对定位，不再全屏覆盖 */
 .start-page-wrapper {
   width: 100%;
-  min-height: calc(100vh - 60px); /* 减去顶部导航栏的高度 */
+  min-height: calc(100vh - 60px);
+  /* 减去顶部导航栏的高度 */
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -242,26 +296,44 @@ onUnmounted(() => {
 }
 
 .content-box {
-  width: 100%; max-width: 900px;
+  width: 100%;
+  max-width: 900px;
   padding: 40px 20px 20px 20px;
-  display: flex; flex-direction: column; gap: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
   color: #fff;
 }
 
 /* 广告单元样式 */
 .ad-unit {
   width: 100%;
+  min-width: 100px;
+  /* 确保有最小宽度 */
+  min-height: 60px;
+  /* 确保有最小高度 */
   display: flex;
   justify-content: center;
   margin: 20px 0;
   z-index: 11;
   position: relative;
+  background-color: rgba(255, 255, 255, 0.05);
+  /* 添加背景色作为占位 */
+  overflow: hidden;
+}
+
+/* 广告ins元素样式 */
+.ad-unit ins {
+  display: block;
+  width: 100%;
+  min-width: 100px !important;
+  min-height: 60px !important;
 }
 
 /* 头部信息 */
 .info-header {
   text-align: center;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 .main-title {
@@ -289,7 +361,8 @@ onUnmounted(() => {
 
 /* 搜索框 */
 .search-container {
-  width: 100%; max-width: 700px;
+  width: 100%;
+  max-width: 700px;
   margin: 0 auto;
 }
 
@@ -299,7 +372,7 @@ onUnmounted(() => {
   align-items: center;
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 16px;
   padding: 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -318,7 +391,7 @@ onUnmounted(() => {
   padding: 0 10px;
   cursor: pointer;
   border-radius: 10px;
-  color: rgba(255,255,255,0.9);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .engine-name {
@@ -342,11 +415,11 @@ onUnmounted(() => {
   left: 0;
   width: 140px;
   background: rgba(30, 41, 59, 0.95);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px);
   border-radius: 12px;
   padding: 6px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   z-index: 50;
 }
 
@@ -360,7 +433,7 @@ onUnmounted(() => {
 }
 
 .dropdown-item:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
 
@@ -380,7 +453,7 @@ onUnmounted(() => {
 }
 
 .search-input::placeholder {
-  color: rgba(255,255,255,0.5);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .search-btn {
@@ -394,7 +467,7 @@ onUnmounted(() => {
 }
 
 .search-btn:hover {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* 导航网格 */
@@ -407,17 +480,94 @@ onUnmounted(() => {
   .main-title {
     font-size: 2rem;
   }
-  
+
   .clock {
     font-size: 2rem;
   }
-  
+
   .search-container {
     width: 95%;
   }
-  
+
   .ad-unit {
     margin: 15px 0;
+  }
+}
+
+/* 广告容器 - 用于布局两侧广告 */
+.ad-container {
+  position: relative;
+  width: 100%;
+  height: 0;
+  margin: 20px 0;
+}
+
+/* 侧边广告单元样式 - 放在两侧 */
+.ad-unit-side {
+  position: absolute;
+  top: -100px;
+  /* 调整位置以在搜索框上方 */
+  width: 300px;
+  height: 250px;
+  min-width: 100px;
+  min-height: 60px;
+  z-index: 11;
+  background-color: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.ad-unit-side.left {
+  left: calc(50% - 1000px);
+  /* 左侧位置 */
+}
+
+.ad-unit-side.right {
+  right: calc(50% - 1000px);
+  /* 右侧位置 */
+}
+
+/* 内联广告单元样式 - 放在输入框和按钮之间 */
+.ad-unit-inline {
+  width: 120px;
+  height: 36px;
+  margin: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 11;
+  background-color: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.ad-unit-inline ins {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+
+  /* 在窄屏下隐藏侧边广告 */
+  .ad-unit-side {
+    display: none;
+  }
+
+  /* 保持内联广告 */
+  .ad-unit-inline {
+    width: 80px;
+    height: 32px;
+    margin: 0 4px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* ... existing responsive styles ... */
+
+  /* 在小屏幕上完全隐藏内联广告 */
+  .ad-unit-inline {
+    display: none;
   }
 }
 </style>
