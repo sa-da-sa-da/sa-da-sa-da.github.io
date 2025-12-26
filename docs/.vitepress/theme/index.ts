@@ -16,8 +16,9 @@ import NavLayout from './layouts/NavLayout.vue'; // 引入导航布局组件
 import { NavPage } from './components/nav-page/index';
 import NavGrid from './components/nav-page/NavGrid.vue';
 
-// 导入Google广告组件
-import GoogleAd from "./components/GoogleAd.vue";
+// 导入Vue Google AdSense
+import VueGoogleAdsense from 'vue-google-adsense'
+import { Adsense, InArticleAdsense } from 'vue-google-adsense'
 
 
 // Teek 在线主题包引用（需安装 Teek 在线版本）
@@ -98,6 +99,19 @@ export default {
     // 注册全局组件
     app.component("friend-link", SLink);
     
+    // 注册Google AdSense插件
+    app.use(VueGoogleAdsense, {
+      adClient: 'ca-pub-2897720906666216', // 替换为您的AdSense发布商ID
+      adSlot: '4340179531', // 默认广告位ID
+      pageLevelAds: true, // 启用页面级广告
+      autoLoad: true // 自动加载广告
+    })
+    
+    // 注册Adsense组件
+    app.component('Adsense', Adsense)
+    // 注册InArticleAdsense组件
+    app.component('InArticleAdsense', InArticleAdsense)
+    
     // 注册3D模型查看器组件
     app.component('ThreeDModelViewer', ThreeDModelViewer);
     app.component('MultipleChoiceQuestion', MultipleChoiceQuestion);
@@ -114,20 +128,6 @@ export default {
     // 注册产品展示组件
     app.component('ProductGrid', ProductGrid);
     app.component('ProductDetail', ProductDetail);
-
-    // 注册Google广告组件
-    app.component("GoogleAd", GoogleAd);
-    
-    // 创建ins组件别名，使其可以使用<ins>标签
-    app.component("ins", {
-      props: {
-        id: String
-      },
-      render() {
-        // 使用GoogleAd组件渲染广告
-        return h(GoogleAd, { id: this.id });
-      }
-    });
 
 
     // 非SSR环境下配置路由进度条
