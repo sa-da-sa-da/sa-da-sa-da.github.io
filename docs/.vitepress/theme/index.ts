@@ -18,7 +18,7 @@ import NavGrid from './components/nav-page/NavGrid.vue';
 
 // 导入Vue Google AdSense
 import VueGoogleAdsense from 'vue-google-adsense'
-import { Adsense, InArticleAdsense } from 'vue-google-adsense'
+// 修正导入方式，移除不存在的命名导入
 
 
 // Teek 在线主题包引用（需安装 Teek 在线版本）
@@ -107,10 +107,8 @@ export default {
       autoLoad: true // 自动加载广告
     })
     
-    // 注册Adsense组件
-    app.component('Adsense', Adsense)
-    // 注册InArticleAdsense组件
-    app.component('InArticleAdsense', InArticleAdsense)
+    // 移除对不存在组件的注册
+    // 如需使用AdSense，建议创建自定义组件或使用其他库
     
     // 注册3D模型查看器组件
     app.component('ThreeDModelViewer', ThreeDModelViewer);
