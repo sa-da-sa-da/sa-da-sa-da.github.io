@@ -16,6 +16,9 @@ import NavLayout from './layouts/NavLayout.vue'; // 引入导航布局组件
 import { NavPage } from './components/nav-page/index';
 import NavGrid from './components/nav-page/NavGrid.vue';
 
+// 导入Google广告组件
+import GoogleAd from "./components/GoogleAd.vue";
+
 
 // Teek 在线主题包引用（需安装 Teek 在线版本）
 import "vitepress-theme-teek/index.css"; // 引入主题样式
@@ -112,7 +115,20 @@ export default {
     app.component('ProductGrid', ProductGrid);
     app.component('ProductDetail', ProductDetail);
 
-  
+    // 注册Google广告组件
+    app.component("GoogleAd", GoogleAd);
+    
+    // 创建ins组件别名，使其可以使用<ins>标签
+    app.component("ins", {
+      props: {
+        id: String
+      },
+      render() {
+        // 使用GoogleAd组件渲染广告
+        return h(GoogleAd, { id: this.id });
+      }
+    });
+
 
     // 非SSR环境下配置路由进度条
     // @ts-expect-error
@@ -163,7 +179,7 @@ export default {
       }
 
 
-   
+    
 
       // 对于其他所有页面，包括导航页面，都使用默认布局
       return () => h(TeekLayoutProvider, props);

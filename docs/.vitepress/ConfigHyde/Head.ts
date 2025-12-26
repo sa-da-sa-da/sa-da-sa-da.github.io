@@ -200,4 +200,5 @@ export const HeadData = [
   ],
   // 不再需要全局的vue-3d-loader和Three.js脚本，因为我们使用了专用的Vue组件
   // 新添加的脚本 
+  // Google广告代码已移至GoogleAd组件中，不再需要在此处添加
 ];
