@@ -9,7 +9,7 @@ const pageConfig = computed(() => {
   const config = theme.value.startPage || {}
   return {
     title: config.title || '',
-    bgImage: 'https://img.sakaay.com/d/img/sakaay/bg-01.mp4' // 直接使用视频背景URL
+    bgImage: 'https://ossaiimages.sakaay.com/ai-image/sakaay/FabConvert.com_bg-01.avif' // 图片背景URL
   }
 })
 
@@ -17,7 +17,7 @@ const pageConfig = computed(() => {
 const wrapperStyle = computed(() => {
   const bgImage = pageConfig.value.bgImage
   if (bgImage && bgImage.endsWith('.mp4')) {
-    // 如果是视频，需要特殊处理，这里我们会在模板中使用video标签
+    // 如果是视频，需要特殊处理
     return {}
   }
   return bgImage ? { backgroundImage: `url(${bgImage})` } : {}
@@ -122,8 +122,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="start-page-wrapper">
-    <!-- 视频背景 --->
+  <div class="start-page-wrapper" :style="wrapperStyle">
+    <!-- 背景处理 -->
     <video v-if="pageConfig.bgImage && pageConfig.bgImage.endsWith('.mp4')" class="bg-video"
       :src="pageConfig.bgImage"
       autoplay
