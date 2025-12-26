@@ -203,4 +203,53 @@ export const HeadData = [
   // Google广告代码已移至GoogleAd组件中，不再需要在此处添加
   // 移除全局广告脚本和广告位，改为按需加载
   ["script", { async: "", customElement: "amp-ad", src: "https://cdn.ampproject.org/v0/amp-ad-0.1.js" }],
+  // 为class为aside的元素添加广告
+  [
+    "script",
+    {},
+    `
+      // 等待页面加载完成后执行
+      document.addEventListener('DOMContentLoaded', function() {
+        // 查找所有class为aside的元素
+        const asideElements = document.querySelectorAll('.aside');
+        
+        // 为每个aside元素添加广告
+        asideElements.forEach((aside, index) => {
+          // 创建广告容器
+          const adContainer = document.createElement('div');
+          adContainer.className = 'aside-ad';
+          adContainer.style.margin = '20px 0';
+          adContainer.style.padding = '10px';
+          adContainer.style.backgroundColor = '#f8f9fa';
+          adContainer.style.borderRadius = '4px';
+          
+          // 创建广告注释
+          const comment = document.createComment(" nav-aside ");
+          adContainer.appendChild(comment);
+          
+          // 创建广告元素
+          const adElement = document.createElement('ins');
+          adElement.className = 'adsbygoogle';
+          adElement.style.display = 'block';
+          adElement.style.width = '100%';
+          adElement.style.height = '250px';
+          adElement.setAttribute('data-ad-client', 'ca-pub-2897720906666216');
+          adElement.setAttribute('data-ad-slot', '4522753183'); // 更新为新的广告位ID
+          adElement.setAttribute('data-ad-format', 'auto');
+          adElement.setAttribute('data-full-width-responsive', 'true');
+          
+          // 将广告元素添加到广告容器
+          adContainer.appendChild(adElement);
+          
+          // 创建广告加载脚本
+          const scriptElement = document.createElement('script');
+          scriptElement.textContent = '(adsbygoogle = window.adsbygoogle || []).push({});';
+          adContainer.appendChild(scriptElement);
+          
+          // 将广告容器添加到aside元素
+          aside.appendChild(adContainer);
+        });
+      });
+    `,
+  ],
 ];
