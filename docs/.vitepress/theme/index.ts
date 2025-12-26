@@ -80,16 +80,67 @@ import EmojiShiroki from "./components/EmojiShiroki/index.vue"; // 引入EmojiSh
 
 // 全局谷歌广告导入
 const loadGoogleAds = () => {
-  if (typeof window !== 'undefined' && !document.getElementById('google-adsense-script')) {
-    const script = document.createElement('script');
-    script.id = 'google-adsense-script';
-    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-    script.async = true;
-    script.crossOrigin = 'anonymous';
-    document.head.appendChild(script);
+  if (typeof window !== 'undefined') {
+    try {
+      // 检查脚本是否已加载，避免重复加载
+      if (!window.adsbygoogle) {
+        // 检查是否已有脚本标签
+        let scriptTag = document.getElementById('google-adsense-script');
+        if (!scriptTag) {
+          scriptTag = document.createElement('script');
+          scriptTag.id = 'google-adsense-script';
+          scriptTag.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2897720906666216';
+          scriptTag.async = true;
+          scriptTag.crossOrigin = 'anonymous';
+          
+          // 添加错误处理
+          scriptTag.onerror = (error) => {
+            console.warn('Google AdSense 脚本加载失败:', error);
+          };
+          
+          // 添加加载成功回调
+          scriptTag.onload = () => {
+            console.log('Google AdSense 脚本加载成功');
+            // 脚本加载完成后，为已存在的广告单元触发刷新
+            setTimeout(() => {
+              refreshExistingAds();
+            }, 200);
+          };
+          
+          document.head.appendChild(scriptTag);
+        }
+      } else {
+        // 如果脚本已加载，刷新现有广告
+        refreshExistingAds();
+      }
+    } catch (error) {
+      console.error('加载 Google AdSense 时出错:', error);
+    }
   }
 };
 
+// 刷新页面上已存在的广告单元
+const refreshExistingAds = () => {
+  if (typeof window !== 'undefined' && window.adsbygoogle) {
+    try {
+      // 获取所有广告容器
+      const adContainers = document.querySelectorAll('.adsbygoogle[data-ad-slot]');
+      if (adContainers.length > 0) {
+        // 延迟一点时间，确保DOM完全就绪
+        setTimeout(() => {
+          // 检查每个广告容器的宽度
+          adContainers.forEach((container) => {
+            if (container.clientWidth > 0) {
+              (window.adsbygoogle = window.adsbygoogle || []).push({});
+            }
+          });
+        }, 100);
+      }
+    } catch (error) {
+      console.warn('刷新广告时出错:', error);
+    }
+  }
+};
 
 import DefaultTheme from 'vitepress/theme';
 import { h } from 'vue';
