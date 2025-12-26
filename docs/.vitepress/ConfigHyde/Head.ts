@@ -210,4 +210,11 @@ export const HeadData = [
       crossorigin: "anonymous",
     },
   ],
+  [
+    "script",
+    {},
+    `
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    `,
+  ],
 ];

@@ -66,8 +66,6 @@ import ThreeDModelViewer from './components/ThreeDModelViewer.vue'
 import MultipleChoiceQuestion from './components/MultipleChoiceQuestion.vue'
 import FillInTheBlank from './components/FillInTheBlank.vue'
 import PythonEditor from './components/PythonEditor.vue'
-// 导入Google AdSense广告组件
-import GoogleAdUnit from './components/GoogleAdUnit.vue'
 
 // 引入复制事件（复制后弹窗提示）
 import { useCopyEvent } from "./composables/useCopyEvent.ts";
@@ -113,8 +111,6 @@ export default {
     app.component('MultipleChoiceQuestion', MultipleChoiceQuestion);
     app.component('FillInTheBlank', FillInTheBlank);
     app.component('PythonEditor', PythonEditor);
-    // 注册Google AdSense广告组件
-    app.component('GoogleAdUnit', GoogleAdUnit);
 
     app.component("emoji-Shiroki", EmojiShiroki); // ◀️ 注入 Emoji 表情库组件布局
     app.component("NavLayout", NavLayout); // 注册导航布局组件

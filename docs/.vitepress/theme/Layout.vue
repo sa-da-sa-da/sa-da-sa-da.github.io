@@ -110,7 +110,7 @@ onUnmounted(() => {
                 
                 <div class="text-center md:text-left">
                   <h1 class="site-title text-4xl md:text-5xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-teal-200 to-blue-300 drop-shadow-lg">
-                    十三の导航页
+                    sakaay の导航页
                   </h1>
                   <p class="text-sm text-gray-400 mt-2 tracking-[0.2em] uppercase opacity-80 hidden md:block">
                     Personal Dashboard

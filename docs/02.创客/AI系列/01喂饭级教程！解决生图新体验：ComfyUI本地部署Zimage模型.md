@@ -15,6 +15,8 @@ coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201708/b956d70b738cf476edeb81619991b764.jpg
 ---
 
+<GoogleAdUnit adId="ca-pub-2897720906666216/2668661755" />
+
 # 喂饭级教程！解决生图新体验：ComfyUI本地部署Zimage模型
 
 ## 一、前言

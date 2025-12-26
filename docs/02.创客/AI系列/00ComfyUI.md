@@ -11,6 +11,8 @@ coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201712/9ad9bf725cf51cd9bd2ffaca147054b0.jpg
 ---
 
+<GoogleAdUnit adId="ca-pub-2897720906666216/2668661755" />
+
 # 喂饭级教程！ComfyUI本地部署超详细指南
 
 ## 一、前言
