@@ -1,7 +1,7 @@
 // 组件导入
 import Teek from "vitepress-theme-teek";
 import TeekLayoutProvider from "./components/TeekLayoutProvider.vue";
-import { defineComponent, h } from "vue";
+import { defineComponent, h, onMounted } from "vue";
 import { useData } from "vitepress";
 // import notice from "./components/notice.vue";
 // import MNavLinks from "./components/MNavLinks.vue"; // 引入导航组件
@@ -15,12 +15,6 @@ import NavLayout from './layouts/NavLayout.vue'; // 引入导航布局组件
 // 导入导航页相关组件
 import { NavPage } from './components/nav-page/index';
 import NavGrid from './components/nav-page/NavGrid.vue';
-
-// 导入自定义GoogleAd组件
-import GoogleAd from "./components/GoogleAd.vue";
-
-// 移除不兼容的vue-google-adsense库导入
-// import VueGoogleAdsense from 'vue-google-adsense'
 
 
 // Teek 在线主题包引用（需安装 Teek 在线版本）
@@ -72,6 +66,8 @@ import ThreeDModelViewer from './components/ThreeDModelViewer.vue'
 import MultipleChoiceQuestion from './components/MultipleChoiceQuestion.vue'
 import FillInTheBlank from './components/FillInTheBlank.vue'
 import PythonEditor from './components/PythonEditor.vue'
+// 导入Google AdSense广告组件
+import GoogleAdUnit from './components/GoogleAdUnit.vue'
 
 // 引入复制事件（复制后弹窗提示）
 import { useCopyEvent } from "./composables/useCopyEvent.ts";
@@ -83,8 +79,6 @@ import { useGuangbiaoTX } from "./components/guangbiaoTX/useGuangbiaoTX"; // ⬅
 import { initImageViewer } from "./style/dd-image/dd-image.ts" // 引入图片查看器功能（替换原版
 
 import EmojiShiroki from "./components/EmojiShiroki/index.vue"; // 引入EmojiShiroki组件
-
-
 
 export default {
   extends: Teek,
@@ -101,51 +95,13 @@ export default {
     // 注册全局组件
     app.component("friend-link", SLink);
     
-    // 移除不兼容的Google AdSense插件注册代码
-    // app.use(VueGoogleAdsense, {
-    //   adClient: 'ca-pub-2897720906666216', // 替换为您的AdSense发布商ID
-    //   adSlot: '4340179531', // 默认广告位ID
-    //   pageLevelAds: true, // 启用页面级广告
-    //   autoLoad: true // 自动加载广告
-    // })
-    
-    // 如需使用AdSense，建议创建自定义组件或使用其他与Vue 3兼容的库
-    
-    // 注册自定义GoogleAd组件
-    app.component("GoogleAd", GoogleAd);
-    // 创建ins别名，便于在文章中使用
-    app.component("ins", {
-      extends: GoogleAd,
-      props: {
-        dataAdClient: {
-          type: String,
-          default: 'ca-pub-2897720906666216'
-        },
-        dataAdSlot: {
-          type: String,
-          default: '4340179531'
-        },
-        dataAdFormat: {
-          type: String,
-          default: 'auto'
-        }
-      },
-      setup(props) {
-        // 将data-*属性映射到组件props
-        return {
-          adClient: props.dataAdClient,
-          adSlot: props.dataAdSlot,
-          adFormat: props.dataAdFormat,
-          isInArticle: true
-        };
-      }
-    });
-    
     // 注册3D模型查看器组件
     app.component('ThreeDModelViewer', ThreeDModelViewer);
     app.component('MultipleChoiceQuestion', MultipleChoiceQuestion);
     app.component('FillInTheBlank', FillInTheBlank);
     app.component('PythonEditor', PythonEditor);
+    // 注册Google AdSense广告组件
+    app.component('GoogleAdUnit', GoogleAdUnit);
 
     app.component("emoji-Shiroki", EmojiShiroki); // ◀️ 注入 Emoji 表情库组件布局
     app.component("NavLayout", NavLayout); // 注册导航布局组件
@@ -167,12 +123,16 @@ export default {
       router.onAfterRouteChange = () => {
         setTimeout(() => {
           NProgress.done();
+          // 页面切换时加载谷歌广告
+          loadGoogleAds();
         }, 100);
       };
 
     // 🔽 鼠标拖尾星星动画
     if (typeof window !== "undefined") {
       useGuangbiaoTX();
+      // 初始加载谷歌广告
+      loadGoogleAds();
     }  
 
     // 🔽 替换原版图片查看器
@@ -197,6 +157,8 @@ export default {
       if (typeof window !== 'undefined') {
             // 监听复制事件
             useCopyEvent();
+            // 布局加载时也加载谷歌广告
+            loadGoogleAds();
           }
 
       const props: Record<string, any> = {};
