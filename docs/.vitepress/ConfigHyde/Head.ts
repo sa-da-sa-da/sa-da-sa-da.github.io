@@ -211,10 +211,19 @@ export const HeadData = [
     },
   ],
   [
+    "ins",
+    {
+      class: "adsbygoogle",
+      style: "display:block",
+      "data-ad-format": "fluid",
+      "data-ad-layout-key": "-ii+7-14-2d+99",
+      "data-ad-client": "ca-pub-2897720906666216",
+      "data-ad-slot": "2668661755",
+    },
+  ],
+  [
     "script",
     {},
-    `
-      (adsbygoogle = window.adsbygoogle || []).push({});
-    `,
+    `(adsbygoogle = window.adsbygoogle || []).push({});`,
   ],
 ];
