@@ -116,7 +116,7 @@ onUnmounted(() => {
                     Personal Dashboard
                   </p>
                 </div>
-
+                <GoogleAd ad-slot="2668661755"/>
                 <div class="flex flex-col items-center md:items-end">
                   <div class="clock-time text-5xl md:text-6xl font-bold text-white tracking-wide drop-shadow-xl leading-none">
                     {{ timeStr || '00:00:00' }}
@@ -142,6 +142,7 @@ onUnmounted(() => {
             </div>
           </div>
         </div>
+        <GoogleAd ad-slot="7966054610"/>
       </template>
     </main>
 
