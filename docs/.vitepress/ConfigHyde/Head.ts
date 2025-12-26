@@ -202,4 +202,12 @@ export const HeadData = [
   // 新添加的脚本 
   // Google广告代码已移至GoogleAd组件中，不再需要在此处添加
   ["script", { async: "", customElement: "amp-ad", src: "https://cdn.ampproject.org/v0/amp-ad-0.1.js" }],
+  [
+    "script",
+    {
+      async: "async",
+      src: "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2897720906666216",
+      crossorigin: "anonymous",
+    },
+  ],
 ];
