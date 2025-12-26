@@ -59,7 +59,6 @@ import NavPage from '../components/nav-page/NavPage.vue';
 /* 导航页包装器 */
 .nav-page-wrapper {
   width: 100%;
-  display: flex;
   justify-content: center;
 }
 </style>

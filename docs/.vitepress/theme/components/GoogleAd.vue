@@ -171,8 +171,6 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  /* 添加背景色占位，避免闪烁 */
-  background-color: rgba(240, 240, 240, 0.2);
   min-height: 60px;
 }
 

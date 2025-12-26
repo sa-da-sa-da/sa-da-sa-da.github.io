@@ -208,13 +208,13 @@ onUnmounted(() => {
             <input type="text" class="search-input" v-model="searchText" @keyup.enter="handleSearch"
               :placeholder="currentEngine.placeholder" />
 
-           
+
 
             <button class="search-btn" @click="handleSearch">搜索</button>
           </div>
-          
+
         </div>
-        
+
         <!-- 第一个广告单元 - 放在两侧 -->
         <div class="ad-container">
           <div class="ad-unit-side left" v-if="adScriptLoaded">
@@ -227,11 +227,11 @@ onUnmounted(() => {
               data-ad-slot="7966054610" data-ad-format="auto" data-full-width-responsive="true"></ins>
           </div>
         </div>
- <!-- 第二个广告单元 - 移动到输入框和按钮之间 -->
-            <div class="ad-unit-inline" v-if="adScriptLoaded">
-              <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216"
-                data-ad-slot="3199691592" data-ad-format="fluid" data-ad-layout-key="-6j+cs-g-49+kk"></ins>
-            </div>
+        <!-- 第二个广告单元 - 移动到输入框和按钮之间 -->
+        <div class="ad-unit-inline" v-if="adScriptLoaded">
+          <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216"
+            data-ad-slot="3199691592" data-ad-format="fluid" data-ad-layout-key="-6j+cs-g-49+kk"></ins>
+        </div>
         <div class="nav-grid-wrapper">
           <NavGrid />
         </div>
@@ -239,12 +239,10 @@ onUnmounted(() => {
     </div>
   </div>
   <!-- hengban -->
-    <div class="ad-unit-inline" v-if="adScriptLoaded">
-  <ins class="adsbygoogle" style="display:block"
-    data-ad-client="ca-pub-2897720906666216" 
-    data-ad-slot="4281684534"
-    data-ad-format="auto" 
-    data-full-width-responsive="true"></ins></div>
+  <div class="ad-unit-inline" v-if="adScriptLoaded">
+    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="4281684534"
+      data-ad-format="auto" data-full-width-responsive="true"></ins>
+  </div>
 </template>
 
 <style scoped>
