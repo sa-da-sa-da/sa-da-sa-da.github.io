@@ -490,6 +490,14 @@ export default defineConfig({
     },
 
     plugins: [
+      // 添加groupIconVitePlugin配置，确保使用本地图标资源
+      groupIconVitePlugin({
+        // 自定义图标资源路径，使用本地路径
+        resourcePath: '/vp-icons.css',
+        // 禁用外部资源加载
+        external: false
+      }),
+      
       // 自动注入一级前缀（rewrite模式）
       AutoFrontmatter({
         pattern: "**/*.md",
