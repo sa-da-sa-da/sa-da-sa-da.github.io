@@ -77,6 +77,7 @@ import { useGuangbiaoTX } from "./components/guangbiaoTX/useGuangbiaoTX"; // ⬅
 import { initImageViewer } from "./style/dd-image/dd-image.ts" // 引入图片查看器功能（替换原版
 
 import EmojiShiroki from "./components/EmojiShiroki/index.vue"; // 引入EmojiShiroki组件
+import Adsense from "./components/Adsense.vue"; // 引入Adsense广告组件
 
 
 
@@ -111,6 +112,9 @@ export default {
     // 注册产品展示组件
     app.component('ProductGrid', ProductGrid);
     app.component('ProductDetail', ProductDetail);
+    
+    // 注册Adsense广告组件
+    app.component('Adsense', Adsense);
 
   
 

@@ -28,6 +28,9 @@ import {
   type TransformRule,
 } from "./theme/composables/useTransform";
 
+// 导入自动插入广告插件
+import { autoAdsense } from "./plugins/autoAdsense";
+
 const description = [
   "欢迎来到 sakaay-飒龘 当以读书通世事",
   "sakaay-飒龘 当以读书通世事 是一个基于 VitePress 构建的主题，是在默认主题的基础上进行拓展，支持 VitePress 的所有功能、配置",
@@ -547,6 +550,12 @@ export default defineConfig({
                           : undefined;*/
         },
       }),
+      
+      // 自动插入广告插件
+      autoAdsense({
+        minParagraphs: 8,  // 至少8个段落才插入广告
+        maxAds: 4          // 最多插入4个广告
+      }),
     ],
   },
 
@@ -554,7 +563,75 @@ export default defineConfig({
   base: "/",
 
   transformHtml: (code, id, context) => {
-    if (context.page !== "404.md") return code;
-    return code.replace("404 | ", "");
+    // 处理404页面
+    if (context.page === "404.md") {
+      return code.replace("404 | ", "");
+    }
+    
+    // 只处理markdown文章页面
+    if (!id.endsWith('.md')) {
+      return code;
+    }
+    
+    // 查找文章主内容区域
+    const mainContentMatch = code.match(/(<main[^>]*>)([\s\S]*?)(<\/main>)/i);
+    if (!mainContentMatch) {
+      return code;
+    }
+    
+    const [, mainStart, mainContent, mainEnd] = mainContentMatch;
+    
+    // 分割内容为段落
+    const paragraphs = mainContent.split(/(<p[^>]*>.*?<\/p>)/gi).filter(Boolean);
+    
+    // 计算段落数（只计算真正的段落标签）
+    const actualParagraphs = paragraphs.filter(p => p.startsWith('<p'));
+    
+    // 配置广告插入规则
+    const minParagraphs = 8;  // 至少8个段落才插入广告
+    const maxAds = 4;         // 最多插入4个广告
+    
+    // 如果段落数不足，不插入广告
+    if (actualParagraphs.length < minParagraphs) {
+      return code;
+    }
+    
+    // 计算需要插入的广告数量
+    const adCount = Math.min(
+      maxAds,
+      Math.floor(actualParagraphs.length / 5) // 每5个段落插入一个广告
+    );
+    
+    if (adCount === 0) {
+      return code;
+    }
+    
+    // 计算插入位置
+    const insertionPoints: number[] = [];
+    for (let i = 1; i <= adCount; i++) {
+      const position = Math.floor((actualParagraphs.length / (adCount + 1)) * i);
+      insertionPoints.push(position * 2 - 1); // 考虑段落标签和内容的交替排列
+    }
+    
+    // 插入广告
+    let modifiedContent = paragraphs;
+    let insertionOffset = 0;
+    
+    insertionPoints.forEach(position => {
+      const insertIndex = position + insertionOffset;
+      if (insertIndex < modifiedContent.length) {
+        // 在段落之间插入广告组件
+        modifiedContent.splice(insertIndex, 0, '<Adsense />');
+        insertionOffset++;
+      }
+    });
+    
+    // 重新组合内容
+    const newHtml = code.replace(
+      /(<main[^>]*>)([\s\S]*?)(<\/main>)/i,
+      `${mainStart}${modifiedContent.join('')}${mainEnd}`
+    );
+    
+    return newHtml;
   },
 });
