@@ -53,11 +53,21 @@
         </div>
       </div>
     </div>
+    
+    <!-- 广告单元 -->
+    <div class="ad-container">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-2897720906666216"
+           data-ad-slot="4281684534"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useData, useRoute } from 'vitepress'
 
 // 统一配置区
@@ -83,6 +93,14 @@ const currentUrl = computed(() => {
   const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
   const path = route.path === '/' ? '' : route.path.replace(/^\//, '')
   return `${normalizedBaseUrl}${path}`
+})
+
+// 组件挂载后执行广告代码
+onMounted(() => {
+  // 确保广告脚本已加载
+  if (typeof window.adsbygoogle !== 'undefined') {
+    window.adsbygoogle.push({})
+  }
 })
 </script>
 
