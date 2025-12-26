@@ -41,9 +41,6 @@ importers:
       vue-pdf-embed:
         specifier: ^2.1.3
         version: 2.1.3(vue@3.5.25)
-      vue-script2:
-        specifier: ^2.1.0
-        version: 2.1.0
     devDependencies:
       echarts:
         specifier: ^5.6.0
@@ -1222,9 +1219,6 @@ packages:
     resolution: {integrity: sha512-EGgZNb8HRrAloBpb8p8CugDpJpoPbQ8CFfAYdWZgq2e5qBMP9JSeLzVQIAJkXsclHXRIS3O9fp3WQbP9T5Inwg==}
     peerDependencies:
       vue: ^3.3.0
-
-  vue-script2@2.1.0:
-    resolution: {integrity: sha512-EDUOjQBFvhkJXwmWuUR9ijlF7/4JtmvjXSKaHSa/LNTMy9ltjgKgYB68aqlxgq8ORdSxowd5eo24P1syjZJnBA==}
 
   vue@3.5.25:
     resolution: {integrity: sha512-YLVdgv2K13WJ6n+kD5owehKtEXwdwXuj2TTyJMsO7pSeKw2bfRNZGjhB7YzrpbMYj5b5QsUebHpOqR3R3ziy/g==}
@@ -2409,8 +2403,6 @@ snapshots:
     dependencies:
       pdfjs-dist: 4.10.38
       vue: 3.5.25
-
-  vue-script2@2.1.0: {}
 
   vue@3.5.25:
     dependencies:

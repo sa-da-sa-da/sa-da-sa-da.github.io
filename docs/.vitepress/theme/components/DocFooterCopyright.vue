@@ -1,4 +1,13 @@
 <template>
+  <!-- 广告单元 -->
+    <div class="ad-container">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-2897720906666216"
+           data-ad-slot="4281684534"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+    </div>
   <div v-if="shouldShow" class="shiguang-public">
     <div class="copyright-card">
       <!-- 公共图标 -->
@@ -54,15 +63,7 @@
       </div>
     </div>
     
-    <!-- 广告单元 -->
-    <div class="ad-container">
-      <ins class="adsbygoogle"
-           style="display:block"
-           data-ad-client="ca-pub-2897720906666216"
-           data-ad-slot="4281684534"
-           data-ad-format="auto"
-           data-full-width-responsive="true"></ins>
-    </div>
+    
   </div>
 </template>
 

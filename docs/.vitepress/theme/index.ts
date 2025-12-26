@@ -80,6 +80,19 @@ import { initImageViewer } from "./style/dd-image/dd-image.ts" // 引入图片�
 
 import EmojiShiroki from "./components/EmojiShiroki/index.vue"; // 引入EmojiShiroki组件
 
+// 全局谷歌广告导入
+const loadGoogleAds = () => {
+  if (typeof window !== 'undefined' && !document.getElementById('google-adsense-script')) {
+    const script = document.createElement('script');
+    script.id = 'google-adsense-script';
+    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    document.head.appendChild(script);
+  }
+};
+
+
 export default {
   extends: Teek,
   async enhanceApp({ app, router }) {
