@@ -44,9 +44,6 @@ import ScheduleCard from "./ScheduleCard.vue"; //节日倒计时卡片
 
 import Twikoo from './Twikoo.vue' //评论组件
 
-// 导入广告注入器组件
-import PostListAdInjector from "./PostListAdInjector.vue";
-
 const ns = "layout-provider";
 const { frontmatter } = useData();
 
@@ -112,15 +109,6 @@ const handleConfigSwitch = (config: TeekConfig, style: string) => {
       
       <!-- 路由切换遮罩动画组件 -->
       <RouteSwitchingLoading />
-      
-      <!-- 文章列表广告注入器 -->
-      <PostListAdInjector />
-      
-      <!-- 文章内容广告注入器（在单篇文章内容中间插入广告） -->
-      <ArticleContentAdInjector />
-      <!-- 全局文章广告注入器 -->
-      <ArticlePostListAdInjector />
-      <slot name="teek-theme-enhance-bottom" />
     </template>
 
 
