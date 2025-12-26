@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_queue
+title: 4.4 TCP 半连接队列和全连接队列
 permalink: /network/tcp_queue
 categories:
   - 学习
@@ -9,6 +9,8 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201709/b87acc6bf5e4d85def697039e664c645.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.4 TCP 半连接队列和全连接队列
 
 网上许多博客针对增大 TCP 半连接队列和全连接队列的方式如下：

@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: ping
+title: 5.2 ping 的工作原理
 permalink: /network/ping
 categories:
   - 学习
@@ -8,7 +8,9 @@ categories:
   - 4_ip
 coverImg: >-
   http://cdn-hsyq-static.shanhutech.cn/bizhi/staticwp/202503/58027a08072962c94c5b3cc2a5a1e1af--1459684851.jpg
----
+--- 
+<GoogleAd ad-slot="2668661755"/>
+
 # 5.2 ping 的工作原理
 
 

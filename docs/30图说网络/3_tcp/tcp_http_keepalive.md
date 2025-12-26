@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_http_keepalive
+title: 4.15 TCP Keepalive 和 HTTP Keep-Alive 是一个东西吗？
 permalink: /network/tcp_http_keepalive
 categories:
   - 学习
@@ -8,6 +8,8 @@ categories:
   - 3_tcp
 coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/a/201910/21/5dad8140f0048.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.15 TCP Keepalive 和 HTTP Keep-Alive 是一个东西吗？
 
 大家好，我是小林。

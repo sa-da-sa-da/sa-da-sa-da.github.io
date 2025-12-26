@@ -14,13 +14,7 @@ tags:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201708/b956d70b738cf476edeb81619991b764.jpg
 ---
-
-<ins class="adsbygoogle"
-     style="display:block; text-align:center;"
-     data-ad-layout="in-article"
-     data-ad-format="fluid"
-     data-ad-client="ca-pub-2897720906666216"
-     data-ad-slot="3275724622"></ins>
+<GoogleAd ad-slot="2668661755"/>
 
 # 喂饭级教程！解决生图新体验：ComfyUI本地部署Zimage模型
 

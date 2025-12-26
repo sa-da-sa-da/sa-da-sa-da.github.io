@@ -9,6 +9,8 @@ tags:
 coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/a/201908/22/5d5e7c1591d27.jpg
 ---
 
+<GoogleAd ad-slot="2668661755"/>
+
 ## 引言
 
 在 LemLib 的大多数运动算法中都使用了 PID。LemLib 使用了两个 PID 控制器：一个用于横向运动，一个用于角运动。本教程将重点介绍这些 PID 的整定。

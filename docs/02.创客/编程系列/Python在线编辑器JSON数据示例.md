@@ -12,6 +12,10 @@ coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201711/f5d336a399accb02f8d5dcd081638f67.jpg
 ---
 
+<GoogleAd ad-slot="2668661755"/>
+
+
+
 # Python在线编辑器JSON数据示例
 
 本示例展示如何使用基于JSON数据格式的Python在线编辑器组件。

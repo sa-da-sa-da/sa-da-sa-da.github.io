@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_optimize
+title: 4.5 如何优化 TCP?
 permalink: /network/tcp_optimize
 categories:
   - 学习
@@ -9,6 +9,8 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201803/6834170cf8d094e81d7701a7c8b7f358.jpgp
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.5 如何优化 TCP?
 
 TCP 性能的提升不仅考察 TCP 的理论知识，还考察了对于操作系统提供的内核参数的理解与应用。

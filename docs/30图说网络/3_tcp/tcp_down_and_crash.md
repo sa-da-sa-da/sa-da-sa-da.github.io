@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_down_and_crash
+title: 4.12 TCP 连接，一端断电和进程崩溃有什么区别？
 permalink: /network/tcp_down_and_crash
 categories:
   - 学习
@@ -9,6 +9,8 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static.shanhutech.cn/bizhi/staticwp/202503/58027a08072962c94c5b3cc2a5a1e1af--1459684851.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.12 TCP 连接，一端断电和进程崩溃有什么区别？
 
 有位读者找我说，他在面试腾讯的时候，遇到了这么个问题：

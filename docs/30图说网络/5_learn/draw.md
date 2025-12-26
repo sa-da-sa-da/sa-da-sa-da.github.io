@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: draw
+title: 6.2 画图经验分享
 permalink: /network/draw
 categories:
   - 学习
@@ -8,7 +8,9 @@ categories:
   - 5_learn
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201711/b546b417ee6c24c88e7bce121dfc0732.jpg
----
+--- 
+<GoogleAd ad-slot="2668661755"/>
+
 # 6.2 画图经验分享
 
 小林写这么多篇图解文章，你们猜我收到的最多的读者问题是什么？没错，就是问我是使用什么**画图**工具，看来对这一点大家都相当好奇，那干脆不如写一篇介绍下我是怎么画图的。

@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_stream
+title: 4.6 如何理解是 TCP 面向字节流协议？
 permalink: /network/tcp_stream
 categories:
   - 学习
@@ -9,6 +9,8 @@ categories:
 coverImg: >-
   http://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201904/6d41dac385290719603572cf2f4121c9.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.6 如何理解是 TCP 面向字节流协议？
 
 有个读者问我，这么个问题：

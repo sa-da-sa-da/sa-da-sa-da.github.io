@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_no_accpet
+title: 4.20 没有 accept，能建立 TCP 连接吗？
 permalink: /network/tcp_no_accpet
 categories:
   - 学习
@@ -9,6 +9,8 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201707/410b261ac8d01bfec2ff794fb5ac7d8e.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.20 没有 accept，能建立 TCP 连接吗？
 
 > 来源：公众号@小白 debug

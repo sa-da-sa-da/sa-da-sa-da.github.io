@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: quic
+title: 4.17 如何基于 UDP 协议实现可靠传输？
 permalink: /network/quic
 categories:
   - 学习
@@ -9,6 +9,8 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201711/5528d06746b9c3b13b4c253d1c18159c.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.17 如何基于 UDP 协议实现可靠传输？
 
 大家好，我是小林。

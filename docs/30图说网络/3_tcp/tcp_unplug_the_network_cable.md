@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_unplug_the_network_cable
+title: 4.13 拔掉网线后，原本的 TCP 连接还存在吗？
 permalink: /network/tcp_unplug_the_network_cable
 categories:
   - 学习
@@ -8,7 +8,9 @@ categories:
   - 3_tcp
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/202006/ff6084b4d3db5b80fc6b3fdd7d8a33d0--746280784.jpg
----
+--- 
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.13 拔掉网线后，原本的 TCP 连接还存在吗？
 
 大家好，我是小林。

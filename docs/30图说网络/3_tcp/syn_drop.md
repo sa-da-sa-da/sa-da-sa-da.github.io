@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: syn_drop
+title: 4.8 SYN 报文什么时候情况下会被丢弃？
 permalink: /network/syn_drop
 categories:
   - 学习
@@ -9,6 +9,8 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static.shanhutech.cn/bizhi/staticwp/202304/45e2e370615f8766e0eae1d13f59274b--1195357847.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.8 SYN 报文什么时候情况下会被丢弃？
 
 大家好，我是小林。

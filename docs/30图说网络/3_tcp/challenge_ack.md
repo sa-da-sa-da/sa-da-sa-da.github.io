@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: challenge_ack
+title: 4.9 已建立连接的 TCP，收到 SYN 会发生什么？
 permalink: /network/challenge_ack
 categories:
   - 学习
@@ -9,6 +9,9 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201803/30ebae5827f11043c459c4392ec97158.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
+
 # 4.9 已建立连接的 TCP，收到 SYN 会发生什么？
 
 大家好，我是小林。

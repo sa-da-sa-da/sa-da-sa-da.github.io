@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: https_ecdhe
+title: 3.4 HTTPS ECDHE 握手解析
 permalink: /network/https_ecdhe
 categories:
   - 学习
@@ -9,6 +9,9 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201709/481a9aa2daa67143fd7e454bd091edde.jpg
 ---
+
+<GoogleAd ad-slot="2668661755"/>
+
 # 3.4 HTTPS ECDHE 握手解析
 
 HTTPS 常用的密钥交换算法有两种，分别是 RSA 和 ECDHE 算法。

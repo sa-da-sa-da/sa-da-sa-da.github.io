@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: http3
+title: 3.7 HTTP/3 强势来袭
 permalink: /network/http3
 categories:
   - 学习
@@ -9,6 +9,10 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201901/9d083f65bf6443046ed3136b31963d18.jpg
 ---
+
+<GoogleAd ad-slot="2668661755"/>
+
+
 # 3.7 HTTP/3 强势来袭
 
 HTTP/3 现在（2022 年 5 月）还没正式推出，不过自 2017 年起，HTTP/3 已经更新到 34 个草案了，基本的特性已经确定下来了，对于包格式可能后续会有变化。

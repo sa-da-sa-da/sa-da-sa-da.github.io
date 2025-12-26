@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_problem
+title: 4.16 TCP 协议有什么缺陷？
 permalink: /network/tcp_problem
 categories:
   - 学习
@@ -9,6 +9,8 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201711/5528d06746b9c3b13b4c253d1c18159c.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.16 TCP 协议有什么缺陷？
 
 大家好，我是小林。

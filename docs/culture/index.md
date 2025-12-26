@@ -5,7 +5,8 @@ date: 2025-12-23 08:00:00
 coverImg: /img/culture/banner.jpg
 categories:
   - culture
----
+--- 
+<GoogleAd ad-slot="2668661755"/>
 
 # 校园文创产品展示
 

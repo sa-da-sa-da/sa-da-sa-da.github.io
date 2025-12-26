@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: http_websocket
+title: 3.9 既然有 HTTP 协议，为什么还要有 WebSocket？
 permalink: /network/http_websocket
 categories:
   - 学习
@@ -8,6 +8,9 @@ categories:
   - 2_http
 coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/a/202001/06/5e12d319576be.jpg
 ---
+
+<GoogleAd ad-slot="2668661755"/>
+
 # 3.9 既然有 HTTP 协议，为什么还要有 WebSocket？
 
 > 来源：公众号@小白 debug

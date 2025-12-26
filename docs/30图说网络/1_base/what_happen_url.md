@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: what_happen_url
+title: 2.2 键入网址到网页显示，期间发生了什么？
 permalink: /network/what_happen_url
 categories:
   - 学习
@@ -9,6 +9,8 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201801/5b7a28d1c7ca1c2c32d45a2540a8750f.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 2.2 键入网址到网页显示，期间发生了什么？
 
 想必不少小伙伴面试过程中，会遇到「**当键入网址后，到网页显示，其间发生了什么**」的面试题。

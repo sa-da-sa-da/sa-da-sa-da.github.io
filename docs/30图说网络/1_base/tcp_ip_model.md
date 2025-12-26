@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_ip_model
+title: 2.1 TCP/IP 网络模型有哪几层？
 permalink: /network/tcp_ip_model
 categories:
   - 学习
@@ -9,6 +9,9 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201704/dc81f1d613a2a4f2f02a8232388646c4.jpg
 ---
+
+<GoogleAd ad-slot="2668661755"/>
+
 # 2.1 TCP/IP 网络模型有哪几层？
 
 问大家，为什么要有 TCP/IP 网络模型？

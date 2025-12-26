@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: isn_deff
+title: 4.7 为什么 TCP 每次建立连接时，初始化序列号都要不一样呢？
 permalink: /network/isn_deff
 categories:
   - 学习
@@ -9,6 +9,9 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201704/dc81f1d613a2a4f2f02a8232388646c4.jpg
 ---
+
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.7 为什么 TCP 每次建立连接时，初始化序列号都要不一样呢？
 
 大家好，我是小林。

@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_drop
+title: 4.21 用了 TCP 协议，数据一定不会丢吗？
 permalink: /network/tcp_drop
 categories:
   - 学习
@@ -9,6 +9,8 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201706/6b445a281d613f0f9aba16e7523eb39e.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.21 用了 TCP 协议，数据一定不会丢吗？
 
 > 来源：公众号@小白 debug

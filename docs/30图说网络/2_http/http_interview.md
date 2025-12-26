@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: http_interview
+title: 3.1 HTTP 常见面试题
 permalink: /network/http_interview
 categories:
   - 学习
@@ -9,6 +9,9 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201706/6b445a281d613f0f9aba16e7523eb39e.jpg
 ---
+
+<GoogleAd ad-slot="2668661755"/>
+
 # 3.1 HTTP 常见面试题
 
 在面试过程中，HTTP 被提问的概率还是比较高的。

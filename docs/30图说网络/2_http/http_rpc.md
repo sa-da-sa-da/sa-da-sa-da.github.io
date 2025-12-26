@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: http_rpc
+title: 3.8 既然有 HTTP 协议，为什么还要有 RPC？
 permalink: /network/http_rpc
 categories:
   - 学习
@@ -9,6 +9,11 @@ categories:
 coverImg: >-
   http://cdn-hsyq-static.shanhutech.cn/bizhi/staticwp/202503/58027a08072962c94c5b3cc2a5a1e1af--1459684851.jpg
 ---
+
+<GoogleAd ad-slot="2668661755"/>
+
+
+
 # 3.8 既然有 HTTP 协议，为什么还要有 RPC？
 
 > 来源：公众号@小白 debug

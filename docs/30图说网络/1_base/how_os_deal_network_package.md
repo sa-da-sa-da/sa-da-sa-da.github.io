@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: how_os_deal_network_package
+title: 2.3 Linux 系统是如何收发网络包的？
 permalink: /network/how_os_deal_network_package
 categories:
   - 学习
@@ -9,6 +9,9 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201705/eaba18ed5075d2c80611fbac6ed1d34a.jpg
 ---
+
+<GoogleAd ad-slot="2668661755"/>
+
 # 2.3 Linux 系统是如何收发网络包的？
 
 这次，就围绕一个问题来说。

@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: ip_base
+title: 5.1 IP 基础知识全家桶
 permalink: /network/ip_base
 categories:
   - 学习
@@ -8,7 +8,9 @@ categories:
   - 4_ip
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201708/b956d70b738cf476edeb81619991b764.jpg
----
+--- 
+<GoogleAd ad-slot="2668661755"/>
+
 #  5.1 IP 基础知识全家桶
 
 前段时间，有读者希望我写一篇关于 IP 分类地址、子网划分等的文章，他反馈常常混淆，摸不着头脑。

@@ -1,13 +1,15 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_tls
+title: 4.14 HTTPS 中 TLS 和 TCP 能同时握手吗？
 permalink: /network/tcp_tls
 categories:
   - 学习
   - 30图说网络
   - 3_tcp
 coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/a/201910/21/5dad8140f0048.jpg
----
+--- 
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.14 HTTPS 中 TLS 和 TCP 能同时握手吗？
 
 大家好，我是小林。

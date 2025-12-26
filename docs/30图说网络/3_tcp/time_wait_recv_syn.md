@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: time_wait_recv_syn
+title: 4.11 在 TIME_WAIT 状态的 TCP 连接，收到 SYN 后会发生什么？
 permalink: /network/time_wait_recv_syn
 categories:
   - 学习
@@ -8,7 +8,9 @@ categories:
   - 3_tcp
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201704/ca9d052cc415059b002d4d46b236b206.jpg
----
+--- 
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.11 在 TIME_WAIT 状态的 TCP 连接，收到 SYN 后会发生什么？
 
 大家好，我是小林。

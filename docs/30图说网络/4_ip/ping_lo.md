@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: ping_lo
+title: 5.3 断网了，还能 ping 通 127.0.0.1 吗？
 permalink: /network/ping_lo
 categories:
   - 学习
@@ -8,7 +8,9 @@ categories:
   - 4_ip
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201803/30ebae5827f11043c459c4392ec97158.jpg
----
+--- 
+<GoogleAd ad-slot="2668661755"/>
+
 # 5.3 断网了，还能 ping 通 127.0.0.1 吗？
 
 > 来源：公众号@小白 debug

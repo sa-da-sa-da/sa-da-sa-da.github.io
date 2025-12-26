@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_feature
+title: 4.2 TCP 重传、滑动窗口、流量控制、拥塞控制
 permalink: /network/tcp_feature
 categories:
   - 学习
@@ -9,6 +9,8 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201803/37c5fcac05159bab31e2c8d0a3d6f517.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.2 TCP 重传、滑动窗口、流量控制、拥塞控制
 
 TCP **巨复杂**，它为了保证可靠性，用了巨多的机制来保证，真是个「伟大」的协议，写着写着发现这水太深了。。。

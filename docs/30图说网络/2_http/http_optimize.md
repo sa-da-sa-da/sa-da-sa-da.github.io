@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: http_optimize
+title: 3.2 HTTP/1.1 如何优化？
 permalink: /network/http_optimize
 categories:
   - 学习
@@ -9,6 +9,9 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201803/91b05a804e53f49a903a6a68aff89321.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
+
 # 3.2 HTTP/1.1 如何优化？
 
 问你一句：「**你知道 HTTP/1.1 该如何优化吗？**」

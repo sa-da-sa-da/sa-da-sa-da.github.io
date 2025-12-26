@@ -12,6 +12,7 @@ tags:
 coverImg: >-
   http://cdn-hsyq-static.shanhutech.cn/bizhi/staticwp/202503/58027a08072962c94c5b3cc2a5a1e1af--1459684851.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
 
 # Python编程题目示例
 

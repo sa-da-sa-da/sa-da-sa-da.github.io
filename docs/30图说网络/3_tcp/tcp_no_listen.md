@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_no_listen
+title: 4.19 服务端没有 listen，客户端发起连接建立，会发生什么？
 permalink: /network/tcp_no_listen
 categories:
   - 学习
@@ -9,6 +9,8 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201803/37c5fcac05159bab31e2c8d0a3d6f517.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.19 服务端没有 listen，客户端发起连接建立，会发生什么？
 
 大家好，我是小林。

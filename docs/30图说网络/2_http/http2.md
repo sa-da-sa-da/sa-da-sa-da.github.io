@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: http2
+title: 3.6 HTTP/2 牛逼在哪？
 permalink: /network/http2
 categories:
   - 学习
@@ -9,6 +9,9 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201707/410b261ac8d01bfec2ff794fb5ac7d8e.jpg
 ---
+
+<GoogleAd ad-slot="2668661755"/>
+
 # 3.6 HTTP/2 牛逼在哪？ 
 
 

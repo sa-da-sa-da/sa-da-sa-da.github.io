@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: port
+title: 4.18 TCP 和 UDP 可以使用同一个端口吗？
 permalink: /network/port
 categories:
   - 学习
@@ -10,6 +10,8 @@ coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201709/f3ad41747f7933acd1d62083f557df1f.jpg
 ---
 # 4.18 TCP 和 UDP 可以使用同一个端口吗？
+
+<GoogleAd ad-slot="2668661755"/>
 
 大家好，我是小林。
 

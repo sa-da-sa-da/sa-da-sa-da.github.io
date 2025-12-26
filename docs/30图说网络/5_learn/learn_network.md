@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: learn_network
+title: 6.1 计算机网络怎么学？
 permalink: /network/learn_network
 categories:
   - 学习
@@ -8,7 +8,9 @@ categories:
   - 5_learn
 coverImg: >-
   https://cdn-hsyq-static.shanhutech.cn/bizhi/staticwp/202304/45e2e370615f8766e0eae1d13f59274b--1195357847.jpg
----
+--- 
+<GoogleAd ad-slot="2668661755"/>
+
 # 6.1 计算机网络怎么学？
 
 计算机网络相比操作系统好学非常多，因为计算机网络不抽象，你要想知道网络中的细节，你都可以通过抓包来分析，而且不管是手机、个人电脑和服务器，它们所使用的计算网络协议是一致的。

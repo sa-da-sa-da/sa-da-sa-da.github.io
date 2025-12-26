@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: out_of_order_fin
+title: 4.10 四次挥手中收到乱序的 FIN 包会如何处理？
 permalink: /network/out_of_order_fin
 categories:
   - 学习
@@ -9,6 +9,9 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/202006/ff6084b4d3db5b80fc6b3fdd7d8a33d0--746280784.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
+
 # 4.10 四次挥手中收到乱序的 FIN 包会如何处理？
 
 大家好，我是小林。

@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_three_fin
+title: 4.22 TCP 四次挥手，可以变成三次吗？
 permalink: /network/tcp_three_fin
 categories:
   - 学习
@@ -9,6 +9,8 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201803/d40a66a19a2608b77ded14770c2a31cb.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.22 TCP 四次挥手，可以变成三次吗？
 
 大家好，我是小林。

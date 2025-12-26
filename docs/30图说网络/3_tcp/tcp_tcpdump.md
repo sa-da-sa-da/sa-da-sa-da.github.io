@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_tcpdump
+title: 4.3 TCP 实战抓包分析
 permalink: /network/tcp_tcpdump
 categories:
   - 学习
@@ -9,6 +9,8 @@ categories:
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201704/dc81f1d613a2a4f2f02a8232388646c4.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.3 TCP 实战抓包分析
 
 为了让大家更容易「看得见」TCP，我搭建不少测试环境，并且数据包抓很多次，花费了不少时间，才抓到比较容易分析的数据包。

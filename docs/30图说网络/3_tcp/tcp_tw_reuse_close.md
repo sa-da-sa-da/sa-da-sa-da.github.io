@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_tw_reuse_close
+title: 4.14 tcp_tw_reuse 为什么默认是关闭的？
 permalink: /network/tcp_tw_reuse_close
 categories:
   - 学习
@@ -8,7 +8,9 @@ categories:
   - 3_tcp
 coverImg: >-
   https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201707/25e414e406382516b40ab41abc1fa91f.jpg
----
+--- 
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.14 tcp_tw_reuse 为什么默认是关闭的？
 
 大家好，我是小林。

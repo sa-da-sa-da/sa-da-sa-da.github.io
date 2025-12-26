@@ -1,6 +1,6 @@
 ---
 date: 2025-12-23 15:46:43
-title: tcp_interview
+title: 4.1 TCP 三次握手与四次挥手面试题
 permalink: /network/tcp_interview
 categories:
   - 学习
@@ -8,6 +8,8 @@ categories:
   - 3_tcp
 coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/a/201911/01/5dbbd5ade0727.jpg
 ---
+<GoogleAd ad-slot="2668661755"/>
+
 # 4.1 TCP 三次握手与四次挥手面试题
 
 大家好，我是小林。
