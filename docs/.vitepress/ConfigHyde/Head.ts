@@ -82,8 +82,8 @@ const HeadData: HeadConfig[] = [
     'script',
     {},
     `
-      // 确保DOM加载完成后执行
-      document.addEventListener('DOMContentLoaded', function() {
+      // 立即执行广告注入逻辑，不依赖DOMContentLoaded
+      (function() {
         // 侧边栏广告注入函数
         function injectSidebarAds() {
           try {
@@ -161,9 +161,67 @@ const HeadData: HeadConfig[] = [
           }
         }
         
-        // 延迟执行广告注入，确保页面元素已完全加载
+        // 首次加载时执行
         setTimeout(injectSidebarAds, 500);
-      });
+        
+        // 监听页面变化，支持VitePress单页应用导航
+        // 1. 使用MutationObserver监测页面主要内容变化
+        const observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+              // 检查是否有侧边栏相关元素被添加
+              if (mutation.addedNodes.length > 0) {
+                setTimeout(injectSidebarAds, 100);
+              }
+            }
+          });
+        });
+        
+        // 开始观察body元素的变化
+        if (document.body) {
+          observer.observe(document.body, {
+            childList: true,
+            subtree: true
+          });
+        }
+        
+        // 2. 监听路由变化（针对history.pushState和replaceState）
+        const originalPushState = history.pushState;
+        const originalReplaceState = history.replaceState;
+        
+        history.pushState = function(...args) {
+          const result = originalPushState.apply(this, args);
+          setTimeout(injectSidebarAds, 300); // 页面导航后延迟执行
+          return result;
+        };
+        
+        history.replaceState = function(...args) {
+          const result = originalReplaceState.apply(this, args);
+          setTimeout(injectSidebarAds, 300); // 页面导航后延迟执行
+          return result;
+        };
+        
+        // 3. 监听popstate事件（针对浏览器前进/后退按钮）
+        window.addEventListener('popstate', function() {
+          setTimeout(injectSidebarAds, 300);
+        });
+        
+        // 4. 监听hashchange事件（针对URL hash变化）
+        window.addEventListener('hashchange', function() {
+          setTimeout(injectSidebarAds, 300);
+        });
+        
+        // 作为最后的保险，定时检查广告是否正常显示
+        setInterval(function() {
+          const hasAds = document.querySelectorAll('.VPDocAside .nav-aside').length > 0;
+          const hasSidebar = document.querySelectorAll('.VPDocAside').length > 0;
+          
+          // 如果存在侧边栏但没有广告，则重新注入
+          if (hasSidebar && !hasAds) {
+            injectSidebarAds();
+          }
+        }, 5000); // 每5秒检查一次
+      })();
     `,
   ],
 ]
