@@ -163,10 +163,10 @@ export const techStackIcons = [
 
 export const ossProjects = [
   {
-    name: "Teek-One",
-    desc: "🎉 Teek~一款简约、唯美、丝滑且强大的VitePress主题博客",
-    tag: { name: "React", bg: "#e3edfa", color: "#3976c6" },
-    projectsimg: "https://img.onedayxyy.cn/images/image-20250502073710566.png",
+    name: "青少年编程训练软件",
+    desc: "🎉 一款面向中小学学生的编程训练软件，帮助学生提升编程能力和兴趣。",
+    tag: { name: "python", bg: "#e3edfa", color: "#3976c6" },
+    projectsimg: "https://img.sakaay.com/d/img/bz/20251214_183312_6280.avif",
     Star: '35.0k',
     Fork: '12.6k',
     View: '32.6k',
@@ -176,7 +176,7 @@ export const ossProjects = [
     name: "Typora-One",
     desc: "Teek 是一个轻量、简洁高效、灵活配置、易于扩展的 VitePress 主题 ✨",
     tag: { name: "JavaScript", bg: "#fffbe6", color: "#e4ae3a" },
-    projectsimg: "https://img.onedayxyy.cn/images/image-20240911120905085.png",
+    projectsimg: "https://img.sakaay.com/d/img/bz/20251214_183312_6280.avif",
     Star: '96.8k',
     Fork: '46.2k',
     View: '79.3k',

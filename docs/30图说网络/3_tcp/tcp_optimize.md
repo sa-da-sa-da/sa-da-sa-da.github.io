@@ -1,13 +1,12 @@
 ---
-date: 2025-12-23 15:46:43
+date: 2025-12-23 23:46:43
 title: 4.5 如何优化 TCP?
 permalink: /network/tcp_optimize
 categories:
   - 学习
   - 30图说网络
   - 3_tcp
-coverImg: >-
-  https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201803/6834170cf8d094e81d7701a7c8b7f358.jpgp
+coverImg: https://img.sakaay.com/d/img/bz/20251214_184646_5656.avif
 ---
 <GoogleAd ad-slot="2668661755"/>
 

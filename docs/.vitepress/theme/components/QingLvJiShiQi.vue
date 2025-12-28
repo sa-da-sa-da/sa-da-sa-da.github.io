@@ -39,7 +39,7 @@
         
         <!-- 右侧头像 -->
         <div class="avatar-wrapper right-avatar">
-          <img src="https://img.onedayxyy.cn/images/fxj.jpg" alt="情侣头像2" class="avatar-image">
+          <img src="https://img.sakaay.com/d/img/bz/20251214_183312_6280.avif" alt="情侣头像2" class="avatar-image">
           <div class="gender-indicator female">
             <span class="icon">♀</span>
           </div>

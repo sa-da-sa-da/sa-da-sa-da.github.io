@@ -18,6 +18,6 @@ export const SocialDate: Social[] = [
     icon: "icon-mobile",
     iconType: "iconfont",
     name: "微信",
-    link: "https://img.onedayxyy.cn/images/image-20230107215114763-1694437284994-1-1697348761221-1-1697407921190-1-1697636582091-3-1698965093137-1.png",
+    link: "https://img.sakaay.com/d/img/bz/20251214_183312_6280.avif",
   },
 ];

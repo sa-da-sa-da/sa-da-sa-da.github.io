@@ -920,7 +920,7 @@ var teekConfig = defineTeekConfig({
     // 侧边栏个人昵称
     slogan: "\u5F53\u4EE5\u8BFB\u4E66\u901A\u4E16\u4E8B",
     // 侧边栏个人座右铭
-    circleBgImg: "https://img.onedayxyy.cn/images/Teek/TeekBg/14.webp",
+    circleBgImg: "https://img.sakaay.com/d/img/sakaay/14.avif",
     // 侧边栏个人头像圆形背景图
     circleBgMask: false,
     // 头像圆形背景图是否显示遮罩层

@@ -677,26 +677,21 @@ function startServiceMonitoring() {
 function getFallbackImages(): string[] {
   // 从 Wallaper.ts 导入的备用图片
   const fallbackImages = [
-    "https://img.xxdevops.cn/blog/wallpaper/bg01.webp", 
-    "https://img.xxdevops.cn/blog/wallpaper/bg02.webp", 
-    "https://img.xxdevops.cn/blog/wallpaper/bg03.webp", 
-    "https://img.xxdevops.cn/blog/wallpaper/bg04.webp", 
-    "https://img.xxdevops.cn/blog/wallpaper/bg05.webp", 
-    "https://img.xxdevops.cn/blog/wallpaper/bg06.webp", 
-    "https://img.xxdevops.cn/blog/wallpaper/bg07.webp", 
-    "https://img.xxdevops.cn/blog/wallpaper/bg08.webp", 
-    "https://img.xxdevops.cn/blog/wallpaper/bg09.webp", 
-    "https://img.xxdevops.cn/blog/wallpaper/bg10.webp", 
-    "https://img.xxdevops.cn/blog/wallpaper/bg11.webp", 
-    "https://img.xxdevops.cn/blog/wallpaper/bg12.webp",
-    "https://img.xxdevops.cn/blog/wallpaper/bg13.webp",
-    "https://img.xxdevops.cn/blog/wallpaper/bg14.webp",
-    "https://img.xxdevops.cn/blog/wallpaper/bg15.webp",
-    "https://img.xxdevops.cn/blog/wallpaper/bg16.webp",
-    "https://img.xxdevops.cn/blog/wallpaper/bg17.webp",
-    "https://img.xxdevops.cn/blog/wallpaper/bg18.webp",
-    "https://img.xxdevops.cn/blog/wallpaper/bg19.webp",
-    "https://img.xxdevops.cn/blog/wallpaper/bg20.webp"
+    "https://img.sakaay.com/d/img/bz/06e8a51ef12581befd70b168dd914d77--3968391448.avif",
+    "https://img.sakaay.com/d/img/bz/10ada35bb4c54f127960eefb66849e56.avif",
+    "https://img.sakaay.com/d/img/bz/1555298b8bcf9421b5fb2cd96a9fc4d5.avif",
+    "https://img.sakaay.com/d/img/bz/20251214_181402_1481.avif",
+    "https://img.sakaay.com/d/img/bz/20251214_181726_7812.avif",
+    "https://img.sakaay.com/d/img/bz/20251214_182048_3384.avif",
+    "https://img.sakaay.com/d/img/bz/20251214_182429_5973.avif",
+    "https://img.sakaay.com/d/img/bz/20251214_182652_8031.avif",
+    "https://img.sakaay.com/d/img/bz/20251214_183007_8604.avif",
+    "https://img.sakaay.com/d/img/bz/20251214_183312_6280.avif",
+    "https://img.sakaay.com/d/img/bz/20251214_183454_2298.avif",
+    "https://img.sakaay.com/d/img/bz/20251214_183820_2371.avif",
+    "https://img.sakaay.com/d/img/bz/20251214_184024_1600.avif",
+    "https://img.sakaay.com/d/img/bz/20251214_184248_3865.avif",
+    "https://img.sakaay.com/d/img/bz/20251214_184452_6198.avif",
   ]
   return fallbackImages
 }

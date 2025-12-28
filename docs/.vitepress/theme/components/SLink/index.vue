@@ -112,7 +112,7 @@
         <pre ref="messageFormat">
 名称: sakaay
 链接: https://sakaay.com/
-头像: https://img.onedayxyy.cn/images/Teek/Teekwebsite/xyy-logo.webp
+头像: https://img.sakaay.com/d/img/bz/20251214_183312_6280.avif
 描述: 当以读书通世事</pre>
 
         <!-- 评论区插槽 -->
