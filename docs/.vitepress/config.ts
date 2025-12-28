@@ -18,10 +18,9 @@ import {
 import timeline from "vitepress-markdown-timeline"; // 导入时间线插件
 
 import type { HeadConfig } from "vitepress"; // 在文件顶部添加类型导入
-import { HeadData } from "./ConfigHyde/Head"; // 导入 HeadData 导入和类型断言
+import HeadData from "./ConfigHyde/Head"; // 导入 HeadData（修改为默认导入方式）
 
 import { createRewrites } from "vitepress-theme-teek/config";
-
 import AutoFrontmatter, { FileInfo } from "vitepress-plugin-auto-frontmatter";
 import {
   useTransformByRules,
