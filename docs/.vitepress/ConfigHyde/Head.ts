@@ -210,8 +210,8 @@ export const HeadData = [
     `
       // 等待页面加载完成后执行
       document.addEventListener('DOMContentLoaded', function() {
-        // 查找所有class为aside的元素
-        const asideElements = document.querySelectorAll('.aside');
+        // 查找所有VPDocAside元素
+        const asideElements = document.querySelectorAll('.VPDocAside');
         
         // 为每个aside元素添加广告
         asideElements.forEach((aside, index) => {
@@ -222,6 +222,7 @@ export const HeadData = [
           adContainer.style.padding = '10px';
           adContainer.style.backgroundColor = '#f8f9fa';
           adContainer.style.borderRadius = '4px';
+          adContainer.style.height = 'auto !important';
           
           // 创建广告注释
           const comment = document.createComment(" nav-aside ");
@@ -232,9 +233,9 @@ export const HeadData = [
           adElement.className = 'adsbygoogle';
           adElement.style.display = 'block';
           adElement.style.width = '100%';
-          adElement.style.height = '250px';
+          adElement.style.height = '600px';
           adElement.setAttribute('data-ad-client', 'ca-pub-2897720906666216');
-          adElement.setAttribute('data-ad-slot', '4522753183'); // 更新为新的广告位ID
+          adElement.setAttribute('data-ad-slot', '4522753183'); // 使用新的广告位ID
           adElement.setAttribute('data-ad-format', 'auto');
           adElement.setAttribute('data-full-width-responsive', 'true');
           
@@ -246,8 +247,23 @@ export const HeadData = [
           scriptElement.textContent = '(adsbygoogle = window.adsbygoogle || []).push({});';
           adContainer.appendChild(scriptElement);
           
-          // 将广告容器添加到aside元素
-          aside.appendChild(adContainer);
+          // 查找doc-outline-aria-label元素
+          const docOutlineElement = aside.querySelector('#doc-outline-aria-label');
+          const spacerElement = aside.querySelector('.spacer');
+          
+          if (docOutlineElement && spacerElement) {
+            // 在doc-outline-aria-label之后，spacer之前插入广告
+            docOutlineElement.parentNode.insertBefore(adContainer, spacerElement);
+          } else if (docOutlineElement) {
+            // 如果只有doc-outline-aria-label，则在其后插入
+            docOutlineElement.parentNode.insertBefore(adContainer, docOutlineElement.nextSibling);
+          } else if (spacerElement) {
+            // 如果只有spacer，则在其前插入
+            spacerElement.parentNode.insertBefore(adContainer, spacerElement);
+          } else {
+            // 如果都没有，就添加到aside元素末尾
+            aside.appendChild(adContainer);
+          }
         });
       });
     `,
