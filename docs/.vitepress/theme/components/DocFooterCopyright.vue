@@ -1,6 +1,6 @@
 <template>
-  <!-- 广告单元 -->
-    <div class="ad-container">
+  <!-- 文档底部广告单元 -->
+    <div class="ad-container doc-footer-ad">
       <ins class="adsbygoogle"
            style="display:block"
            data-ad-client="ca-pub-2897720906666216"
@@ -69,7 +69,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, nextTick } from 'vue'
 import { useData, useRoute } from 'vitepress'
 
 // 统一配置区
@@ -98,10 +98,30 @@ const currentUrl = computed(() => {
 })
 
 // 组件挂载后执行广告代码
-onMounted(() => {
+onMounted(async () => {
+  // 使用nextTick确保DOM已完全渲染
+  await nextTick()
+  
   // 确保广告脚本已加载
-  if (typeof window.adsbygoogle !== 'undefined') {
-    window.adsbygoogle.push({})
+  try {
+    // 确保全局adsbygoogle对象存在
+    if (typeof window !== 'undefined' && window.adsbygoogle) {
+      // 为底部广告单独创建一个广告实例
+      const footerAdElement = document.querySelector('.doc-footer-ad .adsbygoogle')
+      if (footerAdElement) {
+        // 安全地初始化底部广告
+        window.adsbygoogle.push({})
+      }
+    } else {
+      // 如果全局广告脚本未加载，使用延迟重试机制
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && window.adsbygoogle) {
+          window.adsbygoogle.push({})
+        }
+      }, 1000)
+    }
+  } catch (error) {
+    console.warn('底部广告初始化时发生错误:', error)
   }
 })
 </script>
