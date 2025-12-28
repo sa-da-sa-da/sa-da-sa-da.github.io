@@ -230,7 +230,7 @@ export const teekConfig = defineTeekConfig({
   },
   // 友情链接卡片配置
   friendLink: {
-    enabled: true, // 是否启用友情链接卡片
+    enabled: false, // 是否启用友情链接卡片
     list: [
       {
         name: "Teeker",
