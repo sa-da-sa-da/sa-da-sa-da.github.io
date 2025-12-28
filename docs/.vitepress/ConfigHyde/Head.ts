@@ -247,15 +247,15 @@ export const HeadData = [
           scriptElement.textContent = '(adsbygoogle = window.adsbygoogle || []).push({});';
           adContainer.appendChild(scriptElement);
           
-          // 查找doc-outline-aria-label元素
-          const docOutlineElement = aside.querySelector('#doc-outline-aria-label');
+          // 查找VPDocAsideOutline has-outline元素
+          const docOutlineElement = aside.querySelector('#VPDocAsideOutline has-outline');
           const spacerElement = aside.querySelector('.spacer');
           
           if (docOutlineElement && spacerElement) {
-            // 在doc-outline-aria-label之后，spacer之前插入广告
+            // 在VPDocAsideOutline has-outline之后，spacer之前插入广告
             docOutlineElement.parentNode.insertBefore(adContainer, spacerElement);
           } else if (docOutlineElement) {
-            // 如果只有doc-outline-aria-label，则在其后插入
+            // 如果只有VPDocAsideOutline has-outline，则在其后插入
             docOutlineElement.parentNode.insertBefore(adContainer, docOutlineElement.nextSibling);
           } else if (spacerElement) {
             // 如果只有spacer，则在其前插入
