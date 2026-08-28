@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<!--
+  随机点名工具 (Random Roll Call)
+  - 名单通过 localStorage 缓存到浏览器本地，刷新不丢失
+  - 支持批量导入/导出、按班级分组管理
+  - 支持「不重复抽取」模式：抽过的自动从待点池移除
+  - 支持快捷键：空格开始/停止、F11 全屏
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>随机点名工具</title>
+<style>
+  /* ========== 基础重置与全局变量 ========== */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --primary: #4A90D9;
+    --primary-dark: #2E6DB4;
+    --danger: #E74C3C;
+    --success: #27AE60;
+    --warn: #F39C12;
+    --bg: #F0F2F5;
+    --card: #FFFFFF;
+    --border: #E1E4E8;
+    --text: #2C3E50;
+    --text-light: #7F8C8D;
+  }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  /* ========== 顶部标题栏 ========== */
+  .header {
+    background: linear-gradient(135deg, #4A90D9 0%, #2E6DB4 100%);
+    color: #fff;
+    padding: 20px 28px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .header h1 { font-size: 22px; font-weight: 600; }
+  .header .stats {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    opacity: 0.95;
+  }
+  .header .stats span strong { font-size: 18px; margin-right: 4px; }
+
+  /* ========== 舞台区（点名大字） ========== */
+  .stage {
+    background: var(--stage-bg, #fff);
+    color: var(--name-color, #000);
+    min-height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+  .stage { cursor: pointer; }
+  .stage-name {
+    font-size: var(--font-size, 100px);
+    font-weight: var(--font-weight, 900);
+    font-family: var(--font-family, "Microsoft YaHei");
+    line-height: 1.1;
+    text-align: center;
+    letter-spacing: 8px;
+    word-break: break-all;
+    padding: 0 20px;
+  }
+  .stage-placeholder {
+    color: var(--text-light);
+    font-size: 18px;
+    font-weight: normal;
+    letter-spacing: 0;
+  }
+  .stage .count-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: rgba(0,0,0,0.08);
+    color: var(--text-light);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+  }
+
+  /* ========== 控制按钮区 ========== */
+  .controls {
+    background: var(--card);
+    padding: 18px 28px;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+  .btn {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    background: #ECEFF1;
+    color: var(--text);
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-danger { background: #FDECEA; color: var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-warn { background: #FEF5E7; color: var(--warn); }
+
+  .checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+    color: var(--text);
+  }
+  .checkbox-label input { cursor: pointer; width: 16px; height: 16px; accent-color: var(--primary); }
+
+  .shortcut-hint {
+    margin-left: auto;
+    font-size: 13px;
+    color: var(--text-light);
+  }
+  .kbd {
+    display: inline-block;
+    padding: 1px 7px;
+    background: #F5F5F5;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    font-family: "Consolas", monospace;
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  /* ========== 设置区 ========== */
+  .settings {
+    background: var(--card);
+    padding: 16px 28px;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12px; color: var(--text-light); font-weight: 500; }
+  .field input, .field select {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--text);
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(74,144,217,0.15);
+  }
+  .field input[type="color"] { padding: 2px; height: 36px; cursor: pointer; }
+
+  /* ========== 名单管理区 ========== */
+  .roster-section {
+    background: var(--card);
+    padding: 18px 28px 24px;
+    border: 1px solid var(--border);
+    border-radius: 0 0 12px 12px;
+  }
+  .roster-toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .roster-toolbar select,
+  .roster-toolbar input {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+  }
+  .roster-toolbar .add-input { flex: 1; min-width: 180px; }
+  .roster-tabs {
+    display: flex;
+    gap: 14px;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .tab {
+    padding: 8px 4px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-light);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.2s;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+  .tab .count { font-size: 12px; margin-left: 4px; opacity: 0.7; }
+
+  /* ========== 名单芯片网格 ========== */
+  .name-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .name-chip {
+    background: #F8F9FA;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+  .name-chip:hover { border-color: var(--primary); background: #F0F7FF; }
+  .name-chip .chip-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .name-chip .chip-del {
+    color: var(--text-light);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+  .name-chip .chip-del:hover { color: var(--danger); }
+  .name-chip.called { opacity: 0.45; background: #FDF2F0; border-color: #F5C6C0; text-decoration: line-through; }
+
+  .empty-tip {
+    text-align: center;
+    color: var(--text-light);
+    padding: 40px 20px;
+    font-size: 14px;
+  }
+
+  /* 已点名单横向滚动 */
+  .called-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .called-item {
+    background: #FFF3E0;
+    color: var(--warn);
+    border: 1px solid #FFD9A0;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .called-item .idx { color: var(--text-light); font-weight: normal; margin-right: 4px; font-size: 12px; }
+
+  /* ========== 模态框 ========== */
+  .modal-mask {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+  .modal-mask.show { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal-header {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 16px;
+  }
+  .modal-close { cursor: pointer; color: var(--text-light); font-size: 22px; line-height: 1; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 18px 22px; overflow-y: auto; flex: 1; }
+  .modal-footer {
+    padding: 14px 22px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  .modal-body textarea {
+    width: 100%;
+    min-height: 220px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    line-height: 1.8;
+    resize: vertical;
+  }
+  .modal-body textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(74,144,217,0.15);
+  }
+  .modal-tip {
+    font-size: 13px;
+    color: var(--text-light);
+    margin-top: 10px;
+    line-height: 1.7;
+  }
+
+  /* ========== Toast 提示 ========== */
+  .toast {
+    position: fixed;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--text);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 2000;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* 滚动条美化 */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #CFD8DC; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #B0BEC5; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* 响应式 */
+  @media (max-width: 640px) {
+    body { padding: 10px; }
+    .stage { min-height: 200px; }
+    .stage-name { font-size: min(var(--font-size, 100px), 40vw) !important; letter-spacing: 2px; }
+    .shortcut-hint { display: none; }
+    .header { padding: 16px; }
+    .controls, .settings, .roster-section { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 顶部标题栏 -->
+  <div class="header">
+    <h1>🎯 随机点名工具</h1>
+    <div class="stats">
+      <span><strong id="stat-pool">0</strong>待点</span>
+      <span><strong id="stat-called">0</strong>已点</span>
+      <span><strong id="stat-total">0</strong>总数</span>
+    </div>
+  </div>
+
+  <!-- 舞台 -->
+  <div class="stage" id="stage">
+    <div class="count-badge" id="draw-count">第 0 次</div>
+    <div class="stage-name" id="stage-name">
+      <span class="stage-placeholder">点击「开始」或按空格键开始点名</span>
+    </div>
+  </div>
+
+  <!-- 控制按钮 -->
+  <div class="controls">
+    <button class="btn btn-primary" id="btn-roll">▶ 开始 / 停止</button>
+    <button class="btn" id="btn-detail">显示 / 隐藏详情</button>
+    <button class="btn btn-warn" id="btn-reset-called">重置已点</button>
+    <button class="btn btn-danger" id="btn-clear-all">清空名单</button>
+    <label class="checkbox-label">
+      <input type="checkbox" id="chk-repeat"> 允许重复
+    </label>
+    <span class="shortcut-hint">按 <span class="kbd">空格</span> 开始/停止　<span class="kbd">F11</span> 全屏</span>
+  </div>
+
+  <!-- 参数设置 -->
+  <div class="settings">
+    <div class="field">
+      <label>切换间隔（毫秒）</label>
+      <input type="number" id="opt-interval" value="60" min="10" step="10">
+    </div>
+    <div class="field">
+      <label>字号（像素）</label>
+      <input type="number" id="opt-size" value="100" min="20" max="300" step="10">
+    </div>
+    <div class="field">
+      <label>背景颜色</label>
+      <input type="color" id="opt-bg" value="#ffffff">
+    </div>
+    <div class="field">
+      <label>文字颜色</label>
+      <input type="color" id="opt-color" value="#000000">
+    </div>
+    <div class="field">
+      <label>文字粗细</label>
+      <select id="opt-weight">
+        <option value="400">细</option>
+        <option value="500">常规</option>
+        <option value="700">粗</option>
+        <option value="900" selected>特粗</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>字体</label>
+      <select id="opt-font">
+        <option value='"Microsoft YaHei"'>微软雅黑</option>
+        <option value='"PingFang SC"'>苹方</option>
+        <option value='"KaiTi"'>楷体</option>
+        <option value='"SimHei"'>黑体</option>
+        <option value='"Arial"'>Arial</option>
+        <option value='"Consolas"'>Consolas</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>每次抽取人数</label>
+      <input type="number" id="opt-count" value="1" min="1" max="20" step="1">
+    </div>
+    <div class="field">
+      <label>姓名分隔符</label>
+      <input type="text" id="opt-sep" value="、" maxlength="3">
+    </div>
+  </div>
+
+  <!-- 名单管理 -->
+  <div class="roster-section">
+    <div class="roster-toolbar">
+      <select id="group-select"><option value="">— 选择分组 —</option></select>
+      <button class="btn" id="btn-new-group" title="新建分组">＋ 新建分组</button>
+      <button class="btn btn-danger" id="btn-del-group" title="删除当前分组">删除分组</button>
+      <input class="add-input" id="add-name" placeholder="输入姓名后回车添加（支持空格分隔批量添加）">
+      <button class="btn btn-primary" id="btn-add">＋ 添加</button>
+      <button class="btn" id="btn-bulk">📋 批量导入</button>
+      <button class="btn" id="btn-export">💾 导出</button>
+    </div>
+
+    <div class="roster-tabs">
+      <div class="tab active" data-tab="pool">待点名单<span class="count" id="tab-count-pool"></span></div>
+      <div class="tab" data-tab="called">已点名单<span class="count" id="tab-count-called"></span></div>
+    </div>
+
+    <div id="tab-pool">
+      <div class="name-grid" id="pool-grid"></div>
+    </div>
+    <div id="tab-called" style="display:none">
+      <div class="called-list" id="called-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 批量导入模态框 -->
+<div class="modal-mask" id="modal-bulk">
+  <div class="modal">
+    <div class="modal-header">
+      批量导入姓名
+      <span class="modal-close" data-close="modal-bulk">×</span>
+    </div>
+    <div class="modal-body">
+      <textarea id="bulk-text" placeholder="每行一个姓名，或用空格/逗号/顿号分隔&#10;例如：&#10;张三 李四 王五&#10;赵六, 孙七、周八"></textarea>
+      <div class="modal-tip">
+        支持换行、空格、逗号、顿号、分号等分隔。系统会自动去重并移除空白项。
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" data-close="modal-bulk">取消</button>
+      <button class="btn btn-primary" id="btn-bulk-confirm">导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ========== localStorage 键名 ==========
+  var LS_ROSTER  = 'rollcall_roster_v1';   // { "分组名": ["姓名1","姓名2"] }
+  var LS_CALLED  = 'rollcall_called_v1';   // { "分组名": ["姓名1",...] }
+  var LS_SETTING = 'rollcall_setting_v1';  // 界面设置
+
+  // ========== 工具函数 ==========
+  function $(id) { return document.getElementById(id); }
+
+  function showToast(msg, ms) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(function () { t.classList.remove('show'); }, ms || 1800);
+  }
+
+  function loadJSON(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) { return fallback; }
+  }
+  function saveJSON(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+  }
+
+  // ========== 状态 ==========
+  var state = {
+    roster: loadJSON(LS_ROSTER, { '默认分组': [] }),
+    called: loadJSON(LS_CALLED, {}),
+    currentGroup: '',
+    running: false,
+    timer: null,
+    currentPicks: [],
+    tab: 'pool'
+  };
+
+  // ========== 数据访问 ==========
+  function curRoster() { return state.roster[state.currentGroup] || []; }
+  function curCalled() { return state.called[state.currentGroup] || []; }
+  function poolNames() {
+    // 待点池：开启「允许重复」时返回全部，否则排除已点
+    if (allowRepeat()) return curRoster().slice();
+    var called = curCalled();
+    return curRoster().filter(function (n) { return called.indexOf(n) === -1; });
+  }
+  function allowRepeat() { return $('chk-repeat').checked; }
+
+  // ========== 渲染 ==========
+  function renderStats() {
+    var total = curRoster().length;
+    var called = curCalled().length;
+    var pool = poolNames().length;
+    $('stat-total').textContent = total;
+    $('stat-called').textContent = called;
+    $('stat-pool').textContent = pool;
+    $('tab-count-pool').textContent = '(' + pool + ')';
+    $('tab-count-called').textContent = '(' + called + ')';
+    $('draw-count').textContent = '第 ' + called + ' 次';
+  }
+
+  function renderGroups() {
+    var sel = $('group-select');
+    var groups = Object.keys(state.roster).sort();
+    if (groups.indexOf(state.currentGroup) === -1) state.currentGroup = groups[0] || '';
+    sel.innerHTML = groups.length === 0
+      ? '<option value="">（暂无分组，请添加姓名）</option>'
+      : '<option value="">— 选择分组 —</option>' +
+        groups.map(function (g) {
+          return '<option value="' + esc(g) + '"' + (g === state.currentGroup ? ' selected' : '') + '>' +
+                 esc(g) + '（' + state.roster[g].length + '）</option>';
+        }).join('');
+  }
+
+  function renderPool() {
+    var grid = $('pool-grid');
+    var pool = poolNames();
+    if (pool.length === 0) {
+      grid.innerHTML = '<div class="empty-tip" style="grid-column:1/-1">' +
+        (curRoster().length === 0 ? '还没有名单，请先添加姓名或使用「批量导入」' :
+        '所有同学都已点过，可点「重置已点」重新开始') +
+        '</div>';
+      return;
+    }
+    grid.innerHTML = pool.map(function (n, i) {
+      return '<div class="name-chip">' +
+        '<span class="chip-name">' + esc(n) + '</span>' +
+        '<span class="chip-del" data-name="' + escAttr(n) + '">×</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  function renderCalled() {
+    var list = $('called-list');
+    var called = curCalled();
+    if (called.length === 0) {
+      list.innerHTML = '<div class="empty-tip">还没有已点记录</div>';
+      return;
+    }
+    list.innerHTML = called.slice().reverse().map(function (n, i) {
+      var idx = called.length - i;
+      return '<div class="called-item"><span class="idx">#' + idx + '</span>' + esc(n) + '</div>';
+    }).join('');
+  }
+
+  function renderAll() { renderStats(); renderGroups(); renderPool(); renderCalled(); }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+  function escAttr(s) { return esc(s); }
+
+  // ========== 名单操作 ==========
+  function ensureGroup(g) {
+    if (!state.roster[g]) state.roster[g] = [];
+  }
+
+  function addNames(names) {
+    var target = state.currentGroup;
+    if (!target) {
+      showToast('请先在左上角选择/创建分组');
+      return 0;
+    }
+    ensureGroup(target);
+    var arr = state.roster[target];
+    var added = 0, dup = 0;
+    names.forEach(function (n) {
+      n = n.trim();
+      if (!n) return;
+      if (arr.indexOf(n) === -1) { arr.push(n); added++; } else { dup++; }
+    });
+    persist();
+    renderAll();
+    return added;
+  }
+
+  function removeName(name) {
+    ensureGroup(state.currentGroup);
+    state.roster[state.currentGroup] = curRoster().filter(function (n) { return n !== name; });
+    // 同步从已点列表移除
+    state.called[state.currentGroup] = curCalled().filter(function (n) { return n !== name; });
+    persist();
+    renderAll();
+  }
+
+  function persist() {
+    saveJSON(LS_ROSTER, state.roster);
+    saveJSON(LS_CALLED, state.called);
+  }
+
+  // ========== 点名核心 ==========
+  function randomPicks(pool, count) {
+    // 无放回抽取 count 个（Fisher-Yates 部分洗牌）
+    var arr = pool.slice();
+    var picks = [];
+    count = Math.min(count, arr.length);
+    for (var i = 0; i < count; i++) {
+      var j = i + Math.floor(Math.random() * (arr.length - i));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+      picks.push(arr[i]);
+    }
+    return picks;
+  }
+
+  function startRoll() {
+    var pool = poolNames();
+    if (pool.length === 0) { showToast('待点名单为空，请先添加姓名'); return; }
+    state.running = true;
+    $('btn-roll').textContent = '⏸ 停止';
+    var interval = parseInt($('opt-interval').value, 10) || 60;
+    var count = parseInt($('opt-count').value, 10) || 1;
+    var sep = $('opt-sep').value || '、';
+    clearInterval(state.timer);
+    state.timer = setInterval(function () {
+      var picks = randomPicks(pool, count);
+      state.currentPicks = picks;   // 实时记录当前显示的姓名，停止时直接采用
+      var el = $('stage-name');
+      el.innerHTML = '';
+      el.classList.remove('stage-placeholder');
+      el.textContent = picks.join(sep);
+    }, interval);
+  }
+
+  function stopRoll() {
+    if (!state.running) return;
+    state.running = false;
+    clearInterval(state.timer);
+    state.timer = null;
+    $('btn-roll').textContent = '▶ 开始 / 停止';
+
+    var sep = $('opt-sep').value || '、';
+
+    // 使用最后一次滚动显示的 picks，避免"看到的"与"记录的"不一致
+    var picks = state.currentPicks && state.currentPicks.length ? state.currentPicks : [];
+    if (picks.length === 0) {
+      var pool = poolNames();
+      var count = parseInt($('opt-count').value, 10) || 1;
+      picks = randomPicks(pool, count);
+    }
+    state.currentPicks = picks;
+    $('stage-name').textContent = picks.join(sep);
+
+    // 写入已点记录（允许重复时仍记录，但不影响池子）
+    var called = curCalled();
+    picks.forEach(function (p) {
+      if (!allowRepeat() && called.indexOf(p) === -1) called.push(p);
+    });
+    state.called[state.currentGroup] = called;
+    persist();
+    renderAll();
+    showToast('点名结果：' + picks.join(sep));
+  }
+
+  function resetCalled() {
+    if (curCalled().length === 0) { showToast('已点记录为空'); return; }
+    if (!confirm('确定清空当前分组的已点记录吗？')) return;
+    state.called[state.currentGroup] = [];
+    persist();
+    renderAll();
+    showToast('已重置已点记录');
+  }
+
+  // 清空名单（已并入 bindEvents 内，支持前置校验分组）
+
+  // ========== 批量导入解析 ==========
+  function parseBulk(text) {
+    // 按换行、空格、逗号、顿号、分号、制表符拆分
+    return text.split(/[\s,，、;；\t]+/).map(function (s) { return s.trim(); })
+               .filter(function (s) { return s.length > 0; });
+  }
+
+  // ========== 导出 ==========
+  function exportData() {
+    var blob = new Blob([JSON.stringify({
+      roster: state.roster,
+      called: state.called,
+      exportedAt: new Date().toISOString()
+    }, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '点名名单_' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('已导出 JSON 备份');
+  }
+
+  // ========== 界面设置 ==========
+  function applyStyle() {
+    var stage = $('stage');
+    var name = $('stage-name');
+    stage.style.setProperty('--stage-bg', $('opt-bg').value);
+    stage.style.background = $('opt-bg').value;
+    name.style.setProperty('--name-color', $('opt-color').value);
+    name.style.color = $('opt-color').value;
+    name.style.fontSize = $('opt-size').value + 'px';
+    name.style.fontWeight = $('opt-weight').value;
+    name.style.fontFamily = $('opt-font').value;
+    saveJSON(LS_SETTING, {
+      interval: $('opt-interval').value,
+      size: $('opt-size').value,
+      bg: $('opt-bg').value,
+      color: $('opt-color').value,
+      weight: $('opt-weight').value,
+      font: $('opt-font').value,
+      count: $('opt-count').value,
+      sep: $('opt-sep').value,
+      repeat: $('chk-repeat').checked
+    });
+  }
+
+  function restoreStyle() {
+    var s = loadJSON(LS_SETTING, null);
+    if (!s) return;
+    if (s.interval) $('opt-interval').value = s.interval;
+    if (s.size) $('opt-size').value = s.size;
+    if (s.bg) $('opt-bg').value = s.bg;
+    if (s.color) $('opt-color').value = s.color;
+    if (s.weight) $('opt-weight').value = s.weight;
+    if (s.font) $('opt-font').value = s.font;
+    if (s.count) $('opt-count').value = s.count;
+    if (s.sep) $('opt-sep').value = s.sep;
+    if (typeof s.repeat === 'boolean') $('chk-repeat').checked = s.repeat;
+  }
+
+  function toggleDetail() {
+    var sections = document.querySelectorAll('.settings, .roster-section, .header');
+    var stage = document.querySelector('.stage');
+    var show = sections[0].style.display === 'none';
+    sections.forEach(function (el) { el.style.display = show ? '' : 'none'; });
+    stage.style.minHeight = show ? '' : '80vh';
+    $('btn-roll').textContent = state.running ? '⏸ 停止' : (show ? '▶ 开始 / 停止' : '▶ 开始 / 停止');
+    showToast(show ? '显示详情' : '隐藏详情（专注模式）');
+  }
+
+  // ========== 事件绑定 ==========
+  function bindEvents() {
+    // 开始/停止
+    $('btn-roll').addEventListener('click', function () {
+      state.running ? stopRoll() : startRoll();
+    });
+
+    // 画布点击控制开始/停止（便于讲台演示操作）
+    $('stage-name').addEventListener('click', function () {
+      state.running ? stopRoll() : startRoll();
+    });
+
+    // 详情切换
+    $('btn-detail').addEventListener('click', toggleDetail);
+    $('btn-reset-called').addEventListener('click', resetCalled);
+
+    // 清空名单（前置校验分组 + 二次确认）
+    function clearAll() {
+      var g = state.currentGroup;
+      if (!g) { showToast('请先选择要清空的分组'); return; }
+      var count = curRoster().length;
+      if (count === 0) { showToast('分组「' + g + '」名单已为空'); return; }
+      if (!confirm('确定清空分组「' + g + '」的全部 ' + count + ' 条名单？此操作不可恢复。')) return;
+      state.roster[g] = [];
+      state.called[g] = [];
+      stopRoll();
+      $('stage-name').innerHTML = '<span class="stage-placeholder">已清空，请重新添加</span>';
+      persist();
+      renderAll();
+      showToast('已清空分组「' + g + '」的名单');
+    }
+    $('btn-clear-all').addEventListener('click', clearAll);
+    $('btn-export').addEventListener('click', exportData);
+
+    // 分组切换
+    $('group-select').addEventListener('change', function (e) {
+      stopRoll();
+      state.currentGroup = e.target.value;
+      renderAll();
+    });
+
+    // 添加单个姓名
+    function doAdd() {
+      var input = $('add-name');
+      var raw = input.value.trim();
+      if (!raw) return;
+      // 支持空格/逗号/顿号批量添加
+      var names = parseBulk(raw);
+      var n = addNames(names);
+      if (n > 0) {
+        input.value = '';
+        showToast('已添加 ' + n + ' 人');
+      } else {
+        showToast('未添加（重复或为空）');
+      }
+    }
+    $('btn-add').addEventListener('click', doAdd);
+    $('add-name').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); doAdd(); }
+    });
+
+    // 池子中删除姓名（事件委托）
+    $('pool-grid').addEventListener('click', function (e) {
+      var del = e.target.closest('.chip-del');
+      if (del) removeName(del.dataset.name);
+    });
+
+    // Tab 切换
+    document.querySelectorAll('.tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        state.tab = tab.dataset.tab;
+        $('tab-pool').style.display = state.tab === 'pool' ? '' : 'none';
+        $('tab-called').style.display = state.tab === 'called' ? '' : 'none';
+      });
+    });
+
+    // 批量导入模态框
+    $('btn-bulk').addEventListener('click', function () {
+      if (!state.currentGroup) { showToast('请先选择分组'); return; }
+      $('bulk-text').value = '';
+      openModal('modal-bulk');
+    });
+    $('btn-bulk-confirm').addEventListener('click', function () {
+      var names = parseBulk($('bulk-text').value);
+      if (names.length === 0) { showToast('未解析到有效姓名'); return; }
+      var n = addNames(names);
+      closeModal('modal-bulk');
+      showToast('成功导入 ' + n + ' 人');
+    });
+
+    // 新建分组
+    $('btn-new-group').addEventListener('click', function () {
+      var name = prompt('请输入分组名称（例如：高一(3)班）：', '');
+      if (name === null) return;
+      name = name.trim();
+      if (!name) { showToast('分组名称不能为空'); return; }
+      if (state.roster[name]) { showToast('分组「' + name + '」已存在'); return; }
+      state.roster[name] = [];
+      state.called[name] = [];
+      state.currentGroup = name;
+      persist();
+      renderAll();
+      showToast('已创建分组「' + name + '」');
+    });
+
+    // 删除当前分组
+    $('btn-del-group').addEventListener('click', function () {
+      var g = state.currentGroup;
+      if (!g) { showToast('请先选择要删除的分组'); return; }
+      var count = curRoster().length;
+      if (!confirm('确定删除分组「' + g + '」及其全部 ' + count + ' 条名单？此操作不可恢复。')) return;
+      delete state.roster[g];
+      delete state.called[g];
+      state.currentGroup = '';
+      persist();
+      renderAll();
+      showToast('已删除分组「' + g + '」');
+    });
+
+    // 模态框关闭（委托）
+    document.addEventListener('click', function (e) {
+      var el = e.target.closest('[data-close]');
+      if (el) closeModal(el.dataset.close);
+      if (e.target.classList.contains('modal-mask')) {
+        e.target.classList.remove('show');
+      }
+    });    // 样式实时更新
+    ['opt-interval','opt-size','opt-bg','opt-color','opt-weight','opt-font','opt-count','opt-sep']
+      .forEach(function (id) {
+        $(id).addEventListener('change', applyStyle);
+        $(id).addEventListener('input', function () {
+          if (id === 'opt-size') {
+            $('stage-name').style.fontSize = this.value + 'px';
+          }
+        });
+      });
+    $('opt-bg').addEventListener('input', function () {
+      $('stage').style.background = this.value; applyStyle();
+    });
+    $('opt-color').addEventListener('input', function () {
+      $('stage-name').style.color = this.value; applyStyle();
+    });
+    $('chk-repeat').addEventListener('change', function () {
+      renderPool(); renderStats(); applyStyle();
+    });
+
+    // 键盘快捷键
+    document.addEventListener('keydown', function (e) {
+      // 输入框/文本域内不响应
+      var tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        state.running ? stopRoll() : startRoll();
+      } else if (e.key === 'f' || e.key === 'F') {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+        } else {
+          document.exitFullscreen && document.exitFullscreen();
+        }
+      }
+    });
+
+    // 页面卸载前保存
+    window.addEventListener('beforeunload', function () {
+      if (state.running) stopRoll();
+      persist();
+    });
+  }
+
+  function openModal(id) { $(id).classList.add('show'); }
+  function closeModal(id) { $(id).classList.remove('show'); }
+
+  // ========== 初始化 ==========
+  function init() {
+    restoreStyle();
+    bindEvents();
+    applyStyle();
+    renderAll();
+    if (Object.keys(state.roster).length === 0) {
+      showToast('欢迎使用！请添加姓名或点击「批量导入」');
+    }
+  }
+  init();
+})();
+</script>
+</body>
+</html>
