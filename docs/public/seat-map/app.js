@@ -226,28 +226,67 @@ function triggerUpload() {
     document.getElementById('fileInput').click();
 }
 
+// 解析名单行数据（识别常见表头：姓名/学号/性别/身高/视力/成绩），返回学生数组
+function parseRoster(rows) {
+    if (!rows || rows.length === 0) return { students: [], count: 0 };
+    const header = (rows[0] || []).map(h => String(h == null ? '' : h).trim());
+    const idx = {
+        name: header.findIndex(h => /姓名|名字|学生/.test(h)),
+        id: header.findIndex(h => /学号|编号|考号|序号/.test(h)),
+        gender: header.findIndex(h => /性别/.test(h)),
+        height: header.findIndex(h => /身高/.test(h)),
+        vision: header.findIndex(h => /视力/.test(h)),
+        score: header.findIndex(h => /成绩|分数|总分|得分/.test(h))
+    };
+    const students = [];
+    for (let i = 1; i < rows.length; i++) {
+        const r = rows[i] || [];
+        if (r.every(c => !String(c == null ? '' : c).trim())) continue;
+        const name = idx.name >= 0 ? String(r[idx.name] || '').trim() : String(r[0] || '').trim();
+        if (!name) continue;
+        const num = (v) => {
+            const m = String(v == null ? '' : v).replace(/,/g, '').match(/[-+]?\d+(\.\d+)?/);
+            return m ? parseFloat(m[0]) : null;
+        };
+        students.push({
+            name,
+            student_id: idx.id >= 0 ? String(r[idx.id] || '').trim() || name : 'S' + (i),
+            gender: idx.gender >= 0 ? String(r[idx.gender] || '').trim() : '未知',
+            height: idx.height >= 0 ? num(r[idx.height]) : null,
+            vision: idx.vision >= 0 ? String(r[idx.vision] || '').trim() : null,
+            score: idx.score >= 0 ? num(r[idx.score]) : null
+        });
+    }
+    return { students, count: students.length };
+}
+
 async function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
-        const response = await fetch('/api/upload-roster', {
-            method: 'POST',
-            body: formData
-        });
-        const result = await response.json();
-
-        if (result.success) {
-            currentStudents = result.students;
-            showStudentModal(result.students);
-            resetAllSettings();   // 重新上传 → 所有设置复位到初始状态（行列/VIP/分隔合并/规则/座次）
-            showToast(`成功导入 ${result.count} 名学生`);
+        let rows = [];
+        if (typeof XLSX !== 'undefined') {
+            const data = await file.arrayBuffer();
+            const wb = XLSX.read(data, { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
         } else {
-            showToast('导入失败', 'error');
+            // CDN 不可用时降级为 CSV 解析
+            const text = await file.text();
+            rows = String(text).split(/\r?\n/).filter(l => l.trim()).map(l =>
+                l.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(c => c.replace(/^"|"$/g, ''))
+            );
         }
+        const { students, count } = parseRoster(rows);
+        if (count === 0) {
+            showToast('未识别到学生数据，请检查表头格式', 'error');
+            return;
+        }
+        currentStudents = students;
+        showStudentModal(students);
+        resetAllSettings();   // 重新上传 → 所有设置复位到初始状态（行列/VIP/分隔合并/规则/座次）
+        showToast(`成功导入 ${count} 名学生`);
     } catch (error) {
         console.error('上传失败:', error);
         showToast('上传失败: ' + error.message, 'error');
@@ -257,8 +296,42 @@ async function handleFileUpload(event) {
     event.target.value = '';
 }
 
+// 通用 Blob 下载
+function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// 下载名单模板：优先生成 .xlsx（SheetJS），不可用时降级为 CSV
 function downloadTemplate() {
-    window.open('/api/download-template', '_blank');
+    const rows = [
+        ['姓名', '学号', '性别', '身高(cm)', '视力', '成绩'],
+        ['张三', '001', '男', '165', '5.0', '92'],
+        ['李四', '002', '女', '158', '4.8', '78'],
+        ['王五', '003', '男', '172', '正常', '85']
+    ];
+    try {
+        if (typeof XLSX !== 'undefined') {
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            ws['!cols'] = [{ wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 12 }, { wch: 10 }, { wch: 8 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '座位模板');
+            XLSX.writeFile(wb, '座位编排-名单模板.xlsx');
+        } else {
+            const csv = '\ufeff' + rows.map(r => r.join(',')).join('\n');
+            downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), '座位编排-名单模板.csv');
+        }
+        showToast('模板已下载，按表头填写名单后上传即可', 'success');
+    } catch (e) {
+        console.error('模板下载失败:', e);
+        showToast('模板下载失败: ' + e.message, 'error');
+    }
 }
 
 // ==================== 布局设置 ====================
@@ -577,6 +650,131 @@ function toggleColumnConfig(index) {
     if (lastSeating) renderSeatingChart(lastSeating);
 }
 
+// ==================== 前端智能排座算法 ====================
+// 视力转数字（正常→5.0，无数据→Infinity 排最后）
+function visionToNum(v) {
+    if (v == null || String(v).trim() === '') return Infinity;
+    const s = String(v).trim();
+    if (s === '正常' || s === '正常视力' || s === '好') return 5.0;
+    const m = s.match(/(\d+(?:\.\d+)?)/);
+    return m ? parseFloat(m[1]) : Infinity;
+}
+
+// 纯前端排座：返回 rows×columns 二维数组（seat 对象，空位 isEmpty:true）
+// 规则：
+//  - 身高排序（矮→前）；视力排序（差→前）；两者叠加时身高为主、视力为次
+//  - 性别配对 mixed：每行内同性别相邻成块（女左/男左），避免 男女男/女男女 交替
+//  - 性别配对 same：每行统一一种性别，行间交替
+//  - 成绩互勉：行内按成绩两端交替排列，让相邻座位成绩互补
+function computeSeating(students, layout, rules) {
+    const columns = layout.columns;
+    const rows = layout.rows;
+    const capacity = columns * rows;
+
+    // 1. 基础排序（稳定排序，保持名单原有相对顺序）
+    const arr = students.map((s, i) => ({ s, i }));
+    const sortKeys = [];
+    if (rules.sort_by_height) sortKeys.push(x => (x.s.height != null ? x.s.height : Infinity));
+    if (rules.sort_by_vision) sortKeys.push(x => visionToNum(x.s.vision));
+    if (sortKeys.length) {
+        arr.sort((a, b) => {
+            for (const key of sortKeys) {
+                const av = key(a), bv = key(b);
+                if (av !== bv) return av - bv;
+            }
+            return a.i - b.i;
+        });
+    }
+    const ordered = arr.map(x => x.s);
+    const girls = ordered.filter(s => s.gender === '女');
+    const boys = ordered.filter(s => s.gender === '男');
+    const others = ordered.filter(s => s.gender !== '女' && s.gender !== '男');
+
+    // 2. 生成填充队列（行优先：第一排为前排）
+    let queue = [];
+    if (rules.gender_pairing && rules.gender_mode === 'mixed') {
+        // 每行内性别成块：主性别在前（女左→女生优先），其次另一性别，最后未知
+        const lead = rules.gender_position === 'male-left'
+            ? [boys, girls, others]
+            : [girls, boys, others];
+        const groups = lead.map(g => g.slice());
+        for (let r = 0; r < rows; r++) {
+            let need = columns;
+            while (need > 0) {
+                let filled = false;
+                for (const g of groups) {
+                    if (g.length) {
+                        queue.push(g.shift());
+                        need--;
+                        filled = true;
+                        break;
+                    }
+                }
+                if (!filled) break;
+            }
+        }
+    } else if (rules.gender_pairing && rules.gender_mode === 'same') {
+        // 每行统一性别，行间交替（从人数较多的性别开始）
+        const g1 = girls.slice(), g2 = boys.slice(), g3 = others.slice();
+        const pools = { girls: g1, boys: g2 };
+        let rowGender = g1.length >= g2.length ? 'girls' : 'boys';
+        for (let r = 0; r < rows; r++) {
+            // 当前性别不足该行所需，则切换用另一性别（仅从未使用的学生中取，避免重复）
+            if (pools[rowGender].length < columns && pools[rowGender === 'girls' ? 'boys' : 'girls'].length) {
+                rowGender = rowGender === 'girls' ? 'boys' : 'girls';
+            }
+            const pool = pools[rowGender];
+            for (let c = 0; c < columns; c++) {
+                let s = pool.shift();
+                if (!s) s = g3.shift() || null; // 补充「未知性别」学生
+                if (s) queue.push(s);
+            }
+            rowGender = rowGender === 'girls' ? 'boys' : 'girls';
+        }
+    } else {
+        queue = ordered.slice();
+    }
+
+    // 3. 按行填充矩阵（行优先）
+    const seating = [];
+    for (let r = 0; r < rows; r++) {
+        const row = [];
+        for (let c = 0; c < columns; c++) {
+            const s = queue.shift();
+            if (s) {
+                row.push({ row: r + 1, col: c + 1, student_id: s.student_id, name: s.name, gender: s.gender || '', height: s.height, vision: s.vision, score: s.score, isEmpty: false });
+            } else {
+                row.push({ row: r + 1, col: c + 1, student_id: null, name: '', gender: '', isEmpty: true });
+            }
+        }
+        seating.push(row);
+    }
+
+    // 4. 成绩互勉（好差生互坐）：行内按成绩两端交替，使相邻座位成绩互补
+    if (rules.score_pairing) {
+        for (let r = 0; r < rows; r++) {
+            const row = seating[r];
+            const filled = row.filter(x => !x.isEmpty);
+            if (filled.length < 2) continue;
+            const rest = row.filter(x => x.isEmpty);
+            filled.sort((a, b) => (a.score != null ? a.score : -1) - (b.score != null ? b.score : -1));
+            const reordered = [];
+            let lo = 0, hi = filled.length - 1;
+            while (lo <= hi) {
+                if (lo === hi) { reordered.push(filled[lo]); break; }
+                reordered.push(filled[lo]); reordered.push(filled[hi]);
+                lo++; hi--;
+            }
+            // 保持空位位置，只替换有学生的座位
+            let k = 0;
+            for (let c = 0; c < row.length; c++) {
+                if (!row[c].isEmpty) row[c] = reordered[k++];
+            }
+        }
+    }
+    return seating;
+}
+
 // ==================== 生成座次表 ====================
 async function generateSeating() {
     if (!layoutLocked) {
@@ -617,69 +815,58 @@ async function generateSeating() {
             showToast(`以下规则名单缺少对应数据、未生效：${noData.join('、')}`, 'warning');
         }
 
-        const response = await fetch('/api/generate-seating', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                layout: layoutData,
-                rules: rulesData,
-                // 已手动拖入 VIP 座位的学生不参与本次智能排座（保留在 VIP，不进普通座位矩阵）
-                vip_student_ids: getVipStudentIds()
-            })
-        });
+        // 已手动拖入 VIP 座位的学生不参与本次智能排座（保留在 VIP，不进普通座位矩阵）
+        const vipIds = getVipStudentIds();
+        const pool = currentStudents.filter(s => !vipIds.includes(s.student_id));
 
-        const result = await response.json();
+        // 纯前端排座（替代后端 /api/generate-seating）
+        lastSeating = computeSeating(pool, layoutData, rulesData);
 
-        if (result.success) {
-            lastSeating = result.seating;
-            // 安全网：无论后端是否重启/生效，前端都强制把「已手动拖入 VIP 的学生」从普通座位矩阵中清除，
-            // 确保同一学生不会同时出现在普通座位与 VIP 中（避免重复落座）。
-            // 关键：清掉后必须把队尾的普通学生补进这些空洞，否则原座位会变成前排空洞。
-            const vipIds = new Set(getVipStudentIds());
-            if (vipIds.size) {
-                // 收集普通座位中的学生（非 VIP、非空），按矩阵顺序（行优先）
-                const regular = []; // { seat, r, c }
-                const holes = [];   // { r, c } 需被清空的 VIP 学生占位
-                for (let r = 0; r < lastSeating.length; r++) {
-                    for (let c = 0; c < lastSeating[r].length; c++) {
-                        const seat = lastSeating[r][c];
-                        if (!seat || seat.isEmpty || seat.student_id == null) continue;
-                        if (vipIds.has(seat.student_id)) holes.push({ r, c });
-                        else regular.push({ seat, r, c });
-                    }
-                }
-                // 逐个空洞：用队尾的普通学生补位（把空洞平移到末尾，避免前排/中间空洞）
-                for (const h of holes) {
-                    const src = regular.pop();
-                    if (src) {
-                        lastSeating[h.r][h.c] = src.seat;
-                        lastSeating[src.r][src.c] = {
-                            row: src.r + 1, col: src.c + 1,
-                            student_id: null, name: '', gender: '', isEmpty: true
-                        };
-                    } else {
-                        lastSeating[h.r][h.c] = {
-                            row: h.r + 1, col: h.c + 1,
-                            student_id: null, name: '', gender: '', isEmpty: true
-                        };
-                    }
+        // 安全网：强制把「已手动拖入 VIP 的学生」从普通座位矩阵中清除，
+        // 确保同一学生不会同时出现在普通座位与 VIP 中（避免重复落座）。
+        // 关键：清掉后必须把队尾的普通学生补进这些空洞，否则原座位会变成前排空洞。
+        const vipSet = new Set(vipIds);
+        if (vipSet.size) {
+            // 收集普通座位中的学生（非 VIP、非空），按矩阵顺序（行优先）
+            const regular = []; // { seat, r, c }
+            const holes = [];   // { r, c } 需被清空的 VIP 学生占位
+            for (let r = 0; r < lastSeating.length; r++) {
+                for (let c = 0; c < lastSeating[r].length; c++) {
+                    const seat = lastSeating[r][c];
+                    if (!seat || seat.isEmpty || seat.student_id == null) continue;
+                    if (vipSet.has(seat.student_id)) holes.push({ r, c });
+                    else regular.push({ seat, r, c });
                 }
             }
-            // vipAssignments 在此处保持原样（不清空），VIP 座位继续显示手动拖入的学生。
-            renderSeatingChart(lastSeating);
-            const vip = getVipCount();
-            const vipNote = vip > 0 ? `（VIP 座位 ${vip} 个不参与自动排座，可手动拖入）` : '';
-            const grp = getColumnGroupWidths();
-            let grpNote = '';
-            if (grp.length > 1 && rulesData.gender_pairing) {
-                grpNote = rulesData.gender_mode === 'same'
-                    ? `，同性搭配：每行统一一种性别（行间交替，不要求整组同性别）`
-                    : `，异性搭配：同性别相邻成块，避免 男女男/女男女 交替`;
+            // 逐个空洞：用队尾的普通学生补位（把空洞平移到末尾，避免前排/中间空洞）
+            for (const h of holes) {
+                const src = regular.pop();
+                if (src) {
+                    lastSeating[h.r][h.c] = src.seat;
+                    lastSeating[src.r][src.c] = {
+                        row: src.r + 1, col: src.c + 1,
+                        student_id: null, name: '', gender: '', isEmpty: true
+                    };
+                } else {
+                    lastSeating[h.r][h.c] = {
+                        row: h.r + 1, col: h.c + 1,
+                        student_id: null, name: '', gender: '', isEmpty: true
+                    };
+                }
             }
-            showToast(`座次表生成完成！共安排 ${result.total_students} 名学生${vipNote}${grpNote}`, 'success');
-        } else {
-            showToast('生成失败', 'error');
         }
+        // vipAssignments 在此处保持原样（不清空），VIP 座位继续显示手动拖入的学生。
+        renderSeatingChart(lastSeating);
+        const vip = getVipCount();
+        const vipNote = vip > 0 ? `（VIP 座位 ${vip} 个不参与自动排座，可手动拖入）` : '';
+        const grp = getColumnGroupWidths();
+        let grpNote = '';
+        if (grp.length > 1 && rulesData.gender_pairing) {
+            grpNote = rulesData.gender_mode === 'same'
+                ? `，同性搭配：每行统一一种性别（行间交替，不要求整组同性别）`
+                : `，异性搭配：同性别相邻成块，避免 男女男/女男女 交替`;
+        }
+        showToast(`座次表生成完成！共安排 ${pool.length} 名学生${vipNote}${grpNote}`, 'success');
     } catch (error) {
         console.error('生成失败:', error);
         showToast('生成失败: ' + error.message, 'error');
@@ -689,10 +876,9 @@ async function generateSeating() {
     btn.innerHTML = '智能生成座次表 →';
 }
 
-// ==================== 导出座次表为 PDF（直接下载文件，不走打印对话框） ====================
-// 实现：读取屏幕上座位网格各元素（座位卡片 / 讲台 / VIP）的真实几何坐标与内容，
-// 发送到后端 /api/export-pdf 用 reportlab 绘制 A4 竖向 PDF（仅上半页、不含身高/视力/成绩、
-// 保留性别/VIP 配色、布局与屏幕一致），返回 PDF 文件直接触发浏览器下载。
+// ==================== 导出座次表为 PDF（前端 html2canvas + jsPDF，直接下载文件） ====================
+// 实现：把当前屏幕上的座位网格（含讲台/VIP/性别配色）用 html2canvas 截图，
+// 再用 jsPDF 写入 A4 竖向 PDF 并触发浏览器下载，无需后端。
 async function exportSeatingPDF() {
     if (!lastSeating) {
         showToast('请先生成座次表，再导出 PDF', 'warning');
@@ -703,59 +889,43 @@ async function exportSeatingPDF() {
         showToast('导出失败：缺少布局信息', 'error');
         return;
     }
+    if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+        showToast('PDF 组件未加载，请检查网络后刷新重试', 'error');
+        return;
+    }
 
     // 先在新标签页打开推广链接，再触发 PDF 导出（必须在 await 之前、处于用户点击手势内，否则被浏览器拦截）
     window.open('https://mp.weixin.qq.com/s/i1MfaaoghaA0Nti3wn5TlA', '_blank', 'noopener');
-
-    // 发送结构化布局数据，由后端按与屏幕一致的常量重算几何，避免前端像素采集误差
-    const columnTypes = columnConfigs.map(c => (c && c.type) || 'merge');
-    const vipPayload = (vipAssignments || []).map(s => {
-        if (!s) return null;
-        return {
-            name: s.name || '',
-            gender: s.gender || '',
-            isEmpty: !!s.isEmpty
-        };
-    });
-    const payload = {
-        title: '班级座次表',
-        columns,
-        rows,
-        columnTypes,
-        vipAssignments: vipPayload,
-        seating: lastSeating
-    };
 
     const btn = document.getElementById('exportBtn');
     const oldText = btn ? btn.textContent : '';
     if (btn) { btn.disabled = true; btn.textContent = '⏳ 正在导出...'; }
 
     try {
-        const resp = await fetch('/api/export-pdf', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+        const grid = document.getElementById('seatingGrid');
+        // 截图前确保网格在视口内且已渲染（滚动回顶部保证 html2canvas 正确截取）
+        const canvas = await html2canvas(grid, {
+            backgroundColor: '#ffffff',
+            scale: 2,
+            useCORS: true,
+            logging: false
         });
-        if (!resp.ok) {
-            // 读取后端返回的具体错误原因并显示，便于定位（不再只显示笼统的「导出失败」）
-            let detail = '';
-            try {
-                const err = await resp.json();
-                detail = (err && (err.detail || err.message)) ? String(err.detail || err.message) : '';
-            } catch (_) {}
-            console.error('导出失败 HTTP', resp.status, detail);
-            showToast(detail ? ('导出失败：' + detail) : ('导出失败（HTTP ' + resp.status + '）'), 'error');
-            return;
-        }
-        const blob = await resp.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = '班级座次表.pdf';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pageW = 210, pageH = 297;
+        const margin = 12;
+        // 标题
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('班级座次表', pageW / 2, 16, { align: 'center' });
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`${columns} 列 × ${rows} 行 · ${new Date().toLocaleDateString('zh-CN')}`, pageW / 2, 23, { align: 'center' });
+        // 座位网格图片：按比例缩放到 A4 可用宽度
+        const imgW = pageW - margin * 2;
+        const imgH = canvas.height * imgW / canvas.width;
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, 28, imgW, Math.min(imgH, pageH - 40));
+        pdf.save('班级座次表.pdf');
         showToast('座次表 PDF 已导出', 'success');
     } catch (e) {
         console.error('导出失败:', e);
@@ -946,16 +1116,11 @@ function closeModalDirect() {
 }
 
 // ==================== 清空名单 ====================
-async function clearStudents() {
-    try {
-        await fetch('/api/clear-students', { method: 'POST' });
-        currentStudents = [];
-        closeModalDirect();
-        resetAllSettings();   // 清空名单一并复位所有设置到初始状态
-        showToast('已清空学生名单');
-    } catch (e) {
-        console.error(e);
-    }
+function clearStudents() {
+    currentStudents = [];
+    closeModalDirect();
+    resetAllSettings();   // 清空名单一并复位所有设置到初始状态
+    showToast('已清空学生名单');
 }
 
 // ==================== Toast 提示 ====================

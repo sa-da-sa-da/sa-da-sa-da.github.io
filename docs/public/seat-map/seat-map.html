@@ -224,6 +224,11 @@
     <!-- 打印导出专用容器：屏幕隐藏，仅在打印/导出 PDF 时显示 -->
     <div id="printArea"></div>
 
+    <!-- SheetJS：Excel(.xlsx/.xls) 解析与模板生成。CDN 不可用时自动降级为 CSV 解析 -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <!-- html2canvas + jsPDF：前端导出 PDF -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="app.js"></script>
 
 
