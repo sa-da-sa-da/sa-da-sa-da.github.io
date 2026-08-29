@@ -1,0 +1,209 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: 班
+      - generic [ref=e6]:
+        - generic [ref=e7]: 班主任工作台
+        - generic [ref=e8]: 一站式班级管理
+    - navigation [ref=e9]:
+      - button "📊 首页仪表盘" [ref=e10] [cursor=pointer]:
+        - generic [ref=e11]: 📊
+        - generic [ref=e12]: 首页仪表盘
+      - button "📅 课程表" [ref=e13] [cursor=pointer]:
+        - generic [ref=e14]: 📅
+        - generic [ref=e15]: 课程表
+      - generic [ref=e16]:
+        - button "📚 学生档案库 ▼" [ref=e17] [cursor=pointer]:
+          - generic [ref=e18]: 📚
+          - generic [ref=e19]: 学生档案库
+          - generic [ref=e20]: ▼
+        - button "📋 全班花名册" [ref=e21] [cursor=pointer]:
+          - generic [ref=e22]: 📋
+          - generic [ref=e23]: 全班花名册
+        - button "🪑 座位表" [ref=e24] [cursor=pointer]:
+          - generic [ref=e25]: 🪑
+          - generic [ref=e26]: 座位表
+        - button "🏠 住宿信息" [ref=e27] [cursor=pointer]:
+          - generic [ref=e28]: 🏠
+          - generic [ref=e29]: 住宿信息
+        - button "💊 过敏病史" [ref=e30] [cursor=pointer]:
+          - generic [ref=e31]: 💊
+          - generic [ref=e32]: 过敏病史
+        - button "💭 心理台账" [ref=e33] [cursor=pointer]:
+          - generic [ref=e34]: 💭
+          - generic [ref=e35]: 心理台账
+        - button "⭐ 好人好事" [ref=e36] [cursor=pointer]:
+          - generic [ref=e37]: ⭐
+          - generic [ref=e38]: 好人好事
+        - button "⚠ 违纪台账" [ref=e39] [cursor=pointer]:
+          - generic [ref=e40]: ⚠
+          - generic [ref=e41]: 违纪台账
+        - button "👤 特殊学生档案" [ref=e42] [cursor=pointer]:
+          - generic [ref=e43]: 👤
+          - generic [ref=e44]: 特殊学生档案
+      - generic [ref=e45]:
+        - button "🕐 考勤请假 ▼" [ref=e46] [cursor=pointer]:
+          - generic [ref=e47]: 🕐
+          - generic [ref=e48]: 考勤请假
+          - generic [ref=e49]: ▼
+        - button "🏃 早操考勤" [ref=e50] [cursor=pointer]:
+          - generic [ref=e51]: 🏃
+          - generic [ref=e52]: 早操考勤
+        - button "🤸 课间操考勤" [ref=e53] [cursor=pointer]:
+          - generic [ref=e54]: 🤸
+          - generic [ref=e55]: 课间操考勤
+        - button "📝 请假审批" [ref=e56] [cursor=pointer]:
+          - generic [ref=e57]: 📝
+          - generic [ref=e58]: 请假审批
+        - button "🚫 缺勤登记" [ref=e59] [cursor=pointer]:
+          - generic [ref=e60]: 🚫
+          - generic [ref=e61]: 缺勤登记
+      - button "📈 智能成绩分析" [ref=e62] [cursor=pointer]:
+        - generic [ref=e63]: 📈
+        - generic [ref=e64]: 智能成绩分析
+      - generic [ref=e65]:
+        - button "🧹 日常班务 ▼" [ref=e66] [cursor=pointer]:
+          - generic [ref=e67]: 🧹
+          - generic [ref=e68]: 日常班务
+          - generic [ref=e69]: ▼
+        - button "📅 值日排班" [ref=e70] [cursor=pointer]:
+          - generic [ref=e71]: 📅
+          - generic [ref=e72]: 值日排班
+        - button "🎖 班干部档案" [ref=e73] [cursor=pointer]:
+          - generic [ref=e74]: 🎖
+          - generic [ref=e75]: 班干部档案
+        - button "🎤 班会存档" [ref=e76] [cursor=pointer]:
+          - generic [ref=e77]: 🎤
+          - generic [ref=e78]: 班会存档
+        - button "🎉 班级活动" [ref=e79] [cursor=pointer]:
+          - generic [ref=e80]: 🎉
+          - generic [ref=e81]: 班级活动
+        - button "🛡 安全排查" [ref=e82] [cursor=pointer]:
+          - generic [ref=e83]: 🛡
+          - generic [ref=e84]: 安全排查
+      - generic [ref=e85]:
+        - button "📞 家校沟通 ▼" [ref=e86] [cursor=pointer]:
+          - generic [ref=e87]: 📞
+          - generic [ref=e88]: 家校沟通
+          - generic [ref=e89]: ▼
+        - button "📇 家长通讯录" [ref=e90] [cursor=pointer]:
+          - generic [ref=e91]: 📇
+          - generic [ref=e92]: 家长通讯录
+        - button "🚪 家访记录" [ref=e93] [cursor=pointer]:
+          - generic [ref=e94]: 🚪
+          - generic [ref=e95]: 家访记录
+        - button "💬 师生谈话" [ref=e96] [cursor=pointer]:
+          - generic [ref=e97]: 💬
+          - generic [ref=e98]: 师生谈话
+        - button "📢 班级通知" [ref=e99] [cursor=pointer]:
+          - generic [ref=e100]: 📢
+          - generic [ref=e101]: 班级通知
+        - button "👪 家长会资料" [ref=e102] [cursor=pointer]:
+          - generic [ref=e103]: 👪
+          - generic [ref=e104]: 家长会资料
+      - generic [ref=e105]:
+        - button "📚 文案素材 ▼" [ref=e106] [cursor=pointer]:
+          - generic [ref=e107]: 📚
+          - generic [ref=e108]: 文案素材
+          - generic [ref=e109]: ▼
+        - button "📜 班规公约" [ref=e110] [cursor=pointer]:
+          - generic [ref=e111]: 📜
+          - generic [ref=e112]: 班规公约
+        - button "📅 每周计划" [ref=e113] [cursor=pointer]:
+          - generic [ref=e114]: 📅
+          - generic [ref=e115]: 每周计划
+        - button "📝 工作小结" [ref=e116] [cursor=pointer]:
+          - generic [ref=e117]: 📝
+          - generic [ref=e118]: 工作小结
+        - button "✏️ 期末评语" [ref=e119] [cursor=pointer]:
+          - generic [ref=e120]: ✏️
+          - generic [ref=e121]: 期末评语
+        - button "📄 通知范本" [ref=e122] [cursor=pointer]:
+          - generic [ref=e123]: 📄
+          - generic [ref=e124]: 通知范本
+        - button "🎨 班会课件素材" [ref=e125] [cursor=pointer]:
+          - generic [ref=e126]: 🎨
+          - generic [ref=e127]: 班会课件素材
+      - generic [ref=e128]:
+        - button "🏆 积分管理 ▼" [ref=e129] [cursor=pointer]:
+          - generic [ref=e130]: 🏆
+          - generic [ref=e131]: 积分管理
+          - generic [ref=e132]: ▼
+        - button "📝 积分记录" [ref=e133] [cursor=pointer]:
+          - generic [ref=e134]: 📝
+          - generic [ref=e135]: 积分记录
+        - button "📋 积分规则" [ref=e136] [cursor=pointer]:
+          - generic [ref=e137]: 📋
+          - generic [ref=e138]: 积分规则
+      - button "✅ 待办备忘录" [ref=e139] [cursor=pointer]:
+        - generic [ref=e140]: ✅
+        - generic [ref=e141]: 待办备忘录
+    - generic [ref=e142]: 数据存储于浏览器 localStorage建议定期备份
+  - main [ref=e143]:
+    - generic [ref=e144]:
+      - generic [ref=e145]: 首页仪表盘
+      - generic [ref=e146]:
+        - button "📦 版本" [ref=e147] [cursor=pointer]
+        - button "💾 备份" [ref=e148] [cursor=pointer]
+        - button "♻ 恢复" [ref=e149] [cursor=pointer]
+    - generic [ref=e150]:
+      - generic [ref=e151]:
+        - generic [ref=e152]:
+          - generic [ref=e153]: 👥
+          - generic [ref=e154]:
+            - generic [ref=e155]: 班级总人数
+            - generic [ref=e156]: "0"
+            - generic [ref=e157]: 来自花名册
+        - generic [ref=e158]:
+          - generic [ref=e159]: ✅
+          - generic [ref=e160]:
+            - generic [ref=e161]: 今日待办
+            - generic [ref=e162]: "0"
+            - generic [ref=e163]: 含今日到期事项
+        - generic [ref=e164]:
+          - generic [ref=e165]: 📞
+          - generic [ref=e166]:
+            - generic [ref=e167]: 待沟通家长
+            - generic [ref=e168]: "0"
+            - generic [ref=e169]: 家长沟通待跟进
+        - generic [ref=e170]:
+          - generic [ref=e171]: ⭐
+          - generic [ref=e172]:
+            - generic [ref=e173]: 重点关注学生
+            - generic [ref=e174]: "0"
+            - generic [ref=e175]: 心理/特殊档案
+      - generic [ref=e177]:
+        - heading "🔍 百度搜索" [level=3] [ref=e178]
+        - generic [ref=e179]:
+          - generic [ref=e180]:
+            - textbox "输入关键词，回车或点击搜索" [ref=e181]
+            - button "🔍 百度搜索" [ref=e182] [cursor=pointer]
+          - generic [ref=e183]:
+            - generic "点击搜索：班级管理经验" [ref=e184] [cursor=pointer]:
+              - text: 班级管理经验
+              - generic "删除该快捷词" [ref=e185]: ✕
+            - generic "点击搜索：教学设计" [ref=e186] [cursor=pointer]:
+              - text: 教学设计
+              - generic "删除该快捷词" [ref=e187]: ✕
+            - generic "点击搜索：班主任工作总结" [ref=e188] [cursor=pointer]:
+              - text: 班主任工作总结
+              - generic "删除该快捷词" [ref=e189]: ✕
+            - generic "添加自定义快捷词" [ref=e190] [cursor=pointer]: ＋ 添加
+      - generic [ref=e191]:
+        - generic [ref=e192]:
+          - generic [ref=e193]:
+            - heading "✅ 今日待办" [level=3] [ref=e194]
+            - generic [ref=e195]: 今日无待办
+          - generic [ref=e198]:
+            - heading "📅 本周日程" [level=3] [ref=e199]
+            - generic [ref=e200]: 本周暂无计划（2026-08-24 ~ 2026-08-30）
+        - generic [ref=e202]:
+          - generic [ref=e203]:
+            - heading "📞 待沟通家长" [level=3] [ref=e204]
+            - generic [ref=e205]: 暂无待沟通家长
+          - generic [ref=e208]:
+            - heading "⭐ 重点学生提醒" [level=3] [ref=e209]
+            - generic [ref=e210]: 暂无重点关注学生
+          - generic [ref=e213]:
+            - heading "📤 材料上交倒计时" [level=3] [ref=e214]
+            - generic [ref=e215]: 暂无截止任务

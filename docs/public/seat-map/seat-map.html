@@ -74,6 +74,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .sbt{flex:1;height:14px;background:#e2e8f0;border-radius:3px;overflow:hidden}
 .sbf{height:100%;border-radius:3px;transition:width .5s;display:flex;align-items:center;justify-content:flex-end;padding-right:3px;color:#fff;font-size:9px;font-weight:600}
 .mo{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:center}
+/* 班级切换栏（header 内） */
+.clsbar{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:4px 8px}
+.clsbar select{padding:4px 8px;border:1px solid rgba(255,255,255,.4);border-radius:6px;font-size:12px;outline:none;background:rgba(255,255,255,.9);color:var(--text);max-width:150px;cursor:pointer}
+/* 班级管理列表行 */
+.clsi{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all .2s;background:#f8fafc}
+.clsi:hover{border-color:var(--pl);background:#eef2ff}
+.clsi.cur{border-color:var(--primary);background:#eef2ff;box-shadow:0 0 0 2px rgba(79,70,229,.15)}
+.clsi-n{flex:1;font-weight:600;font-size:13px}
+.clsi.cur .clsi-n::before{content:'✓ ';color:var(--primary)}
+.clsi-stu{font-size:11px;color:var(--tm);white-space:nowrap}
+.clsi-ops{display:flex;gap:4px}
 .mo.on{display:flex}
 .md{background:#fff;border-radius:var(--r);padding:20px;width:90%;max-width:560px;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
 .md h2{font-size:17px;margin-bottom:14px}
@@ -123,6 +134,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 <body>
 <div class="header">
   <div><h1>🏫 座位表智能调整系统</h1><div class="sub">大组模式 · 单人单桌 · 小组模式 · 智能排座</div></div>
+  <div class="clsbar" id="clsBar">
+    <span style="font-size:12px;opacity:.85">班级：</span>
+    <select id="clsSel" onchange="switchClass(this.value)" title="切换班级，各班数据完全独立"></select>
+    <button class="btn btn-g btn-sm" onclick="openCls()" title="新建/编辑/删除班级">🏫 班级管理</button>
+  </div>
   <div class="ha">
     <button class="btn btn-g" onclick="openCfg()">⚙️ 座位管理</button>
     <button class="btn btn-g" onclick="openStu()">👥 学生管理</button>
@@ -221,6 +237,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
   </div>
   <div id="sml" style="max-height:380px;overflow-y:auto"></div>
   <div class="ma"><button class="btn btn-s" onclick="closeM('stuModal')">完成</button></div>
+</div></div>
+<div class="mo" id="clsModal"><div class="md">
+  <h2>🏫 班级管理</h2>
+  <p style="font-size:11px;color:var(--tm);margin-bottom:10px">每个班级拥有独立的学生、座位、规则、版本数据。点击列表切换当前班级。</p>
+  <div class="fg"><label>新建班级</label>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <input id="ncGrade" placeholder="年级（如 初三）" style="flex:1;min-width:90px">
+      <input id="ncName" placeholder="班级名（如 2班）" style="flex:1;min-width:90px">
+      <button class="btn btn-s" onclick="newClass()">➕ 新建并切换</button>
+    </div>
+  </div>
+  <div id="clsList"></div>
+  <div class="ma"><button class="btn btn-s" onclick="closeM('clsModal')">完成</button></div>
 </div></div>
 <div class="mo" id="cfgModal"><div class="md">
   <h2>⚙️ 座位管理</h2>
@@ -327,15 +356,42 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <script>
 const SK='seat_v2_data';
+// ===== 多班级存储 =====
+// 索引：seat_v3_classes = {list:[{id,name,grade}],cur:id}
+// 数据：seat_v3_c_{id} = 单班级完整数据（旧 seat_v2_data 自动迁移）
+const SK_CLS='seat_v3_classes';
+const classKey=id=>'seat_v3_c_'+id;
+let CLASSES=[]; // [{id,name,grade}]
+let CID=null;   // 当前班级 id
+function loadClsIdx(){try{return JSON.parse(localStorage.getItem(SK_CLS))||null}catch(e){return null}}
+function saveClsIdx(){try{localStorage.setItem(SK_CLS,JSON.stringify({list:CLASSES,cur:CID}))}catch(e){}}
+function clsLabel(c){return (c.grade||'')+(c.name||'')}
+// 旧单班数据迁移：首次升级时把 seat_v2_data 包装成一个班级
+function ensureClasses(){
+  const idx=loadClsIdx();
+  if(idx&&Array.isArray(idx.list)&&idx.list.length){
+    CLASSES=idx.list;
+    CID=(idx.cur&&CLASSES.some(c=>c.id===idx.cur))?idx.cur:CLASSES[0].id;
+    return;
+  }
+  let old=null;try{old=localStorage.getItem(SK)}catch(e){}
+  let cn='默认班级';
+  if(old){try{const d=JSON.parse(old);if(d&&d.cn)cn=d.cn}catch(e){}}
+  const id=uid();
+  CLASSES=[{id,name:cn,grade:''}];
+  CID=id;
+  if(old){try{localStorage.setItem(classKey(id),old)}catch(e){}}
+  saveClsIdx();
+}
 const PTAGS=['myopia','leader','active','discipline','grade','gleader'];
 const TL={myopia:'👓近视',leader:'⭐班干部',active:'🏃好动',discipline:'✅纪律好',grade:'📚成绩好',gleader:'🏅小组长'};
 const TC={myopia:['#fef3c7','#92400e'],leader:['#d1fae5','#065f46'],active:['#dbeafe','#1e40af'],discipline:['#e0e7ff','#3730a3'],grade:['#f3e8ff','#6b21a8'],gleader:['#fef9c3','#854d0e']};
 
-let S={
-  cn:'座位表',mode:'group',
+// 默认班级数据模板：切换班级时用此重置，防止上一班字段残留
+function defaultS(){return{
+  cn:'座位表',grade:'',mode:'group',
   groups:4,cpg:2,rows:6,
   singleCols:7,singleRows:7,
-  smallSplit:6,
   smallSplit:6, // 小组人数：每个大组前smallSplit人(即前Math.ceil(smallSplit/cpg)排)为A组
   flipV:false,flipH:false,
   myopiaRows:2,shortRows:2,
@@ -347,11 +403,13 @@ let S={
   statT:'front',showTags:false,
   // 锁定座位：{ seatKey:true }，随机排座时不移动这些座位上的学生
   locked:{},arrangeCount:0,
-  // VIP 座位：讲台左右侧特殊座位数量（0-4），vipSids 为标记为 VIP 的学生 ID
+  // VIP 座位：讲台左右侧特殊座位数量，vipSids 为标记为 VIP 的学生 ID
   vipCount:2,vipSids:[]
-};
+}}
+let S=defaultS();
 
 function uid(){return 's'+Date.now()+Math.floor(Math.random()*1e3)}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function toast(m,t=''){const e=document.getElementById('toast');e.textContent=m;e.className='toast show '+t;setTimeout(()=>e.classList.remove('show'),2500)}
 function cols(){
   if(S.mode==='single')return S.singleCols;
@@ -414,8 +472,83 @@ function renderPodiumArea(){
   return wrap;
 }
 
-function saveL(){try{localStorage.setItem(SK,JSON.stringify({cn:S.cn,mode:S.mode,groups:S.groups,cpg:S.cpg,rows:S.rows,singleCols:S.singleCols,singleRows:S.singleRows,smallSplit:S.smallSplit,flipV:S.flipV,flipH:S.flipH,myopiaRows:S.myopiaRows,shortRows:S.shortRows,rules:S.rules,students:S.students,seats:S.seats,pairs:S.pairs,versions:S.versions,curVer:S.curVer,showTags:S.showTags,locked:S.locked,arrangeCount:S.arrangeCount,vipCount:S.vipCount,vipSids:S.vipSids}))}catch(e){}if(WB_MODE)postWbResult()}
-function loadL(){try{const r=localStorage.getItem(SK);if(!r)return false;const d=JSON.parse(r);Object.assign(S,d);return true}catch(e){return false}}
+function saveL(){try{localStorage.setItem(classKey(CID),JSON.stringify({cn:S.cn,grade:S.grade,mode:S.mode,groups:S.groups,cpg:S.cpg,rows:S.rows,singleCols:S.singleCols,singleRows:S.singleRows,smallSplit:S.smallSplit,flipV:S.flipV,flipH:S.flipH,myopiaRows:S.myopiaRows,shortRows:S.shortRows,rules:S.rules,students:S.students,seats:S.seats,pairs:S.pairs,versions:S.versions,curVer:S.curVer,showTags:S.showTags,locked:S.locked,arrangeCount:S.arrangeCount,vipCount:S.vipCount,vipSids:S.vipSids}))}catch(e){}if(WB_MODE)postWbResult()}
+function loadL(){try{const r=localStorage.getItem(classKey(CID));if(!r)return false;const d=JSON.parse(r);Object.assign(S,d);return true}catch(e){return false}}
+
+// ===== 班级切换/管理 =====
+function syncClsSel(){
+  const sel=document.getElementById('clsSel');if(!sel)return;
+  sel.innerHTML=CLASSES.map(c=>'<option value="'+c.id+'"'+(c.id===CID?' selected':'')+'>'+esc(clsLabel(c))+'</option>').join('');
+}
+function switchClass(id){
+  if(!id||id===CID)return;
+  const c=CLASSES.find(x=>x.id===id);if(!c)return;
+  saveL();
+  CID=id;saveClsIdx();
+  S=defaultS();
+  loadL();
+  S.hist=[];S.hi=-1;S.swap=false;S.swap1=null;
+  syncClsSel();syncCfgInputs();
+  saveHist();renderAll();
+  toast('已切换到 '+(clsLabel(c)||'班级'),'success');
+}
+function newClass(){
+  const gEl=document.getElementById('ncGrade'),nEl=document.getElementById('ncName');
+  const grade=(gEl&&gEl.value||'').trim();
+  const name=(nEl&&nEl.value||'').trim();
+  if(!name){toast('请填写班级名称','warning');return}
+  if(CLASSES.some(c=>(c.grade||'')===grade&&c.name===name)){toast('班级已存在：'+grade+name,'warning');return}
+  const id=uid();
+  CLASSES.push({id,name,grade});
+  try{localStorage.setItem(classKey(id),JSON.stringify({cn:grade+name}))}catch(e){}
+  saveClsIdx();
+  if(nEl)nEl.value='';if(gEl)gEl.value='';
+  renderClsList();syncClsSel();
+  switchClass(id);
+  toast('已创建班级：'+grade+name,'success');
+}
+function editClass(id){
+  const c=CLASSES.find(x=>x.id===id);if(!c)return;
+  const oldLabel=clsLabel(c);
+  const grade=prompt('年级（可留空，如：初三）',c.grade||'');
+  if(grade===null)return;
+  const name=prompt('班级名称（如：2班）',c.name||'');
+  if(name===null)return;
+  const g=grade.trim(),n=name.trim();
+  if(!n){toast('班级名称不能为空','warning');return}
+  if(CLASSES.some(x=>x.id!==id&&(x.grade||'')===g&&x.name===n)){toast('该班级已存在','warning');return}
+  c.grade=g;c.name=n;
+  if(id===CID&&S.cn===oldLabel){S.cn=clsLabel(c);saveL();renderAll()}
+  saveClsIdx();syncClsSel();renderClsList();
+  toast('班级已更新','success');
+}
+function delClass(id){
+  if(CLASSES.length<=1){toast('至少保留一个班级','warning');return}
+  const c=CLASSES.find(x=>x.id===id);if(!c)return;
+  if(!confirm('删除班级「'+clsLabel(c)+'」及其全部学生、座位与版本数据？\n此操作不可恢复！'))return;
+  try{localStorage.removeItem(classKey(id))}catch(e){}
+  const wasCur=id===CID;
+  CLASSES=CLASSES.filter(x=>x.id!==id);
+  if(wasCur){
+    CID=CLASSES[0].id;
+    S=defaultS();loadL();
+    S.hist=[];S.hi=-1;
+    syncCfgInputs();saveHist();renderAll();
+  }
+  saveClsIdx();syncClsSel();renderClsList();
+  toast('班级已删除','warning');
+}
+function openCls(){renderClsList();document.getElementById('clsModal').classList.add('on')}
+function renderClsList(){
+  const box=document.getElementById('clsList');if(!box)return;
+  box.innerHTML=CLASSES.map(c=>'<div class="clsi'+(c.id===CID?' cur':'')+'" onclick="switchClass(\''+c.id+'\')">'+
+    '<span class="clsi-n">'+esc(clsLabel(c))+'</span>'+
+    '<span class="clsi-stu">'+(c.id===CID?S.students.length+' 名学生':'')+'</span>'+
+    '<span class="clsi-ops">'+
+    '<button class="btn btn-sm" onclick="event.stopPropagation();editClass(\''+c.id+'\')">✎ 编辑</button>'+
+    '<button class="btn btn-sm btn-d" onclick="event.stopPropagation();delClass(\''+c.id+'\')">🗑</button>'+
+    '</span></div>').join('');
+}
 
 // 把空座位压实到每个大组/列的最后一行：确保空位不出现在中间
 function compactSeats(){
@@ -1551,20 +1684,32 @@ window.addEventListener('storage',e=>{
 });
 
 // ===== 初始化 =====
-function init(){
-  loadL();
-  // 工作台同步模式：启动时合并花名册
-  if(WB_MODE)mergeWbRoster();
-  // 清理旧标签：删除已废弃的 quiet/trouble
-  const deprecatedTags=new Set(['quiet','trouble']);
-  S.students.forEach(s=>{if(s.tags)s.tags=s.tags.filter(t=>!deprecatedTags.has(t))});
+// 配置输入框与当前班级状态同步（init / 切换班级后调用）
+function syncCfgInputs(){
   document.getElementById('cgg').value=S.groups;document.getElementById('cgc').value=S.cpg;document.getElementById('cgr').value=S.rows;
   document.getElementById('cgm').value=S.myopiaRows;document.getElementById('cgs').value=S.shortRows;
   document.getElementById('cgn').value=S.cn;document.getElementById('cn').textContent=S.cn;
   if(document.getElementById('cgs_col'))document.getElementById('cgs_col').value=S.singleCols;
   if(document.getElementById('cgs_row'))document.getElementById('cgs_row').value=S.singleRows;
   if(document.getElementById('cgs_n'))document.getElementById('cgs_n').value=S.smallSplit;
-  const tb=document.getElementById('tagBtn');if(S.showTags){tb.classList.add('on');tb.textContent='🏷️ 隐藏标签'}else{tb.classList.remove('on');tb.textContent='🏷️ 显示标签'}
+  if(document.getElementById('cgv'))document.getElementById('cgv').value=S.vipCount||0;
+  const tb=document.getElementById('tagBtn');
+  if(tb){if(S.showTags){tb.classList.add('on');tb.textContent='🏷️ 隐藏标签'}else{tb.classList.remove('on');tb.textContent='🏷️ 显示标签'}}
+}
+function init(){
+  ensureClasses();
+  loadL();
+  // 工作台同步模式：启动时合并花名册；工作台自带班级体系，隐藏本页班级切换
+  if(WB_MODE){
+    document.getElementById('clsBar').style.display='none';
+    mergeWbRoster();
+  }else{
+    syncClsSel();
+  }
+  // 清理旧标签：删除已废弃的 quiet/trouble
+  const deprecatedTags=new Set(['quiet','trouble']);
+  S.students.forEach(s=>{if(s.tags)s.tags=s.tags.filter(t=>!deprecatedTags.has(t))});
+  syncCfgInputs();
   saveHist();renderAll()
 }
 init();
