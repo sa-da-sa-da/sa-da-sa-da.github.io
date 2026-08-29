@@ -1,4 +1,0 @@
-docs/public/class-workbench.js OK
-docs/public/class-workbench-views.js OK
-docs/public/seat-map/seat-map.html script[0] OK, len=53016
-config ERROR: Expected property name or '}' in JSON at position 4 (line 2 column 3)

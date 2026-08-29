@@ -67,6 +67,10 @@ import MultipleChoiceQuestion from './components/MultipleChoiceQuestion.vue'
 import FillInTheBlank from './components/FillInTheBlank.vue'
 import PythonEditor from './components/PythonEditor.vue'
 import ToolsGallery from './components/ToolsGallery.vue'
+import FunGallery from './components/FunGallery.vue'
+import MusicPlayer from './components/MusicPlayer.vue'
+import MoviePlayer from './components/MoviePlayer.vue'
+import PdfReader from './components/PdfReader.vue'
 import AdPopup from './components/AdPopup.vue'
 
 // 引入复制事件（复制后弹窗提示）
@@ -170,6 +174,10 @@ export default {
     app.component('FillInTheBlank', FillInTheBlank);
     app.component('PythonEditor', PythonEditor);
     app.component('ToolsGallery', ToolsGallery); // 注册工具展示组件
+    app.component('FunGallery', FunGallery); // 注册娱乐广场展示组件
+    app.component('MusicPlayer', MusicPlayer); // 注册站内音乐播放器
+    app.component('MoviePlayer', MoviePlayer); // 注册站内电影播放器
+    app.component('PdfReader', PdfReader); // 注册站内 PDF 阅读器
     app.component('AdPopup', AdPopup); // 注册广告弹窗组件
     app.component('GoogleAd', GoogleAd); // 注册GoogleAd组件
 

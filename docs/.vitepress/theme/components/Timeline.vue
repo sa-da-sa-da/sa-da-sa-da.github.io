@@ -72,13 +72,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 
 // 管理员密码（请在部署前修改为您自己的密码）
 const ADMIN_PASSWORD = 'Hg@2025'; // 这里请修改为您自己的密码
 
-// 初始化事件列表，从本地存储加载（如果有）
-const events = ref(JSON.parse(localStorage.getItem('timelineEvents')) || [
+// 【AURA Fix-20250830】默认事件数据抽取为常量，避免 SSR 阶段同步访问 localStorage
+const defaultEvents = [
   {
     date: '2021-07-08',
     title: '初见',
@@ -89,7 +89,27 @@ const events = ref(JSON.parse(localStorage.getItem('timelineEvents')) || [
     title: '后来',
     description: '再见竟是，再也不见。至此，我从未真正地快乐过……'
   },
-]);
+];
+
+// 【AURA Fix-20250830】SSR 安全：VitePress 构建（Node 环境）下无 localStorage，
+// 顶层同步调用会抛 ReferenceError，打断页面渲染。改为 onMounted 后再读取本地存储。
+const loadEvents = () => {
+  if (typeof localStorage === 'undefined') return defaultEvents;
+  try {
+    const saved = localStorage.getItem('timelineEvents');
+    return saved ? (JSON.parse(saved) || defaultEvents) : defaultEvents;
+  } catch (e) {
+    return defaultEvents;
+  }
+};
+
+// 初始化事件列表（SSR 期间使用默认数据，客户端挂载后再恢复本地数据）
+const events = ref([...defaultEvents]);
+
+// 客户端挂载后加载本地存储数据
+onMounted(() => {
+  events.value = loadEvents();
+});
 
 // 权限控制相关
 const isAuthenticated = ref(false);
@@ -135,8 +155,10 @@ const addEvent = () => {
   
   events.value.push({...newEvent.value});
   
-  // 保存到本地存储
-  localStorage.setItem('timelineEvents', JSON.stringify(events.value));
+  // 【AURA Fix-20250830】保存到本地存储前加 SSR 守卫（虽然函数仅在客户端交互时调用，保持防御性）
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('timelineEvents', JSON.stringify(events.value));
+  }
   
   // 重置表单
   newEvent.value = {
@@ -150,7 +172,10 @@ const addEvent = () => {
 const deleteEvent = (index) => {
   if (confirm('确定要删除这个事件吗？')) {
     events.value.splice(index, 1);
-    localStorage.setItem('timelineEvents', JSON.stringify(events.value));
+    // 【AURA Fix-20250830】同上加 SSR 守卫
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('timelineEvents', JSON.stringify(events.value));
+    }
   }
 };
 

@@ -146,6 +146,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
     <button class="btn btn-g" onclick="openStat()">📊 数据统计</button>
     <button class="btn btn-g" onclick="autoArrange()" title="每次点击生成全新随机方案，自动校验男女分布">🎲 随机排座</button>
     <button class="btn btn-g" onclick="saveCur()" style="border-color:rgba(255,255,255,.5)">💾 保存</button>
+    <button class="btn btn-g" onclick="backupAll()" title="导出全部班级的座位数据（含学生、排座、版本历史）">📦 备份</button>
+    <label class="btn btn-g" style="cursor:pointer" title="从备份文件恢复全部座位数据（将覆盖当前数据）">📥 恢复<input type="file" id="seatRestoreFile" accept=".json" style="display:none" onchange="restoreSeatMap(this)"></label>
     <button class="btn btn-p" onclick="exportDocx()">📄 导出Word</button>
     <button class="btn btn-p" onclick="exportXlsx()">📋 导出Excel</button>
   </div>
@@ -302,8 +304,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 </div></div>
 <div class="mo" id="verModal"><div class="md">
   <h2>📦 版本管理</h2>
+  <p style="font-size:11px;color:var(--tm);margin-bottom:10px">当前座次已保存到本地。输入名称可另存为版本快照，随时切换/回滚（回车快速保存）。</p>
   <div style="display:flex;gap:6px;margin-bottom:12px">
-    <input id="vn" placeholder="版本名称，如：第一次月考座位" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+    <input id="vn" placeholder="版本名称，如：第一次月考座位" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px" onkeydown="if(event.key==='Enter')saveVer()">
     <button class="btn btn-su" onclick="saveVer()">💾 保存为新版本</button>
   </div>
   <div id="vl" style="max-height:400px;overflow-y:auto"></div>
@@ -360,7 +363,8 @@ const SK='seat_v2_data';
 // 索引：seat_v3_classes = {list:[{id,name,grade}],cur:id}
 // 数据：seat_v3_c_{id} = 单班级完整数据（旧 seat_v2_data 自动迁移）
 const SK_CLS='seat_v3_classes';
-const classKey=id=>'seat_v3_c_'+id;
+const SEAT_PREFIX='seat_v3_c_'; // 班级数据 key 前缀：扫描/清理统一复用，避免硬编码长度出错
+const classKey=id=>SEAT_PREFIX+id;
 let CLASSES=[]; // [{id,name,grade}]
 let CID=null;   // 当前班级 id
 function loadClsIdx(){try{return JSON.parse(localStorage.getItem(SK_CLS))||null}catch(e){return null}}
@@ -983,7 +987,7 @@ function renderTagEditor(){
 // ===== 统计 =====
 function renderStats(){
   const t=S.students.length;
-  const a=Object.keys(S.seats).filter(k=>!k.startsWith('vip-')).length;
+  const a=Object.keys(S.seats).length; // VIP 座位也算已排座
   const u=t-a;
   const m=S.students.filter(s=>s.gender==='male').length,f=S.students.filter(s=>s.gender==='female').length;
   const my=S.students.filter(s=>(s.tags||[]).includes('myopia')).length;
@@ -1289,8 +1293,132 @@ function renderPairs(){const l=document.getElementById('pl');if(!l)return;l.inne
 function toggleRule(el,r){S.rules[r]=!S.rules[r];el.classList.toggle('on');renderCons();saveL()}
 function updCN(){S.cn=document.getElementById('cgn').value;document.getElementById('cn').textContent=S.cn;saveL()}
 
+// ===== 备份/恢复（独立页面用） =====
+// 本地日期串 YYYYMMDD，用于备份文件名
+function today(){const d=new Date(),p=n=>String(n).padStart(2,'0');return ''+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())}
+function backupAll(){
+  // 收集全部班级数据：索引 + 每班数据 + 旧版数据
+  var data={
+    version:1,
+    source:'seat-map',
+    backupTime:new Date().toISOString(),
+    index:localStorage.getItem(SK_CLS),
+    classes:{},
+    legacy:localStorage.getItem(SK)
+  };
+  try{
+    var idx=data.index?JSON.parse(data.index):null;
+    if(idx&&Array.isArray(idx.list)){
+      idx.list.forEach(function(c){if(c&&c.id)data.classes[c.id]=localStorage.getItem(classKey(c.id))})
+    }
+    // 兜底扫描：用 SEAT_PREFIX 精确截取 id（此前 slice(9) 会多留一个下划线，产生脏 key）
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(!k||k.indexOf(SEAT_PREFIX)!==0)continue;
+      var id=k.slice(SEAT_PREFIX.length);
+      if(!id)continue;
+      if(data.classes[id]==null)data.classes[id]=localStorage.getItem(k)
+    }
+  }catch(e){}
+  var clsCount=Object.keys(data.classes).filter(function(id){return data.classes[id]!=null}).length;
+  var json=JSON.stringify(data,null,2);
+  downloadBlob(json,'座位表备份_'+(S.cn||'data')+'_'+today()+'.json','application/json;charset=utf-8');
+  if(clsCount)toast('备份已下载（'+clsCount+' 个班级）','success');
+  else toast('备份已下载，但未检测到任何班级数据，请确认座位表有内容','warning')
+}
+function restoreSeatMap(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      // 兼容两种格式：独立备份 {index,classes} 或工作台备份 {state,seatMap:{index,classes}}
+      var sm=(data.source==='seat-map')?data:(data.seatMap||null);
+      if(!sm||!sm.index){toast('无效的座位表备份文件（缺少索引）','error');input.value='';return}
+      var idx=null;try{idx=JSON.parse(sm.index)}catch(e){idx=null}
+      if(!idx||!Array.isArray(idx.list)||!idx.list.length){
+        toast('备份文件中没有班级数据','error');input.value='';return
+      }
+      // 只统计真正带数据的班级，避免"恢复了索引但没内容"的假成功
+      var withData=idx.list.filter(function(c){return c&&c.id&&sm.classes&&sm.classes[c.id]!=null});
+      if(!withData.length){toast('备份文件中所有班级均无排座数据','error');input.value='';return}
+      var clsCount=withData.length;
+      var body='<div style="font-size:13px;line-height:1.9">' +
+        '<div style="color:var(--danger);margin-bottom:8px;font-weight:600">⚠️ 将覆盖当前全部座位表数据！</div>' +
+        '<div>备份时间：<b>'+esc(sm.backupTime||'未知')+'</b></div>' +
+        '<div>可恢复班级：<b>'+clsCount+' / '+idx.list.length+' 个</b></div>' +
+        '<div style="margin-top:6px">';
+      idx.list.forEach(function(c){
+        var has=sm.classes&&sm.classes[c.id]!=null;
+        body+='<div style="padding:2px 0;font-size:12px">'+esc((c.grade||'')+(c.name||''))+'：'+
+          (has?'<span style="color:var(--success)">✓ 有数据</span>':'<span style="color:var(--warning)">⚠ 无数据（将建为空班级）</span>')+'</div>'
+      });
+      body+='</div></div>';
+      openConfirm('📥 确认恢复座位表',body,function(){
+        var err='';
+        try{
+          // ① 先清空旧的班级数据：避免残留 key 与新版数据混合、以及脏 key 累积撑爆容量
+          var del=[];
+          for(var i=0;i<localStorage.length;i++){
+            var k=localStorage.key(i);
+            if(k&&k.indexOf(SEAT_PREFIX)===0)del.push(k)
+          }
+          del.forEach(function(k){localStorage.removeItem(k)});
+          // ② 只按索引里的 id 回写，丢弃备份文件中的脏 key（如旧版 slice 错误产生的 _xxx）
+          var validIds=[];
+          idx.list.forEach(function(c){
+            if(!c||!c.id)return;
+            var v=sm.classes?sm.classes[c.id]:null;
+            if(v!=null){localStorage.setItem(classKey(c.id),v);validIds.push(c.id)}
+          });
+          // ③ 写索引并修正 cur：必须指向有数据的班级，否则恢复后整个页面是空白
+          var newIdx={list:idx.list.slice(),cur:idx.cur};
+          if(validIds.length&&validIds.indexOf(newIdx.cur)<0)newIdx.cur=validIds[0];
+          localStorage.setItem(SK_CLS,JSON.stringify(newIdx));
+          // ④ legacy：有则写，无则清，避免旧数据干扰 ensureClasses
+          if(sm.legacy)localStorage.setItem(SK,sm.legacy);else localStorage.removeItem(SK);
+        }catch(ex){err=ex.message||String(ex)}
+        if(err){toast('写入失败：'+err,'error');input.value='';return}
+        // ⑤ 重新加载到内存
+        CLASSES=[];CID=null;
+        ensureClasses();
+        S=defaultS();loadL();
+        S.hist=[];S.hi=-1;
+        syncClsSel();syncCfgInputs();saveHist();renderAll();
+        input.value='';
+        toast('恢复成功（'+clsCount+' 个班级已还原）','success')
+      },function(){input.value=''});
+    }catch(err){toast('解析失败：'+err.message,'error');input.value=''}
+  };
+  reader.readAsText(file)
+}
+function openConfirm(title,body,onOk,onCancel){
+  var m=document.createElement('div');
+  m.className='mo on';m.style.zIndex='1100';
+  m.innerHTML='<div class="md" style="max-width:480px"><h2>'+title+'</h2>'+body+
+    '<div class="ma"><button class="btn btn-g" id="cfCancel" style="color:var(--text);border:1px solid var(--border)">取消</button>'+
+    '<button class="btn btn-d" id="cfOk">确认覆盖</button></div></div>';
+  document.body.appendChild(m);
+  document.getElementById('cfOk').onclick=function(){document.body.removeChild(m);onOk()};
+  document.getElementById('cfCancel').onclick=function(){document.body.removeChild(m);onCancel&&onCancel()}
+}
+function downloadBlob(content,filename,mime){
+  var blob=new Blob([content],{type:mime});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download=filename;a.click();
+  setTimeout(function(){URL.revokeObjectURL(url)},500)
+}
+
 // ===== 版本 =====
-function saveCur(){saveL();toast('已保存','success')}
+// 点击「保存」：先落盘当前状态，再打开版本管理并预填默认名，可直接回车存档
+function saveCur(){saveL();openVer(true)}
+// 生成默认版本名：日期 + 排座，同名自动加序号
+function defaultVerName(){
+  const d=new Date(),p=n=>String(n).padStart(2,'0');
+  const base=d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+  const n=S.versions.filter(v=>v.n.indexOf(base)===0).length;
+  return n?base+' 排座('+(n+1)+')':base+' 排座'
+}
 function saveVer(){
   const n=document.getElementById('vn').value.trim();if(!n){toast('请输入版本名','error');return}
   const v={id:uid(),n,date:new Date().toISOString(),data:{cn:S.cn,mode:S.mode,groups:S.groups,cpg:S.cpg,rows:S.rows,singleCols:S.singleCols,singleRows:S.singleRows,smallSplit:S.smallSplit,flipV:S.flipV,flipH:S.flipH,myopiaRows:S.myopiaRows,shortRows:S.shortRows,rules:S.rules,vipCount:S.vipCount||0,vipSids:S.vipSids||[],students:JSON.parse(JSON.stringify(S.students)),seats:JSON.parse(JSON.stringify(S.seats)),pairs:JSON.parse(JSON.stringify(S.pairs))}};
@@ -1391,17 +1519,44 @@ async function exportDocx(){
     })]
   }));
 
-  // 第2行：讲台（合并所有列）
-  rows.push(new TableRow({
-    height:{value:1000,rule:HeightRule.ATLEAST},
-    children:[new TableCell({
+  // 第2行：讲台 + VIP 座位
+  const vks=vipSeats();
+  if(vks.length>0){
+    const vipCells=[];
+    const leftCount=Math.ceil(vks.length/2);
+    for(let i=0;i<leftCount;i++){
+      const sid=S.seats[vks[i]];
+      const s=sid?S.students.find(x=>x.id===sid):null;
+      vipCells.push(mkSeatCell(s?s.n:'',1,true));
+    }
+    vipCells.push(new TableCell({
       children:[mkPara('【 讲 台 】',40)],
-      columnSpan:totalCols,
+      columnSpan:totalCols-vks.length,
       verticalAlign:VerticalAlign.CENTER,
       borders:cellBordersAisle,
       margins:cellMargin
-    })]
-  }));
+    }));
+    for(let i=leftCount;i<vks.length;i++){
+      const sid=S.seats[vks[i]];
+      const s=sid?S.students.find(x=>x.id===sid):null;
+      vipCells.push(mkSeatCell(s?s.n:'',1,true));
+    }
+    rows.push(new TableRow({
+      height:{value:1000,rule:HeightRule.ATLEAST},
+      children:vipCells
+    }));
+  }else{
+    rows.push(new TableRow({
+      height:{value:1000,rule:HeightRule.ATLEAST},
+      children:[new TableCell({
+        children:[mkPara('【 讲 台 】',40)],
+        columnSpan:totalCols,
+        verticalAlign:VerticalAlign.CENTER,
+        borders:cellBordersAisle,
+        margins:cellMargin
+      })]
+    }));
+  }
 
   // 第3行：大组标题（仅group/small模式，单人模式跳过）
   if(S.mode==='group'||S.mode==='small'){
@@ -1531,10 +1686,43 @@ function exportXlsx(){
   const tRow=physCols.map(()=>'');tRow[0]='座位表';
   buildRow(tRow,physCols.map(()=>sTitle),50);
   merges.push({s:{r:0,c:0},e:{r:0,c:totalCols-1}});
-  // 讲台行
-  const pRow=physCols.map(()=>'');pRow[0]='【 讲 台 】';
-  buildRow(pRow,physCols.map(()=>sPodium),50);
-  merges.push({s:{r:1,c:0},e:{r:1,c:totalCols-1}});
+  // 讲台行（含 VIP 座位）
+  const vks=vipSeats();
+  if(vks.length>0){
+    const leftCount=Math.ceil(vks.length/2);
+    const pRow=physCols.map(()=>'');
+    const pSts=physCols.map(()=>sAisle);
+    let vipIdx=0;
+    for(let i=0;i<physCols.length;i++){
+      if(vipIdx<leftCount){
+        const sid=S.seats[vks[vipIdx]];
+        const s=sid?S.students.find(x=>x.id===sid):null;
+        pRow[i]=s?s.n:'';
+        pSts[i]=sSeat;
+        vipIdx++;
+      }else if(vipIdx===leftCount){
+        pRow[i]='【 讲 台 】';
+        pSts[i]=sPodium;
+        // 合并讲台单元格
+        const mergeStart=i;
+        let mergeEnd=i;
+        for(let j=i+1;j<physCols.length-(vks.length-leftCount);j++){mergeEnd=j}
+        if(mergeEnd>mergeStart)merges.push({s:{r:1,c:mergeStart},e:{r:1,c:mergeEnd}});
+        vipIdx++;
+      }else if(i>=physCols.length-(vks.length-leftCount)){
+        const sid=S.seats[vks[vipIdx-1]];
+        const s=sid?S.students.find(x=>x.id===sid):null;
+        pRow[i]=s?s.n:'';
+        pSts[i]=sSeat;
+        vipIdx++;
+      }
+    }
+    buildRow(pRow,pSts,50);
+  }else{
+    const pRow=physCols.map(()=>'');pRow[0]='【 讲 台 】';
+    buildRow(pRow,physCols.map(()=>sPodium),50);
+    merges.push({s:{r:1,c:0},e:{r:1,c:totalCols-1}});
+  }
   // 大组标题行（单人模式跳过）
   const hasGroupRow=S.mode==='group'||S.mode==='small';
   if(hasGroupRow){
@@ -1626,7 +1814,13 @@ function openCfg(){
   document.getElementById('cfgSmall').style.display=S.mode==='small'?'block':'none';
   updPairSel();document.getElementById('cfgModal').classList.add('on')
 }
-function openVer(){renderVerL();document.getElementById('verModal').classList.add('on')}
+function openVer(withDefault){
+  renderVerL();
+  const vn=document.getElementById('vn');
+  if(withDefault&&!vn.value.trim())vn.value=defaultVerName();
+  document.getElementById('verModal').classList.add('on');
+  setTimeout(()=>{vn.focus();vn.select()},50)
+}
 function openStat(){renderStatC();document.getElementById('statModal').classList.add('on')}
 function closeM(id){document.getElementById(id).classList.remove('on')}
 document.addEventListener('click',e=>{if(!e.target.closest('#ctxMenu'))document.getElementById('ctxMenu').classList.remove('on')});
@@ -1674,6 +1868,18 @@ function postWbResult(){
       else row.push({isEmpty:true})
     });
     seating.push(row)
+  }
+  // VIP 座位作为独立行追加到 seating 末尾，方便父页面识别
+  const vks=vipSeats();
+  if(vks.length>0){
+    const vipRow=[];
+    for(const vk of vks){
+      const sid=S.seats[vk];
+      const s=sid?S.students.find(x=>x.id===sid):null;
+      if(s)vipRow.push({student_id:s.studentNo||'',name:s.n,gender:s.gender==='female'?'女':'男',height:s.height,vision:(s.tags||[]).includes('myopia')?1:0,score:null,vip:true});
+      else vipRow.push({isEmpty:true,vip:true})
+    }
+    seating.push(vipRow)
   }
   const columnGroups=phys.map(p=>p.type==='aisle'?0:(S.mode==='single'?0:Math.floor(p.seatIdx/S.cpg)+1));
   window.parent.postMessage({type:'wb-seatmap-result',seating,columnGroups},'*')

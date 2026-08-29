@@ -390,7 +390,7 @@ export const Nav = [
               <span>风险链接提示页</span>
             </div>
             `,
-        link: "/risk-link?target=https://sakaay.com/",
+        link: "/risk-link?target=https://www.sakaay.com/",
       },
     ],
   },

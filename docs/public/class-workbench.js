@@ -385,7 +385,8 @@
       '<input id="ver-name" placeholder="版本名称，如：开学初 / 月考后" style="flex:1">' +
       '<button class="btn btn-primary" id="ver-create" style="flex-shrink:0">💾 保存当前</button></div>' +
       '<div style="font-size:12px;color:var(--c-text-2);margin-bottom:8px">' +
-      '自动快照每 10 分钟生成一次；手动版本可用于关键节点（开学、月考、调座后）。最多保留 60 个。</div>' +
+      '自动快照每 10 分钟生成一次；手动版本可用于关键节点（开学、月考、调座后）。最多保留 60 个。<br>' +
+      '<span style="color:var(--c-text-3)">注：版本快照只包含本工作台表格数据，<b>座位表需通过顶部「💾 备份」导出</b>（备份文件已含座位表全部班级）。</span></div>' +
       '<div id="ver-list">' + renderVerList() + '</div>';
     WB.openModal('📦 版本管理', html, [{ text: '关闭', cls: 'btn btn-primary', act: 'close' }], null, function (body) {
       var create = body.querySelector('#ver-create');
@@ -1709,21 +1710,32 @@
 
     seating.forEach(function (row, ri) {
       if (!Array.isArray(row)) return;
+      // 最后一行且带 vip 标记 → VIP 座位行
+      var isVipRow = ri === seating.length - 1 && row.length > 0 && row.some(function (s) { return s && s.vip; });
       row.forEach(function (seat, ci) {
         if (!seat || seat.isEmpty || !seat.name) return;
-        // 通过 student_id (对应学号/姓名) 查花名册补全信息
         var key = seat.student_id || seat.name;
         var rosterRow = studentMap[seat.name] || studentMap[seat.student_id] || {};
-        // 分组：优先用 seat-map 传的分组信息，否则默认「第一组」
-        var zone = '第' + (colGroups[ci] || (ci + 1)) + '组';
-        rows.push({
-          studentNo: rosterRow.studentNo || key || '',
-          name: seat.name || '',
-          zone: zone,
-          row: String(ri + 1),
-          seatNo: String(ci + 1),
-          note: (rosterRow.remark || '')
-        });
+        if (isVipRow) {
+          rows.push({
+            studentNo: rosterRow.studentNo || key || '',
+            name: seat.name || '',
+            zone: 'VIP',
+            row: '讲台',
+            seatNo: 'VIP-' + (ci + 1),
+            note: (rosterRow.remark || '')
+          });
+        } else {
+          var zone = '第' + (colGroups[ci] || (ci + 1)) + '组';
+          rows.push({
+            studentNo: rosterRow.studentNo || key || '',
+            name: seat.name || '',
+            zone: zone,
+            row: String(ri + 1),
+            seatNo: String(ci + 1),
+            note: (rosterRow.remark || '')
+          });
+        }
       });
     });
 
@@ -1829,18 +1841,100 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
+  // ============ 座位表（seat-map）独立存储读写 ============
+  // seat-map 是独立工具，数据存在自己的 localStorage（索引 seat_v3_classes +
+  // 每班 seat_v3_c_{id}，旧版 seat_v2_data），不在工作台 state 内。
+  // 工作台备份时必须单独收集/写回，否则备份会丢座位表与排座结果。
+  var SEATMAP_IDX_KEY = 'seat_v3_classes';
+  var SEATMAP_PREFIX = 'seat_v3_c_';
+  var SEATMAP_OLD_KEY = 'seat_v2_data';
+
+  function collectSeatMap() {
+    var out = { index: null, classes: {}, legacy: null };
+    try {
+      out.index = localStorage.getItem(SEATMAP_IDX_KEY);
+      out.legacy = localStorage.getItem(SEATMAP_OLD_KEY);
+      var idx = out.index ? JSON.parse(out.index) : null;
+      if (idx && Array.isArray(idx.list)) {
+        idx.list.forEach(function (c) {
+          if (c && c.id) out.classes[c.id] = localStorage.getItem(SEATMAP_PREFIX + c.id);
+        });
+      }
+      // 兜底扫描：防止索引缺失/损坏导致漏备
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!k || k.indexOf(SEATMAP_PREFIX) !== 0) continue;
+        var id = k.slice(SEATMAP_PREFIX.length);
+        // 跳过历史脏 key（旧版前缀长度算错，导致 id 多带一个下划线），避免备份体积翻倍
+        if (!id || id.charAt(0) === '_') continue;
+        if (out.classes[id] == null) out.classes[id] = localStorage.getItem(k);
+      }
+    } catch (e) { /* 读取失败不影响主备份 */ }
+    return out;
+  }
+
+  // 写回座位表数据。逻辑与 seat-map.html 的 restoreSeatMap 保持一致：
+  // 清旧 key → 只按索引 id 回写（丢弃脏 key）→ 修正 cur 指向有数据的班级。
+  // 缺第 3 步时，若索引 cur 指向无数据的班级，seat-map 打开后整页空白。
+  function applySeatMap(data) {
+    if (!data) return 0;
+    var ok = 0; // 成功恢复的班级数
+    try {
+      var idx = null;
+      if (data.index) { try { idx = JSON.parse(data.index); } catch (e) { idx = null; } }
+      if (!idx || !Array.isArray(idx.list) || !idx.list.length) {
+        // 无有效索引：仅回写 legacy，交由 seat-map 启动时自行迁移
+        if (data.legacy) localStorage.setItem(SEATMAP_OLD_KEY, data.legacy);
+        return ok;
+      }
+      // ① 清空旧的班级数据：避免残留 key 与新数据混合、脏 key 累积
+      var del = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf(SEATMAP_PREFIX) === 0) del.push(k);
+      }
+      del.forEach(function (k) { localStorage.removeItem(k); });
+      // ② 只按索引里的 id 回写，丢弃备份文件中的脏 key（旧版 slice 长度错误产生的 _xxx）
+      var validIds = [];
+      idx.list.forEach(function (c) {
+        if (!c || !c.id) return;
+        var v = data.classes ? data.classes[c.id] : null;
+        if (v != null) { localStorage.setItem(SEATMAP_PREFIX + c.id, v); validIds.push(c.id); ok++; }
+      });
+      // ③ 写索引并修正 cur：必须指向有数据的班级，否则 seat-map 打开后是空白
+      var newIdx = { list: idx.list.slice(), cur: idx.cur };
+      if (validIds.length && validIds.indexOf(newIdx.cur) < 0) newIdx.cur = validIds[0];
+      localStorage.setItem(SEATMAP_IDX_KEY, JSON.stringify(newIdx));
+      // ④ legacy：有则写，无则清，避免旧数据干扰 seat-map 的 ensureClasses
+      if (data.legacy) localStorage.setItem(SEATMAP_OLD_KEY, data.legacy);
+      else localStorage.removeItem(SEATMAP_OLD_KEY);
+    } catch (e) {
+      console.error('[seatMap] 恢复失败', e);
+      showToast('座位表数据写入失败：' + (e.message || e));
+    }
+    return ok;
+  }
+
   // ============ 备份/恢复 ============
   function backupAll() {
     // 整体导出 state：后续新增顶层业务字段（床位、标签配置、成绩配置等）
     // 会自动纳入备份，无需逐个补字段，避免"新增数据漏备份导致恢复丢数据"
+    var seatMap = collectSeatMap();
+    var seatCount = Object.keys(seatMap.classes || {}).filter(function (id) {
+      return seatMap.classes[id] != null;
+    }).length;
     var data = {
       version: window.WB_CONFIG.version,
       backupTime: new Date().toISOString(),
-      state: state
+      state: state,
+      // 座位表工具独立存储，单独纳入备份（含全部班级与排座结果）
+      seatMap: seatMap
     };
     var json = JSON.stringify(data, null, 2);
     downloadBlob(json, '班主任工作台备份_' + today() + '.json', 'application/json;charset=utf-8');
-    showToast('备份已下载');
+    showToast(seatCount > 0
+      ? '备份已下载（含座位表 ' + seatCount + ' 个班级）'
+      : '备份已下载（座位表暂无数据）');
   }
 
   function restoreAll() {
@@ -1852,6 +1946,15 @@
     reader.onload = function (e) {
       try {
         var data = JSON.parse(e.target.result);
+        // 座位表独立备份（seat-map 导出）：只还原座位表，不动工作台数据
+        if (data.source === 'seat-map' && data.index) {
+          if (!confirm('检测到「座位表」独立备份，将覆盖座位表数据（工作台其他数据不受影响）。是否继续？')) return;
+          var n = applySeatMap(data);
+          showToast(n > 0
+            ? '座位表已恢复（' + n + ' 个班级，请刷新座位表页面）'
+            : '座位表恢复失败：备份中没有班级数据');
+          return;
+        }
         // 兼容两种备份格式：新版 { state: {...} } 与旧版顶层平铺 { tables, grades, ... }
         var src = data.state || data;
         if (!src.tables && !data.state) throw new Error('备份文件格式不正确');
@@ -1883,10 +1986,14 @@
         } else if (!state.classes || !state.classes.list || !state.classes.list.length) {
           migrateClasses();
         }
+        // 座位表工具独立存储一并还原（写回 localStorage，seat-map 启动/刷新后自动读取）
+        var seatN = applySeatMap(data.seatMap);
         saveCurClass(); // 顶层数据同步到当前班级桶
         persist();
         render();
-        showToast('恢复成功');
+        showToast(seatN > 0
+          ? '恢复成功（含座位表 ' + seatN + ' 个班级，请刷新座位表页面）'
+          : '恢复成功（备份中无座位表数据）');
       } catch (err) {
         showToast('恢复失败：' + err.message);
       }

@@ -184,57 +184,64 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 
+// 【AURA Fix-20250830】SSR 安全：抽取初始数据，避免 SSR 阶段 undefined localStorage
+const initialMoments = [
+  {
+    id: 1,
+    content: "今天天气真好，去公园散步了～ 🌸",
+    images: [
+      "https://picsum.photos/600/400?random=10",
+      "https://picsum.photos/600/400?random=11"
+    ],
+    time: new Date(Date.now() - 3600000).getTime(), // 1小时前
+    likes: 15,
+    liked: false,
+    comments: 3
+  },
+  {
+    id: 2,
+    content: "分享一下新做的晚餐，味道还不错！",
+    images: [
+      "https://picsum.photos/600/400?random=20"
+    ],
+    time: new Date(Date.now() - 86400000).getTime(), // 1天前
+    likes: 28,
+    liked: true,
+    comments: 7
+  },
+  {
+    id: 3,
+    content: "周末去看了一场精彩的电影，强烈推荐！",
+    images: [],
+    time: new Date(Date.now() - 172800000).getTime(), // 2天前
+    likes: 12,
+    liked: false,
+    comments: 2
+  }
+];
+
 // 从localStorage加载数据或使用初始数据
 const loadMoments = () => {
+  // 【AURA Fix-20250830】VitePress SSR 无 localStorage，加守卫避免构建期 ReferenceError
+  if (typeof localStorage === 'undefined') return initialMoments;
   const saved = localStorage.getItem('momentsData');
   if (saved) {
     try {
       return JSON.parse(saved);
     } catch (e) {
       console.error('Failed to parse moments data', e);
-      return [];
+      return initialMoments;
     }
   }
   // 初始示例数据
-  return [
-    {
-      id: 1,
-      content: "今天天气真好，去公园散步了～ 🌸",
-      images: [
-        "https://picsum.photos/600/400?random=10",
-        "https://picsum.photos/600/400?random=11"
-      ],
-      time: new Date(Date.now() - 3600000).getTime(), // 1小时前
-      likes: 15,
-      liked: false,
-      comments: 3
-    },
-    {
-      id: 2,
-      content: "分享一下新做的晚餐，味道还不错！",
-      images: [
-        "https://picsum.photos/600/400?random=20"
-      ],
-      time: new Date(Date.now() - 86400000).getTime(), // 1天前
-      likes: 28,
-      liked: true,
-      comments: 7
-    },
-    {
-      id: 3,
-      content: "周末去看了一场精彩的电影，强烈推荐！",
-      images: [],
-      time: new Date(Date.now() - 172800000).getTime(), // 2天前
-      likes: 12,
-      liked: false,
-      comments: 2
-    }
-  ];
+  return initialMoments;
 };
 
 // 保存数据到localStorage
 const saveMoments = (data) => {
   try {
+    // 【AURA Fix-20250830】加 SSR 守卫（watch 在 SSR 期也会执行一次吗？仍保持防御）
+    if (typeof localStorage === 'undefined') return;
     localStorage.setItem('momentsData', JSON.stringify(data));
   } catch (e) {
     console.error('Failed to save moments data', e);

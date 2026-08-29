@@ -14,11 +14,11 @@ export const teekDocConfig: TeekConfig = {
   // 文档风格，footer简洁版
   footerInfo: {
     theme: {
-      name: `Theme By Teek@${version}`,
+      name: `Theme By sakaay@${version}`,
     },
     copyright: {
       createYear: 2025,
-      suffix: "One",
+      suffix: "sakaay",
     },
   },  
 

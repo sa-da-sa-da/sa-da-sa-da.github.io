@@ -305,6 +305,23 @@ const teekConfig = defineTeekConfig({
         every: 5, // 每隔 5 个标题插入一个中间广告
         maxAds: 3, // 每篇最多 3 个（Google 政策上限）
       });
+      // 【AURA Fix-20250830】防 markdown-it-anchor 崩溃：在"anchor" ruler 之前加一层守卫 ruler。
+      // 崩溃根因：自定义插件 autoGoogleAd + 特殊 md 结构（原考务助手.md）组合，
+      // 让某些 heading_open → inline token 的 children 变成 null（而不是 []），
+      // 随后 markdown-it-anchor 的 permalink 阶段对 `children.push/unshift` 抛 null.push。
+      // 策略：主动 normalize 所有 heading_open 后紧跟的 inline token.children 为数组（若不是数组）。
+      md.core.ruler.before('anchor', 'normalize-heading-inline-children', (state) => {
+        const tokens = state.tokens;
+        for (let i = 0; i < tokens.length; i++) {
+          const t = tokens[i];
+          if (t && t.type === 'heading_open') {
+            const next = tokens[i + 1];
+            if (next && next.type === 'inline' && !Array.isArray(next.children)) {
+              (next as any).children = [];
+            }
+          }
+        }
+      });
     },
     demo: {
       githubUrl:
@@ -378,6 +395,23 @@ export default defineConfig({
       dangerLabel: "危险",
       infoLabel: "信息",
       detailsLabel: "详细信息",
+    },
+    // 【AURA Fix-20250830】markdown-it-anchor 默认 getTokensText 未对 heading 的 inline children
+    // 做 null/undefined 守卫，考务助手.md + autoGoogleAd 插件组合下会触发 null.filter。
+    // 同时 markdown-it-anchor 的 permalink 阶段会直接对 children.push/unshift，在同一场景下抛 null.push。
+    // 解决方案（双保险）：
+    //   1) 覆盖 getTokensText：显式空值守卫；
+    //   2) 关闭 permalink（= false）：不再向标题插入 `¶` 永久链接按钮。
+    //      副作用极小：标题仍有 #id（保证侧边栏/锚点跳转正常），只是页面内悬停时不再显示 ¶ 按钮。
+    anchor: {
+      getTokensText(tokens: any[] | null | undefined): string {
+        if (!tokens || !Array.isArray(tokens)) return '';
+        return tokens
+          .filter((t) => t && (t.type === 'text' || t.type === 'code_inline'))
+          .map((t) => (t.content as string) || '')
+          .join('');
+      },
+      permalink: false,
     },
   },
   sitemap: {

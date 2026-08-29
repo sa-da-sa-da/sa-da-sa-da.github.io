@@ -3017,9 +3017,9 @@ window.WB_VIEWS = (function () {
   // ============ 住宿床位画布 ============
   var DORM_PENDING = null; // 待分配学生（先点学生 chip，再点空床入住）
 
-  // 布局数据懒初始化：state.dormLayout = { rooms: [{ __id, name, gender, beds }] }
+  // 布局数据懒初始化：state.dormLayout = { rooms: [{ __id, name, gender, beds, bedMode }], bedMode:'bunk'|'desk' }
   function dormRooms() {
-    if (!WB.state.dormLayout) WB.state.dormLayout = { rooms: [] };
+    if (!WB.state.dormLayout) WB.state.dormLayout = { rooms: [], bedMode: 'bunk', oddIsTop: true };
     if (!Array.isArray(WB.state.dormLayout.rooms)) WB.state.dormLayout.rooms = [];
     return WB.state.dormLayout.rooms;
   }
@@ -3027,9 +3027,19 @@ window.WB_VIEWS = (function () {
     if (!WB.state.tables.dorm) WB.state.tables.dorm = [];
     return WB.state.tables.dorm;
   }
-  // 床位铺位：1 起编号，奇数=上铺、偶数=下铺（1上 2下 3上 4下…）
-  function dormBedLevel(i) { return i % 2 === 1 ? '上' : '下'; }
-  function dormBedNo(i) { return Math.ceil(i / 2); }
+  // 床位铺位模式：bunk=上下铺（默认），desk=上床下桌
+  // oddIsTop=true 时奇数=上铺/上床，false 时奇数=下铺/下床
+  function dormBedLevel(i) {
+    var mode = WB.state.dormLayout && WB.state.dormLayout.bedMode;
+    var oddTop = !(WB.state.dormLayout && WB.state.dormLayout.oddIsTop === false);
+    if (mode === 'desk') return oddTop ? (i % 2 === 1 ? '上床' : '下桌') : (i % 2 === 1 ? '下桌' : '上床');
+    return oddTop ? (i % 2 === 1 ? '上' : '下') : (i % 2 === 1 ? '下' : '上');
+  }
+  function dormBedNo(i) {
+    var mode = WB.state.dormLayout && WB.state.dormLayout.bedMode;
+    if (mode === 'desk') return i; // 上床下桌每床独立编号
+    return Math.ceil(i / 2);
+  }
   function dormRoomKey(name) { return String(name || '').replace(/\s+/g, '').toUpperCase(); }
   function dormRecInRoom(rec, room) { return dormRoomKey(rec.roomNo) === dormRoomKey(room.name); }
 
@@ -3081,7 +3091,7 @@ window.WB_VIEWS = (function () {
       var gs = Object.keys(g.gc);
       var gender = '混合';
       if (gs.length === 1 && (gs[0] === '男' || gs[0] === '女')) gender = gs[0];
-      rooms.push({ __id: WB.uid(), name: g.name, gender: gender, beds: beds });
+      rooms.push({ __id: WB.uid(), name: g.name, gender: gender, beds: beds, bedMode: 'bunk' });
       exist[k] = true;
       added++;
     });
@@ -3151,9 +3161,10 @@ window.WB_VIEWS = (function () {
       beds += '</div>';
     }
     var full = occ >= room.beds;
+    var modeTag = room.bedMode === 'desk' ? '上床下桌' : '上下铺';
     return '<div class="dorm-room">' +
       '<div class="dorm-room-head"><b>' + H(room.name) + '</b>' +
-      '<span class="dorm-room-info' + (full ? ' full' : '') + '">' + (full ? '满员' : occ + '/' + room.beds) + '</span>' +
+      '<span class="dorm-room-info' + (full ? ' full' : '') + '">' + (full ? '满员' : occ + '/' + room.beds) + ' · ' + modeTag + '</span>' +
       '<span class="dorm-room-ops">' +
       '<button class="dorm-op" data-edit-room="' + room.__id + '" title="编辑房间">✎</button>' +
       '<button class="dorm-op" data-del-room="' + room.__id + '" title="删除房间">🗑</button>' +
@@ -3176,7 +3187,11 @@ window.WB_VIEWS = (function () {
     });
 
     var html = '<div class="card">';
-    html += '<div class="card-title">🏠 住宿床位 · 画布视图 <span class="extra">点床位分配学生 · 奇数床=上铺 偶数床=下铺</span></div>';
+    var bedMode = WB.state.dormLayout && WB.state.dormLayout.bedMode || 'bunk';
+    var oddTop = !(WB.state.dormLayout && WB.state.dormLayout.oddIsTop === false);
+    var modeLabel = bedMode === 'desk' ? '上床下桌' : '上下铺';
+    var oddLabel = oddTop ? (bedMode === 'desk' ? '奇数=上床' : '奇数=上铺') : (bedMode === 'desk' ? '奇数=下桌' : '奇数=下铺');
+    html += '<div class="card-title">🏠 住宿床位 · 画布视图 <span class="extra">' + modeLabel + ' · ' + oddLabel + '</span></div>';
 
     // 工具栏 + 统计
     var totalBeds = 0, occ = 0;
@@ -3187,10 +3202,12 @@ window.WB_VIEWS = (function () {
     html += '<div class="dorm-toolbar">';
     html += '<button class="btn btn-sm" id="dm-add">＋ 添加房间</button>';
     html += '<button class="btn btn-sm" id="dm-batch" title="按起始房号批量生成多个房间">⧉ 批量建房</button>';
-    html += '<button class="btn btn-sm" id="dm-roster" title="把花名册学生批量加为待分配住宿生">👥 同步花名册</button>';
+    html += '<button class="btn btn-sm" id="dm-roster" title="与花名册保持一致：新增新学生、移除已不在册的学生、校准姓名/电话">👥 同步花名册</button>';
     html += '<button class="btn btn-sm" id="dm-sync">🔄 从表格同步</button>';
     html += '<button class="btn btn-sm" id="dm-auto">⚡ 一键分配</button>';
     html += '<button class="btn btn-sm" id="dm-table" title="切回表格模式，可批量导入/编辑字段">📋 表格</button>';
+    html += '<button class="btn btn-sm" id="dm-mode" title="切换上下铺/上床下桌">🔄 ' + (bedMode === 'desk' ? '上下铺' : '上床下桌') + '</button>';
+    html += '<button class="btn btn-sm" id="dm-odd" title="切换奇数床是上铺还是下铺">🔀 奇数=' + (oddTop ? '上' : '下') + '</button>';
     html += '<div style="flex:1"></div>';
     html += '<span class="dorm-stat">🛏 ' + totalBeds + ' 床</span>';
     html += '<span class="dorm-stat ok">✅ 已住 ' + occ + '</span>';
@@ -3298,6 +3315,10 @@ window.WB_VIEWS = (function () {
     });
     body += '</select></label>';
     body += '<label><span class="lbl">床位数（上下铺成对）</span><input id="dr-beds" type="number" min="2" max="12" value="' + (room ? room.beds : 4) + '"></label>';
+    body += '<label><span class="lbl">铺位模式</span><select id="dr-mode">' +
+      '<option value="bunk"' + ((room ? (room.bedMode || 'bunk') : 'bunk') === 'bunk' ? ' selected' : '') + '>上下铺</option>' +
+      '<option value="desk"' + ((room ? (room.bedMode || 'bunk') : 'bunk') === 'desk' ? ' selected' : '') + '>上床下桌</option>' +
+      '</select></label>';
     WB.openModal(room ? '编辑房间 · ' + H(room.name) : '添加房间', body, [
       { text: '取消', cls: 'btn', act: 'close' },
       { text: room ? '保存' : '创建', cls: 'btn btn-primary', act: 'save' }
@@ -3310,10 +3331,11 @@ window.WB_VIEWS = (function () {
       if (!name) { WB.showToast('请填写房间号'); return false; }
       var dup = rooms.find(function (r) { return r !== room && dormRoomKey(r.name) === dormRoomKey(name); });
       if (dup) { WB.showToast('已存在同名房间：' + dup.name); return false; }
+      var bedMode = formEl.querySelector('#dr-mode') ? formEl.querySelector('#dr-mode').value : 'bunk';
       var rows = dormRows();
       if (room) {
         var oldKey = dormRoomKey(room.name);
-        room.name = name; room.gender = gender; room.beds = beds;
+        room.name = name; room.gender = gender; room.beds = beds; room.bedMode = bedMode;
         if (oldKey !== dormRoomKey(name)) {
           rows.forEach(function (r) { if (r.roomNo && dormRoomKey(r.roomNo) === oldKey) r.roomNo = name; });
         }
@@ -3322,7 +3344,7 @@ window.WB_VIEWS = (function () {
         });
         WB.showToast('房间已更新：' + name, 'ok');
       } else {
-        rooms.push({ __id: WB.uid(), name: name, gender: gender, beds: beds });
+        rooms.push({ __id: WB.uid(), name: name, gender: gender, beds: beds, bedMode: bedMode });
         WB.showToast('房间已创建：' + name, 'ok');
       }
       dormSyncAll();
@@ -3347,26 +3369,109 @@ window.WB_VIEWS = (function () {
     WB.showToast('房间已删除');
   }
 
-  // 从花名册同步住宿生：全部学生批量加入待分配（dorm 表已有同名记录的跳过）
+  // 从花名册同步住宿生：新增（花名册有、住宿无）+ 移除（花名册已无此人）+ 字段校准
+  // 关联优先级：_sid（学号/唯一ID）> 姓名，避免改名后重复新增或误删
   function dormSyncRoster() {
     var roster = WB.getTable('roster') || [];
     if (!roster.length) { WB.showToast('花名册为空，请先在「学生档案库」录入'); return; }
     var rows = dormRows();
-    var existed = {};
-    rows.forEach(function (r) { if (r.name) existed[r.name] = true; });
-    var added = 0;
+
+    // 花名册索引：_sid → 学生，姓名 → 学生（同名取首个）
+    var bySid = {}, byName = {};
     roster.forEach(function (s) {
       var name = String(s.name || '').trim();
-      if (!name || existed[name]) return;
-      rows.push({ __id: WB.uid(), name: name, building: '', roomNo: '', bedNo: '',
-        roommate: '', guardianPhone: s.phone || '', note: '', _sid: s.__id || '' });
-      existed[name] = true;
-      added++;
+      if (s.__id) bySid[s.__id] = s;
+      if (name && !byName[name]) byName[name] = s;
     });
-    if (!added) { WB.showToast('花名册学生均已在住宿名单中'); return; }
-    WB.saveState();
-    renderDormRefresh();
-    WB.showToast('已从花名册加入 ' + added + ' 名待分配住宿生');
+
+    var usedSid = {};   // 已被某条住宿行占用的花名册 __id，防止多人匹配同一学生
+    var toRemove = [];  // 花名册中已不存在的住宿行（含重复孤儿数据）
+    var updated = 0;    // 校准条数
+
+    rows.forEach(function (r) {
+      var name = String(r.name || '').trim();
+      var s = (r._sid && bySid[r._sid]) || (name && byName[name]) || null;
+      if (!s) { toRemove.push(r); return; }
+      var sid = s.__id || '';
+      if (sid) {
+        if (usedSid[sid]) { toRemove.push(r); return; } // 该学生已被别的行关联，本行是重复数据
+        usedSid[sid] = true;
+      }
+      // 校准：姓名 / 关联ID / 联系电话
+      var newName = String(s.name || '').trim();
+      if (newName && newName !== name) { r.name = newName; updated++; }
+      if (s.__id && r._sid !== s.__id) { r._sid = s.__id; updated++; }
+      var phone = s.phone || '';
+      if (phone && r.guardianPhone !== phone) { r.guardianPhone = phone; updated++; }
+    });
+
+    // 待新增：花名册中尚未被任何住宿行关联的学生
+    var toAdd = [];
+    roster.forEach(function (s) {
+      var name = String(s.name || '').trim();
+      if (!name) return;
+      if (s.__id && usedSid[s.__id]) return;
+      var dup = rows.some(function (r) {
+        return toRemove.indexOf(r) < 0 && String(r.name || '').trim() === name;
+      });
+      if (dup) return;
+      toAdd.push(s);
+    });
+
+    if (!toAdd.length && !toRemove.length && !updated) {
+      WB.showToast('住宿名单已与花名册一致');
+      return;
+    }
+
+    // 移除对象中已分配床位的人数（移除即释放床位，需明确提示）
+    var occupied = toRemove.filter(function (r) { return r.roomNo && parseInt(r.bedNo, 10) > 0; });
+
+    // 名单预览：折叠展示，便于核对是否误判
+    function nameList(list) {
+      if (!list.length) return '';
+      var items = list.map(function (r) {
+        var nm = H(String(r.name || '').trim() || '(未命名)');
+        var bn = parseInt(r.bedNo, 10) || 0;
+        var bed = (r.roomNo && bn > 0)
+          ? '<i style="font-style:normal;color:#dc2626"> · ' + H(r.roomNo) + '-' + bn + '</i>' : '';
+        return '<span style="display:inline-block;padding:1px 6px;margin:2px;border:1px solid var(--c-border);border-radius:4px;font-size:12px">' +
+          nm + bed + '</span>';
+      }).join('');
+      return '<details style="margin-top:2px"><summary style="cursor:pointer;font-size:12px;color:var(--c-text-2)">查看名单</summary>' +
+        '<div style="margin-top:4px">' + items + '</div></details>';
+    }
+
+    var body = '<div style="font-size:13px;line-height:1.9">' +
+      '<div style="margin-bottom:6px">本次同步将执行以下操作：</div>' +
+      '<div>➕ <b>新增 ' + toAdd.length + ' 人</b>（花名册有、住宿名单无）' + nameList(toAdd) + '</div>' +
+      '<div style="margin-top:6px">➖ <b>移除 ' + toRemove.length + ' 人</b>（花名册已无此人）' +
+      (occupied.length
+        ? '<span style="color:#dc2626">，其中 ' + occupied.length + ' 人已占床位，移除后床位自动释放</span>'
+        : '') + nameList(toRemove) + '</div>' +
+      '<div style="margin-top:6px">🔧 <b>校准 ' + updated + ' 条</b>（姓名 / 关联 / 联系电话）</div>' +
+      '<div style="font-size:11px;color:var(--c-text-3);margin-top:8px">' +
+      '按学号（_sid）优先匹配，改名不会误删或重复新增。</div>' +
+      '</div>';
+
+    WB.openModal('🔄 同步花名册', body, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: '确认同步', cls: 'btn btn-primary', act: 'ok' }
+    ], function (act) {
+      if (act !== 'ok') return true;
+      toRemove.forEach(function (r) {
+        var i = rows.indexOf(r);
+        if (i >= 0) rows.splice(i, 1);
+      });
+      toAdd.forEach(function (s) {
+        rows.push({ __id: WB.uid(), name: String(s.name || '').trim(), building: '', roomNo: '', bedNo: '',
+          roommate: '', guardianPhone: s.phone || '', note: '', _sid: s.__id || '' });
+      });
+      dormSyncAll();
+      WB.saveState();
+      renderDormRefresh();
+      WB.showToast('同步完成：新增 ' + toAdd.length + ' 人 · 移除 ' + toRemove.length + ' 人 · 校准 ' + updated + ' 条');
+      return true;
+    });
   }
 
   // 批量创建宿舍：起始房号 + 间数 + 性别 + 每间床数
@@ -3380,6 +3485,11 @@ window.WB_VIEWS = (function () {
       '<option value="男">男生宿舍</option><option value="女">女生宿舍</option><option value="混合">混合</option>' +
       '</select></label>' +
       '<label style="flex:1;min-width:100px"><span class="lbl">每间床位数</span><input id="db-beds" type="number" min="2" max="12" value="4"></label>' +
+      '</div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">' +
+      '<label style="flex:1;min-width:100px"><span class="lbl">铺位模式</span><select id="db-mode">' +
+      '<option value="bunk">上下铺</option><option value="desk">上床下桌</option>' +
+      '</select></label>' +
       '</div>' +
       '<p style="font-size:11px;color:var(--c-text-3);margin-top:8px">示例：起始 301、间数 8 → 生成 301~308 共 8 间房（编号自动递增）。已存在的同名房间会跳过。</p>';
 
@@ -3406,11 +3516,12 @@ window.WB_VIEWS = (function () {
       var num = m ? parseInt(m[2], 10) : 1;
       var padLen = m ? m[2].length : 0;
 
+      var bedMode = formEl.querySelector('#db-mode') ? formEl.querySelector('#db-mode').value : 'bunk';
       var created = 0, skipped = 0;
       for (var i = 0; i < count; i++) {
         var name = m ? prefix + String(num + i).padStart(padLen, '0') : start + '-' + (i + 1);
         if (existKeys[dormRoomKey(name)]) { skipped++; continue; }
-        rooms.push({ __id: WB.uid(), name: name, gender: gender, beds: beds });
+        rooms.push({ __id: WB.uid(), name: name, gender: gender, beds: beds, bedMode: bedMode });
         existKeys[dormRoomKey(name)] = true;
         created++;
       }
@@ -3528,6 +3639,27 @@ window.WB_VIEWS = (function () {
       WB.saveState();
       WB.render();
     });
+    // 全局铺位模式切换
+    var modeBtn = el('dm-mode');
+    if (modeBtn) {
+      modeBtn.addEventListener('click', function () {
+        var cur = WB.state.dormLayout && WB.state.dormLayout.bedMode || 'bunk';
+        WB.state.dormLayout.bedMode = cur === 'bunk' ? 'desk' : 'bunk';
+        WB.saveState();
+        renderDormRefresh();
+        WB.showToast('已切换为 ' + (WB.state.dormLayout.bedMode === 'desk' ? '上床下桌' : '上下铺'));
+      });
+    }
+    var oddBtn = el('dm-odd');
+    if (oddBtn) {
+      oddBtn.addEventListener('click', function () {
+        var cur = !(WB.state.dormLayout && WB.state.dormLayout.oddIsTop === false);
+        WB.state.dormLayout.oddIsTop = !cur;
+        WB.saveState();
+        renderDormRefresh();
+        WB.showToast('已切换：奇数 = ' + (WB.state.dormLayout.oddIsTop ? '上铺/上床' : '下铺/下桌'));
+      });
+    }
   }
 
   function renderDormRefresh() {
