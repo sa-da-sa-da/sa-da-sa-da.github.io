@@ -14,7 +14,24 @@
  *
  * 单篇文章可关闭：frontmatter 中写 `ad: false`
  */
-import type MarkdownIt from "markdown-it";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+// markdown-it 最小类型（项目未直接安装 markdown-it 类型包）
+interface MarkdownItLike {
+  core: {
+    ruler: {
+      after(
+        afterName: string,
+        ruleName: string,
+        rule: (state: {
+          env?: { frontmatter?: Record<string, any>; pageData?: { frontmatter?: Record<string, any> } };
+          tokens: any[];
+          Token: new (type: string, tag: string, nesting: number) => { content: string; map: [number, number] };
+        }) => void
+      ): void;
+    };
+  };
+}
 
 export interface AutoGoogleAdOptions {
   /** 发布者 ID，默认 ca-pub-2897720906666216 */
@@ -80,7 +97,7 @@ function pickTargets(points: number[], maxAds: number): number[] {
   return [first, ...middle.slice(0, keepMid), last].slice(0, maxAds);
 }
 
-export function autoGoogleAd(md: MarkdownIt, options: AutoGoogleAdOptions): void {
+export function autoGoogleAd(md: MarkdownItLike, options: AutoGoogleAdOptions): void {
   const opts: Required<
     Pick<AutoGoogleAdOptions, "adClient" | "adFormat" | "adLayoutKey" | "positions" | "every" | "maxAds" | "skipIfExisting" | "minTokensForBoth">
   > & AutoGoogleAdOptions = {
