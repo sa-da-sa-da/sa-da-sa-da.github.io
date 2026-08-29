@@ -53,6 +53,218 @@
     return initEmpty();
   }
 
+  // ============ 多班级 ============
+  // 旧版本（单班级）数据迁移：把顶层业务数据收进「默认班级」桶
+  function migrateClasses() {
+    if (state.classes && state.classes.list && state.classes.list.length) {
+      // 已有班级体系，但可能缺少桶结构兜底
+      if (!state.classData) state.classData = {};
+      return;
+    }
+    var defId = 'c_' + Date.now().toString(36);
+    state.classes = { list: [{ id: defId, name: '默认班级' }], cur: defId };
+    state.classData = {};
+    state.classData[defId] = {
+      tables: state.tables || {},
+      grades: state.grades || { exams: [], scores: {} },
+      schedule: state.schedule || null,
+      todo: state.todo || { items: [] },
+      versions: state.versions || [],
+      collapsedGroups: state.collapsedGroups || {}
+    };
+    persist();
+  }
+  migrateClasses();
+
+  function getCurClassName() {
+    var cls = state.classes || { list: [] };
+    for (var i = 0; i < cls.list.length; i++) {
+      if (cls.list[i].id === cls.cur) return cls.list[i].name;
+    }
+    return '默认班级';
+  }
+
+  // 把当前顶层数据写回当前班级桶（切换 / 恢复备份前调用）
+  function saveCurClass() {
+    if (!state.classes || !state.classData) return;
+    state.classData[state.classes.cur] = {
+      tables: state.tables || {},
+      grades: state.grades || { exams: [], scores: {} },
+      schedule: state.schedule || null,
+      todo: state.todo || { items: [] },
+      versions: state.versions || [],
+      collapsedGroups: state.collapsedGroups || {}
+    };
+  }
+
+  // 切换班级：先保存当前班级，再从目标班级桶恢复
+  function loadClass(id) {
+    if (!state.classData) state.classData = {};
+    if (!state.classes) state.classes = { list: [], cur: id };
+    if (!state.classData[id]) {
+      // 目标班级还没有任何数据（异常情况），建立空桶
+      state.classData[id] = { tables: {}, grades: { exams: [], scores: {} }, schedule: null, todo: { items: [] }, versions: [], collapsedGroups: {} };
+    }
+    saveCurClass();
+    state.classes.cur = id;
+    var d = state.classData[id];
+    state.tables = d.tables || {};
+    state.grades = d.grades || { exams: [], scores: {} };
+    state.schedule = d.schedule || null;
+    state.todo = d.todo || { items: [] };
+    state.versions = d.versions || [];
+    state.collapsedGroups = d.collapsedGroups || {};
+    // 兜底：为配置中新增、但班级桶里不存在的表建立空数组
+    window.WB_CONFIG.modules.forEach(function (mod) {
+      if (mod.subs) {
+        mod.subs.forEach(function (sub) {
+          if (sub.fields && !state.tables[sub.id]) state.tables[sub.id] = [];
+        });
+      }
+    });
+    persist();
+    route = { view: 'dashboard' };
+    saveRoute();
+    render();
+    closeModal();
+    showToast('已切换到班级：' + getCurClassName());
+  }
+
+  // 新建班级并切换到新班级
+  function addClass(name) {
+    if (!state.classes) state.classes = { list: [], cur: null };
+    if (!state.classData) state.classData = {};
+    name = String(name || '').trim();
+    if (!name) { showToast('请输入班级名称'); return; }
+    for (var i = 0; i < state.classes.list.length; i++) {
+      if (state.classes.list[i].name === name) { showToast('班级已存在：' + name); return; }
+    }
+    var id = 'c_' + Date.now().toString(36) + Math.floor(Math.random() * 99);
+    state.classes.list.push({ id: id, name: name });
+    state.classData[id] = { tables: {}, grades: { exams: [], scores: {} }, schedule: null, todo: { items: [] }, versions: [], collapsedGroups: {} };
+    saveCurClass();
+    state.classes.cur = id;
+    state.tables = state.classData[id].tables;
+    state.grades = state.classData[id].grades;
+    state.schedule = null;
+    state.todo = state.classData[id].todo;
+    state.versions = [];
+    state.collapsedGroups = {};
+    // 为所有表建立空数组
+    window.WB_CONFIG.modules.forEach(function (mod) {
+      if (mod.subs) {
+        mod.subs.forEach(function (sub) {
+          if (sub.fields && !state.tables[sub.id]) state.tables[sub.id] = [];
+        });
+      }
+    });
+    persist();
+    route = { view: 'dashboard' };
+    saveRoute();
+    render();
+    closeModal();
+    showToast('已创建并切换到班级：' + name);
+  }
+
+  // 重命名班级
+  function renameClass(id, name) {
+    name = String(name || '').trim();
+    if (!name) { showToast('班级名称不能为空'); return; }
+    var cls = state.classes || { list: [] };
+    for (var i = 0; i < cls.list.length; i++) {
+      if (cls.list[i].id !== id && cls.list[i].name === name) { showToast('班级已存在：' + name); return; }
+    }
+    for (var j = 0; j < cls.list.length; j++) {
+      if (cls.list[j].id === id) cls.list[j].name = name;
+    }
+    persist();
+    renderSidebar();
+    closeModal();
+    showToast('班级已重命名：' + name);
+  }
+
+  // 删除班级（保留最后一个班级，删除前确认）
+  function removeClass(id) {
+    var cls = state.classes || { list: [] };
+    if (cls.list.length <= 1) { showToast('至少保留一个班级'); return; }
+    var name = '';
+    for (var i = 0; i < cls.list.length; i++) if (cls.list[i].id === id) name = cls.list[i].name;
+    if (!confirm('删除班级「' + name + '」将永久清除该班全部数据（花名册 / 成绩 / 课程表 / 待办 / 快照），且不可恢复！确定删除？')) return;
+    cls.list = cls.list.filter(function (c) { return c.id !== id; });
+    delete state.classData[id];
+    if (state.classes.cur === id) {
+      // 删除的是当前班级：切到列表第一个班级
+      state.classes.cur = cls.list[0].id;
+      var d = state.classData[cls.list[0].id] || {};
+      state.tables = d.tables || {};
+      state.grades = d.grades || { exams: [], scores: {} };
+      state.schedule = d.schedule || null;
+      state.todo = d.todo || { items: [] };
+      state.versions = d.versions || [];
+      state.collapsedGroups = d.collapsedGroups || {};
+    }
+    persist();
+    route = { view: 'dashboard' };
+    saveRoute();
+    render();
+    closeModal();
+    showToast('班级「' + name + '」已删除');
+  }
+
+  // 班级管理弹窗：新建 / 切换 / 重命名 / 删除
+  function openClassManager() {
+    var cls = state.classes || { list: [] };
+    var html = '<div style="font-size:12px;color:var(--c-text-2);margin-bottom:10px;line-height:1.7">' +
+      '每个班级拥有完全独立的数据（花名册 / 成绩 / 课程表 / 待办 / 快照），互不影响。' +
+      '点击班级名可快速切换当前班级。</div>';
+    html += '<div class="cls-list">';
+    cls.list.forEach(function (c) {
+      var cur = c.id === cls.cur;
+      html += '<div class="cls-row' + (cur ? ' cur' : '') + '" data-cls-id="' + escapeHtml(c.id) + '">';
+      html += '<span class="cls-name' + (cur ? '' : ' switchable') + '" data-cls-switch="' + escapeHtml(c.id) + '">' + escapeHtml(c.name) + '</span>';
+      if (cur) html += '<span class="cls-cur">当前</span>';
+      html += '<span class="cls-ops">';
+      html += '<button class="btn btn-sm" data-cls-edit="' + escapeHtml(c.id) + '" title="重命名">✏️</button>';
+      if (cls.list.length > 1) html += '<button class="btn btn-sm btn-danger" data-cls-del="' + escapeHtml(c.id) + '" title="删除该班全部数据">🗑</button>';
+      html += '</span></div>';
+    });
+    html += '</div>';
+    html += '<div class="cls-new">';
+    html += '<input id="cls-new-name" placeholder="新班级名称，如 初二(1)班" style="flex:1;min-width:0">';
+    html += '<button class="btn btn-primary" id="cls-new-btn">＋ 新建</button>';
+    html += '</div>';
+    WB.openModal('🏫 班级管理', html, [{ text: '关闭', cls: 'btn btn-primary', act: 'close' }], null, function (bodyRef) {
+      // 新建班级
+      var newBtn = bodyRef.querySelector('#cls-new-btn');
+      var newInput = bodyRef.querySelector('#cls-new-name');
+      function doAdd() {
+        var n = newInput.value;
+        if (!String(n || '').trim()) { showToast('请输入班级名称'); return; }
+        addClass(n);
+      }
+      newBtn.addEventListener('click', doAdd);
+      newInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') doAdd(); });
+      // 切换 / 重命名 / 删除
+      bodyRef.querySelectorAll('[data-cls-switch]').forEach(function (sp) {
+        sp.addEventListener('click', function () { loadClass(sp.dataset.clsSwitch); });
+      });
+      bodyRef.querySelectorAll('[data-cls-edit]').forEach(function (bt) {
+        bt.addEventListener('click', function () {
+          var id = bt.dataset.clsEdit;
+          var curName = '';
+          for (var i = 0; i < state.classes.list.length; i++) {
+            if (state.classes.list[i].id === id) curName = state.classes.list[i].name;
+          }
+          var n = prompt('输入新的班级名称：', curName);
+          if (n && n.trim()) renameClass(id, n.trim());
+        });
+      });
+      bodyRef.querySelectorAll('[data-cls-del]').forEach(function (bt) {
+        bt.addEventListener('click', function () { removeClass(bt.dataset.clsDel); });
+      });
+    });
+  }
+
   function initEmpty() {
     // 为所有 tables 和 grades 建立空数据
     var tables = {};
@@ -64,10 +276,13 @@
         });
       }
     });
+    var defId = 'c_' + Date.now().toString(36);
     return {
       tables: tables, grades: grades, todo: { items: [] }, schedule: null, versions: [],
       collapsedGroups: {},
-      quickWords: ['班级管理经验', '教学设计', '班主任工作总结']
+      quickWords: ['班级管理经验', '教学设计', '班主任工作总结'],
+      classes: { list: [{ id: defId, name: '默认班级' }], cur: defId },
+      classData: {}
     };
   }
 
@@ -212,11 +427,12 @@
   function restoreVersion(id) {
     var v = (state.versions || []).find(function (x) { return x.id === id; });
     if (!v) return;
-    if (!confirm('恢复将覆盖当前全部数据（含课程表与快照列表），是否继续？')) return;
+    if (!confirm('恢复将覆盖当前班级全部数据（含课程表与快照列表），是否继续？')) return;
     state.tables = JSON.parse(JSON.stringify(v.snap.tables || {}));
     state.grades = JSON.parse(JSON.stringify(v.snap.grades || { exams: [], scores: {} }));
     state.todo = JSON.parse(JSON.stringify(v.snap.todo || { items: [] }));
     state.schedule = v.snap.schedule ? JSON.parse(JSON.stringify(v.snap.schedule)) : null;
+    saveCurClass(); // 同步回当前班级桶
     persist();
     render();
     showToast('已恢复到「' + v.name + '」');
@@ -278,6 +494,16 @@
   function renderSidebar() {
     var html = '';
     html += '<div class="brand"><div class="logo">班</div><div><div class="title">班主任工作台</div><div class="sub">一站式班级管理</div></div></div>';
+    // 班级切换条
+    html += '<div class="cls-bar">';
+    html += '<span class="cls-bar-icon">🏫</span>';
+    html += '<select id="cls-sel" title="切换班级，各班数据完全独立">';
+    (state.classes ? state.classes.list : []).forEach(function (c) {
+      html += '<option value="' + escapeHtml(c.id) + '"' + (c.id === state.classes.cur ? ' selected' : '') + '>' + escapeHtml(c.name) + '</option>';
+    });
+    html += '</select>';
+    html += '<button class="cls-bar-btn" id="cls-manage" title="新建 / 重命名 / 删除班级">⚙</button>';
+    html += '</div>';
     html += '<nav class="nav" id="nav">';
 
     var collapsed = state.collapsedGroups || {};
@@ -313,6 +539,14 @@
     html += '<div class="foot">数据存储于浏览器 localStorage<br>建议定期备份</div>';
 
     el('sidebar').innerHTML = html;
+
+    // 班级切换
+    var clsSel = el('cls-sel');
+    if (clsSel) {
+      clsSel.addEventListener('change', function () { loadClass(clsSel.value); });
+    }
+    var clsMgr = el('cls-manage');
+    if (clsMgr) clsMgr.addEventListener('click', openClassManager);
 
     // 绑定点击
     var nav = el('nav');
@@ -371,6 +605,7 @@
 
   function updateCrumb() {
     var parts = [];
+    parts.push('🏫 ' + getCurClassName());
     if (route.view === 'dashboard') parts.push('首页仪表盘');
     else if (route.view === 'schedule') parts.push('课程表');
     else if (route.view === 'grades') {
@@ -402,7 +637,9 @@
       window.WB_VIEWS.bindDashboard();
     } else if (route.view === 'schedule') {
       c.innerHTML = window.WB_VIEWS.renderSchedule();
-      window.WB_VIEWS.bindSchedule();
+      var sc = state.schedule;
+      if (sc && sc.mode === 'teacher') window.WB_VIEWS.bindTeacherTable();
+      else window.WB_VIEWS.bindSchedule();
     } else if (route.view === 'grades') {
       c.innerHTML = window.WB_VIEWS.renderGrades();
       window.WB_VIEWS.bindGrades();
@@ -531,6 +768,11 @@
       return window.WB_VIEWS.renderDutyWeekView();
     }
 
+    // 住宿信息专属：床位画布（默认视图，可切回表格模式批量导入/编辑）
+    if (tableId === 'dorm' && !state.dormTableMode) {
+      return window.WB_VIEWS.renderDormCanvas();
+    }
+
     var table = getTable(tableId);
     var fields = def.table.fields;
     var sel = getSel(tableId);
@@ -604,6 +846,13 @@
     }
     html += '</tbody></table></div></div>';
     html += '</div>';
+    // 住宿信息表格模式：顶部提供切回画布入口
+    if (tableId === 'dorm') {
+      html = '<div class="card"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+        '<button class="btn btn-primary" id="dm-to-canvas">🛏 切换床位画布</button>' +
+        '<span style="font-size:12px;color:var(--c-text-2)">表格模式：适合批量导入与编辑完整字段，画布模式用于可视化分配床位</span>' +
+        '</div></div>' + html;
+    }
     return html;
   }
 
@@ -621,6 +870,11 @@
     // 值日排班专属：周视图绑定
     if (tableId === 'duty') {
       window.WB_VIEWS.bindDutyWeekView();
+      return;
+    }
+    // 住宿信息专属：床位画布绑定（表格模式走通用 CRUD 绑定）
+    if (tableId === 'dorm' && !state.dormTableMode) {
+      window.WB_VIEWS.bindDormCanvas();
       return;
     }
 
@@ -748,6 +1002,12 @@
     updateBatchUI(tableId);
     // 初始更新筛选计数（无筛选时显示"共 N 条"）
     applyFilter(tableId);
+    // 住宿信息表格模式：切回画布
+    el('dm-to-canvas') && el('dm-to-canvas').addEventListener('click', function () {
+      state.dormTableMode = false;
+      saveState();
+      render();
+    });
   }
 
   function updateBatchUI(tableId) {
@@ -1616,6 +1876,14 @@
             });
           }
         });
+        // 班级体系：旧格式备份（无 classes）导入当前班级；新格式备份整体恢复班级体系
+        if (src.classes && src.classes.list && src.classes.list.length && src.classData) {
+          state.classes = src.classes;
+          state.classData = src.classData;
+        } else if (!state.classes || !state.classes.list || !state.classes.list.length) {
+          migrateClasses();
+        }
+        saveCurClass(); // 顶层数据同步到当前班级桶
         persist();
         render();
         showToast('恢复成功');
@@ -1667,6 +1935,12 @@
 
   // ============ 启动 ============
   function init() {
+    // 旧数据兼容：补齐后加模块字段，防止 undefined 导致渲染中断
+    state.grades = state.grades || { exams: [], scores: {} };
+    state.grades.exams = state.grades.exams || [];
+    state.grades.scores = state.grades.scores || {};
+    state.todo = state.todo || { items: [] };
+    state.tables = state.tables || {};
     migrateRosterTags();
     bindGlobal();
     render();

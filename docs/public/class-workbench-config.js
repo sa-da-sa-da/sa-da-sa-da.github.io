@@ -26,6 +26,7 @@ window.WB_CONFIG = {
       { id: 'roster', icon: '📋', label: '全班花名册', fields: [
         { name: 'studentNo', label: '学号', type: 'text', required: true, placeholder: '如 20240101' },
         { name: 'name', label: '姓名', type: 'text', required: true, placeholder: '请输入姓名' },
+        { name: 'className', label: '班级', type: 'text', placeholder: '如 初二(1)班（多班共用时填写）' },
         { name: 'gender', label: '性别', type: 'select', options: ['男', '女'] },
         { name: 'birth', label: '出生日期', type: 'date' },
         { name: 'phone', label: '联系电话', type: 'text' },

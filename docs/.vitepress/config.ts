@@ -17,6 +17,8 @@ import {
 
 import timeline from "vitepress-markdown-timeline"; // 导入时间线插件
 
+import { autoGoogleAd } from "./plugins/auto-google-ad"; // 文章自动广告插件
+
 import type { HeadConfig } from "vitepress"; // 在文件顶部添加类型导入
 import HeadData from "./ConfigHyde/Head"; // 导入 HeadData（修改为默认导入方式）
 
@@ -295,6 +297,14 @@ const teekConfig = defineTeekConfig({
     config: (md) => {
       md.use(timeline); //时间线插件
       md.use(groupIconMdPlugin); // 代码组图标插件
+      // 文章自动广告：无需手动在 md 中写 <GoogleAd>，自动在文首/文末/长文中间注入
+      md.use(autoGoogleAd, {
+        adSlot: "2668661755", // 广告单元 ID
+        adFormat: "fluid",
+        positions: ["top", "bottom"],
+        every: 5, // 每隔 5 个标题插入一个中间广告
+        maxAds: 3, // 每篇最多 3 个（Google 政策上限）
+      });
     },
     demo: {
       githubUrl:

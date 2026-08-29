@@ -26,7 +26,7 @@ window.WB_VIEWS = (function () {
     html += '<div class="stats-row">';
     html += statCard('👥', '班级总人数', stats.totalStudents, '来自花名册', '');
     html += statCard('✅', '今日待办', stats.todoToday, '含今日到期事项', stats.todoToday > 0 ? 'warn' : '');
-    html += statCard('📞', '待沟通家长', stats.pendingParents, '家长沟通待跟进', 'warn');
+    html += statCard('📞', '待沟通家长', stats.pendingParents, '家长沟通待跟进');
     html += statCard('⭐', '重点关注学生', stats.keyStudents, '心理/特殊档案', 'danger');
     html += '</div>';
 
@@ -452,6 +452,8 @@ window.WB_VIEWS = (function () {
     if (!sc.periods || !sc.periods.length) sc.periods = DEFAULT_PERIODS.map(function (p) { return { name: p.name, time: p.time }; });
     if (!sc.subjects) sc.subjects = Object.assign({}, SUBJ_INIT);
     if (!sc.grid) sc.grid = {};
+    if (!sc.teachers) sc.teachers = {};          // 教师通讯录：{ 姓名: { phone, wechat, note } }
+    if (typeof sc.mode === 'undefined') sc.mode = 'grid'; // 'grid' 课程表 | 'teacher' 任课表
     return sc;
   }
 
@@ -470,16 +472,19 @@ window.WB_VIEWS = (function () {
 
   function renderSchedule() {
     var sc = getSchedule();
+    if (sc.mode === 'teacher') return renderTeacherTable();
     var days = sc.days, periods = sc.periods;
     var todayMap = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
     var today = todayMap[new Date().getDay()];
 
     var html = '<div class="card">';
-    html += '<div class="card-title">📅 课程表 <span class="extra">图形化周课表 · 点击格子录入科目</span></div>';
+    html += '<div class="card-title">📅 课程表 <span class="extra">图形化周课表 · 点击格子录入科目与任课教师</span></div>';
     html += '<div class="table-toolbar">';
     html += '<button class="btn btn-primary" id="sched-add-sub">＋ 添加科目</button>';
     html += '<button class="btn" id="sched-edit-periods">🕐 编辑时段</button>';
+    html += '<button class="btn" id="sched-days" title="自定义每周显示星期几">📆 设置周次</button>';
     html += '<button class="btn" id="sched-stats">📊 课时统计</button>';
+    html += '<button class="btn" id="sched-teacher" title="查看各科任课教师及联系方式">👨‍🏫 任课表</button>';
     html += '<button class="btn" id="sched-clear">🧹 清空课表</button>';
     html += '<div class="spacer"></div>';
     html += '<button class="btn" id="sched-export">⬇ 导出课表</button>';
@@ -515,6 +520,7 @@ window.WB_VIEWS = (function () {
           var c = sc.subjects[subj] || '#64748b';
           html += '<td class="sched-cell has" data-key="' + H(key) + '" style="background:' + hexToRgba(c, 0.14) + ';border-left:4px solid ' + c + '">';
           html += '<div class="s-subj" style="color:' + darkenHex(c) + '">' + H(subj) + '</div>';
+          if (cell.teacher) html += '<div class="s-teacher">' + H(cell.teacher) + '</div>';
           if (cell.note) html += '<div class="s-note">' + H(cell.note) + '</div>';
           html += '</td>';
         } else {
@@ -539,9 +545,37 @@ window.WB_VIEWS = (function () {
       var id = btn.id;
       if (id === 'sched-add-sub') addScheduleSubject();
       else if (id === 'sched-edit-periods') editSchedulePeriods();
+      else if (id === 'sched-days') editScheduleDays();
       else if (id === 'sched-stats') showScheduleStats();
+      else if (id === 'sched-teacher') { getSchedule().mode = 'teacher'; WB.saveState(); renderScheduleRefresh(); }
       else if (id === 'sched-clear') clearSchedule();
       else if (id === 'sched-export') exportSchedule();
+    });
+  }
+
+  // 自定义周次：勾选要显示的星期几
+  function editScheduleDays() {
+    var sc = getSchedule();
+    var html = '<div style="font-size:12px;color:var(--c-text-2);margin-bottom:10px;line-height:1.7">勾选课表要显示的星期，取消勾选的星期不展示（数据保留，重新勾选后恢复）。</div>';
+    html += '<div class="sched-days-ck">';
+    DEFAULT_DAYS.forEach(function (d) {
+      var on = sc.days.indexOf(d) >= 0;
+      html += '<label class="sched-day-ck' + (on ? ' on' : '') + '"><input type="checkbox" value="' + d + '"' + (on ? ' checked' : '') + '>' + d + '</label>';
+    });
+    html += '</div>';
+    WB.openModal('📆 设置周次', html, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: '保存', cls: 'btn btn-primary', act: 'save' }
+    ], function (act) {
+      if (act !== 'save') return;
+      var picked = [];
+      Array.prototype.forEach.call(document.querySelectorAll('.sched-day-ck input:checked'), function (cb) { picked.push(cb.value); });
+      if (picked.length === 0) { WB.showToast('请至少保留一个星期'); return false; }
+      // 按默认顺序排列
+      sc.days = DEFAULT_DAYS.filter(function (d) { return picked.indexOf(d) >= 0; });
+      WB.saveState();
+      renderScheduleRefresh();
+      WB.showToast('周次已更新：' + sc.days.join('、'));
     });
   }
 
@@ -549,6 +583,8 @@ window.WB_VIEWS = (function () {
     var sc = getSchedule();
     var cur = sc.grid[key] || {};
     var subjects = Object.keys(sc.subjects);
+    // 教师候选名单：已录入教师 + 课表中出现的教师名
+    var teacherNames = collectTeacherNames();
     var html = '<div style="font-size:13px;margin-bottom:10px;color:var(--c-text-2)">' + H(key) + '</div>';
     html += '<label><span class="lbl">科目</span><select id="sc-subj">';
     html += '<option value="">— 清除本格 —</option>';
@@ -556,6 +592,11 @@ window.WB_VIEWS = (function () {
       html += '<option value="' + H(s) + '"' + (cur.subject === s ? ' selected' : '') + '>' + H(s) + '</option>';
     });
     html += '</select></label>';
+    html += '<label class="full"><span class="lbl">任课教师</span>';
+    html += '<input id="sc-teacher" list="sc-teacher-list" value="' + H(cur.teacher || '') + '" placeholder="可手输，或从列表选择">';
+    html += '<datalist id="sc-teacher-list">';
+    teacherNames.forEach(function (t) { html += '<option value="' + H(t) + '">'; });
+    html += '</datalist></label>';
     html += '<label class="full"><span class="lbl">备注（如 双周 / 单周 / 实验课）</span>';
     html += '<input id="sc-note" value="' + H(cur.note || '') + '" placeholder="如 双周、单周、实验课、自习"></label>';
     WB.openModal('编辑课程 · ' + key, html, [
@@ -564,9 +605,12 @@ window.WB_VIEWS = (function () {
     ], function (act) {
       if (act !== 'save') return;
       var subj = el('sc-subj').value;
+      var teacher = el('sc-teacher').value.trim();
       var note = el('sc-note').value.trim();
-      if (subj) sc.grid[key] = { subject: subj, note: note };
-      else delete sc.grid[key];
+      if (subj) {
+        sc.grid[key] = { subject: subj, note: note };
+        if (teacher) sc.grid[key].teacher = teacher;
+      } else delete sc.grid[key];
       WB.saveState();
       renderScheduleRefresh();
     });
@@ -664,7 +708,11 @@ window.WB_VIEWS = (function () {
     var lines = sc.periods.map(function (p) {
       return [p.name + ' ' + (p.time || '')].concat(sc.days.map(function (d) {
         var cell = sc.grid[d + '-' + p.name];
-        return cell ? (cell.subject + (cell.note ? '(' + cell.note + ')' : '')) : '';
+        if (!cell) return '';
+        var parts = [cell.subject];
+        if (cell.teacher) parts.push(cell.teacher);
+        if (cell.note) parts.push(cell.note);
+        return parts.join('·');
       }));
     });
     var csv = '\uFEFF' + [header.map(WB.csvEscape).join(',')].concat(
@@ -675,8 +723,216 @@ window.WB_VIEWS = (function () {
   }
 
   function renderScheduleRefresh() {
+    var sc = getSchedule();
     el('content').innerHTML = renderSchedule();
-    bindSchedule();
+    if (sc.mode === 'teacher') bindTeacherTable();
+    else bindSchedule();
+  }
+
+  // ============ 任课表 ============
+  // 教师名单：已录入通讯录 + 课表中出现的教师名（去重）
+  function collectTeacherNames() {
+    var sc = getSchedule();
+    var set = {};
+    Object.keys(sc.teachers).forEach(function (t) { if (t) set[t] = true; });
+    Object.keys(sc.grid).forEach(function (k) {
+      var t = sc.grid[k].teacher;
+      if (t) set[t] = true;
+    });
+    return Object.keys(set).sort();
+  }
+
+  // 聚合每个教师的任课情况：科目、课时、课表明细
+  function buildTeacherAssignments() {
+    var sc = getSchedule();
+    var map = {};
+    Object.keys(sc.grid).forEach(function (k) {
+      var cell = sc.grid[k];
+      if (!cell.subject) return;
+      var t = cell.teacher || '（未指定）';
+      if (!map[t]) map[t] = { subjects: {}, cells: [] };
+      map[t].subjects[cell.subject] = (map[t].subjects[cell.subject] || 0) + 1;
+      map[t].cells.push({ key: k, subject: cell.subject, note: cell.note || '' });
+    });
+    // 已录入通讯录但未排课的教师也展示
+    Object.keys(sc.teachers).forEach(function (t) {
+      if (!map[t]) map[t] = { subjects: {}, cells: [] };
+    });
+    var list = Object.keys(map).map(function (t) {
+      return { name: t, info: sc.teachers[t] || {}, subjects: map[t].subjects, cells: map[t].cells, total: map[t].cells.length };
+    });
+    list.sort(function (a, b) { return b.total - a.total || a.name.localeCompare(b.name, 'zh'); });
+    return list;
+  }
+
+  function renderTeacherTable() {
+    var sc = getSchedule();
+    var list = buildTeacherAssignments();
+
+    var html = '<div class="card">';
+    html += '<div class="card-title">👨‍🏫 任课表 <span class="extra">各科任课教师一览 · 点击教师查看联系方式</span></div>';
+    html += '<div class="table-toolbar">';
+    html += '<button class="btn" id="tt-back">📅 返回课程表</button>';
+    html += '<button class="btn btn-primary" id="tt-add">＋ 添加教师</button>';
+    html += '<div class="spacer"></div>';
+    html += '<span class="tt-total">共 ' + list.length + ' 位教师</span>';
+    html += '</div>';
+
+    if (!list.length) {
+      html += '<div class="empty">还没有教师信息。<br>可先「返回课程表」在格子里录入任课教师，或点击「＋ 添加教师」直接登记。</div>';
+      html += '</div>';
+      return html;
+    }
+
+    html += '<div class="tt-grid">';
+    list.forEach(function (t) {
+      var info = t.info;
+      var subjKeys = Object.keys(t.subjects);
+      var color = SUBJ_COLORS[Math.abs(hashStr(t.name)) % SUBJ_COLORS.length];
+      html += '<div class="tt-card" data-tt="' + H(t.name) + '" title="点击查看 / 编辑联系方式">';
+      html += '<div class="tt-head">';
+      html += '<div class="tt-avatar" style="background:' + hexToRgba(color, 0.15) + ';color:' + darkenHex(color) + '">' + H(t.name.slice(0, 1)) + '</div>';
+      html += '<div class="tt-id"><b>' + H(t.name) + '</b>';
+      html += '<span>' + t.total + ' 节/周' + (subjKeys.length ? ' · ' + subjKeys.length + ' 科' : ' · 未排课') + '</span></div>';
+      html += '<span class="tt-arrow">›</span>';
+      html += '</div>';
+      if (subjKeys.length) {
+        html += '<div class="tt-subjs">';
+        subjKeys.forEach(function (s) {
+          var c = sc.subjects[s] || '#64748b';
+          html += '<span class="tt-subj" style="background:' + hexToRgba(c, 0.14) + ';color:' + darkenHex(c) + ';border:1px solid ' + c + '">' + H(s) + ' ×' + t.subjects[s] + '</span>';
+        });
+        html += '</div>';
+      } else {
+        html += '<div class="tt-subjs"><span class="tt-none">暂无排课</span></div>';
+      }
+      html += '<div class="tt-meta">';
+      html += info.phone
+        ? '<span class="tt-phone">📞 ' + H(info.phone) + '</span>'
+        : '<span class="tt-phone none">📞 未登记手机号</span>';
+      if (info.wechat) html += '<span class="tt-phone">💬 ' + H(info.wechat) + '</span>';
+      html += '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '<div class="sched-hint">💡 点击教师卡片查看任课明细并登记手机号 / 微信，方便家校联系。</div>';
+    html += '</div>';
+    return html;
+  }
+
+  // 简单字符串哈希（用于给教师分配头像底色）
+  function hashStr(s) {
+    var h = 0;
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return h;
+  }
+
+  function bindTeacherTable() {
+    var root = rebindRoot();
+    root.addEventListener('click', function (e) {
+      var card = e.target.closest('.tt-card');
+      if (card) { openTeacherEditor(card.dataset.tt); return; }
+      var btn = e.target.closest('button');
+      if (!btn) return;
+      if (btn.id === 'tt-back') {
+        getSchedule().mode = 'grid';
+        WB.saveState();
+        renderScheduleRefresh();
+      } else if (btn.id === 'tt-add') addTeacherManually();
+    });
+  }
+
+  // 教师详情弹窗：联系方式编辑 + 任课明细
+  function openTeacherEditor(name) {
+    var sc = getSchedule();
+    var info = sc.teachers[name] || {};
+    var assigns = buildTeacherAssignments();
+    var me = null;
+    assigns.forEach(function (t) { if (t.name === name) me = t; });
+    if (!me) me = { name: name, subjects: {}, cells: [], total: 0 };
+
+    var body = '<div style="font-size:12px;color:var(--c-text-2);margin-bottom:10px">登记联系方式后，点击「保存」即可。</div>';
+    body += '<label><span class="lbl">姓名</span><input id="tt-name" value="' + H(name) + '"></label>';
+    body += '<label><span class="lbl">📞 手机号</span><input id="tt-phone" value="' + H(info.phone || '') + '" placeholder="如 138****8888"></label>';
+    body += '<label><span class="lbl">💬 微信</span><input id="tt-wechat" value="' + H(info.wechat || '') + '" placeholder="选填"></label>';
+    body += '<label class="full"><span class="lbl">备注</span><input id="tt-note" value="' + H(info.note || '') + '" placeholder="如 语文备课组长 / 班主任"></label>';
+
+    if (me.cells.length) {
+      body += '<div style="margin-top:12px"><div class="form-title" style="margin-bottom:6px">📖 任课明细（' + me.total + ' 节）</div>';
+      body += '<div class="tt-detail">';
+      me.cells.forEach(function (c) {
+        var subj = c.subject;
+        var col = sc.subjects[subj] || '#64748b';
+        body += '<div class="tt-detail-item"><span class="tt-dot" style="background:' + col + '"></span>' +
+          '<span class="tt-detail-key">' + H(c.key) + '</span>' +
+          '<span class="tt-detail-subj" style="color:' + darkenHex(col) + '">' + H(subj) + '</span>' +
+          (c.note ? '<span class="tt-detail-note">' + H(c.note) + '</span>' : '') +
+          '</div>';
+      });
+      body += '</div></div>';
+    }
+
+    WB.openModal('👨‍🏫 教师 · ' + H(name), body, [
+      { text: '关闭', cls: 'btn', act: 'close' },
+      { text: '删除登记', cls: 'btn btn-danger', act: 'remove' },
+      { text: '保存', cls: 'btn btn-primary', act: 'save' }
+    ], function (act) {
+      if (act === 'close') return;
+      var newName = el('tt-name').value.trim();
+      if (!newName) { WB.showToast('姓名不能为空'); return false; }
+      if (act === 'remove') {
+        delete sc.teachers[name];
+        // 课表中该教师标注清除，回到未指定
+        Object.keys(sc.grid).forEach(function (k) {
+          if (sc.grid[k].teacher === name) delete sc.grid[k].teacher;
+        });
+        WB.saveState();
+        renderScheduleRefresh();
+        WB.showToast('已删除教师登记');
+        return;
+      }
+      // 改名：同步课表中所有该教师的格子
+      if (newName !== name) {
+        Object.keys(sc.grid).forEach(function (k) {
+          if (sc.grid[k].teacher === name) sc.grid[k].teacher = newName;
+        });
+        var old = sc.teachers[name];
+        delete sc.teachers[name];
+        sc.teachers[newName] = old || {};
+      }
+      sc.teachers[newName].phone = el('tt-phone').value.trim();
+      sc.teachers[newName].wechat = el('tt-wechat').value.trim();
+      sc.teachers[newName].note = el('tt-note').value.trim();
+      WB.saveState();
+      renderScheduleRefresh();
+      WB.showToast('教师信息已保存');
+    });
+  }
+
+  // 手动添加教师（无排课也可先登记）
+  function addTeacherManually() {
+    var sc = getSchedule();
+    var html = '<div style="font-size:12px;color:var(--c-text-2);margin-bottom:10px">登记教师姓名与联系方式；之后在课程表格子中可直接选择该教师。</div>';
+    html += '<label><span class="lbl">姓名</span><input id="tt-new-name" placeholder="如 王老师"></label>';
+    html += '<label><span class="lbl">📞 手机号</span><input id="tt-new-phone" placeholder="如 138****8888"></label>';
+    html += '<label><span class="lbl">💬 微信</span><input id="tt-new-wechat" placeholder="选填"></label>';
+    WB.openModal('＋ 添加教师', html, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: '保存', cls: 'btn btn-primary', act: 'save' }
+    ], function (act) {
+      if (act !== 'save') return;
+      var n = el('tt-new-name').value.trim();
+      if (!n) { WB.showToast('请填写教师姓名'); return false; }
+      if (sc.teachers[n]) { WB.showToast('教师已存在：' + n); return false; }
+      sc.teachers[n] = {
+        phone: el('tt-new-phone').value.trim(),
+        wechat: el('tt-new-wechat').value.trim(),
+        note: ''
+      };
+      WB.saveState();
+      renderScheduleRefresh();
+      WB.showToast('已添加教师：' + n);
+    });
   }
 
   // ============ 成绩分析 ============
@@ -684,10 +940,11 @@ window.WB_VIEWS = (function () {
     var state = WB.state.grades;
     var exams = state.exams || [];
     var html = '<div class="card">';
-    html += '<div class="card-title">📈 智能成绩分析 <span class="extra">支持多批次对比 · 自动统计 · 学情分析</span></div>';
+    html += '<div class="card-title">📈 智能成绩分析 <span class="extra">多批次对比 · 自动统计 · 学情分析</span></div>';
     html += '<div class="table-toolbar">';
     html += '<button class="btn btn-primary" id="g-new-exam">＋ 新建考试批次</button>';
     html += '<button class="btn" id="g-import-roster">从花名册同步学生</button>';
+    html += '<button class="btn" id="g-lines" title="设置上线分数线（总分/单科），用于上线类分析">🎯 分数线设置</button>';
     html += '</div>';
 
     if (exams.length === 0) {
@@ -700,7 +957,8 @@ window.WB_VIEWS = (function () {
     exams.forEach(function (ex) {
       // 用 dataset 存储 exam id
       html += '<button class="score-tab ' + (state.currentExamId === ex.__id ? 'active' : '') + '" data-exam-id="' + ex.__id + '">' +
-        (ex.icon || '📅') + ' ' + H(ex.name) + '</button>';
+        (ex.icon || '📅') + ' ' + H(ex.name) +
+        (ex.type ? '<small>' + H(ex.type) + '</small>' : '') + '</button>';
     });
     html += '</div>';
 
@@ -714,12 +972,58 @@ window.WB_VIEWS = (function () {
     return html;
   }
 
+  // ===== 成绩分析页签 =====
+  var GA_TABS = [
+    { key: 'overview', icon: '📊', label: '考情总览' },
+    { key: 'classes', icon: '🏫', label: '各班对比' },
+    { key: 'lines', icon: '🎯', label: '上线分析' },
+    { key: 'balance', icon: '⚖️', label: '学科均衡' },
+    { key: 'history', icon: '📈', label: '班级历次' },
+    { key: 'table', icon: '📋', label: '学生成绩' },
+    { key: 'report', icon: '👤', label: '学生报告' }
+  ];
+  function renderGTabNav() {
+    var tab = WB.state.grades.gTab || 'overview';
+    var html = '<div class="score-tabs ga-tabs" id="g-tabs2">';
+    GA_TABS.forEach(function (t) {
+      html += '<button class="score-tab ga-tab' + (tab === t.key ? ' active' : '') + '" data-gtab="' + t.key + '">' +
+        t.icon + ' ' + t.label + '</button>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  // 班级映射：成绩行姓名/学号 → 花名册班级
+  function getClassMap() {
+    var map = {};
+    (WB.getTable('roster') || []).forEach(function (r) {
+      if (r.name) map[r.name] = r.className || '';
+      if (r.studentNo) map['#' + r.studentNo] = r.className || '';
+    });
+    return map;
+  }
+  function classOfRow(row, classMap) {
+    var c = classMap[row.name] || classMap['#' + (row.studentNo || '')];
+    return c || '未分班';
+  }
+  // 按班级分组
+  function groupByClass(withRank, classMap) {
+    var groups = {}, order = [];
+    withRank.forEach(function (r) {
+      var c = classOfRow(r, classMap);
+      if (!groups[c]) { groups[c] = []; order.push(c); }
+      groups[c].push(r);
+    });
+    return { groups: groups, order: order };
+  }
+
   function renderExamDetail(exam) {
     var html = '';
 
     // 顶部：基本信息 + 编辑
     html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">';
     html += '<div style="font-weight:600;font-size:15px">' + (exam.icon || '📅') + ' ' + H(exam.name) + '</div>';
+    if (exam.type) html += '<span class="ga-exam-type">' + H(exam.type) + '</span>';
     if (exam.subjects) html += '<div style="color:var(--c-text-2);font-size:12px">' + H(exam.subjects.join(' / ')) + '</div>';
     html += '<div style="margin-left:auto">';
     html += '<button class="btn btn-sm" data-act="edit-exam" data-id="' + exam.__id + '">编辑批次</button>';
@@ -729,47 +1033,113 @@ window.WB_VIEWS = (function () {
     // 工具栏
     html += '<div class="table-toolbar">';
     html += '<button class="btn btn-primary" data-act="add-score">＋ 录入学生成绩</button>';
+    html += '<button class="btn" data-act="import-scores" title="Excel/CSV 按列映射批量导入，自动按姓名更新">📥 Excel 导入</button>';
     html += '<button class="btn" data-act="export-scores">⬇ 导出成绩</button>';
     html += '<button class="btn" data-act="analysis-summary">📝 生成学情小结</button>';
     html += '</div>';
 
-    // 统计摘要
-    html += renderScoreSummary();
+    // 分析页签
+    html += renderGTabNav();
 
-    // 表格
+    // 数据
     var scores = WB.state.grades.scores[exam.__id] || [];
     var subjects = (exam.subjects && exam.subjects.length) ? exam.subjects
       : getSubjectsFromScores(scores);
     var withRank = scores.length > 0 ? computeWithRank(scores, subjects) : [];
-    html += '<div class="table-wrap"><div class="table-scroll"><table class="data"><thead><tr>';
+    var tab = WB.state.grades.gTab || 'overview';
+
+    if (tab === 'overview') {
+      // 📊 考情总览：统计摘要 + 分段对比 + 等级分布 + 直方图 + 学情小结
+      html += renderScoreSummary();
+      html += renderSegmentCompare(withRank);
+      html += renderHistogram(withRank, subjects);
+      html += renderAnalysisPanel(subjects, withRank);
+    } else if (tab === 'classes') {
+      // 🏫 各班对比：班级成绩对比 + 各班各科对比 + 优秀生分布
+      html += renderClassCompare(withRank, subjects);
+    } else if (tab === 'lines') {
+      // 🎯 上线分析：上线情况 / 各科上线 / 人数对比 / 命中贡献 / 均分对比 / 临界生
+      html += renderLinesPanel(withRank, subjects);
+    } else if (tab === 'balance') {
+      // ⚖️ 学科均衡
+      html += renderBalancePanel(withRank, subjects);
+    } else if (tab === 'history') {
+      // 📈 班级历次对比 + 多批次对比
+      html += renderClassHistory();
+      html += renderComparePanel();
+    } else if (tab === 'table') {
+      // 📋 学生成绩表
+      html += renderScoreTable(withRank, subjects);
+    } else if (tab === 'report') {
+      // 👤 学生报告
+      html += renderReportPanel(withRank, subjects);
+    }
+
+    return html;
+  }
+
+  // 📋 学生成绩表
+  function renderScoreTable(withRank, subjects) {
+    var html = '<div class="table-wrap"><div class="table-scroll"><table class="data"><thead><tr>';
     html += '<th>学号</th><th>姓名</th>';
     subjects.forEach(function (s) { html += '<th>' + H(s) + '</th>'; });
     html += '<th>总分</th><th>班级排名</th><th>等级</th><th>操作</th></tr></thead><tbody id="score-tbody">';
 
-    if (scores.length === 0) {
+    if (withRank.length === 0) {
       html += '<tr><td colspan="' + (subjects.length + 7) + '" class="empty">尚未录入成绩</td></tr>';
     } else {
-      withRank.forEach(function (row, idx) {
+      withRank.forEach(function (row) {
         html += '<tr>';
         html += '<td>' + H(row.studentNo || '') + '</td>';
-        html += '<td>' + H(row.name) + '</td>';
+        html += '<td class="ga-name" data-act="trend" data-name="' + H(row.name) + '" title="点击查看跨批次成绩趋势">📈 ' + H(row.name) + '</td>';
         subjects.forEach(function (s) {
-          html += '<td>' + (row[s] != null ? row[s] : '—') + '</td>';
+          var rk = row['__rk_' + s];
+          html += '<td>' + (row[s] != null ? H(row[s]) : '—') +
+            (rk ? ' <span class="ga-srank" title="' + H(s) + '第 ' + rk + ' 名">#' + rk + '</span>' : '') +
+            '</td>';
         });
-        html += '<td style="font-weight:600;color:var(--c-primary)">' + row.__total.toFixed(1) + '</td>';
+        html += '<td style="font-weight:600;color:var(--c-primary)">' + row.__total.toFixed(1) +
+          (row.__imported ? ' <span class="ga-srank" title="使用导入的总分（可在编辑中留空改为按科目相加）">导</span>' : '') + '</td>';
         html += '<td style="font-weight:600">' + row.__rank + '</td>';
         html += '<td><span class="tag ' + levelTag(row.__level) + '" style="padding:2px 8px;border-radius:4px;font-size:11px">' + row.__level + '</span></td>';
         html += '<td class="op">' +
-          '<button class="btn btn-sm" data-act="edit-score" data-idx="' + idx + '">编辑</button>' +
-          '<button class="btn btn-sm btn-danger" data-act="del-score" data-idx="' + idx + '">删除</button>' +
+          '<button class="btn btn-sm" data-act="edit-score" data-name="' + H(row.name) + '">编辑</button>' +
+          '<button class="btn btn-sm btn-danger" data-act="del-score" data-name="' + H(row.name) + '">删除</button>' +
+          '<button class="btn btn-sm" data-act="open-report" data-name="' + H(row.name) + '" title="查看完整学生报告">📄 报告</button>' +
           '</td></tr>';
       });
     }
     html += '</tbody></table></div></div>';
+    return html;
+  }
 
-    // 学情分析卡
-    html += renderAnalysisPanel(subjects, withRank);
-
+  // 📊 分数分段对比（总分 ≥90/80/70/60/<60 人数与占比）
+  function renderSegmentCompare(withRank) {
+    if (!withRank || withRank.length === 0) return '';
+    var segs = [
+      { name: '优秀 ≥90', min: 90, c: 0, cls: 'var(--c-success)' },
+      { name: '良好 80-89', min: 80, c: 0, cls: 'var(--c-primary)' },
+      { name: '中等 70-79', min: 70, c: 0, cls: 'var(--c-warn)' },
+      { name: '及格 60-69', min: 60, c: 0, cls: 'var(--c-text-2)' },
+      { name: '待提高 <60', min: 0, c: 0, cls: 'var(--c-danger)' }
+    ];
+    withRank.forEach(function (r) {
+      var t = r.__total;
+      for (var i = 0; i < segs.length; i++) {
+        if (t >= segs[i].min) { segs[i].c++; break; }
+      }
+    });
+    var maxC = Math.max.apply(null, segs.map(function (s) { return s.c; })) || 1;
+    var html = '<div class="card" style="margin-top:12px"><div class="card-title">🔢 分数分段对比 <span class="extra">总分分段人数分布</span></div>';
+    html += '<div class="ga-hist-chart" style="grid-template-columns:repeat(' + segs.length + ',1fr);display:grid;gap:8px">';
+    segs.forEach(function (s) {
+      var h = Math.round(s.c / maxC * 100);
+      html += '<div class="ga-hist-col" title="' + s.name + '：' + s.c + ' 人">' +
+        '<span class="ga-hist-n">' + s.c + ' 人</span>' +
+        '<span class="ga-hist-bar" style="height:' + Math.max(h, s.c > 0 ? 8 : 2) + '%;background:' + s.cls + '"></span>' +
+        '<span style="font-size:11px;color:var(--c-text-2)">' + (s.c / withRank.length * 100).toFixed(0) + '%</span></div>';
+    });
+    html += '</div><div class="ga-hist-legend">' + segs.map(function (s) { return H(s.name); }).join(' · ') + '</div></div>';
     return html;
   }
 
@@ -799,10 +1169,28 @@ window.WB_VIEWS = (function () {
         var v = parseFloat(r[s]);
         if (!isNaN(v)) { total += v; count++; }
       });
-      return Object.assign({}, r, { __total: total, __count: count });
+      // Excel 导入的总分优先（__totalImported 有值 = 以导入为准；否则按科目相加）
+      var it = parseFloat(r.__totalImported);
+      var imported = !isNaN(it);
+      if (imported) total = it;
+      return Object.assign({}, r, { __total: total, __count: count, __imported: imported });
     });
     arr.sort(function (a, b) { return b.__total - a.__total; });
     arr.forEach(function (r, i) { r.__rank = i + 1; });
+    // 单科名次（同分并列同名次），存于 __rk_{科目}
+    subjects.forEach(function (s) {
+      var idxs = arr.map(function (r, i) {
+        return { v: parseFloat(r[s]), i: i };
+      }).filter(function (x) { return !isNaN(x.v); })
+        .sort(function (a, b) { return b.v - a.v; });
+      var prevV = null, prevRank = 0;
+      idxs.forEach(function (x, k) {
+        var rank = (prevV !== null && x.v === prevV) ? prevRank : k + 1;
+        arr[x.i]['__rk_' + s] = rank;
+        prevV = x.v;
+        prevRank = rank;
+      });
+    });
     // 划分等级：前 20% 尖子生，后 20% 学困生，中间 20% 临界生
     var n = arr.length;
     var topN = Math.max(1, Math.ceil(n * 0.2));
@@ -856,6 +1244,171 @@ window.WB_VIEWS = (function () {
     return '<div class="cell"><div class="k">' + H(k) + '</div><div class="v">' + v + '</div></div>';
   }
 
+  // 总分/单科分布直方图（纯 CSS 柱状，8 桶，科目可切换）
+  var GA_HIST_SUBJ = '__total';
+  function renderHistogram(withRank, subjects) {
+    if (!withRank || withRank.length < 2) return '';
+    subjects = subjects || [];
+    // 当前维度取数（切到无效科目时回退总分）
+    var vals;
+    if (GA_HIST_SUBJ === '__total') {
+      vals = withRank.map(function (r) { return r.__total; });
+    } else {
+      vals = withRank.map(function (r) { return parseFloat(r[GA_HIST_SUBJ]); })
+        .filter(function (v) { return !isNaN(v); });
+      if (vals.length < 2) { GA_HIST_SUBJ = '__total'; vals = withRank.map(function (r) { return r.__total; }); }
+    }
+    var max = Math.max.apply(null, vals);
+    var min = Math.min.apply(null, vals);
+    var n = 8;
+    var step = (max - min) / n || 1;
+    if (step <= 0) step = 1;
+    var buckets = [];
+    for (var i = 0; i < n; i++) {
+      var lo = min + i * step;
+      buckets.push({ lo: lo, hi: lo + step, c: 0 });
+    }
+    vals.forEach(function (t) {
+      var idx = Math.floor((t - min) / step);
+      if (idx < 0) idx = 0;
+      if (idx >= n) idx = n - 1;
+      buckets[idx].c++;
+    });
+    var maxC = Math.max.apply(null, buckets.map(function (b) { return b.c; }));
+
+    // 维度切换按钮：总分 + 各科目
+    function tabBtn(key, label) {
+      return '<button class="ga-hist-tab' + (GA_HIST_SUBJ === key ? ' on' : '') +
+        '" data-act="hist-sub" data-sub="' + H(key) + '">' + H(label) + '</button>';
+    }
+    var tabs = tabBtn('__total', '总分');
+    subjects.forEach(function (s) { tabs += tabBtn(s, s); });
+
+    var dimLabel = GA_HIST_SUBJ === '__total' ? '总分' : GA_HIST_SUBJ;
+    var html = '<div class="ga-hist"><div class="ga-hist-title">📊 ' + H(dimLabel) + '分布（' +
+      min.toFixed(0) + ' ~ ' + max.toFixed(0) + ' 分，' + vals.length + ' 人）' +
+      '<span class="ga-hist-tabs">' + tabs + '</span></div>';
+    html += '<div class="ga-hist-chart">';
+    buckets.forEach(function (b) {
+      var h = maxC > 0 ? Math.round(b.c / maxC * 100) : 0;
+      html += '<div class="ga-hist-col" title="' + b.lo.toFixed(0) + '-' + b.hi.toFixed(0) + ' 分：' + b.c + ' 人">' +
+        '<span class="ga-hist-n"' + (b.c === 0 ? ' style="opacity:.35"' : '') + '>' + b.c + '</span>' +
+        '<span class="ga-hist-bar" style="height:' + Math.max(h, b.c > 0 ? 8 : 2) + '%"></span>' +
+        '</div>';
+    });
+    html += '</div><div class="ga-hist-legend">' + H(dimLabel) + '区间 →</div></div>';
+    return html;
+  }
+
+  // ===== 多批次对比 =====
+  // 计算两次考试的总分/名次对照（按姓名匹配，科目可不同）
+  function computeCompare(aId, bId) {
+    var g = WB.state.grades;
+    function stats(eid) {
+      var exam = g.exams.find(function (x) { return x.__id === eid; });
+      var scores = g.scores[eid] || [];
+      var subs = (exam && exam.subjects && exam.subjects.length) ? exam.subjects : getSubjectsFromScores(scores);
+      var wr = computeWithRank(scores, subs);
+      var map = {};
+      wr.forEach(function (r) { map[r.name] = { total: r.__total, rank: r.__rank }; });
+      return { map: map, subs: subs, rows: wr, count: scores.length };
+    }
+    var A = stats(aId), B = stats(bId);
+    var names = Object.keys(A.map).filter(function (n) { return B.map[n]; });
+    var rows = names.map(function (n) {
+      return { name: n, ta: A.map[n].total, ra: A.map[n].rank, tb: B.map[n].total, rb: B.map[n].rank };
+    });
+    rows.sort(function (x, y) { return x.rb - y.rb; });
+    rows.forEach(function (r) { r.dt = r.tb - r.ta; r.dr = r.ra - r.rb; }); // dr>0 = 名次上升
+    return { A: A, B: B, rows: rows, names: names };
+  }
+
+  function renderComparePanel() {
+    var g = WB.state.grades;
+    var withScores = (g.exams || []).filter(function (e) { return (g.scores[e.__id] || []).length > 0; });
+    if (withScores.length < 2) return '';
+    // 默认对比最近两次（列表顺序视为时间顺序）
+    var aId = g.cmpA, bId = g.cmpB;
+    if (!withScores.some(function (e) { return e.__id === aId; })) aId = withScores[withScores.length - 2].__id;
+    if (!withScores.some(function (e) { return e.__id === bId; }) || bId === aId) bId = withScores[withScores.length - 1].__id === aId
+      ? withScores[withScores.length - 2].__id : withScores[withScores.length - 1].__id;
+    g.cmpA = aId; g.cmpB = bId;
+
+    function sel(id, val) {
+      var h = '<select id="' + id + '" class="ga-cmp-sel">';
+      withScores.forEach(function (e) {
+        h += '<option value="' + e.__id + '"' + (e.__id === val ? ' selected' : '') + '>' +
+          H((e.icon || '📅') + ' ' + e.name) + '</option>';
+      });
+      return h + '</select>';
+    }
+
+    var html = '<div class="card" style="margin-top:12px">';
+    html += '<div class="card-title">🔀 多批次对比 <span class="extra">进退步追踪 · 均分变化</span></div>';
+    html += '<div class="ga-cmp-bar">' +
+      sel('g-cmp-a', aId) +
+      '<span class="ga-cmp-vs">VS</span>' +
+      sel('g-cmp-b', bId) +
+      '<span style="font-size:11px;color:var(--c-text-3);margin-left:8px">两次科目可不同，按总分与名次对比；仅匹配两次都参考的学生</span>' +
+      '</div>';
+
+    var cmp = computeCompare(aId, bId);
+    var aName = (g.exams.find(function (e) { return e.__id === aId; }) || {}).name;
+    var bName = (g.exams.find(function (e) { return e.__id === bId; }) || {}).name;
+
+    if (cmp.names.length < 2) {
+      html += '<div class="empty">两次考试没有共同学生（按姓名匹配），无法对比。</div></div>';
+      return html;
+    }
+
+    // 均分变化
+    var avgA = cmp.rows.reduce(function (a, r) { return a + r.ta; }, 0) / cmp.rows.length;
+    var avgB = cmp.rows.reduce(function (a, r) { return a + r.tb; }, 0) / cmp.rows.length;
+    var dAvg = avgB - avgA;
+    html += '<div class="score-summary">';
+    html += summaryCell('共同参考', cmp.rows.length + ' 人');
+    html += '<div class="cell"><div class="k">' + H(aName) + ' 均分</div><div class="v">' + avgA.toFixed(1) + '</div></div>';
+    html += '<div class="cell"><div class="k">' + H(bName) + ' 均分</div><div class="v">' + avgB.toFixed(1) + '</div></div>';
+    html += '<div class="cell"><div class="k">均分变化</div><div class="v" style="color:' +
+      (dAvg > 0 ? 'var(--c-success)' : dAvg < 0 ? 'var(--c-danger)' : 'var(--c-text-2)') + '">' +
+      (dAvg > 0 ? '+' : '') + dAvg.toFixed(1) + '</div></div>';
+    html += '</div>';
+
+    // 进步榜 / 退步预警
+    var asc = cmp.rows.slice().sort(function (x, y) { return y.dr - x.dr; }).slice(0, 5);
+    var desc = cmp.rows.slice().sort(function (x, y) { return x.dr - y.dr; }).filter(function (r) { return r.dr < 0; }).slice(0, 5);
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:10px 0">';
+    html += '<div class="card" style="border-color:#a7f3d0;background:#f0fdf4">' +
+      '<div class="card-title" style="color:var(--c-success);margin-bottom:6px">🚀 进步榜（名次上升 Top' + asc.length + '）</div>' +
+      '<div style="font-size:12px;color:var(--c-text-2);line-height:1.8">' +
+      (asc.filter(function (r) { return r.dr > 0; }).map(function (r) {
+        return H(r.name) + ' <b style="color:var(--c-success)">↑' + r.dr + '</b>（' + r.ra + '→' + r.rb + '）';
+      }).join('、') || '<span class="empty">—</span>') + '</div></div>';
+    html += '<div class="card" style="border-color:#fecaca;background:#fef2f2">' +
+      '<div class="card-title" style="color:var(--c-danger);margin-bottom:6px">⚠️ 退步预警（名次下降 Top' + desc.length + '）</div>' +
+      '<div style="font-size:12px;color:var(--c-text-2);line-height:1.8">' +
+      (desc.map(function (r) {
+        return H(r.name) + ' <b style="color:var(--c-danger)">↓' + (-r.dr) + '</b>（' + r.ra + '→' + r.rb + '）';
+      }).join('、') || '<span class="empty">—</span>') + '</div></div>';
+    html += '</div>';
+
+    // 对比表
+    html += '<div class="table-wrap"><div class="table-scroll"><table class="data"><thead><tr>' +
+      '<th>姓名</th><th>' + H(aName) + ' 总分</th><th>名次</th><th>' + H(bName) + ' 总分</th><th>名次</th>' +
+      '<th>总分变化</th><th>名次变化</th></tr></thead><tbody>';
+    cmp.rows.forEach(function (r) {
+      html += '<tr><td>' + H(r.name) + '</td><td>' + r.ta.toFixed(1) + '</td><td>' + r.ra + '</td>' +
+        '<td>' + r.tb.toFixed(1) + '</td><td>' + r.rb + '</td>' +
+        '<td style="color:' + (r.dt > 0 ? 'var(--c-success)' : r.dt < 0 ? 'var(--c-danger)' : 'var(--c-text-3)') + '">' +
+        (r.dt > 0 ? '+' : '') + r.dt.toFixed(1) + '</td>' +
+        '<td style="font-weight:600;color:' + (r.dr > 0 ? 'var(--c-success)' : r.dr < 0 ? 'var(--c-danger)' : 'var(--c-text-3)') + '">' +
+        (r.dr > 0 ? '↑' + r.dr : r.dr < 0 ? '↓' + (-r.dr) : '—') + '</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+    html += '</div>';
+    return html;
+  }
+
   function renderAnalysisPanel(subjects, withRank) {
     if (withRank.length === 0) return '';
     var top = withRank.filter(function (r) { return r.__level === '尖子生'; });
@@ -905,12 +1458,13 @@ window.WB_VIEWS = (function () {
     html += '</div>';
 
     // 简易学情小结
-    var不及格 = {};
+    var failCount = {};
     subjects.forEach(function (s) {
       var failN = scoresOfSubject(s).filter(function (v) { return v < 60; }).length;
-      不及格[s] = failN;
+      failCount[s] = failN;
     });
-    var failTotal = Object.values(不及格).reduce(function (a, b) { return a + b; }, 0);
+    var failTotal = Object.keys(failCount).map(function (k) { return failCount[k]; })
+      .reduce(function (a, b) { return a + b; }, 0);
     var failStudents = scoresOfSubjectArr().filter(function (r) {
       return subjects.some(function (s) { var v = parseFloat(r[s]); return !isNaN(v) && v < 60; });
     }).map(function (r) { return r.name; });
@@ -942,10 +1496,566 @@ window.WB_VIEWS = (function () {
     }
   }
 
+  // ===== 分数线（独立弹窗配置）=====
+  var LINES_DEFAULT = [
+    { name: '一本线', total: 560, subs: {} },
+    { name: '本科线', total: 460, subs: {} },
+    { name: '专科线', total: 200, subs: {} }
+  ];
+  function getLines() {
+    var g = WB.state.grades;
+    if (!g.lines || !Array.isArray(g.lines.rows) || !g.lines.rows.length) {
+      g.lines = { rows: JSON.parse(JSON.stringify(LINES_DEFAULT)) };
+      WB.saveState();
+    }
+    return g.lines.rows;
+  }
+  function linesRowHtml(row, idx, subjects) {
+    var h = '<div class="lr" data-idx="' + idx + '">';
+    h += '<input class="lr-name" value="' + H(row.name || '') + '" placeholder="线名称">';
+    h += '<input class="lr-total" type="number" value="' + (row.total != null ? row.total : '') + '" placeholder="总分线">';
+    subjects.forEach(function (s) {
+      h += '<input class="lr-sub" type="number" data-sub="' + H(s) + '" value="' +
+        (row.subs && row.subs[s] != null ? row.subs[s] : '') + '" placeholder="' + H(s) + '">';
+    });
+    h += '<button class="btn btn-sm btn-danger lr-del" title="删除此线">✕</button>';
+    h += '</div>';
+    return h;
+  }
+  function openLinesForm() {
+    var g = WB.state.grades;
+    var exam = g.exams.find(function (e) { return e.__id === g.currentExamId; });
+    var subjects = (exam && exam.subjects) || [];
+    var lines = getLines();
+    var head = '<div class="lr lr-head"><span>线名称</span><span>总分线</span>' +
+      subjects.map(function (s) { return '<span>' + H(s) + ' 线</span>'; }).join('') + '<span></span></div>';
+    var body = '<div class="lines-editor" id="lines-box">' + head +
+      lines.map(function (l, i) { return linesRowHtml(l, i, subjects); }).join('') +
+      '<button class="btn btn-sm lr-add">＋ 添加一条分数线</button>' +
+      '</div>';
+    body += '<p style="font-size:11px;color:var(--c-text-3);margin-top:8px;line-height:1.7">' +
+      '· 总分线：总分 ≥ 线值即上线；单科线：填了则对应科目也需 ≥ 线值才计入上线（留空 = 不设单科线）<br>' +
+      '· 分数线用于「🎯 上线分析」页签：上线情况 / 各科上线 / 人数对比 / 命中率贡献率 / 上线均分 / 临界生</p>';
+    WB.openModal('🎯 分数线设置', body, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: '保存', cls: 'btn btn-primary', act: 'save' }
+    ], function (act, formEl) {
+      if (act !== 'save') return;
+      var rows = [];
+      formEl.querySelectorAll('.lr[data-idx]').forEach(function (rowEl) {
+        var name = rowEl.querySelector('.lr-name').value.trim();
+        var total = parseFloat(rowEl.querySelector('.lr-total').value);
+        if (!name || isNaN(total)) return;
+        var subs = {};
+        rowEl.querySelectorAll('.lr-sub').forEach(function (inp) {
+          var v = parseFloat(inp.value);
+          if (!isNaN(v)) subs[inp.dataset.sub] = v;
+        });
+        rows.push({ name: name, total: total, subs: subs });
+      });
+      g.lines = { rows: rows };
+      WB.saveState();
+      renderGradesRefresh();
+      WB.showToast('已保存 ' + rows.length + ' 条分数线');
+    }, function (formEl) {
+      var box = formEl.querySelector('#lines-box');
+      if (!box) return;
+      box.addEventListener('click', function (e) {
+        var del = e.target.closest('.lr-del');
+        if (del) { var row = del.closest('.lr'); if (row) row.parentNode.removeChild(row); return; }
+        var add = e.target.closest('.lr-add');
+        if (add) {
+          var idx = box.querySelectorAll('.lr[data-idx]').length;
+          var rowEl = document.createElement('div');
+          rowEl.innerHTML = linesRowHtml({ name: '', total: '', subs: {} }, idx, subjects);
+          box.insertBefore(rowEl.firstChild, add);
+        }
+      });
+    });
+  }
+  // 该生是否过某条线（总分 + 单科全达标）
+  function linePass(row, line) {
+    if (row.__total < line.total) return false;
+    var subs = line.subs || {};
+    for (var s in subs) {
+      var v = parseFloat(row[s]);
+      if (isNaN(v) || v < subs[s]) return false;
+    }
+    return true;
+  }
+  function lineSubsHtml(line) {
+    var subs = line.subs || {};
+    var ks = Object.keys(subs);
+    if (!ks.length) return '—';
+    return ks.map(function (s) { return H(s) + '≥' + subs[s]; }).join('、');
+  }
+
+  // ===== 🏫 各班对比：班级成绩对比 / 各班各科对比 / 优秀生分布 =====
+  function renderClassCompare(withRank, subjects) {
+    if (!withRank.length) return '';
+    var classMap = getClassMap();
+    var g = groupByClass(withRank, classMap);
+    var html = '';
+
+    // 1. 班级成绩对比（总分）
+    html += '<div class="card" style="margin-top:12px"><div class="card-title">🏫 班级成绩对比 <span class="extra">本次考试总分概况（按花名册班级字段分组）</span></div>';
+    html += '<div class="table-wrap"><table class="data ga-matrix"><thead><tr>' +
+      '<th>班级</th><th>参考人数</th><th>总分均分</th><th>最高分</th><th>最低分</th><th>平均名次</th></tr></thead><tbody>';
+    var bestAvg = -1;
+    g.order.forEach(function (c) {
+      var arr = g.groups[c];
+      var avg = arr.reduce(function (a, r) { return a + r.__total; }, 0) / arr.length;
+      if (avg > bestAvg) bestAvg = avg;
+    });
+    g.order.forEach(function (c) {
+      var arr = g.groups[c];
+      var avg = arr.reduce(function (a, r) { return a + r.__total; }, 0) / arr.length;
+      var mx = Math.max.apply(null, arr.map(function (r) { return r.__total; }));
+      var mn = Math.min.apply(null, arr.map(function (r) { return r.__total; }));
+      var avgRank = arr.reduce(function (a, r) { return a + r.__rank; }, 0) / arr.length;
+      html += '<tr><td style="font-weight:600">' + H(c) + '</td><td>' + arr.length + '</td>' +
+        '<td' + (avg === bestAvg && g.order.length > 1 ? ' class="best"' : '') + '>' + avg.toFixed(1) + '</td>' +
+        '<td>' + mx.toFixed(1) + '</td><td>' + mn.toFixed(1) + '</td><td>' + avgRank.toFixed(1) + '</td></tr>';
+    });
+    if (g.order.length <= 1) {
+      html += '<tr><td colspan="6" class="empty" style="text-align:center">仅一个班级（未分班数据），可在「全班花名册」为学生填写班级后对比多班</td></tr>';
+    }
+    html += '</tbody></table></div></div>';
+
+    // 2. 各班各科对比（均分矩阵）
+    html += '<div class="card" style="margin-top:12px"><div class="card-title">🧮 各班各科对比 <span class="extra">各科均分（绿=最高，红=最低）</span></div>';
+    html += '<div class="table-wrap"><table class="data ga-matrix"><thead><tr><th>科目</th>';
+    g.order.forEach(function (c) { html += '<th>' + H(c) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    subjects.forEach(function (s) {
+      var vals = g.order.map(function (c) {
+        var arr = g.groups[c].map(function (r) { return parseFloat(r[s]); }).filter(function (v) { return !isNaN(v); });
+        return arr.length ? arr.reduce(function (a, b) { return a + b; }, 0) / arr.length : null;
+      });
+      var best = Math.max.apply(null, vals.filter(function (v) { return v != null; }));
+      var worst = Math.min.apply(null, vals.filter(function (v) { return v != null; }));
+      html += '<tr><td style="font-weight:600">' + H(s) + '</td>';
+      vals.forEach(function (v) {
+        if (v == null) { html += '<td>—</td>'; return; }
+        var cls = (g.order.length > 1 && v === best) ? ' class="best"' : (g.order.length > 1 && v === worst) ? ' class="worst"' : '';
+        html += '<td' + cls + '>' + v.toFixed(1) + '</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+
+    // 3. 优秀生分布
+    var topN = WB.state.grades.topN || 10;
+    var top = withRank.slice(0, Math.min(topN, withRank.length));
+    html += '<div class="card" style="margin-top:12px"><div class="card-title">🏅 优秀生分布 <span class="extra">总分前 ' + topN + ' 名的班级归属' +
+      '<span class="ga-top-nav">' + [5, 10, 20, 50].map(function (n) {
+        return '<button class="ga-hist-tab' + (topN === n ? ' on' : '') + '" data-act="top-dist" data-n="' + n + '">前 ' + n + '</button>';
+      }).join('') + '</span></span></div>';
+    html += '<div class="table-wrap"><table class="data ga-matrix"><thead><tr><th>班级</th><th>优秀人数</th><th>占比</th><th>名单</th></tr></thead><tbody>';
+    g.order.slice().sort(function (a, b) {
+      var ca = top.filter(function (r) { return classOfRow(r, classMap) === a; }).length;
+      var cb = top.filter(function (r) { return classOfRow(r, classMap) === b; }).length;
+      return cb - ca;
+    }).forEach(function (c) {
+      var hit = top.filter(function (r) { return classOfRow(r, classMap) === c; });
+      html += '<tr><td style="font-weight:600">' + H(c) + '</td><td class="best">' + hit.length + '</td>' +
+        '<td>' + (hit.length / top.length * 100).toFixed(0) + '%</td>' +
+        '<td style="font-size:12px;color:var(--c-text-2)">' + (hit.map(function (r) {
+          return H(r.name) + '(' + r.__total.toFixed(0) + ')';
+        }).join('、') || '—') + '</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+    return html;
+  }
+
+  // ===== 🎯 上线分析：上线情况 / 各科上线 / 人数对比 / 命中贡献 / 均分对比 / 临界生 =====
+  function renderLinesPanel(withRank, subjects) {
+    if (!withRank.length) return '';
+    var lines = getLines();
+    if (!lines.length) return '<div class="empty">请先点击右上角「🎯 分数线设置」配置分数线。</div>';
+    var classMap = getClassMap();
+    var g = groupByClass(withRank, classMap);
+    var html = '';
+
+    // 1. 上线情况（按线）
+    html += '<div class="card" style="margin-top:12px"><div class="card-title">🎯 上线情况 <span class="extra">总分 ≥ 线值（单科线需全部达标）</span></div>';
+    html += '<div class="table-wrap"><table class="data"><thead><tr>' +
+      '<th>线</th><th>总分线</th><th>单科线</th><th>上线人数</th><th>上线率</th><th>上线名单</th></tr></thead><tbody>';
+    lines.forEach(function (ln) {
+      var hit = withRank.filter(function (r) { return linePass(r, ln); });
+      var names = hit.slice(0, 15).map(function (r) { return H(r.name) + '(' + r.__total.toFixed(0) + ')'; }).join('、');
+      html += '<tr><td><b>' + H(ln.name) + '</b></td><td>' + ln.total + '</td><td style="font-size:12px;color:var(--c-text-2)">' +
+        lineSubsHtml(ln) + '</td>' +
+        '<td class="best">' + hit.length + '</td><td>' + (hit.length / withRank.length * 100).toFixed(1) + '%</td>' +
+        '<td style="font-size:12px;color:var(--c-text-2);max-width:300px">' +
+        (names + (hit.length > 15 ? ' …共 ' + hit.length + ' 人' : '') || '—') + '</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+
+    // 2. 各科上线对比（设置了单科线的科目）
+    var subLines = {};
+    lines.forEach(function (ln) {
+      Object.keys(ln.subs || {}).forEach(function (s) {
+        if (!subLines[s]) subLines[s] = [];
+        subLines[s].push({ line: ln.name, v: ln.subs[s] });
+      });
+    });
+    var subKeys = Object.keys(subLines);
+    html += '<div class="card" style="margin-top:12px"><div class="card-title">🔬 各科上线对比 <span class="extra">单科线达标情况（未设单科线可在分数线弹窗补充）</span></div>';
+    if (!subKeys.length) {
+      html += '<div class="empty">尚未为任何科目设置单科线。在「🎯 分数线设置」弹窗中填写单科线后，此处显示各科上线人数。</div>';
+    } else {
+      html += '<div class="table-wrap"><table class="data ga-matrix"><thead><tr><th>科目</th><th>达标要求</th><th>达标人数</th><th>达标率</th></tr></thead><tbody>';
+      subKeys.forEach(function (s) {
+        var req = subLines[s].map(function (x) { return H(x.line) + '≥' + x.v; }).join('、');
+        var hit = withRank.filter(function (r) {
+          var v = parseFloat(r[s]);
+          if (isNaN(v)) return false;
+          return subLines[s].every(function (x) { return v >= x.v; });
+        });
+        html += '<tr><td style="font-weight:600">' + H(s) + '</td><td style="font-size:12px;color:var(--c-text-2)">' + req + '</td>' +
+          '<td class="best">' + hit.length + '</td><td>' + (hit.length / withRank.length * 100).toFixed(1) + '%</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    html += '</div>';
+
+    // 3. 上线人数对比 + 命中率与贡献率（班级 × 线）
+    html += '<div class="card" style="margin-top:12px"><div class="card-title">📊 上线人数对比 / 命中率 / 贡献率 <span class="extra">命中率=本班上线/本班参考；贡献率=本班上线/全校上线</span></div>';
+    html += '<div class="table-wrap"><table class="data ga-matrix"><thead><tr><th>班级</th><th>参考</th>';
+    lines.forEach(function (ln) { html += '<th>' + H(ln.name) + '<br><small>人数</small></th><th><small>命中率</small></th><th><small>贡献率</small></th>'; });
+    html += '</tr></thead><tbody>';
+    g.order.forEach(function (c) {
+      var arr = g.groups[c];
+      html += '<tr><td style="font-weight:600">' + H(c) + '</td><td>' + arr.length + '</td>';
+      lines.forEach(function (ln) {
+        var hit = arr.filter(function (r) { return linePass(r, ln); }).length;
+        var totalHit = withRank.filter(function (r) { return linePass(r, ln); }).length;
+        html += '<td class="best">' + hit + '</td>' +
+          '<td>' + (hit / arr.length * 100).toFixed(0) + '%</td>' +
+          '<td>' + (totalHit ? (hit / totalHit * 100).toFixed(0) + '%' : '—') + '</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+
+    // 4. 上线均分对比（班级 × 线）
+    html += '<div class="card" style="margin-top:12px"><div class="card-title">📈 上线均分对比 <span class="extra">各班上线学生的总分均分</span></div>';
+    html += '<div class="table-wrap"><table class="data ga-matrix"><thead><tr><th>班级</th>';
+    lines.forEach(function (ln) { html += '<th>' + H(ln.name) + ' 上线均分</th>'; });
+    html += '</tr></thead><tbody>';
+    g.order.forEach(function (c) {
+      var arr = g.groups[c];
+      html += '<tr><td style="font-weight:600">' + H(c) + '</td>';
+      lines.forEach(function (ln) {
+        var hit = arr.filter(function (r) { return linePass(r, ln); });
+        var avg = hit.length ? hit.reduce(function (a, r) { return a + r.__total; }, 0) / hit.length : null;
+        html += '<td>' + (avg != null ? avg.toFixed(1) + '（' + hit.length + '人）' : '—') + '</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+
+    // 5. 临界生分析（距线 10 分内）
+    html += '<div class="card" style="margin-top:12px"><div class="card-title">🚧 临界生分析 <span class="extra">总分低于线值 10 分内，最有望冲线</span></div>';
+    lines.forEach(function (ln) {
+      var crit = withRank.filter(function (r) {
+        return r.__total < ln.total && r.__total >= ln.total - 10;
+      }).sort(function (a, b) { return b.__total - a.__total; });
+      html += '<div style="margin-bottom:8px"><b>' + H(ln.name) + '</b>（' + ln.total + ' 分）临界 ' + crit.length + ' 人：' +
+        '<span style="font-size:12px;color:var(--c-text-2)">' +
+        (crit.map(function (r) {
+          return H(r.name) + '(' + r.__total.toFixed(0) + '分，差' + (ln.total - r.__total).toFixed(0) + ')';
+        }).join('、') || '—') + '</span></div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  // ===== ⚖️ 学科均衡分析 =====
+  function findImbalanced(withRank, subjects) {
+    return withRank.filter(function (r, i) {
+      if (i < Math.floor(withRank.length * 0.3) || i >= Math.floor(withRank.length * 0.7)) return false;
+      var rankInClass = r.__rank;
+      return subjects.some(function (s) {
+        var v = parseFloat(r[s]);
+        if (isNaN(v)) return false;
+        var sorted = withRank.map(function (x) { return parseFloat(x[s]); }).sort(function (a, b) { return b - a; });
+        var sRank = sorted.indexOf(v) + 1;
+        return Math.abs(sRank - rankInClass) > 20;
+      });
+    });
+  }
+  function renderBalancePanel(withRank, subjects) {
+    if (!withRank.length) return '';
+    var html = '<div class="card" style="margin-top:12px"><div class="card-title">⚖️ 学科均衡分析 <span class="extra">各科均分 / 优秀率 / 及格率 / 离散度</span></div>';
+    // 各科统计
+    var rows = subjects.map(function (s) {
+      var vals = withRank.map(function (r) { return parseFloat(r[s]); }).filter(function (v) { return !isNaN(v); });
+      if (!vals.length) return null;
+      var avg = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+      var mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals);
+      var sd = Math.sqrt(vals.reduce(function (a, v) { return a + (v - avg) * (v - avg); }, 0) / vals.length);
+      var good = vals.filter(function (v) { return v >= 90; }).length;
+      var pass = vals.filter(function (v) { return v >= 60; }).length;
+      return { s: s, avg: avg, mx: mx, mn: mn, sd: sd, good: good, pass: pass, n: vals.length };
+    }).filter(Boolean);
+    var maxAvg = Math.max.apply(null, rows.map(function (r) { return r.avg; })) || 1;
+    html += '<div class="table-wrap"><table class="data ga-matrix"><thead><tr>' +
+      '<th>科目</th><th>参考</th><th>均分</th><th>最高</th><th>最低</th><th>标准差</th><th>优秀率≥90</th><th>及格率</th><th>相对均衡</th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      var pct = Math.round(r.avg / maxAvg * 100);
+      var color = r.avg === maxAvg ? 'var(--c-success)' : (r.avg / maxAvg > 0.9 ? 'var(--c-primary)' : 'var(--c-danger)');
+      html += '<tr><td style="font-weight:600">' + H(r.s) + '</td><td>' + r.n + '</td>' +
+        '<td class="best">' + r.avg.toFixed(1) + '</td><td>' + r.mx + '</td><td>' + r.mn + '</td>' +
+        '<td>' + r.sd.toFixed(1) + '</td>' +
+        '<td>' + (r.good / r.n * 100).toFixed(0) + '%（' + r.good + '）</td>' +
+        '<td>' + (r.pass / r.n * 100).toFixed(0) + '%（' + r.pass + '）</td>' +
+        '<td style="min-width:120px"><div class="ga-hist-chart" style="height:16px;gap:0;background:var(--c-bg);border-radius:4px;overflow:hidden">' +
+        '<span class="ga-hist-bar" style="height:100%;width:' + pct + '%;max-width:none;background:' + color + '"></span></div>' +
+        '<span style="font-size:10px;color:var(--c-text-3)">' + pct + '%</span></td></tr>';
+    });
+    html += '</tbody></table></div>';
+    // 均衡度说明 + 最弱科
+    var weakest = rows.slice().sort(function (a, b) { return a.avg - b.avg; })[0];
+    var hardest = rows.slice().sort(function (a, b) { return a.sd - b.sd; })[0];
+    var failTotal = rows.reduce(function (a, r) { return a + (r.n - r.pass); }, 0);
+    html += '<div style="font-size:12px;color:var(--c-text-2);line-height:1.9;margin-top:10px">' +
+      '📌 班级最弱科目：<b style="color:var(--c-danger)">' + H(weakest.s) + '</b>（均分 ' + weakest.avg.toFixed(1) + '，建议作为补弱重点）<br>' +
+      '📌 两极分化最大科目：<b>' + H(hardest.s) + '</b>（标准差 ' + hardest.sd.toFixed(1) + '）' +
+      (failTotal ? '；本次不及格共 <b style="color:var(--c-danger)">' + failTotal + '</b> 人次' : '') + '</div>';
+    // 偏科学生
+    var imbalanced = findImbalanced(withRank, subjects);
+    html += '<div style="margin-top:10px"><b>⚠️ 偏科筛查（' + imbalanced.length + ' 人）</b>' +
+      '<span style="font-size:12px;color:var(--c-text-2)">：总分中游且某科名次与总分名次相差 20 名以上</span><br>' +
+      '<span style="font-size:12px;color:var(--c-text-2)">' +
+      (imbalanced.map(function (r) { return H(r.name); }).join('、') || '—') + '</span></div>';
+    html += '</div>';
+    return html;
+  }
+
+  // ===== 📈 班级历次对比 =====
+  function renderClassHistory() {
+    var g = WB.state.grades;
+    var withScores = (g.exams || []).filter(function (e) { return (g.scores[e.__id] || []).length > 0; });
+    if (!withScores.length) return '<div class="empty">暂无成绩数据</div>';
+    var classMap = getClassMap();
+    var html = '<div class="card" style="margin-top:12px"><div class="card-title">📈 班级历次对比 <span class="extra">各批次 × 班级 总分均分与名次</span></div>';
+    // 班级 × 批次 矩阵
+    var classSet = {};
+    withScores.forEach(function (ex) {
+      var scores = g.scores[ex.__id] || [];
+      var subs = (ex.subjects && ex.subjects.length) ? ex.subjects : getSubjectsFromScores(scores);
+      var wr = computeWithRank(scores, subs);
+      wr.forEach(function (r) {
+        var c = classOfRow(r, classMap);
+        if (!classSet[c]) classSet[c] = [];
+      });
+    });
+    var classOrder = Object.keys(classSet);
+    html += '<div class="table-wrap"><table class="data ga-matrix"><thead><tr><th>班级</th>';
+    withScores.forEach(function (ex) {
+      html += '<th>' + H((ex.icon || '📅') + ' ' + ex.name) + '<br><small>均分(班名次)</small></th>';
+    });
+    html += '<th>趋势</th></tr></thead><tbody>';
+    if (classOrder.length <= 1) {
+      // 单班：批次均分表
+      html += '</tbody></table></div>';
+      html += '<div class="table-wrap" style="margin-top:8px"><table class="data ga-matrix"><thead><tr>' +
+        '<th>批次</th><th>参考</th><th>总分均分</th><th>最高</th><th>最低</th><th>较上次</th></tr></thead><tbody>';
+      var prevAvg = null;
+      withScores.forEach(function (ex) {
+        var scores = g.scores[ex.__id] || [];
+        var subs = (ex.subjects && ex.subjects.length) ? ex.subjects : getSubjectsFromScores(scores);
+        var wr = computeWithRank(scores, subs);
+        var avg = wr.reduce(function (a, r) { return a + r.__total; }, 0) / wr.length;
+        var mx = Math.max.apply(null, wr.map(function (r) { return r.__total; }));
+        var mn = Math.min.apply(null, wr.map(function (r) { return r.__total; }));
+        var d = prevAvg != null ? avg - prevAvg : null;
+        prevAvg = avg;
+        html += '<tr><td style="font-weight:600">' + H(ex.name) + '</td><td>' + wr.length + '</td><td class="best">' + avg.toFixed(1) + '</td>' +
+          '<td>' + mx.toFixed(1) + '</td><td>' + mn.toFixed(1) + '</td>' +
+          '<td style="color:' + (d != null && d >= 0 ? 'var(--c-success)' : d != null ? 'var(--c-danger)' : 'var(--c-text-3)') + '">' +
+          (d != null ? (d >= 0 ? '+' : '') + d.toFixed(1) : '—') + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      html += '<div class="empty" style="margin-top:8px">仅一个班级：可在「全班花名册」为学生填写班级后查看多班历次对比</div>';
+      html += '</div>';
+      return html;
+    }
+    // 多班：每个班一行，列=批次均分+班名次
+    classOrder.forEach(function (c) {
+      html += '<tr><td style="font-weight:600">' + H(c) + '</td>';
+      var prevRank = null, trend = '';
+      withScores.forEach(function (ex) {
+        var scores = g.scores[ex.__id] || [];
+        var subs = (ex.subjects && ex.subjects.length) ? ex.subjects : getSubjectsFromScores(scores);
+        var wr = computeWithRank(scores, subs);
+        var cArr = wr.filter(function (r) { return classOfRow(r, classMap) === c; });
+        if (!cArr.length) { html += '<td>—</td>'; return; }
+        var avg = cArr.reduce(function (a, r) { return a + r.__total; }, 0) / cArr.length;
+        var clsAvgs = classOrder.map(function (cc) {
+          var a2 = wr.filter(function (r) { return classOfRow(r, classMap) === cc; });
+          return a2.length ? a2.reduce(function (x, r) { return x + r.__total; }, 0) / a2.length : null;
+        });
+        var rank = clsAvgs.filter(function (v) { return v != null; }).sort(function (a, b) { return b - a; }).indexOf(avg) + 1;
+        if (prevRank != null) trend += (rank < prevRank ? '↑' : rank > prevRank ? '↓' : '→');
+        prevRank = rank;
+        var best = Math.max.apply(null, clsAvgs.filter(function (v) { return v != null; }));
+        html += '<td' + (avg === best ? ' class="best"' : '') + '>' + avg.toFixed(1) + '<br><small>第' + rank + '名</small></td>';
+      });
+      html += '<td style="color:var(--c-text-2);font-size:12px">' + (trend || '—') + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    // 底部：批次均分汇总行
+    html += '<div style="font-size:11px;color:var(--c-text-3);margin-top:6px">趋势：↑名次上升 ↓下降 →持平（每列一个字符，从左到右为各批次间变化）。下方为「多批次对比」明细。</div>';
+    html += '</div>';
+    return html;
+  }
+
+  // ===== 👤 学生报告 =====
+  function renderReportPanel(withRank, subjects) {
+    if (!withRank.length) return '<div class="empty">暂无成绩数据</div>';
+    var opts = withRank.map(function (r) {
+      return '<option value="' + H(r.name) + '">' + H(r.name) + '</option>';
+    }).join('');
+    var html = '<div class="card" style="margin-top:12px"><div class="card-title">👤 学生报告 <span class="extra">成绩明细 · 优势科目 · 薄弱科目 · 历次趋势 · 提升建议</span></div>';
+    html += '<div class="ga-cmp-bar">' +
+      '<select id="rp-select" class="ga-cmp-sel">' + opts + '</select>' +
+      '<button class="btn btn-primary" data-act="rp-view">📄 查看报告</button>' +
+      '<span style="font-size:11px;color:var(--c-text-3)">也可在「📋 学生成绩」表点学生姓名旁的 📄 报告</span>' +
+      '</div></div>';
+    return html;
+  }
+  function openStudentReport(name) {
+    var g = WB.state.grades;
+    var exam = g.exams.find(function (e) { return e.__id === g.currentExamId; });
+    if (!exam) { WB.showToast('当前无考试批次'); return; }
+    var scores = g.scores[g.currentExamId] || [];
+    var subjects = (exam.subjects && exam.subjects.length) ? exam.subjects : getSubjectsFromScores(scores);
+    var wr = computeWithRank(scores, subjects);
+    var row = null;
+    wr.forEach(function (r) { if (r.name === name && !row) row = r; });
+    if (!row) { WB.showToast('未找到「' + name + '」的成绩'); return; }
+    var classMap = getClassMap();
+    var cls = classOfRow(row, classMap);
+
+    var body = '<div class="rp-block" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+      '<b style="font-size:16px">' + H(name) + '</b>' +
+      '<span class="ga-exam-type">' + H(cls) + '</span>' +
+      '<span class="tag ' + levelTag(row.__level) + '" style="padding:2px 10px;border-radius:10px;font-size:11px">' + row.__level + '</span>' +
+      '</div>';
+
+    // 本次成绩
+    body += '<div class="rp-block"><div class="rp-title">📊 本次成绩 · ' + H(exam.name) + '</div>';
+    body += '<div class="score-summary">' +
+      summaryCell('总分', row.__total.toFixed(1)) +
+      summaryCell('班级排名', row.__rank + ' / ' + wr.length) +
+      summaryCell('参考科目', row.__count + ' 科') +
+      '</div>';
+    // 各科明细（分数/名次/班均分/差值）
+    body += '<div class="table-wrap"><table class="data ga-matrix"><thead><tr><th>科目</th><th>分数</th><th>单科名次</th><th>班均分</th><th>差值</th></tr></thead><tbody>';
+    subjects.forEach(function (s) {
+      var v = parseFloat(row[s]);
+      if (isNaN(v)) return;
+      var rk = row['__rk_' + s] || '—';
+      var all = wr.map(function (x) { return parseFloat(x[s]); }).filter(function (x) { return !isNaN(x); });
+      var avg = all.reduce(function (a, b) { return a + b; }, 0) / all.length;
+      var d = v - avg;
+      body += '<tr><td>' + H(s) + '</td><td class="best">' + v + '</td><td>' + rk + '</td>' +
+        '<td>' + avg.toFixed(1) + '</td>' +
+        '<td style="color:' + (d >= 0 ? 'var(--c-success)' : 'var(--c-danger)') + '">' + (d >= 0 ? '+' : '') + d.toFixed(1) + '</td></tr>';
+    });
+    body += '</tbody></table></div></div>';
+
+    // 优势/薄弱科目（按超班均分排序）
+    var diffs = subjects.map(function (s) {
+      var v = parseFloat(row[s]);
+      if (isNaN(v)) return null;
+      var all = wr.map(function (x) { return parseFloat(x[s]); }).filter(function (x) { return !isNaN(x); });
+      var avg = all.reduce(function (a, b) { return a + b; }, 0) / all.length;
+      return { s: s, d: v - avg, v: v };
+    }).filter(Boolean).sort(function (a, b) { return b.d - a.d; });
+    var adv = diffs.slice(0, 3);
+    var weak = diffs.slice(-3).reverse();
+    body += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px">' +
+      '<div class="card" style="border-color:#a7f3d0;background:#f0fdf4"><div class="card-title" style="color:var(--c-success);margin-bottom:6px">💪 优势科目</div>' +
+      '<div style="font-size:12px;line-height:1.9">' + adv.map(function (x) {
+        return '<span class="rp-adv">' + H(x.s) + ' ' + x.v + '</span> <span style="color:var(--c-text-3)">(超均分' + (x.d >= 0 ? '+' : '') + x.d.toFixed(1) + ')</span>';
+      }).join('<br>') + '</div></div>' +
+      '<div class="card" style="border-color:#fecaca;background:#fef2f2"><div class="card-title" style="color:var(--c-danger);margin-bottom:6px">⚠️ 薄弱科目</div>' +
+      '<div style="font-size:12px;line-height:1.9">' + weak.map(function (x) {
+        return '<span class="rp-weak">' + H(x.s) + ' ' + x.v + '</span> <span style="color:var(--c-text-3)">(低于均分' + (x.d >= 0 ? '+' : '') + x.d.toFixed(1) + ')</span>';
+      }).join('<br>') + '</div></div></div>';
+
+    // 历次趋势
+    var points = [];
+    (g.exams || []).forEach(function (ex) {
+      var sc = g.scores[ex.__id] || [];
+      var ss = (ex.subjects && ex.subjects.length) ? ex.subjects : getSubjectsFromScores(sc);
+      if (!ss.length) return;
+      var w = computeWithRank(sc, ss);
+      var r2 = null;
+      w.forEach(function (x) { if (x.name === name && !r2) r2 = x; });
+      if (r2) points.push({ exam: ex.name, icon: ex.icon || '📅', total: r2.__total, rank: r2.__rank });
+    });
+    if (points.length > 1) {
+      body += '<div class="rp-block"><div class="rp-title">📈 历次趋势（' + points.length + ' 次考试）</div>';
+      body += '<div class="table-wrap"><table class="data ga-matrix"><thead><tr><th>批次</th><th>总分</th><th>名次</th><th>总分变化</th><th>名次变化</th></tr></thead><tbody>';
+      points.slice().reverse().forEach(function (p, i, arr2) {
+        var prev = arr2[i + 1];
+        var dT = prev ? p.total - prev.total : null;
+        var dR = prev ? prev.rank - p.rank : null;
+        body += '<tr><td>' + H(p.icon) + ' ' + H(p.exam) + '</td><td>' + p.total.toFixed(1) + '</td><td>' + p.rank + '</td>' +
+          '<td style="color:' + (dT != null && dT >= 0 ? 'var(--c-success)' : dT != null ? 'var(--c-danger)' : 'var(--c-text-3)') + '">' +
+          (dT != null ? (dT >= 0 ? '+' : '') + dT.toFixed(1) : '—') + '</td>' +
+          '<td style="color:' + (dR != null && dR > 0 ? 'var(--c-success)' : dR != null && dR < 0 ? 'var(--c-danger)' : 'var(--c-text-3)') + '">' +
+          (dR != null ? (dR > 0 ? '↑' + dR : dR < 0 ? '↓' + (-dR) : '—') : '—') + '</td></tr>';
+      });
+      body += '</tbody></table></div></div>';
+    }
+
+    // 提升建议
+    var tips = [];
+    if (row.__level === '尖子生') tips.push('保持优势科目稳定，重点突破薄弱科目，冲刺更高名次');
+    else if (row.__level === '临界生') tips.push('当前处于临界区间，主抓薄弱科目基础分，是提分最快阶段');
+    else if (row.__level === '学困生') tips.push('建议从基础题抓起，优先补足最低分科目，先及格再提升');
+    else tips.push('保持现状稳步提升，建议每科稳定高于班级均分');
+    if (weak.length) tips.push('重点补弱：' + weak[0].s + '（低于均分' + Math.abs(weak[0].d).toFixed(1) + '）');
+    if (points.length >= 2) {
+      var last = points[points.length - 1], first = points[0];
+      tips.push(last.rank < first.rank ? '近 ' + points.length + ' 次考试名次总体上升，继续保持' :
+        last.rank > first.rank ? '近 ' + points.length + ' 次考试名次总体下滑，建议调整学习节奏' : '名次总体平稳');
+    }
+    body += '<div class="card" style="border-color:#bfdbfe;background:#eff6ff"><div class="card-title" style="color:var(--c-primary);margin-bottom:6px">💡 提升建议</div>' +
+      '<div style="font-size:12px;line-height:1.9;color:var(--c-text-2)">' + tips.map(function (t) { return '· ' + H(t); }).join('<br>') + '</div></div>';
+
+    WB.openModal('📄 学生报告 · ' + H(name), body, [
+      { text: '关闭', cls: 'btn btn-primary', act: 'close' }
+    ]);
+  }
+
   function bindGrades() {
-    // 顶部：新建考试、同步花名册
-    el('g-new-exam').addEventListener('click', openExamForm);
+    // 关键：必须先 rebindRoot（clone 替换 content 会丢失所有旧监听器），
+    // 之后再绑定，否则上面所有直接绑定都会因元素被 clone 替换而失效
+    var root = rebindRoot();
+
+    // 顶部：新建考试、同步花名册、分数线设置（包一层避免 event 对象被当作批次 id 传入）
+    el('g-new-exam').addEventListener('click', function () { openExamForm(null); });
     el('g-import-roster').addEventListener('click', syncRosterToCurrent);
+    el('g-lines').addEventListener('click', openLinesForm);
+
+    // 分析页签切换
+    var gtabs = el('g-tabs2');
+    if (gtabs) {
+      gtabs.addEventListener('click', function (e) {
+        var tab = e.target.closest('[data-gtab]');
+        if (!tab) return;
+        WB.state.grades.gTab = tab.dataset.gtab;
+        WB.saveState();
+        renderGradesRefresh();
+      });
+    }
 
     // Tab 切换
     var tabs = el('g-tabs');
@@ -959,8 +2069,20 @@ window.WB_VIEWS = (function () {
       });
     }
 
-    // 数据表格操作（content 级委托，rebindRoot 防止重复绑定）
-    var root = rebindRoot();
+    // 多批次对比：切换对比批次
+    ['g-cmp-a', 'g-cmp-b'].forEach(function (sid) {
+      var s = el(sid);
+      if (!s) return;
+      s.addEventListener('change', function () {
+        WB.state.grades[sid === 'g-cmp-a' ? 'cmpA' : 'cmpB'] = s.value;
+        WB.saveState();
+        renderGradesRefresh();
+      });
+    });
+
+    // 直方图维度切换（走 root 的 data-act 委托）
+
+    // 数据表格操作（content 级委托）
     root.addEventListener('click', function (e) {
       var btn = e.target.closest('[data-act]');
       if (!btn) return;
@@ -979,12 +2101,29 @@ window.WB_VIEWS = (function () {
         }
       } else if (act === 'add-score') {
         openScoreForm(null);
+      } else if (act === 'import-scores') {
+        openScoreImport();
+      } else if (act === 'trend') {
+        openTrendModal(btn.dataset.name);
+      } else if (act === 'hist-sub') {
+        GA_HIST_SUBJ = btn.dataset.sub || '__total';
+        renderGradesRefresh();
       } else if (act === 'edit-score') {
-        openScoreForm(parseInt(btn.dataset.idx, 10));
+        // withRank 是排序副本，按姓名回找原始行（修复排序后 idx 错位）
+        var editScores = WB.state.grades.scores[WB.state.grades.currentExamId] || [];
+        var eIdx = -1;
+        for (var i = 0; i < editScores.length; i++) {
+          if (editScores[i].name === btn.dataset.name) { eIdx = i; break; }
+        }
+        openScoreForm(eIdx >= 0 ? eIdx : null);
       } else if (act === 'del-score') {
         if (confirm('确认删除该学生成绩？')) {
           var scores = WB.state.grades.scores[WB.state.grades.currentExamId] || [];
-          scores.splice(parseInt(btn.dataset.idx, 10), 1);
+          var dIdx = -1;
+          for (var j = 0; j < scores.length; j++) {
+            if (scores[j].name === btn.dataset.name) { dIdx = j; break; }
+          }
+          if (dIdx >= 0) scores.splice(dIdx, 1);
           WB.saveState();
           renderGradesRefresh();
           WB.showToast('已删除');
@@ -995,6 +2134,16 @@ window.WB_VIEWS = (function () {
         copySummaryText();
       } else if (act === 'copy-summary') {
         copySummaryText();
+      } else if (act === 'top-dist') {
+        WB.state.grades.topN = parseInt(btn.dataset.n, 10) || 10;
+        WB.saveState();
+        renderGradesRefresh();
+      } else if (act === 'rp-view') {
+        var sel = el('rp-select');
+        if (sel && sel.value) openStudentReport(sel.value);
+        else WB.showToast('请先选择学生');
+      } else if (act === 'open-report') {
+        openStudentReport(btn.dataset.name);
       }
     });
   }
@@ -1004,33 +2153,62 @@ window.WB_VIEWS = (function () {
     bindGrades();
   }
 
+  // 考试类型（成绩模板中的分类）
+  var EXAM_TYPES = ['限时练', '周测', '月考', '期中', '期末', '联考', '模拟考', '入学考', '竞赛', '其他'];
+  // 预设科目（勾选即可）；不在列表中的科目走「其他科目」输入
+  var PRESET_SUBJECTS = ['语文', '数学', '英语', '物理', '化学', '生物', '政治', '历史', '地理', '体育', '信息技术'];
+
   function openExamForm(id) {
     var exam = null;
     if (id) exam = WB.state.grades.exams.find(function (e) { return e.__id === id; });
+    var cur = exam ? (exam.subjects || []) : [];
+    var selSet = {};
+    cur.forEach(function (s) { selSet[s] = true; });
+    var custom = cur.filter(function (s) { return PRESET_SUBJECTS.indexOf(s) < 0; });
+
     var body = '<div class="form-grid">' +
       '<label><span class="lbl required">考试名称</span>' +
         '<input id="e-name" value="' + H(exam ? exam.name : '') + '" placeholder="如 第3周周测 / 期中考试"></label>' +
+      '<label><span class="lbl">考试类型</span>' +
+        '<select id="e-type">' + EXAM_TYPES.map(function (t) {
+          return '<option value="' + H(t) + '"' + ((exam ? (exam.type || '月考') : '月考') === t ? ' selected' : '') + '>' + H(t) + '</option>';
+        }).join('') + '</select></label>' +
       '<label><span class="lbl">图标</span>' +
         '<input id="e-icon" value="' + H(exam ? exam.icon || '📅' : '📅') + '" placeholder="📅"></label>' +
-      '<label class="full"><span class="lbl required">考试科目（逗号分隔）</span>' +
-        '<input id="e-subjects" value="' + H(exam ? (exam.subjects || []).join(', ') : '') + '" placeholder="如 语文,数学,英语,物理,化学,政治,历史,地理,生物"></label>' +
+      '<label class="full"><span class="lbl required">考试科目（点选勾选）</span>' +
+        '<div class="ga-sub-list" id="e-subj-grid">' +
+        PRESET_SUBJECTS.map(function (s) {
+          return '<label class="ga-sub-item"><input type="checkbox" class="e-sj" data-sj="' + H(s) + '"' +
+            (selSet[s] ? ' checked' : '') + '>' + H(s) + '</label>';
+        }).join('') +
+        '</div></label>' +
+      '<label class="full"><span class="lbl">其他科目（逗号分隔，列表中没有的）</span>' +
+        '<input id="e-subj-custom" value="' + H(custom.join(', ')) + '" placeholder="如 科学、社政、实验"></label>' +
       '<label class="full"><span class="lbl">备注</span>' +
         '<textarea id="e-note">' + H(exam ? (exam.note || '') : '') + '</textarea></label>' +
       '</div>';
     WB.openModal(id ? '编辑考试批次' : '新建考试批次', body, [
       { text: '取消', cls: 'btn', act: 'close' },
       { text: '保存', cls: 'btn btn-primary', act: 'save' }
-    ], function (act) {
+    ], function (act, formEl) {
       if (act !== 'save') return;
-      var name = el('e-name').value.trim();
+      var name = formEl.querySelector('#e-name').value.trim();
       if (!name) { WB.showToast('请填写考试名称'); return false; }
-      var subjects = el('e-subjects').value.split(/[,，、\s]+/).filter(Boolean);
-      if (subjects.length === 0) { WB.showToast('请至少填写一个科目'); return false; }
+      // 勾选的预设科目 + 自定义科目，去重（预设顺序优先）
+      var picked = [];
+      formEl.querySelectorAll('.e-sj:checked').forEach(function (cb) { picked.push(cb.dataset.sj); });
+      var customArr = formEl.querySelector('#e-subj-custom').value.split(/[,，、\s]+/).filter(Boolean);
+      var seen = {}, subjects = [];
+      picked.concat(customArr).forEach(function (s) {
+        if (!seen[s]) { seen[s] = 1; subjects.push(s); }
+      });
+      if (subjects.length === 0) { WB.showToast('请至少勾选或填写一个科目'); return false; }
       var data = {
         name: name,
-        icon: el('e-icon').value.trim() || '📅',
+        type: formEl.querySelector('#e-type').value,
+        icon: formEl.querySelector('#e-icon').value.trim() || '📅',
         subjects: subjects,
-        note: el('e-note').value.trim()
+        note: formEl.querySelector('#e-note').value.trim()
       };
       if (exam) {
         Object.assign(exam, data);
@@ -1043,7 +2221,7 @@ window.WB_VIEWS = (function () {
       }
       WB.saveState();
       renderGradesRefresh();
-      WB.showToast('已保存');
+      WB.showToast('已保存：' + subjects.length + ' 个科目');
     });
   }
 
@@ -1068,6 +2246,279 @@ window.WB_VIEWS = (function () {
     WB.showToast('已从花名册同步 ' + added + ' 名学生');
   }
 
+  // ===== 成绩 Excel 批量导入 =====
+  // 流程：选文件 → SheetJS 解析 → 列映射（姓名/学号/科目勾选）→ 预览 → 按姓名 upsert 到当前批次
+  function openScoreImport() {
+    var currentExamId = WB.state.grades.currentExamId;
+    var exam = WB.state.grades.exams.find(function (e) { return e.__id === currentExamId; });
+    if (!exam) { WB.showToast('当前无考试批次'); return; }
+    if (window.WB_XLSX_STATE === 'loading' && (typeof XLSX === 'undefined' || !XLSX.read)) {
+      WB.showToast('Excel 库仍在加载中，请稍候再试');
+      return;
+    }
+    if (typeof XLSX === 'undefined' || !XLSX.read) {
+      WB.openModal('Excel 库未加载',
+        '<div style="font-size:13px;line-height:1.8;color:var(--c-text-2)">' +
+        '📥 批量导入需要 SheetJS 库（CDN 与本地均不可用）。<br>' +
+        '可稍后刷新重试，或使用「＋ 录入学生成绩」手动录入。</div>',
+        [{ text: '知道了', cls: 'btn btn-primary', act: 'close' }]);
+      return;
+    }
+    var inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = '.xlsx,.xls,.csv';
+    inp.onchange = function () {
+      if (inp.files && inp.files[0]) parseScoreFile(inp.files[0], exam);
+    };
+    inp.click();
+  }
+
+  function parseScoreFile(file, exam) {
+    var ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (['xlsx', 'xls', 'csv'].indexOf(ext) < 0) { WB.showToast('仅支持 .xlsx / .xls / .csv 文件'); return; }
+    var isCsv = ext === 'csv';
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        var wb = isCsv ? XLSX.read(e.target.result, { type: 'string' })
+                       : XLSX.read(e.target.result, { type: 'array' });
+        var rows = [];
+        // 取第一个有数据的工作表
+        wb.SheetNames.some(function (nm) {
+          var r = XLSX.utils.sheet_to_json(wb.Sheets[nm], { defval: '' });
+          if (r.length) { rows = r; return true; }
+          return false;
+        });
+        if (!rows.length) {
+          WB.showToast('未解析到数据行，请确认第一行是表头（姓名/学号/各科目列）');
+          return;
+        }
+        showScoreImport(file.name, rows, exam);
+      } catch (err) {
+        WB.showToast('解析失败：' + (err.message || err));
+      }
+    };
+    reader.onerror = function () { WB.showToast('文件读取失败'); };
+    if (isCsv) reader.readAsText(file);
+    else reader.readAsArrayBuffer(file);
+  }
+
+  // 列是否为数字主导（用于自动勾选科目列）
+  function scoreIsNumericCol(rows, col) {
+    var n = 0, c = 0;
+    rows.slice(0, 20).forEach(function (r) {
+      var v = r[col];
+      if (v === '' || v == null) return;
+      c++;
+      if (!isNaN(parseFloat(v))) n++;
+    });
+    return c > 0 && n / c >= 0.5;
+  }
+  // 列名是否为总分类（不可作为科目导入）
+  function scoreIsTotalCol(col) { return /总分|总成绩|总分数|合计/.test(String(col)); }
+
+  function showScoreImport(fileName, rows, exam) {
+    var columns = Object.keys(rows[0]);
+    // 自动识别姓名/学号列
+    var nameAuto = columns.find(function (c) { return /姓名|学生/.test(c); }) || columns[0];
+    var noAuto = columns.find(function (c) { return /学号|考号|准考证/.test(c); }) || '';
+    // 自动识别总分列（数字列且列名含"总分/合计"）
+    var totalAuto = columns.find(function (c) {
+      return c !== nameAuto && c !== noAuto && scoreIsTotalCol(c) && scoreIsNumericCol(rows, c);
+    }) || '';
+
+    function colOpts(sel, filter) {
+      var list = columns.filter(filter || function () { return true; });
+      return '<option value="">— 无 —</option>' + list.map(function (c) {
+        return '<option value="' + H(c) + '"' + (c === sel ? ' selected' : '') + '>' + H(c) + '</option>';
+      }).join('');
+    }
+
+    // 科目列勾选：排除姓名/学号/总分列；数字列或列名已在批次科目中 → 默认勾选
+    var subHtml = '';
+    columns.forEach(function (c) {
+      if (c === nameAuto || c === noAuto || scoreIsTotalCol(c)) return;
+      var isSub = scoreIsNumericCol(rows, c) || (exam.subjects || []).indexOf(c) >= 0;
+      subHtml += '<label class="ga-sub-item"><input type="checkbox" class="si-subj" data-col="' + H(c) + '"' +
+        (isSub ? ' checked' : '') + '>' + H(c) +
+        '<small>' + (scoreIsNumericCol(rows, c) ? '' + rows.length + ' 行' : '非数字') + '</small></label>';
+    });
+    if (!subHtml) subHtml = '<div class="empty">没有可用的科目列</div>';
+
+    // 预览表（前 10 行，全部列）
+    var pv = '<table class="data"><thead><tr>' + columns.map(function (c) { return '<th>' + H(c) + '</th>'; }).join('') +
+      '</tr></thead><tbody>' +
+      rows.slice(0, 10).map(function (r) {
+        return '<tr>' + columns.map(function (c) {
+          var v = r[c];
+          if (v && typeof v === 'object' && v.rich) v = v.rich.map(function (x) { return x.t; }).join('');
+          return '<td>' + H(v == null ? '' : String(v)) + '</td>';
+        }).join('') + '</tr>';
+      }).join('') + '</tbody></table>';
+
+    var body = '<div style="padding:10px 12px;background:var(--c-primary-bg);border-radius:6px;font-size:12px;color:var(--c-text-2);line-height:1.7;margin-bottom:12px">' +
+      '📋 已解析：<strong>' + H(fileName) + '</strong>（' + rows.length + ' 行数据）<br>' +
+      '· 按姓名匹配更新：已有成绩的学生更新分数，没有的新建<br>' +
+      '· 勾选要导入的科目列；不在批次科目中的列会自动追加为新科目<br>' +
+      '· <b>总分列</b>：选择后以导入总分为准（排名/统计直接使用）；不选则按各科目自动相加' +
+      '</div>';
+    body += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">' +
+      '<label style="flex:1;min-width:130px"><span class="lbl required">姓名列</span><select id="si-name" style="width:100%">' + colOpts(nameAuto) + '</select></label>' +
+      '<label style="flex:1;min-width:120px"><span class="lbl">学号列</span><select id="si-no" style="width:100%">' + colOpts(noAuto) + '</select></label>' +
+      '<label style="flex:1;min-width:150px"><span class="lbl">总分列</span><select id="si-total" style="width:100%">' +
+      '<option value=""' + (totalAuto ? '' : ' selected') + '>— 不导入（按科目相加）</option>' +
+      columns.filter(function (c) { return c !== nameAuto && scoreIsNumericCol(rows, c); }).map(function (c) {
+        return '<option value="' + H(c) + '"' + (c === totalAuto ? ' selected' : '') + '>' + H(c) + '</option>';
+      }).join('') +
+      '</select></label>' +
+      '</div>';
+    body += '<div class="form-title" style="margin-bottom:6px">导入科目（勾选）</div>';
+    body += '<div class="ga-sub-list">' + subHtml + '</div>';
+    body += '<div class="form-title" style="margin:10px 0 6px">数据预览（前 10 行）</div>';
+    body += '<div style="max-height:220px;overflow:auto;border:1px solid var(--c-border);border-radius:6px">' + pv + '</div>';
+
+    WB.openModal('📥 导入成绩 · ' + H(exam.name), body, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: '导入', cls: 'btn btn-primary', act: 'save' }
+    ], function (act, formEl) {
+      if (act !== 'save') return true;
+      var nameCol = formEl.querySelector('#si-name').value;
+      if (!nameCol) { WB.showToast('请选择姓名列'); return false; }
+      var noCol = formEl.querySelector('#si-no').value;
+      var totalCol = formEl.querySelector('#si-total').value; // 总分列：导入总分 or 留空按科目相加
+      var subjCols = [];
+      formEl.querySelectorAll('.si-subj:checked').forEach(function (cb) {
+        subjCols.push(cb.dataset.col);
+      });
+      if (!subjCols.length) { WB.showToast('请至少勾选一个科目列'); return false; }
+
+      var scores = WB.state.grades.scores[exam.__id] || [];
+      var created = 0, updated = 0, skipped = 0;
+      rows.forEach(function (row) {
+        var name = String(row[nameCol] == null ? '' : row[nameCol]).trim();
+        if (!name) { skipped++; return; }
+        var noVal = noCol ? String(row[noCol] == null ? '' : row[noCol]).trim() : '';
+        var totalVal = null;
+        if (totalCol) {
+          var tv = parseFloat(row[totalCol]);
+          if (!isNaN(tv)) totalVal = tv;
+        }
+        var exist = null;
+        scores.forEach(function (r) { if (r.name === name) { if (!exist) exist = r; } });
+        if (exist) {
+          if (noVal) exist.studentNo = noVal;
+          subjCols.forEach(function (s) {
+            var raw = row[s];
+            var v = parseFloat(raw);
+            if (raw === '' || raw == null || isNaN(v)) return; // 空值不覆盖已有分数
+            exist[s] = v;
+          });
+          if (totalVal != null) exist.__totalImported = totalVal; // 导入总分，优先于科目相加
+          updated++;
+        } else {
+          var data = { studentNo: noVal, name: name };
+          subjCols.forEach(function (s) {
+            var raw = row[s];
+            var v = parseFloat(raw);
+            data[s] = (raw === '' || raw == null || isNaN(v)) ? null : v;
+          });
+          if (totalVal != null) data.__totalImported = totalVal;
+          scores.unshift(data);
+          created++;
+        }
+      });
+      // 追加新科目到批次
+      subjCols.forEach(function (s) {
+        if ((exam.subjects || []).indexOf(s) < 0) {
+          exam.subjects = exam.subjects || [];
+          exam.subjects.push(s);
+        }
+      });
+      WB.state.grades.scores[exam.__id] = scores;
+      WB.saveState();
+      renderGradesRefresh();
+      WB.showToast('导入完成：新建 ' + created + ' 人，更新 ' + updated + ' 人' +
+        (skipped ? '，跳过 ' + skipped + ' 行（无姓名）' : ''));
+      return true;
+    });
+  }
+
+  // ===== 单科名次列 / 学生跨批次趋势 =====
+  // 学生趋势弹窗：SVG 总分折线（跨全部批次），点上标注名次
+  function openTrendModal(name) {
+    var exams = WB.state.grades.exams || [];
+    var points = [];
+    exams.forEach(function (ex) {
+      var scores = WB.state.grades.scores[ex.__id] || [];
+      var subs = (ex.subjects && ex.subjects.length) ? ex.subjects : getSubjectsFromScores(scores);
+      if (!subs.length) return;
+      var wr = computeWithRank(scores, subs);
+      var r = null;
+      wr.forEach(function (x) { if (x.name === name && !r) r = x; });
+      if (r) points.push({ exam: ex.name, icon: ex.icon || '📅', total: r.__total, rank: r.__rank });
+    });
+    if (points.length < 2) {
+      WB.showToast('「' + name + '」不足 2 次有效成绩，暂无趋势');
+      return;
+    }
+
+    // SVG 折线
+    var W = 520, Hh = 230, padL = 44, padR = 16, padT = 26, padB = 42;
+    var totals = points.map(function (p) { return p.total; });
+    var vMin = Math.min.apply(null, totals), vMax = Math.max.apply(null, totals);
+    var span = (vMax - vMin) || 10;
+    var innerW = W - padL - padR, innerH = Hh - padT - padB;
+    function px(i) { return padL + (points.length === 1 ? innerW / 2 : i * innerW / (points.length - 1)); }
+    function py(v) { return padT + innerH - (v - vMin) / span * innerH; }
+    var linePts = points.map(function (p, i) { return px(i).toFixed(1) + ',' + py(p.total).toFixed(1); }).join(' ');
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + Hh + '" style="width:100%;max-width:' + W + 'px;background:#fff;border:1px solid var(--c-border);border-radius:8px">';
+    // 网格 + Y 轴刻度（5 档）
+    for (var g = 0; g <= 4; g++) {
+      var gy = padT + innerH - g * innerH / 4;
+      var gv = vMin + g * span / 4;
+      svg += '<line x1="' + padL + '" y1="' + gy.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + gy.toFixed(1) + '" stroke="var(--c-border)" stroke-dasharray="3,3"/>';
+      svg += '<text x="' + (padL - 6) + '" y="' + (gy + 4).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--c-text-3)">' + gv.toFixed(0) + '</text>';
+    }
+    // 折线
+    svg += '<polyline points="' + linePts + '" fill="none" stroke="var(--c-primary)" stroke-width="2.5" stroke-linejoin="round"/>';
+    // 点 + 名次标注 + X 轴批次名
+    points.forEach(function (p, i) {
+      var x = px(i), y = py(p.total);
+      var up = i > 0 && p.total >= points[i - 1].total;
+      svg += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="5" fill="' +
+        (up ? 'var(--c-success)' : 'var(--c-danger)') + '" stroke="#fff" stroke-width="2"/>';
+      svg += '<text x="' + x.toFixed(1) + '" y="' + (y - 10).toFixed(1) + '" text-anchor="middle" font-size="10" font-weight="700" fill="var(--c-text-2)">#' + p.rank + '</text>';
+      // X 轴：批次名（过长截断）+ 总分
+      var label = p.exam.length > 6 ? p.exam.slice(0, 6) + '…' : p.exam;
+      svg += '<text x="' + x.toFixed(1) + '" y="' + (Hh - 22) + '" text-anchor="middle" font-size="10" fill="var(--c-text-2)">' + H(label) + '</text>';
+      svg += '<text x="' + x.toFixed(1) + '" y="' + (Hh - 8) + '" text-anchor="middle" font-size="10" font-weight="600" fill="var(--c-primary)">' + p.total.toFixed(0) + '</text>';
+    });
+    svg += '</svg>';
+
+    // 明细表
+    var rowsHtml = points.slice().reverse().map(function (p, i, arr2) {
+      var prev = arr2[i + 1];
+      var dRank = prev ? (prev.rank - p.rank) : 0; // >0 进步
+      var dTotal = prev ? (p.total - prev.total) : 0;
+      return '<tr><td>' + H(p.icon) + ' ' + H(p.exam) + '</td><td>' + p.total.toFixed(1) + '</td><td>' + p.rank + '</td>' +
+        '<td style="color:' + (dTotal > 0 ? 'var(--c-success)' : dTotal < 0 ? 'var(--c-danger)' : 'var(--c-text-3)') + '">' +
+        (prev ? (dTotal > 0 ? '+' : '') + dTotal.toFixed(1) : '—') + '</td>' +
+        '<td style="font-weight:600;color:' + (dRank > 0 ? 'var(--c-success)' : dRank < 0 ? 'var(--c-danger)' : 'var(--c-text-3)') + '">' +
+        (prev ? (dRank > 0 ? '↑' + dRank : dRank < 0 ? '↓' + (-dRank) : '—') : '—') + '</td></tr>';
+    }).join('');
+
+    var body = '<div style="text-align:center;font-weight:600;font-size:15px;margin-bottom:10px">📈 ' + H(name) + ' · 成绩趋势（共 ' + points.length + ' 次考试）</div>';
+    body += svg;
+    body += '<div style="font-size:11px;color:var(--c-text-3);text-align:center;margin:6px 0 10px">折线为总分（趋势），点上标注班级名次</div>';
+    body += '<div style="max-height:200px;overflow:auto;border:1px solid var(--c-border);border-radius:6px">' +
+      '<table class="data"><thead><tr><th>批次</th><th>总分</th><th>名次</th><th>总分变化</th><th>名次变化</th></tr></thead><tbody>' +
+      rowsHtml + '</tbody></table></div>';
+
+    WB.openModal('成绩趋势 · ' + H(name), body, [
+      { text: '关闭', cls: 'btn btn-primary', act: 'close' }
+    ]);
+  }
+
   function openScoreForm(idx) {
     var currentExamId = WB.state.grades.currentExamId;
     var exam = WB.state.grades.exams.find(function (e) { return e.__id === currentExamId; });
@@ -1087,26 +2538,36 @@ window.WB_VIEWS = (function () {
           '<input type="number" step="0.1" id="s-sub-' + H(s) + '" value="' +
           (row && row[s] != null ? row[s] : '') + '"></label>';
     });
+    body += '<label><span class="lbl">总分（Excel导入）</span>' +
+        '<input type="number" step="0.1" id="s-total" value="' +
+        (row && row.__totalImported != null ? row.__totalImported : '') + '" placeholder="留空=按科目相加"></label>';
     body += '<label class="full"><span class="lbl">备注</span>' +
           '<textarea id="s-remark">' + H(rowRemark) + '</textarea></label>';
     body += '</div>';
+    body += '<p style="font-size:11px;color:var(--c-text-3);margin-top:-4px">总分为空时按各科目相加计算；填入数值则以该总分参与排名与统计。</p>';
 
     WB.openModal('录入成绩 · ' + exam.name, body, [
       { text: '取消', cls: 'btn', act: 'close' },
       { text: '保存', cls: 'btn btn-primary', act: 'save' }
-    ], function (act) {
+    ], function (act, formEl) {
       if (act !== 'save') return;
-      var name = el('s-name').value.trim();
+      var name = formEl.querySelector('#s-name').value.trim();
       if (!name) { WB.showToast('请填写姓名'); return false; }
       var data = {
-        studentNo: el('s-no').value.trim(),
+        studentNo: formEl.querySelector('#s-no').value.trim(),
         name: name,
-        remark: el('s-remark').value.trim()
+        remark: formEl.querySelector('#s-remark').value.trim()
       };
       subjects.forEach(function (s) {
-        var v = el('s-sub-' + H(s)).value.trim();
+        var v = formEl.querySelector('#s-sub-' + H(s)).value.trim();
         data[s] = v === '' ? null : parseFloat(v);
       });
+      // 总分：填了值则以导入总分为准；留空 = 按科目相加（并清除旧的导入总分）
+      var tv = formEl.querySelector('#s-total').value.trim();
+      if (tv !== '') {
+        var fv = parseFloat(tv);
+        if (!isNaN(fv)) data.__totalImported = fv;
+      }
       if (idx != null) scores[idx] = data;
       else scores.unshift(data);
       WB.state.grades.scores[currentExamId] = scores;
@@ -1124,15 +2585,17 @@ window.WB_VIEWS = (function () {
     if (scores.length === 0) { WB.showToast('暂无成绩'); return; }
     var subjects = exam.subjects || [];
     var withRank = computeWithRank(scores, subjects);
-    var header = ['学号', '姓名'].concat(subjects, ['总分', '班级排名', '等级']);
+    // 首列为考试类型（与成绩模板对齐），文件名也带类型
+    var header = ['考试类型', '学号', '姓名'].concat(subjects, ['总分', '班级排名', '等级']);
     var lines = [header.map(WB.csvEscape).join(',')];
     withRank.forEach(function (r) {
-      var row = [r.studentNo || '', r.name].concat(subjects.map(function (s) { return r[s] == null ? '' : r[s]; }))
+      var row = [exam.type || ''].concat([r.studentNo || '', r.name])
+        .concat(subjects.map(function (s) { return r[s] == null ? '' : r[s]; }))
         .concat([r.__total.toFixed(1), r.__rank, r.__level]);
       lines.push(row.map(WB.csvEscape).join(','));
     });
     var csv = '\uFEFF' + lines.join('\r\n');
-    WB.downloadBlob(csv, exam.name + '_成绩_' + WB.today() + '.csv', 'text/csv;charset=utf-8');
+    WB.downloadBlob(csv, (exam.type ? exam.type + '_' : '') + exam.name + '_成绩_' + WB.today() + '.csv', 'text/csv;charset=utf-8');
     WB.showToast('已导出成绩');
   }
 
@@ -1551,17 +3014,541 @@ window.WB_VIEWS = (function () {
   }
 
   // ============ 暴露 ============
+  // ============ 住宿床位画布 ============
+  var DORM_PENDING = null; // 待分配学生（先点学生 chip，再点空床入住）
+
+  // 布局数据懒初始化：state.dormLayout = { rooms: [{ __id, name, gender, beds }] }
+  function dormRooms() {
+    if (!WB.state.dormLayout) WB.state.dormLayout = { rooms: [] };
+    if (!Array.isArray(WB.state.dormLayout.rooms)) WB.state.dormLayout.rooms = [];
+    return WB.state.dormLayout.rooms;
+  }
+  function dormRows() {
+    if (!WB.state.tables.dorm) WB.state.tables.dorm = [];
+    return WB.state.tables.dorm;
+  }
+  // 床位铺位：1 起编号，奇数=上铺、偶数=下铺（1上 2下 3上 4下…）
+  function dormBedLevel(i) { return i % 2 === 1 ? '上' : '下'; }
+  function dormBedNo(i) { return Math.ceil(i / 2); }
+  function dormRoomKey(name) { return String(name || '').replace(/\s+/g, '').toUpperCase(); }
+  function dormRecInRoom(rec, room) { return dormRoomKey(rec.roomNo) === dormRoomKey(room.name); }
+
+  // 记录关联花名册学生：优先 _sid，回退姓名匹配
+  function dormRecStudent(rec) {
+    var roster = WB.state.tables.roster || [];
+    var stu = null;
+    if (rec._sid) stu = roster.find(function (s) { return (s.__id || '') === rec._sid; });
+    if (!stu && rec.name) stu = roster.find(function (s) { return s.name === rec.name; });
+    return stu || null;
+  }
+  function dormRecGender(rec) { var s = dormRecStudent(rec); return s ? (s.gender || '') : ''; }
+  // 待分配 = 无床位，或房间号未在布局中（孤儿记录）
+  function dormIsUnassigned(r, rooms) {
+    if (!r.roomNo || !parseInt(r.bedNo, 10)) return true;
+    return !rooms.some(function (rm) { return dormRecInRoom(r, rm); });
+  }
+
+  // 从住宿表自动生成房间（房间号非空的记录按房号聚合）
+  function dormAutoImport() {
+    var rows = dormRows();
+    var rooms = dormRooms();
+    var exist = {};
+    rooms.forEach(function (r) { exist[dormRoomKey(r.name)] = true; });
+    var groups = {};
+    rows.forEach(function (r) {
+      if (!r.roomNo) return;
+      var key = dormRoomKey(r.roomNo);
+      if (exist[key] || groups[key]) { if (groups[key]) { var bn = parseInt(r.bedNo, 10) || 0; if (bn > groups[key].beds) groups[key].beds = bn; } return; }
+      groups[key] = { name: r.roomNo, beds: 0, gc: {} };
+      var bn = parseInt(r.bedNo, 10) || 0;
+      if (bn > groups[key].beds) groups[key].beds = bn;
+    });
+    // 需要把性别也聚合（上面 groups[key] 只建一次，这里重扫）
+    rows.forEach(function (r) {
+      if (!r.roomNo) return;
+      var g = groups[dormRoomKey(r.roomNo)];
+      if (!g) return;
+      var gg = dormRecGender(r);
+      if (gg) g.gc[gg] = (g.gc[gg] || 0) + 1;
+    });
+    var added = 0;
+    Object.keys(groups).forEach(function (k) {
+      var g = groups[k];
+      var cnt = Object.keys(g.gc).reduce(function (a, x) { return a + g.gc[x]; }, 0);
+      var beds = Math.max(g.beds, cnt, 4);
+      if (beds % 2 === 1) beds++;
+      beds = Math.min(beds, 12);
+      var gs = Object.keys(g.gc);
+      var gender = '混合';
+      if (gs.length === 1 && (gs[0] === '男' || gs[0] === '女')) gender = gs[0];
+      rooms.push({ __id: WB.uid(), name: g.name, gender: gender, beds: beds });
+      exist[k] = true;
+      added++;
+    });
+    if (added > 0) WB.saveState();
+    return added;
+  }
+
+  // 同房间 roommate 互写（全量同步）
+  function dormSyncAll() {
+    var rows = dormRows();
+    dormRooms().forEach(function (room) {
+      var members = rows.filter(function (r) { return dormRecInRoom(r, room); });
+      members.forEach(function (r) {
+        r.roommate = members.filter(function (x) { return x !== r; })
+          .map(function (x) { return x.name; }).join('、');
+      });
+    });
+  }
+
+  // 入住：学生分配到房间某床；同床已有学生自动腾出，学生旧床位自动迁移
+  function dormAssign(room, bedNo, stu) {
+    var rows = dormRows();
+    if ((room.gender === '男' || room.gender === '女') && stu.gender && stu.gender !== room.gender) {
+      WB.showToast(room.name + ' 是' + room.gender + '生宿舍，' + stu.name + ' 无法入住');
+      return false;
+    }
+    var key = dormRoomKey(room.name);
+    // 该床已有其他学生 → 腾床
+    rows.forEach(function (r) {
+      if (r.roomNo && dormRoomKey(r.roomNo) === key && String(parseInt(r.bedNo, 10)) === String(bedNo) && r.name !== stu.name) {
+        r.roomNo = ''; r.bedNo = '';
+      }
+    });
+    // 学生已有记录 → 换床；没有 → 新建
+    var rec = null;
+    rows.forEach(function (r) {
+      if (stu.__id && r._sid === stu.__id) rec = r;
+      else if (!rec && r.name === stu.name) rec = r;
+    });
+    if (rec) {
+      rec.roomNo = room.name; rec.bedNo = String(bedNo);
+      if (stu.__id) rec._sid = stu.__id;
+    } else {
+      rows.push({ __id: WB.uid(), name: stu.name, building: '', roomNo: room.name,
+        bedNo: String(bedNo), roommate: '', guardianPhone: '', note: '', _sid: stu.__id || '' });
+    }
+    dormSyncAll();
+    WB.saveState();
+    return true;
+  }
+
+  function renderDormRoom(room, bedMap) {
+    var key = dormRoomKey(room.name);
+    var occ = 0;
+    var beds = '';
+    for (var i = 1; i <= room.beds; i++) {
+      var rec = bedMap[key + '|' + i];
+      if (rec) occ++;
+      beds += '<div class="dorm-bed' + (rec ? ' occ' : ' empty') + '" data-room="' + room.__id + '" data-bed="' + i + '" title="' + H(room.name) + ' · ' + i + '号床">';
+      beds += '<span class="dorm-bed-tag">' + dormBedNo(i) + dormBedLevel(i) + '</span>';
+      if (rec) {
+        var g = dormRecGender(rec);
+        beds += '<span class="dorm-bed-name' + (g === '男' ? ' m' : g === '女' ? ' f' : '') + '">' + H(rec.name) + '</span>';
+      } else {
+        beds += '<span class="dorm-bed-plus">＋</span>';
+      }
+      beds += '</div>';
+    }
+    var full = occ >= room.beds;
+    return '<div class="dorm-room">' +
+      '<div class="dorm-room-head"><b>' + H(room.name) + '</b>' +
+      '<span class="dorm-room-info' + (full ? ' full' : '') + '">' + (full ? '满员' : occ + '/' + room.beds) + '</span>' +
+      '<span class="dorm-room-ops">' +
+      '<button class="dorm-op" data-edit-room="' + room.__id + '" title="编辑房间">✎</button>' +
+      '<button class="dorm-op" data-del-room="' + room.__id + '" title="删除房间">🗑</button>' +
+      '</span></div>' +
+      '<div class="dorm-beds">' + beds + '</div></div>';
+  }
+
+  function renderDormCanvas() {
+    var rooms = dormRooms();
+    var rows = dormRows();
+    // 首次进入：尝试从住宿表自动生成房间
+    if (rooms.length === 0) dormAutoImport();
+
+    // 床位占用表：roomKey|bedNo → 记录
+    var bedMap = {};
+    rows.forEach(function (r) {
+      if (!r.roomNo) return;
+      var bn = parseInt(r.bedNo, 10) || 0;
+      if (bn > 0) bedMap[dormRoomKey(r.roomNo) + '|' + bn] = r;
+    });
+
+    var html = '<div class="card">';
+    html += '<div class="card-title">🏠 住宿床位 · 画布视图 <span class="extra">点床位分配学生 · 奇数床=上铺 偶数床=下铺</span></div>';
+
+    // 工具栏 + 统计
+    var totalBeds = 0, occ = 0;
+    rooms.forEach(function (rm) {
+      totalBeds += rm.beds;
+      for (var i = 1; i <= rm.beds; i++) if (bedMap[dormRoomKey(rm.name) + '|' + i]) occ++;
+    });
+    html += '<div class="dorm-toolbar">';
+    html += '<button class="btn btn-sm" id="dm-add">＋ 添加房间</button>';
+    html += '<button class="btn btn-sm" id="dm-batch" title="按起始房号批量生成多个房间">⧉ 批量建房</button>';
+    html += '<button class="btn btn-sm" id="dm-roster" title="把花名册学生批量加为待分配住宿生">👥 同步花名册</button>';
+    html += '<button class="btn btn-sm" id="dm-sync">🔄 从表格同步</button>';
+    html += '<button class="btn btn-sm" id="dm-auto">⚡ 一键分配</button>';
+    html += '<button class="btn btn-sm" id="dm-table" title="切回表格模式，可批量导入/编辑字段">📋 表格</button>';
+    html += '<div style="flex:1"></div>';
+    html += '<span class="dorm-stat">🛏 ' + totalBeds + ' 床</span>';
+    html += '<span class="dorm-stat ok">✅ 已住 ' + occ + '</span>';
+    html += '<span class="dorm-stat empty-c">▢ 空 ' + (totalBeds - occ) + '</span>';
+    html += '</div>';
+
+    if (rooms.length === 0) {
+      html += '<div class="empty" style="margin-top:12px">还没有房间。点击「＋ 添加房间」创建宿舍布局；若住宿表已录房间号，可点「从表格同步」自动生成。</div>';
+    } else {
+      ['男', '女', '混合'].forEach(function (g) {
+        var list = rooms.filter(function (r) { return (r.gender || '混合') === g; });
+        if (!list.length) return;
+        html += '<div class="dorm-sec"><div class="dorm-sec-title">' +
+          (g === '男' ? '👨 男生宿舍区' : g === '女' ? '👩 女生宿舍区' : '🌗 混合区') +
+          '<span>' + list.length + ' 间 · ' + list.reduce(function (a, r) { return a + r.beds; }, 0) + ' 床</span></div>';
+        html += '<div class="dorm-room-grid">';
+        list.forEach(function (rm) { html += renderDormRoom(rm, bedMap); });
+        html += '</div></div>';
+      });
+    }
+
+    // 待分配住宿生
+    var un = rows.filter(function (r) { return dormIsUnassigned(r, rooms); });
+    var orphan = rows.filter(function (r) {
+      return r.roomNo && parseInt(r.bedNo, 10) > 0 && !rooms.some(function (rm) { return dormRecInRoom(r, rm); });
+    });
+    html += '<div class="dorm-unassigned"><div class="dorm-sec-title">🧳 待分配住宿生 <span>' + un.length + ' 人</span></div>';
+    if (orphan.length) {
+      html += '<div class="dorm-orphan-tip">⚠ 有 ' + orphan.length + ' 人录入了房间号但房间未创建，点「从表格同步」可补建</div>';
+    }
+    if (un.length) {
+      html += '<div class="dorm-pend-list">';
+      un.forEach(function (r) {
+        var g = dormRecGender(r);
+        var dm = r._sid || ('n:' + r.name + ':' + (r.__id || ''));
+        var on = DORM_PENDING === dm ? ' on' : '';
+        html += '<span class="dorm-pend' + on + (g === '男' ? ' m' : g === '女' ? ' f' : '') + '" data-dm="' + H(dm) + '">' +
+          H(r.name) + (g ? '<i>' + (g === '男' ? '♂' : '♀') + '</i>' : '') + '</span>';
+      });
+      html += '</div>';
+      html += '<div class="dorm-pend-tip">' + (DORM_PENDING ? '已选中，点击空床位即可入住' : '点击学生后再点空床，或直接点空床从花名册选择') + '</div>';
+    } else {
+      html += '<div class="empty" style="padding:6px 0">' +
+        (rows.length === 0
+          ? '住宿名单为空，点击上方「👥 同步花名册」把全班学生加入待分配'
+          : '全部住宿生均已安排床位 🎉') + '</div>';
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  // 空床选人入住（复用统一学生选择器，数据源花名册）
+  function openDormBedPicker(room, bedNo) {
+    WB.openStudentPicker(function (stu) {
+      if (dormAssign(room, bedNo, stu)) {
+        DORM_PENDING = null;
+        renderDormRefresh();
+        WB.showToast(stu.name + ' 已入住 ' + room.name + ' ' + bedNo + ' 号床');
+      }
+    }, { title: '入住 ' + room.name + ' · ' + bedNo + ' 号床' });
+  }
+
+  // 已占床：换人 / 移出 / 编辑档案
+  function openDormBedEditor(room, bedNo, rec) {
+    var body = '<div style="font-size:13px;margin-bottom:10px;color:var(--c-text-2)">' +
+      '当前入住：<b style="color:var(--c-text)">' + H(rec.name) + '</b> · ' + H(room.name) + ' ' + bedNo + ' 号床' +
+      (rec.roommate ? '<br><small>室友：' + H(rec.roommate) + '</small>' : '') + '</div>';
+    WB.openModal('床位 · ' + H(room.name) + ' ' + bedNo + '号', body, [
+      { text: '关闭', cls: 'btn', act: 'close' },
+      { text: '编辑档案', cls: 'btn', act: 'edit' },
+      { text: '换人', cls: 'btn', act: 'swap' },
+      { text: '移出床位', cls: 'btn btn-danger', act: 'remove' }
+    ], function (act) {
+      if (act === 'edit') {
+        var idx = dormRows().indexOf(rec);
+        WB.openForm('dorm', idx >= 0 ? idx : null, function () { renderDormRefresh(); });
+        return false; // 保留新打开的编辑表单
+      }
+      if (act === 'swap') {
+        openDormBedPicker(room, bedNo);
+        return true;
+      }
+      if (act === 'remove') {
+        rec.roomNo = ''; rec.bedNo = '';
+        dormSyncAll();
+        WB.saveState();
+        renderDormRefresh();
+        WB.showToast(rec.name + ' 已移出床位，回到待分配列表');
+      }
+      return true;
+    });
+  }
+
+  // 房间新增 / 编辑（改名同步记录、减床溢出学生回待分配）
+  function openDormRoomEditor(roomId) {
+    var rooms = dormRooms();
+    var room = roomId ? rooms.find(function (r) { return r.__id === roomId; }) : null;
+    var body = '';
+    body += '<label><span class="lbl required">房间号</span><input id="dr-name" value="' + H(room ? room.name : '') + '" placeholder="如 A301 / 男生楼 302"></label>';
+    var gs = ['男', '女', '混合'];
+    body += '<label><span class="lbl">性别分区</span><select id="dr-gender">';
+    gs.forEach(function (g) {
+      body += '<option value="' + g + '"' + ((room ? (room.gender || '混合') : '男') === g ? ' selected' : '') + '>' +
+        (g === '男' ? '男生宿舍' : g === '女' ? '女生宿舍' : '混合') + '</option>';
+    });
+    body += '</select></label>';
+    body += '<label><span class="lbl">床位数（上下铺成对）</span><input id="dr-beds" type="number" min="2" max="12" value="' + (room ? room.beds : 4) + '"></label>';
+    WB.openModal(room ? '编辑房间 · ' + H(room.name) : '添加房间', body, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: room ? '保存' : '创建', cls: 'btn btn-primary', act: 'save' }
+    ], function (act, formEl) {
+      if (act !== 'save') return true;
+      var name = formEl.querySelector('#dr-name').value.trim();
+      var gender = formEl.querySelector('#dr-gender').value;
+      var beds = parseInt(formEl.querySelector('#dr-beds').value, 10) || 4;
+      beds = Math.max(2, Math.min(12, beds));
+      if (!name) { WB.showToast('请填写房间号'); return false; }
+      var dup = rooms.find(function (r) { return r !== room && dormRoomKey(r.name) === dormRoomKey(name); });
+      if (dup) { WB.showToast('已存在同名房间：' + dup.name); return false; }
+      var rows = dormRows();
+      if (room) {
+        var oldKey = dormRoomKey(room.name);
+        room.name = name; room.gender = gender; room.beds = beds;
+        if (oldKey !== dormRoomKey(name)) {
+          rows.forEach(function (r) { if (r.roomNo && dormRoomKey(r.roomNo) === oldKey) r.roomNo = name; });
+        }
+        rows.forEach(function (r) {
+          if (dormRecInRoom(r, room) && (parseInt(r.bedNo, 10) || 0) > beds) { r.roomNo = ''; r.bedNo = ''; }
+        });
+        WB.showToast('房间已更新：' + name, 'ok');
+      } else {
+        rooms.push({ __id: WB.uid(), name: name, gender: gender, beds: beds });
+        WB.showToast('房间已创建：' + name, 'ok');
+      }
+      dormSyncAll();
+      WB.saveState();
+      renderDormRefresh();
+      return true;
+    });
+  }
+
+  function dormDeleteRoom(roomId) {
+    var rooms = dormRooms();
+    var room = rooms.find(function (r) { return r.__id === roomId; });
+    if (!room) return;
+    var members = dormRows().filter(function (r) { return dormRecInRoom(r, room); });
+    if (!confirm('删除房间「' + room.name + '」？' +
+      (members.length ? members.length + ' 名成员将回到待分配列表。' : ''))) return;
+    members.forEach(function (r) { r.roomNo = ''; r.bedNo = ''; });
+    WB.state.dormLayout.rooms = rooms.filter(function (r) { return r !== room; });
+    dormSyncAll();
+    WB.saveState();
+    renderDormRefresh();
+    WB.showToast('房间已删除');
+  }
+
+  // 从花名册同步住宿生：全部学生批量加入待分配（dorm 表已有同名记录的跳过）
+  function dormSyncRoster() {
+    var roster = WB.getTable('roster') || [];
+    if (!roster.length) { WB.showToast('花名册为空，请先在「学生档案库」录入'); return; }
+    var rows = dormRows();
+    var existed = {};
+    rows.forEach(function (r) { if (r.name) existed[r.name] = true; });
+    var added = 0;
+    roster.forEach(function (s) {
+      var name = String(s.name || '').trim();
+      if (!name || existed[name]) return;
+      rows.push({ __id: WB.uid(), name: name, building: '', roomNo: '', bedNo: '',
+        roommate: '', guardianPhone: s.phone || '', note: '', _sid: s.__id || '' });
+      existed[name] = true;
+      added++;
+    });
+    if (!added) { WB.showToast('花名册学生均已在住宿名单中'); return; }
+    WB.saveState();
+    renderDormRefresh();
+    WB.showToast('已从花名册加入 ' + added + ' 名待分配住宿生');
+  }
+
+  // 批量创建宿舍：起始房号 + 间数 + 性别 + 每间床数
+  function openDormBatchCreate() {
+    var body = '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+      '<label style="flex:2;min-width:120px"><span class="lbl required">起始房号</span><input id="db-start" value="" placeholder="如 301"></label>' +
+      '<label style="flex:1;min-width:80px"><span class="lbl required">间数</span><input id="db-count" type="number" min="1" max="30" value="4"></label>' +
+      '</div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">' +
+      '<label style="flex:1;min-width:100px"><span class="lbl">性别分区</span><select id="db-gender">' +
+      '<option value="男">男生宿舍</option><option value="女">女生宿舍</option><option value="混合">混合</option>' +
+      '</select></label>' +
+      '<label style="flex:1;min-width:100px"><span class="lbl">每间床位数</span><input id="db-beds" type="number" min="2" max="12" value="4"></label>' +
+      '</div>' +
+      '<p style="font-size:11px;color:var(--c-text-3);margin-top:8px">示例：起始 301、间数 8 → 生成 301~308 共 8 间房（编号自动递增）。已存在的同名房间会跳过。</p>';
+
+    WB.openModal('⧉ 批量创建宿舍', body, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: '创建', cls: 'btn btn-primary', act: 'save' }
+    ], function (act, formEl) {
+      if (act !== 'save') return true;
+      var start = formEl.querySelector('#db-start').value.trim();
+      var count = parseInt(formEl.querySelector('#db-count').value, 10) || 0;
+      var gender = formEl.querySelector('#db-gender').value;
+      var beds = parseInt(formEl.querySelector('#db-beds').value, 10) || 4;
+      beds = Math.max(2, Math.min(12, beds));
+      if (!start) { WB.showToast('请填写起始房号'); return false; }
+      if (count <= 0) { WB.showToast('间数需大于 0'); return false; }
+
+      var rooms = dormRooms();
+      var existKeys = {};
+      rooms.forEach(function (r) { existKeys[dormRoomKey(r.name)] = true; });
+
+      // 房号递增：纯数字尾号递增；含字母前缀则只递增数字部分（A301 → A302…）
+      var m = start.match(/^(\D*?)(\d+)$/);
+      var prefix = m ? m[1] : '';
+      var num = m ? parseInt(m[2], 10) : 1;
+      var padLen = m ? m[2].length : 0;
+
+      var created = 0, skipped = 0;
+      for (var i = 0; i < count; i++) {
+        var name = m ? prefix + String(num + i).padStart(padLen, '0') : start + '-' + (i + 1);
+        if (existKeys[dormRoomKey(name)]) { skipped++; continue; }
+        rooms.push({ __id: WB.uid(), name: name, gender: gender, beds: beds });
+        existKeys[dormRoomKey(name)] = true;
+        created++;
+      }
+      if (!created) { WB.showToast('没有创建任何房间（房号均已存在）'); return false; }
+      WB.saveState();
+      renderDormRefresh();
+      WB.showToast('已创建 ' + created + ' 间宿舍' + (skipped ? '，跳过 ' + skipped + ' 间已存在' : ''));
+      return true;
+    });
+  }
+
+  // 一键分配：待分配学生按性别随机填入单性别区空床
+  function dormAutoFill() {
+    var rooms = dormRooms();
+    var rows = dormRows();
+    var un = rows.filter(function (r) { return dormIsUnassigned(r, rooms); });
+    if (!un.length) { WB.showToast('没有待分配的住宿生'); return; }
+    // 收集空床（仅男/女区参与一键分配，混合区不动）
+    var free = [];
+    rooms.forEach(function (rm) {
+      if (rm.gender !== '男' && rm.gender !== '女') return;
+      var key = dormRoomKey(rm.name);
+      var used = {};
+      rows.forEach(function (r) {
+        if (r.roomNo && dormRoomKey(r.roomNo) === key) {
+          var bn = parseInt(r.bedNo, 10) || 0;
+          if (bn > 0) used[bn] = true;
+        }
+      });
+      for (var i = 1; i <= rm.beds; i++) if (!used[i]) free.push({ room: rm, bedNo: i });
+    });
+    // 随机打散空床顺序
+    for (var i = free.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = free[i]; free[i] = free[j]; free[j] = t;
+    }
+    var ok = 0, fail = 0;
+    un.forEach(function (r) {
+      var g = dormRecGender(r);
+      var stu = dormRecStudent(r);
+      var idx = -1;
+      for (var k = 0; k < free.length; k++) {
+        var fg = free[k].room.gender;
+        if (fg === g || (!g && fg)) { idx = k; break; }
+      }
+      if (idx < 0) { fail++; return; }
+      var f = free.splice(idx, 1)[0];
+      r.roomNo = f.room.name; r.bedNo = String(f.bedNo);
+      if (stu && stu.__id) r._sid = stu.__id;
+      ok++;
+    });
+    dormSyncAll();
+    WB.saveState();
+    renderDormRefresh();
+    WB.showToast('一键分配完成：入住 ' + ok + ' 人' +
+      (fail ? '，' + fail + ' 人因性别不匹配或空床不足未分配' : ''));
+  }
+
+  function bindDormCanvas() {
+    var root = rebindRoot();
+    root.addEventListener('click', function (e) {
+      // 待分配学生 chip：选中 → 点空床入住
+      var pend = e.target.closest('.dorm-pend');
+      if (pend) {
+        DORM_PENDING = (DORM_PENDING === pend.dataset.dm) ? null : pend.dataset.dm;
+        renderDormRefresh();
+        return;
+      }
+      // 床位格
+      var bed = e.target.closest('.dorm-bed');
+      if (bed) {
+        var room = dormRooms().find(function (r) { return r.__id === bed.dataset.room; });
+        if (!room) return;
+        var bedNo = parseInt(bed.dataset.bed, 10);
+        var key = dormRoomKey(room.name);
+        var rec = null;
+        dormRows().forEach(function (r) {
+          if (r.roomNo && dormRoomKey(r.roomNo) === key && String(parseInt(r.bedNo, 10) || 0) === String(bedNo)) rec = r;
+        });
+        if (!rec) {
+          if (DORM_PENDING) {
+            // 已选中待分配学生 → 直接入住
+            var target = dormRows().find(function (r) { return (r._sid || ('n:' + r.name + ':' + (r.__id || ''))) === DORM_PENDING; });
+            DORM_PENDING = null;
+            var stu = target ? dormRecStudent(target) : null;
+            if (stu && dormAssign(room, bedNo, stu)) {
+              renderDormRefresh();
+              WB.showToast(stu.name + ' 已入住 ' + room.name + ' ' + bedNo + ' 号床');
+            } else renderDormRefresh();
+          } else {
+            openDormBedPicker(room, bedNo);
+          }
+        } else {
+          openDormBedEditor(room, bedNo, rec);
+        }
+        return;
+      }
+      // 房间编辑 / 删除
+      var eb = e.target.closest('[data-edit-room]');
+      if (eb) { openDormRoomEditor(eb.dataset.editRoom); return; }
+      var db = e.target.closest('[data-del-room]');
+      if (db) { dormDeleteRoom(db.dataset.delRoom); return; }
+    });
+    el('dm-add') && el('dm-add').addEventListener('click', function () { openDormRoomEditor(null); });
+    el('dm-batch') && el('dm-batch').addEventListener('click', openDormBatchCreate);
+    el('dm-roster') && el('dm-roster').addEventListener('click', dormSyncRoster);
+    el('dm-sync') && el('dm-sync').addEventListener('click', function () {
+      var n = dormAutoImport();
+      WB.showToast(n > 0 ? '已同步生成 ' + n + ' 个房间' : '没有发现可新增的房间');
+      renderDormRefresh();
+    });
+    el('dm-auto') && el('dm-auto').addEventListener('click', dormAutoFill);
+    el('dm-table') && el('dm-table').addEventListener('click', function () {
+      WB.state.dormTableMode = true;
+      WB.saveState();
+      WB.render();
+    });
+  }
+
+  function renderDormRefresh() {
+    el('content').innerHTML = renderDormCanvas();
+    bindDormCanvas();
+  }
+
   return {
     renderDashboard: renderDashboard,
     bindDashboard: bindDashboard,
     renderSchedule: renderSchedule,
     bindSchedule: bindSchedule,
+    bindTeacherTable: bindTeacherTable,
     renderGrades: renderGrades,
     bindGrades: bindGrades,
     renderPoints: renderPoints,
     bindPoints: bindPoints,
     renderDutyWeekView: renderDutyWeekView,
     bindDutyWeekView: bindDutyWeekView,
+    renderDormCanvas: renderDormCanvas,
+    bindDormCanvas: bindDormCanvas,
     renderTodo: renderTodo,
     bindTodo: bindTodo
   };
