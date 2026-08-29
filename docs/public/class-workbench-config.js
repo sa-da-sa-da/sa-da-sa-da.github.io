@@ -5,9 +5,22 @@ window.WB_CONFIG = {
   // 版本号，用于升级兼容
   version: 1,
 
+  // 统一标签系统：分组预置 + 用户自定义扩展
+  // 学生 tags 为扁平数组；渲染时按归属分组取色；自定义标签归入「自定义」组
+  tagGroups: [
+    { id: 'position', label: '班内职务', color: '#4f46e5', tags: ['班长', '副班长', '学习委员', '纪律委员', '体育委员', '文艺委员', '生活委员', '组长', '课代表'] },
+    { id: 'talent', label: '才艺特长', color: '#0891b2', tags: ['音乐', '体育', '美术', '书法', '编程', '朗诵', '舞蹈', '篮球'] },
+    { id: 'personality', label: '个人性格', color: '#059669', tags: ['内向', '外向', '活泼', '沉稳', '敏感', '领导力强'] },
+    { id: 'health', label: '健康信息', color: '#dc2626', tags: ['过敏体质', '慢性病', '特殊体质', '需服药'] },
+    { id: 'attention', label: '关注标记', color: '#d97706', tags: ['重点关注', '留守', '单亲', '学业困难'] },
+    { id: 'custom', label: '自定义', color: '#64748b', tags: [] }
+  ],
+
   // 模块定义：一级 + 二级
   modules: [
     { id: 'dashboard', icon: '📊', label: '首页仪表盘', type: 'dashboard' },
+
+    { id: 'schedule', icon: '📅', label: '课程表', type: 'schedule', desc: '图形化周课表，点击格子录入科目' },
 
     { id: 'students', icon: '📚', label: '学生档案库', type: 'group', subs: [
       { id: 'roster', icon: '📋', label: '全班花名册', fields: [
@@ -17,8 +30,7 @@ window.WB_CONFIG = {
         { name: 'birth', label: '出生日期', type: 'date' },
         { name: 'phone', label: '联系电话', type: 'text' },
         { name: 'address', label: '家庭住址', type: 'text' },
-        { name: 'position', label: '担任职务', type: 'select', options: ['班长', '副班长', '学习委员', '纪律委员', '体育委员', '文艺委员', '生活委员', '组长', '课代表', '无'] },
-        { name: 'talent', label: '才艺特长', type: 'text', placeholder: '如 篮球 / 书法 / 钢琴' },
+        { name: 'tags', label: '学生标签', type: 'tags', full: true, hint: '职务 / 才艺 / 性格 / 健康 / 关注标记，点选或自定义' },
         { name: 'remark', label: '备注', type: 'textarea', full: true }
       ]},
       { id: 'seating', icon: '🪑', label: '座位表', fields: [
@@ -124,21 +136,11 @@ window.WB_CONFIG = {
 
     { id: 'duty', icon: '🧹', label: '日常班务', type: 'group', subs: [
       { id: 'duty', icon: '📅', label: '值日排班', fields: [
-        { name: 'week', label: '周次', type: 'text', placeholder: '如 第 8 周' },
         { name: 'date', label: '日期', type: 'date', required: true },
-        { name: 'group', label: '值日组', type: 'text', placeholder: '如 第一组' },
-        { name: 'members', label: '成员', type: 'textarea', placeholder: '多个姓名用逗号分隔' },
-        { name: 'area', label: '负责区域', type: 'select', options: ['教室', '走廊', '卫生间', '垃圾房', '室外'] },
-        { name: 'remark', label: '备注', type: 'text' }
-      ]},
-      { id: 'hygiene', icon: '✨', label: '卫生检查', fields: [
-        { name: 'date', label: '日期', type: 'date', required: true },
-        { name: 'time', label: '检查时段', type: 'select', options: ['早晨', '中午', '放学后'] },
-        { name: 'score', label: '得分', type: 'text', placeholder: '0-100' },
-        { name: 'level', label: '评级', type: 'select', options: ['优', '良', '中', '差'] },
-        { name: 'dutyGroup', label: '值日组', type: 'text' },
-        { name: 'issue', label: '存在问题', type: 'textarea', full: true },
-        { name: 'inspector', label: '检查人', type: 'text' }
+        { name: 'area', label: '负责区域', type: 'select', options: ['教室', '走廊', '卫生间', '室外'] },
+        { name: 'members', label: '值日生', type: 'text', picker: 'student', required: true },
+        { name: 'rating', label: '卫生评价', type: 'select', options: ['—', '优', '良', '中', '差'] },
+        { name: 'points', label: '积分', type: 'text', hint: '自动：优+2 良+1 中0 差-1，可手动微调' }
       ]},
       { id: 'cadres', icon: '🎖', label: '班干部档案', fields: [
         { name: 'name', label: '姓名', type: 'text', required: true },
@@ -177,6 +179,8 @@ window.WB_CONFIG = {
 
     { id: 'communication', icon: '📞', label: '家校沟通', type: 'group', subs: [
       { id: 'contacts', icon: '📇', label: '家长通讯录', fields: [
+        // 学号由学生选择器自动回填；不在列表单独成列，而是与姓名同格显示「学号 · 姓名」
+        { name: 'studentNo', label: '学号', type: 'text', list: false },
         { name: 'name', label: '学生姓名', type: 'text', required: true },
         { name: 'relation', label: '家长关系', type: 'select', options: ['父亲', '母亲', '爷爷', '奶奶', '外公', '外婆', '其他'] },
         { name: 'parentName', label: '家长姓名', type: 'text', required: true },
@@ -264,6 +268,22 @@ window.WB_CONFIG = {
         { name: 'format', label: '格式', type: 'select', options: ['PPT', 'Word', 'PDF', '视频', '音频', '其他'] },
         { name: 'url', label: '链接/路径', type: 'text' },
         { name: 'summary', label: '素材简介', type: 'textarea', full: true }
+      ]}
+    ]},
+
+    { id: 'points', icon: '🏆', label: '积分管理', type: 'group', subs: [
+      { id: 'point_records', icon: '📝', label: '积分记录', fields: [
+        { name: 'date', label: '日期', type: 'date', required: true },
+        { name: 'name', label: '学生姓名', type: 'text', required: true },
+        { name: 'value', label: '分值', type: 'text', required: true, placeholder: '如 +5 或 -3' },
+        { name: 'reason', label: '原因', type: 'text', required: true },
+        { name: 'type', label: '类型', type: 'select', options: ['奖励', '惩罚', '日常表现', '活动', '其他'] }
+      ]},
+      { id: 'point_rules', icon: '📋', label: '积分规则', fields: [
+        { name: 'name', label: '规则名称', type: 'text', required: true },
+        { name: 'value', label: '分值', type: 'text', required: true, placeholder: '如 +2 或 -1' },
+        { name: 'category', label: '类别', type: 'select', options: ['奖励', '惩罚'] },
+        { name: 'desc', label: '说明', type: 'textarea', full: true }
       ]}
     ]},
 

@@ -1,235 +1,1573 @@
-<html lang="zh-CN"><head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>班级座次表生成器</title>
-    <link rel="stylesheet" href="style.css">
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>班级座位表智能调整系统</title>
 <style>
-    @keyframes toastIn {
-        from { opacity: 0; transform: translateX(30px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes toastOut {
-        from { opacity: 1; transform: translateX(0); }
-        to { opacity: 0; transform: translateX(30px); }
-    }
-</style><style>._wrapper_1ooyb_1 {
-	position: fixed;
-	inset: 0;
-	z-index: 2147483641; /* 确保在所有元素之上，除了 panel */
-	cursor: wait;
-	overflow: hidden;
-
-	display: none;
-}
-
-._wrapper_1ooyb_1._visible_1ooyb_11 {
-	display: block;
-}
-/* AI 光标样式 */
-._cursor_1dgwb_2 {
-	position: absolute;
-	width: var(--cursor-size, 75px);
-	height: var(--cursor-size, 75px);
-	pointer-events: none;
-	z-index: 10000;
-}
-
-._cursorBorder_1dgwb_10 {
-	position: absolute;
-	width: 100%;
-	height: 100%;
-	background: linear-gradient(45deg, rgb(57, 182, 255), rgb(189, 69, 251));
-	mask-image: url("data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%20fill='none'%3e%3cg%3e%3cpath%20d='M%2015%2042%20L%2015%2036.99%20Q%2015%2031.99%2023.7%2031.99%20L%2028.05%2031.99%20Q%2032.41%2031.99%2032.41%2021.99%20L%2032.41%2017%20Q%2032.41%2012%2041.09%2016.95%20L%2076.31%2037.05%20Q%2085%2042%2076.31%2046.95%20L%2041.09%2067.05%20Q%2032.41%2072%2032.41%2062.01%20L%2032.41%2057.01%20Q%2032.41%2052.01%2023.7%2052.01%20L%2019.35%2052.01%20Q%2015%2052.01%2015%2047.01%20Z'%20fill='none'%20stroke='%23000000'%20stroke-width='6'%20stroke-miterlimit='10'%20style='stroke:%20light-dark(rgb(0,%200,%200),%20rgb(255,%20255,%20255));'/%3e%3c/g%3e%3c/svg%3e");
-	mask-size: 100% 100%;
-	mask-repeat: no-repeat;
-
-	transform-origin: center;
-	transform: rotate(-135deg) scale(1.2);
-	margin-left: -10px;
-	margin-top: -18px;
-}
-
-._cursorFilling_1dgwb_25 {
-	position: absolute;
-	width: 100%;
-	height: 100%;
-	background: url("data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3e%3cdefs%3e%3c/defs%3e%3cg%20xmlns='http://www.w3.org/2000/svg'%20style='filter:%20drop-shadow(light-dark(rgba(0,%200,%200,%200.4),%20rgba(237,%20237,%20237,%200.4))%203px%204px%204px);'%3e%3cpath%20d='M%2015%2042%20L%2015%2036.99%20Q%2015%2031.99%2023.7%2031.99%20L%2028.05%2031.99%20Q%2032.41%2031.99%2032.41%2021.99%20L%2032.41%2017%20Q%2032.41%2012%2041.09%2016.95%20L%2076.31%2037.05%20Q%2085%2042%2076.31%2046.95%20L%2041.09%2067.05%20Q%2032.41%2072%2032.41%2062.01%20L%2032.41%2057.01%20Q%2032.41%2052.01%2023.7%2052.01%20L%2019.35%2052.01%20Q%2015%2052.01%2015%2047.01%20Z'%20fill='%23ffffff'%20stroke='none'%20style='fill:%20%23ffffff;'/%3e%3c/g%3e%3c/svg%3e");
-	background-size: 100% 100%;
-	background-repeat: no-repeat;
-
-	transform-origin: center;
-	transform: rotate(-135deg) scale(1.2);
-	margin-left: -10px;
-	margin-top: -18px;
-}
-
-._cursorRipple_1dgwb_39 {
-	position: absolute;
-	width: 100%;
-	height: 100%;
-	pointer-events: none;
-	margin-left: -50%;
-	margin-top: -50%;
-
-	&::after {
-		content: '';
-		opacity: 0;
-		position: absolute;
-		inset: 0;
-		border: 4px solid rgba(57, 182, 255, 1);
-		border-radius: 50%;
-	}
-}
-
-._cursor_1dgwb_2._clicking_1dgwb_57 ._cursorRipple_1dgwb_39::after {
-	animation: _cursor-ripple_1dgwb_1 300ms ease-out forwards;
-}
-
-@keyframes _cursor-ripple_1dgwb_1 {
-	0% {
-		transform: scale(0);
-		opacity: 1;
-	}
-	100% {
-		transform: scale(2);
-		opacity: 0;
-	}
-}
-/*$vite$:1*/</style></head>
+:root{--primary:#4f46e5;--pl:#818cf8;--pd:#3730a3;--bg:#f0f4f8;--card:#fff;--text:#1e293b;--tm:#64748b;--border:#e2e8f0;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);--shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);--r:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:12px}
+.header{background:linear-gradient(135deg,var(--primary),var(--pd));color:#fff;padding:16px 24px;border-radius:var(--r);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;box-shadow:var(--shadow-lg)}
+.header h1{font-size:20px;font-weight:700}.header .sub{font-size:12px;opacity:.85;margin-top:3px}
+.ha{display:flex;gap:6px;flex-wrap:wrap}
+.btn{padding:7px 14px;border:none;border-radius:8px;font-size:13px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px;font-weight:500;white-space:nowrap}
+.btn-p{background:#fff;color:var(--primary)}.btn-p:hover{background:#f8fafc;transform:translateY(-1px)}
+.btn-g{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3)}.btn-g:hover{background:rgba(255,255,255,.1)}
+.btn-s{background:var(--primary);color:#fff}.btn-s:hover{background:var(--pd)}
+.btn-sm{padding:4px 9px;font-size:11px}.btn-d{background:var(--danger);color:#fff}.btn-d:hover{background:#dc2626}
+.btn-su{background:var(--success);color:#fff}.btn-su:hover{background:#059669}.btn-w{background:var(--warning);color:#fff}.btn-w:hover{background:#d97706}
+.layout{display:grid;grid-template-columns:260px 1fr 280px;gap:12px;min-height:calc(100vh - 100px)}
+@media(max-width:1200px){.layout{grid-template-columns:1fr}}
+.sl,.sr{background:var(--card);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);overflow-y:auto;max-height:calc(100vh - 100px)}
+.st{font-size:13px;font-weight:600;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.badge{background:var(--primary);color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500}
+.slist{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.si{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:8px;background:#f8fafc;border:1px solid var(--border);cursor:grab;transition:all .2s;font-size:12px;position:relative}
+.si-del{position:absolute;top:3px;right:4px;font-size:10px;color:var(--tm);cursor:pointer;padding:2px 4px;border-radius:4px;line-height:1}
+.si-del:hover{color:#fff;background:var(--danger)}
+.si:hover{border-color:var(--pl);background:#eef2ff;box-shadow:0 2px 4px rgba(79,70,229,.1)}
+.si.dragging{opacity:.5}.si.un{border-left:3px solid var(--warning)}.si.as{border-left:3px solid var(--success)}
+.sa{width:26px;height:26px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.sn{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stags{display:flex;gap:2px;flex-wrap:wrap}
+.tag{font-size:9px;padding:1px 5px;border-radius:4px;font-weight:500}
+.tag-male{background:#dbeafe;color:#1e40af}.tag-female{background:#fce7f3;color:#9d174d}
+.tag-custom{background:#f3e8ff;color:#6b21a8}
+.tag-myopia{background:#fef3c7;color:#92400e}.tag-leader{background:#d1fae5;color:#065f46}.tag-active{background:#dbeafe;color:#1e40af}.tag-discipline{background:#e0e7ff;color:#3730a3}.tag-grade{background:#f3e8ff;color:#6b21a8}.tag-gleader{background:#fef9c3;color:#854d0e}
+.cr{background:var(--card);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);overflow-y:auto;max-height:calc(100vh - 100px)}
+.ch{text-align:center;margin-bottom:10px}.ch h2{font-size:17px}
+.podium{background:linear-gradient(135deg,#78716c,#57534e);color:#fff;text-align:center;padding:9px;border-radius:8px;font-size:13px;margin:8px 0;letter-spacing:3px}
+.sgrid{display:grid;gap:5px;justify-content:center}
+.seat{width:78px;height:68px;border:2px dashed var(--border);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;position:relative;background:#fafbfc;font-size:11px}
+.seat:hover{border-color:var(--pl);background:#eef2ff;transform:scale(1.05)}
+.seat.occ{border:2px solid var(--primary);background:#eef2ff;cursor:grab}
+.seat.occ:hover{box-shadow:0 4px 12px rgba(79,70,229,.25)}
+.seat.occ-m{border-color:#3b82f6;background:#eff6ff}
+.seat.occ-f{border-color:#ec4899;background:#fdf2f8}
+/* 性别分布违规（整行/整列单一性别）高亮 */
+.seat.gv{border-color:#f59e0b!important;box-shadow:0 0 0 2px rgba(245,158,11,.28)}
+/* 锁定座位：重排时不移动 */
+.seat.lk{border-style:double}
+/* VIP 座位：讲台左右侧，金色高亮 */
+.seat.vip{border-color:#d97706!important;box-shadow:0 0 0 2px rgba(217,119,6,.35);background:linear-gradient(135deg,#fef3c7,#fde68a)}
+.seat.vip::after{content:'👑';position:absolute;top:2px;left:50%;transform:translateX(-50%);font-size:11px;opacity:.9;pointer-events:none}
+.seat.vip.occ-m{background:linear-gradient(135deg,#fef3c7,#fde68a)}.seat.vip.occ-f{background:linear-gradient(135deg,#fef3c7,#fde68a)}
+.slock{position:absolute;bottom:2px;right:4px;font-size:10px;opacity:.9;line-height:1}
+.seat.dover{border-color:var(--success);background:#d1fae5;transform:scale(1.08)}
+.slbl{position:absolute;top:2px;left:3px;font-size:8px;color:var(--tm);font-weight:500}
+.snm{font-weight:700;font-size:15px;text-align:center;padding:0 2px;line-height:1.2}
+.snm-m{color:#2563eb}.snm-f{color:#db2777}
+.seat .gen{position:absolute;top:3px;right:4px;width:16px;height:16px;border-radius:50%;color:#fff;font-size:10px;line-height:16px;text-align:center;font-weight:700}
+.stg{display:flex;gap:1px;margin-top:1px}
+.aisle{width:16px;height:68px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--tm);opacity:.3}
+.gh{text-align:center;font-size:10px;font-weight:600;color:var(--primary);margin-bottom:3px;padding:2px;border-radius:4px;background:#eef2ff}
+.qa{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.qab{padding:4px 9px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:11px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:3px}
+.qab:hover{border-color:var(--primary);background:#eef2ff;color:var(--primary)}
+.qab.on{background:var(--success);color:#fff;border-color:var(--success)}
+.ic{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px}
+.ir{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:var(--tm)}
+.ir span:last-child{font-weight:600;color:var(--text)}
+.sb{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11px}
+.sbl{width:55px;text-align:right;color:var(--tm)}
+.sbt{flex:1;height:14px;background:#e2e8f0;border-radius:3px;overflow:hidden}
+.sbf{height:100%;border-radius:3px;transition:width .5s;display:flex;align-items:center;justify-content:flex-end;padding-right:3px;color:#fff;font-size:9px;font-weight:600}
+.mo{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:center}
+.mo.on{display:flex}
+.md{background:#fff;border-radius:var(--r);padding:20px;width:90%;max-width:560px;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.md h2{font-size:17px;margin-bottom:14px}
+.ma{display:flex;gap:7px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:12px;font-weight:600;margin-bottom:3px;color:var(--text)}
+.fg input,.fg select,.fg textarea{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+.cg{display:flex;flex-wrap:wrap;gap:5px}
+.ci{display:flex;align-items:center;gap:3px;font-size:11px;padding:3px 7px;border:1px solid var(--border);border-radius:6px;cursor:pointer;user-select:none;transition:all .15s}
+.ci:hover{border-color:var(--pl)}
+.ci.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--text);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:2000;transition:transform .3s;box-shadow:var(--shadow-lg)}
+.toast.show{transform:translateX(-50%) translateY(0)}.toast.success{background:var(--success)}.toast.error{background:var(--danger)}.toast.warning{background:var(--warning)}
+.cm{display:none;position:fixed;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-lg);z-index:999;min-width:150px;padding:3px}
+.cm.on{display:block}
+.cmi{padding:7px 12px;font-size:12px;cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:5px}
+.cmi:hover{background:#f1f5f9}.cmd{height:1px;background:var(--border);margin:3px 0}
+.ci2{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin-bottom:4px;font-size:11px;background:#f8fafc;border:1px solid var(--border)}
+.ci2.v{border-color:var(--danger);background:#fef2f2}.ci2.s{border-color:var(--success);background:#f0fdf4}
+.sbox{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;margin-bottom:8px;outline:none}
+.sbox:focus{border-color:var(--primary)}
+.hi{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin-bottom:3px;font-size:11px;background:#f8fafc;cursor:pointer;transition:all .2s}
+.hi:hover{background:#eef2ff}.hi.on{background:#eef2ff;border:1px solid var(--primary)}
+.pi{display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:6px;margin-bottom:3px;font-size:11px;background:#fef2f2;border:1px solid #fecaca}
+.pi .rm{margin-left:auto;cursor:pointer;color:var(--danger);font-size:13px}
+.eh{color:var(--tm);font-size:10px;font-style:italic}
+.ds{opacity:.3}
+.tb{display:flex;gap:4px;margin-bottom:10px;border-bottom:2px solid var(--border);padding-bottom:4px}
+.tbb{padding:4px 10px;font-size:12px;border:none;background:none;cursor:pointer;border-radius:4px;color:var(--tm);font-weight:500}
+.tbb.on{background:var(--primary);color:#fff}
+.tc{display:none}.tc.on{display:block}
+.sr{padding:7px;border-radius:6px;margin-bottom:5px;font-size:11px;background:#f8fafc;border:1px solid var(--border)}
+.srt{font-weight:600;margin-bottom:3px;color:var(--text)}
+.srr{display:flex;justify-content:space-between;padding:1px 0}
+.set{display:flex;align-items:center;gap:4px;font-size:10px;padding:2px 6px;border-radius:4px;cursor:pointer;user-select:none;transition:all .15s;margin:2px}
+.set:hover{opacity:.8}
+.set .rm{color:var(--danger);cursor:pointer;font-size:11px;margin-left:3px}
+.cti{display:flex;gap:4px;margin-top:4px}
+.cti input{flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:11px}
+.vi{display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:6px;margin-bottom:3px;font-size:11px;background:#f8fafc;border:1px solid var(--border);cursor:pointer;transition:all .2s}
+.vi:hover{background:#eef2ff}.vi.on{background:#eef2ff;border-color:var(--primary)}
+.vi .vn{flex:1;font-weight:500}.vi .vd{color:var(--tm);font-size:10px}.vi .va{display:flex;gap:3px}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+</style>
+</head>
 <body>
-    <div class="app-container">
-        <!-- 左侧控制面板 -->
-        <aside class="sidebar">
-            <!-- 步骤一：数据准备 -->
-            <div class="section">
-                <h3 class="section-title">步骤一：数据准备</h3>
-                <div class="action-buttons">
-                    <button class="btn btn-outline" onclick="downloadTemplate()">
-                        ⬇ 下载模板
-                    </button>
-                    <button class="btn btn-primary" id="uploadBtn" onclick="triggerUpload()">
-                        ⬆ 上传名单
-                    </button>
-                </div>
-                <p class="hint-text">支持Excel(.xlsx/.xls)格式，或直接粘贴名单内容</p>
-            </div>
-
-            <!-- 隐藏的文件上传 -->
-            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileUpload(event)">
-
-            <!-- 步骤二：布局设置 -->
-            <div class="section">
-                <h3 class="section-title">步骤二：布局设置</h3>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>列数：</label>
-                        <input type="number" id="colCount" value="7" min="1" max="12" class="num-input">
-                    </div>
-                    <div class="form-group">
-                        <label>行数：</label>
-                        <input type="number" id="rowCount" value="7" min="1" max="15" class="num-input">
-                    </div>
-                </div>
-                <p class="hint-text-small">设置教室列数与行数，点击「确定布局」后锁定</p>
-                <div class="form-row" style="margin-top:12px;">
-                    <label class="vip-label">
-                        <input type="checkbox" id="vipCheck" class="vip-checkbox">
-                        VIP座：
-                    </label>
-                    <input type="number" id="vipCount" value="1" min="0" max="4" class="num-input">
-                </div>
-                <p class="hint-text-small">勾选后在讲台左右增加 VIP 座位（最多 4 个）。VIP 座位不参与智能排座，仅可手动拖入学生</p>
-                <button class="btn btn-purple" id="layoutBtn" onclick="onLayoutButtonClick()" disabled="">✓ 确定布局</button>
-                <p class="hint-text-small" id="layoutHint" style="color: rgb(245, 158, 11);">请先上传学生名单，再确定布局</p>
-            </div>
-
-            <!-- 步骤三：排座规则 -->
-            <div class="section">
-                <h3 class="section-title">步骤三：排座规则</h3>
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="ruleHeight" disabled=""> 身高排序（从矮→高）
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="ruleVision" disabled=""> 视力排序（从差→好）
-                    </label>
-                </div>
-            </div>
-
-            <!-- 附加规则 -->
-            <div class="section">
-                <h3 class="section-title">附加规则</h3>
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="ruleGender" disabled=""> 性别配对
-                    </label>
-                    <div class="sub-options" id="genderOptions" style="display:none;">
-                        <label class="radio-label"><input type="radio" name="genderMode" value="mixed" checked="" disabled=""> 男女搭配</label>
-                        <label class="radio-label"><input type="radio" name="genderMode" value="same" disabled=""> 同性搭配</label>
-                        <div class="sub-options" id="genderPositionOptions" style="display:none;">
-                            <label class="radio-label"><input type="radio" name="genderPosition" value="female-left" checked="" disabled=""> 女左</label>
-                            <label class="radio-label"><input type="radio" name="genderPosition" value="male-left" disabled=""> 男左</label>
-                        </div>
-                    </div>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="ruleScore" disabled=""> 成绩互勉（好差生互坐）
-                    </label>
-                </div>
-            </div>
-
-            <!-- 生成按钮 -->
-            <button class="btn btn-generate" onclick="generateSeating()">
-                智能生成座次表 →
-            </button>
-            <!-- 导出 PDF 按钮 -->
-            <button class="btn btn-export-pdf" id="exportBtn" onclick="exportSeatingPDF()" disabled="">
-                导出座次表 (PDF)
-            </button>
-
-            <!-- 底部署名 -->
-            <div class="sidebar-footer">
-                <a href="https://mp.weixin.qq.com/s/i1MfaaoghaA0Nti3wn5TlA" target="_blank" rel="noopener">Design By Tianjt</a>
-            </div>
-        </aside>
-
-        <!-- 主区域 - 座位表 -->
-        <main class="main-area">
-            <!-- 图例 -->
-            <div class="seat-legend">
-                <span class="legend-item"><i class="legend-dot legend-male"></i>男生</span>
-                <span class="legend-item"><i class="legend-dot legend-female"></i>女生</span>
-                <span class="legend-item"><i class="legend-dot legend-vip"></i>VIP 座位</span>
-                <span class="legend-item"><i class="legend-dot legend-empty"></i>空座位</span>
-            </div>
-            <!-- 座位网格（含讲台、座位卡片、列间分隔/合并控件，动态生成） -->
-            <div class="seating-grid" id="seatingGrid" style="grid-template-columns: 135px 5px 135px 5px 135px 5px 135px 5px 135px 5px 135px 5px 135px; grid-template-rows: 85px repeat(7, 85px) 30px;"><div class="podium" style="position: absolute; top: 20px; left: 300px; width: 415px; height: 85px;">讲台</div><div class="seat-cell vip-seat" title="VIP 座位：不参与智能排座，仅可手动拖入学生" data-key="V-0" data-vip="0" style="grid-area: 1 / 3;"><span class="seat-name">VIP</span></div><div class="seat-cell vip-seat" title="VIP 座位：不参与智能排座，仅可手动拖入学生" data-key="V-1" data-vip="1" style="grid-area: 1 / 1;"><span class="seat-name">VIP</span></div><div class="seat-cell vip-seat" title="VIP 座位：不参与智能排座，仅可手动拖入学生" data-key="V-2" data-vip="2" style="grid-area: 1 / 11;"><span class="seat-name">VIP</span></div><div class="seat-cell vip-seat" title="VIP 座位：不参与智能排座，仅可手动拖入学生" data-key="V-3" data-vip="3" style="grid-area: 1 / 13;"><span class="seat-name">VIP</span></div><div class="seat-cell" data-row="1" data-col="1" data-key="R-0-0" style="grid-area: 2 / 1;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="2" data-col="1" data-key="R-1-0" style="grid-area: 3 / 1;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="3" data-col="1" data-key="R-2-0" style="grid-area: 4 / 1;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="4" data-col="1" data-key="R-3-0" style="grid-area: 5 / 1;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="5" data-col="1" data-key="R-4-0" style="grid-area: 6 / 1;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="6" data-col="1" data-key="R-5-0" style="grid-area: 7 / 1;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="7" data-col="1" data-key="R-6-0" style="grid-area: 8 / 1;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="1" data-col="2" data-key="R-0-1" style="grid-area: 2 / 3;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="2" data-col="2" data-key="R-1-1" style="grid-area: 3 / 3;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="3" data-col="2" data-key="R-2-1" style="grid-area: 4 / 3;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="4" data-col="2" data-key="R-3-1" style="grid-area: 5 / 3;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="5" data-col="2" data-key="R-4-1" style="grid-area: 6 / 3;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="6" data-col="2" data-key="R-5-1" style="grid-area: 7 / 3;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="7" data-col="2" data-key="R-6-1" style="grid-area: 8 / 3;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="1" data-col="3" data-key="R-0-2" style="grid-area: 2 / 5;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="2" data-col="3" data-key="R-1-2" style="grid-area: 3 / 5;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="3" data-col="3" data-key="R-2-2" style="grid-area: 4 / 5;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="4" data-col="3" data-key="R-3-2" style="grid-area: 5 / 5;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="5" data-col="3" data-key="R-4-2" style="grid-area: 6 / 5;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="6" data-col="3" data-key="R-5-2" style="grid-area: 7 / 5;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="7" data-col="3" data-key="R-6-2" style="grid-area: 8 / 5;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="1" data-col="4" data-key="R-0-3" style="grid-area: 2 / 7;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="2" data-col="4" data-key="R-1-3" style="grid-area: 3 / 7;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="3" data-col="4" data-key="R-2-3" style="grid-area: 4 / 7;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="4" data-col="4" data-key="R-3-3" style="grid-area: 5 / 7;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="5" data-col="4" data-key="R-4-3" style="grid-area: 6 / 7;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="6" data-col="4" data-key="R-5-3" style="grid-area: 7 / 7;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="7" data-col="4" data-key="R-6-3" style="grid-area: 8 / 7;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="1" data-col="5" data-key="R-0-4" style="grid-area: 2 / 9;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="2" data-col="5" data-key="R-1-4" style="grid-area: 3 / 9;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="3" data-col="5" data-key="R-2-4" style="grid-area: 4 / 9;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="4" data-col="5" data-key="R-3-4" style="grid-area: 5 / 9;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="5" data-col="5" data-key="R-4-4" style="grid-area: 6 / 9;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="6" data-col="5" data-key="R-5-4" style="grid-area: 7 / 9;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="7" data-col="5" data-key="R-6-4" style="grid-area: 8 / 9;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="1" data-col="6" data-key="R-0-5" style="grid-area: 2 / 11;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="2" data-col="6" data-key="R-1-5" style="grid-area: 3 / 11;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="3" data-col="6" data-key="R-2-5" style="grid-area: 4 / 11;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="4" data-col="6" data-key="R-3-5" style="grid-area: 5 / 11;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="5" data-col="6" data-key="R-4-5" style="grid-area: 6 / 11;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="6" data-col="6" data-key="R-5-5" style="grid-area: 7 / 11;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="7" data-col="6" data-key="R-6-5" style="grid-area: 8 / 11;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="1" data-col="7" data-key="R-0-6" style="grid-area: 2 / 13;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="2" data-col="7" data-key="R-1-6" style="grid-area: 3 / 13;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="3" data-col="7" data-key="R-2-6" style="grid-area: 4 / 13;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="4" data-col="7" data-key="R-3-6" style="grid-area: 5 / 13;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="5" data-col="7" data-key="R-4-6" style="grid-area: 6 / 13;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="6" data-col="7" data-key="R-5-6" style="grid-area: 7 / 13;"><span class="seat-name">座位</span></div><div class="seat-cell" data-row="7" data-col="7" data-key="R-6-6" style="grid-area: 8 / 13;"><span class="seat-name">座位</span></div><div class="col-btn-wrap" style="grid-area: 9 / 2;"><button class="col-config-btn state-merge" title="点击分隔（间距 20px）">分隔</button></div><div class="col-btn-wrap" style="grid-area: 9 / 4;"><button class="col-config-btn state-merge" title="点击分隔（间距 20px）">分隔</button></div><div class="col-btn-wrap" style="grid-area: 9 / 6;"><button class="col-config-btn state-merge" title="点击分隔（间距 20px）">分隔</button></div><div class="col-btn-wrap" style="grid-area: 9 / 8;"><button class="col-config-btn state-merge" title="点击分隔（间距 20px）">分隔</button></div><div class="col-btn-wrap" style="grid-area: 9 / 10;"><button class="col-config-btn state-merge" title="点击分隔（间距 20px）">分隔</button></div><div class="col-btn-wrap" style="grid-area: 9 / 12;"><button class="col-config-btn state-merge" title="点击分隔（间距 20px）">分隔</button></div></div>
-        </main>
+<div class="header">
+  <div><h1>🏫 座位表智能调整系统</h1><div class="sub">大组模式 · 单人单桌 · 小组模式 · 智能排座</div></div>
+  <div class="ha">
+    <button class="btn btn-g" onclick="openCfg()">⚙️ 座位管理</button>
+    <button class="btn btn-g" onclick="openStu()">👥 学生管理</button>
+    <button class="btn btn-g" onclick="openVer()">📦 版本管理</button>
+    <button class="btn btn-g" onclick="openStat()">📊 数据统计</button>
+    <button class="btn btn-g" onclick="autoArrange()" title="每次点击生成全新随机方案，自动校验男女分布">🎲 随机排座</button>
+    <button class="btn btn-g" onclick="saveCur()" style="border-color:rgba(255,255,255,.5)">💾 保存</button>
+    <button class="btn btn-p" onclick="exportDocx()">📄 导出Word</button>
+    <button class="btn btn-p" onclick="exportXlsx()">📋 导出Excel</button>
+  </div>
+</div>
+<div class="layout">
+  <div class="sl">
+    <div class="st">📋 未排座<span class="badge" id="uc">0</span></div>
+    <input class="sbox" id="ss" placeholder="🔍 搜索学生..." oninput="renderSList()">
+    <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap">
+      <select id="sfGender" style="flex:1;min-width:55px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:11px;outline:none" onchange="renderSList()">
+        <option value="">性别</option><option value="male">男</option><option value="female">女</option>
+      </select>
+      <select id="sfTag" style="flex:1;min-width:55px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:11px;outline:none" onchange="renderSList()">
+        <option value="">标签</option>
+      </select>
+      <select id="sfHeight" style="flex:1;min-width:55px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:11px;outline:none" onchange="renderSList()">
+        <option value="">身高</option><option value="short">较矮</option><option value="normal">正常</option><option value="tall">较高</option>
+      </select>
+      <select id="sfSeat" style="flex:1;min-width:55px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:11px;outline:none" onchange="renderSList()">
+        <option value="">全部</option><option value="unseated">未排座</option><option value="seated">已排座</option>
+      </select>
     </div>
-
-    <!-- 学生预览弹窗 -->
-    <div class="modal-overlay" id="studentModal" style="display:none" onclick="closeModal(event)">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h3>已上传学生名单</h3>
-                <button class="close-btn" onclick="closeModalDirect()">×</button>
-            </div>
-            <div class="modal-body" id="studentList"></div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="clearStudents()">清空名单</button>
-                <button class="btn btn-primary" onclick="closeModalDirect()">确定</button>
-            </div>
-        </div>
+    <div class="slist" id="ul"></div>
+    <div class="st">✅ 已排座<span class="badge" id="ac">0</span></div>
+    <div class="slist" id="al"></div>
+  </div>
+  <div class="cr">
+    <div class="ch"><h2 id="cn">座位表</h2></div>
+    <div id="topPodium"><div class="podium">📍 讲 台 📍</div></div>
+    <div class="qa">
+      <button class="qab" onclick="flipV()">🔄 上下对调</button>
+      <button class="qab" onclick="flipH()">↔️ 左右对调</button>
+      <button class="qab" onclick="doRotateForward()">🔄 依次轮换</button>
+      <button class="qab" onclick="openCustomRotate()">🔀 自定义轮换</button>
+      <button class="qab" id="swapBtn" onclick="toggleSwap()">🔀 交换</button>
+      <button class="qab" onclick="clearSeats()">🧹 清空</button>
+      <button class="qab" onclick="undo()">↩️ 撤销</button>
+      <button class="qab" id="tagBtn" onclick="toggleShowTags()">🏷️ 显示标签</button>
     </div>
+    <div id="sgc"></div>
+    <div id="botPodium"></div>
+  </div>
+  <div class="sr">
+    <div class="st">📊 班级统计</div>
+    <div class="ic">
+      <div class="ir"><span>总人数</span><span id="st_t">0</span></div>
+      <div class="ir"><span>已排座</span><span id="st_a">0</span></div>
+      <div class="ir"><span>未排座</span><span id="st_u">0</span></div>
+      <div class="ir"><span>男生</span><span id="st_m">0</span></div>
+      <div class="ir"><span>女生</span><span id="st_f">0</span></div>
+    </div>
+    <div class="st">📈 分布分析</div>
+    <div class="ic">
+      <div class="sb"><div class="sbl">男生</div><div class="sbt"><div class="sbf" id="bm" style="background:#3b82f6;width:0%">0</div></div></div>
+      <div class="sb"><div class="sbl">近视率</div><div class="sbt"><div class="sbf" id="by" style="background:#f59e0b;width:0%">0%</div></div></div>
+      <div class="sb"><div class="sbl">前排近视</div><div class="sbt"><div class="sbf" id="bf" style="background:#10b981;width:0%">0</div></div></div>
+    </div>
+    <div class="st">📏 规则检测</div>
+    <div id="cl"></div>
+    <div class="st">⏳ 操作历史</div>
+    <div id="hl" style="max-height:160px;overflow-y:auto"></div>
+  </div>
+</div>
+<div class="mo" id="stuModal"><div class="md" style="max-width:750px"><h2>👥 学生管理</h2>
+  <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+    <input id="nsn" placeholder="姓名" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;flex:1;min-width:100px" onkeydown="if(event.key==='Enter')addStu()">
+    <select id="nsg" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px"><option value="male">男</option><option value="female">女</option></select>
+    <select id="nsh" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px"><option value="normal">身高正常</option><option value="short">较矮</option><option value="tall">较高</option></select>
+    <button class="btn btn-s" onclick="addStu()">➕ 添加</button>
+    <button class="btn btn-w" onclick="batchImp()">📋 批量导入</button>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
+    <input id="smlSearch" placeholder="🔍 搜索姓名..." style="flex:1;min-width:100px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;outline:none" oninput="renderSML()">
+    <select id="smlGender" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;outline:none" onchange="renderSML()">
+      <option value="">全部性别</option><option value="male">男</option><option value="female">女</option>
+    </select>
+    <select id="smlTag" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;outline:none" onchange="renderSML()">
+      <option value="">全部标签</option>
+    </select>
+    <select id="smlHeight" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;outline:none" onchange="renderSML()">
+      <option value="">全部身高</option><option value="short">较矮</option><option value="normal">正常</option><option value="tall">较高</option>
+    </select>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
+    <button class="btn btn-sm btn-s" onclick="smlSelAll()">☑ 全选</button>
+    <button class="btn btn-sm" onclick="smlSelNone()">☐ 取消</button>
+    <div style="flex:1"></div>
+    <button class="btn btn-sm btn-d" id="smlDelBtn" onclick="smlDelSel()">🗑 删除所选(0)</button>
+  </div>
+  <div id="sml" style="max-height:380px;overflow-y:auto"></div>
+  <div class="ma"><button class="btn btn-s" onclick="closeM('stuModal')">完成</button></div>
+</div></div>
+<div class="mo" id="cfgModal"><div class="md">
+  <h2>⚙️ 座位管理</h2>
+  <div class="fg"><label>座位表名称</label><input id="cgn" oninput="updCN()"></div>
+  <div class="fg"><label>布局模式</label><div class="cg">
+    <div class="ci on" id="modeGroup" onclick="setMode('group')">📐 大组模式</div>
+    <div class="ci" id="modeSingle" onclick="setMode('single')">🪑 单人单桌</div>
+    <div class="ci" id="modeSmall" onclick="setMode('small')">👥 小组模式</div>
+  </div></div>
+  <div id="cfgGroup" style="display:block">
+    <div class="fg"><label>大组数</label><input type="number" id="cgg" min="2" max="8" onchange="rebuild()"></div>
+    <div class="fg"><label>每组列数</label><input type="number" id="cgc" min="1" max="6" onchange="rebuild()"></div>
+    <div class="fg"><label>排数（行数）</label><input type="number" id="cgr" min="3" max="15" onchange="rebuild()"></div>
+  </div>
+  <div id="cfgSingle" style="display:none">
+    <div class="fg"><label>列数</label><input type="number" id="cgs_col" min="3" max="12" onchange="rebuildSingle()"></div>
+    <div class="fg"><label>行数</label><input type="number" id="cgs_row" min="3" max="18" onchange="rebuildSingle()"></div>
+  </div>
+  <div id="cfgSmall" style="display:none">
+    <div class="fg"><label>小组人数</label><input type="number" id="cgs_n" min="2" max="20" onchange="rebuildSmall()" value="6"></div>
+    <p style="font-size:11px;color:var(--tm)">小组模式：基于大组布局，每个大组前几排为A组，其余为B组，用颜色区分</p>
+  </div>
+  <div class="fg"><label>近视优先前排（行数）</label><input type="number" id="cgm" min="0" max="10"></div>
+  <div class="fg"><label>矮个子优先前排（行数）</label><input type="number" id="cgs" min="0" max="10"></div>
+  <div class="fg"><label>VIP座位数（讲台左右侧，0-8）</label><input type="number" id="cgv" min="0" max="8" onchange="updVIP()"></div>
+  <div class="fg"><label>排座约束规则</label><div class="cg" id="rc">
+    <div class="ci on" onclick="toggleRule(this,'myopia_front')">👓 近视前排</div>
+    <div class="ci on" onclick="toggleRule(this,'short_front')">📏 矮个前排</div>
+    <div class="ci" onclick="toggleRule(this,'gender_alt')">⚧ 男女交替</div>
+    <div class="ci on" onclick="toggleRule(this,'no_active_pair')">🚫 好动回避</div>
+    <div class="ci on" onclick="toggleRule(this,'no_grade_pair')">🚫 成绩好分散</div>
+    <div class="ci on" onclick="toggleRule(this,'leader_spread')">👥 班干分散</div>
+  </div></div>
+  <div class="fg"><label>回避配对（不能同桌/前后桌）</label><div id="pl"></div>
+    <div style="display:flex;gap:5px;margin-top:5px">
+      <select id="p1" style="flex:1;padding:5px;border:1px solid var(--border);border-radius:6px;font-size:11px"></select>
+      <span style="align-self:center">↔</span>
+      <select id="p2" style="flex:1;padding:5px;border:1px solid var(--border);border-radius:6px;font-size:11px"></select>
+      <button class="btn btn-sm btn-d" onclick="addPair()">➕</button>
+    </div>
+  </div>
+  <div class="ma"><button class="btn btn-s" onclick="closeM('cfgModal')">确定</button></div>
+</div></div>
+<div class="mo" id="batchModal"><div class="md">
+  <h2>📋 批量导入学生</h2>
+  <p style="font-size:12px;color:var(--tm);margin-bottom:10px">每行一个学生，格式：<b>姓名,性别,身高,标签</b>（性别/身高/标签可省略）<br>标签用|分隔，如：近视|班干部|好动|纪律好<br>示例：<code>张三,男,正常,近视</code></p>
+  <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-sm btn-s" onclick="dlTemplate()">📥 下载导入模板</button><button class="btn btn-sm btn-w" onclick="document.getElementById('excelFile').click()">📤 从Excel导入</button><input type="file" id="excelFile" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)"></div>
+  <textarea id="bt" rows="10" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:12px" placeholder="张三,男,正常,近视&#10;李四,女,矮,&#10;王五,男,高,班干部|好动"></textarea>
+  <div class="ma"><button class="btn btn-g" style="color:var(--text);border:1px solid var(--border)" onclick="closeM('batchModal')">取消</button><button class="btn btn-s" onclick="confirmBatch()">导 入</button></div>
+</div></div>
+<div class="mo" id="verModal"><div class="md">
+  <h2>📦 版本管理</h2>
+  <div style="display:flex;gap:6px;margin-bottom:12px">
+    <input id="vn" placeholder="版本名称，如：第一次月考座位" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+    <button class="btn btn-su" onclick="saveVer()">💾 保存为新版本</button>
+  </div>
+  <div id="vl" style="max-height:400px;overflow-y:auto"></div>
+  <div class="ma"><button class="btn btn-s" onclick="closeM('verModal')">关闭</button></div>
+</div></div>
+<div class="mo" id="statModal"><div class="md" style="max-width:650px">
+  <h2>📊 座位数据统计</h2>
+  <div class="tb">
+    <button class="tbb on" onclick="statTab('front',this)">🏆 第一排次数</button>
+    <button class="tbb" onclick="statTab('deskmate',this)">🤝 同桌次数</button>
+    <button class="tbb" onclick="statTab('group',this)">👥 同组次数</button>
+    <button class="tbb" onclick="statTab('position',this)">📍 位置分布</button>
+  </div>
+  <div id="sc" style="max-height:450px;overflow-y:auto"></div>
+  <div class="ma"><button class="btn btn-s" onclick="closeM('statModal')">关闭</button></div>
+</div></div>
+<div class="mo" id="tagModal"><div class="md" style="max-width:450px">
+  <h2>🏷️ 编辑学生标签</h2>
+  <p style="font-size:13px;margin-bottom:10px"><b id="tesn"></b> 的标签（点击切换）：</p>
+  <div id="tea"></div>
+  <div class="cti"><input id="nct" placeholder="输入自定义标签名..."><button class="btn btn-sm btn-s" onclick="addCTag()">➕ 添加</button></div>
+  <div class="ma"><button class="btn btn-s" onclick="closeM('tagModal')">完成</button></div>
+</div></div>
+<div class="mo" id="rotateModal"><div class="md" style="max-width:450px">
+  <h2>🔀 自定义轮换</h2>
+  <p style="font-size:13px;color:var(--tm);margin-bottom:12px">为每个大组选择目标位置（一一对应）</p>
+  <div id="rotateCustomList"></div>
+  <div class="ma">
+    <button class="btn btn-g" style="color:var(--text);border:1px solid var(--border)" onclick="closeM('rotateModal')">取消</button>
+    <button class="btn btn-s" onclick="confirmCustomRotate()">确 认</button>
+  </div>
+</div></div>
+<div class="cm" id="ctxMenu">
+  <div class="cmi" onclick="ctxAct('remove')">🚪 移出座位</div>
+  <div class="cmi" onclick="ctxAct('swap')">🔀 与他人交换</div>
+  <div class="cmi" onclick="ctxAct('lock')">🔒 锁定/解锁座位</div>
+  <div class="cmd"></div>
+  <div class="cmi" onclick="ctxAct('editTags')">🏷️ 编辑标签</div>
+  <div class="cmi" onclick="ctxAct('vip')">👑 设为/取消 VIP</div>
+  <div class="cmi" onclick="ctxAct('myopia')">👓 切换近视</div>
+  <div class="cmi" onclick="ctxAct('short')">📏 切换较矮</div>
+  <div class="cmi" onclick="ctxAct('leader')">⭐ 切换班干部</div>
+  <div class="cmi" onclick="ctxAct('active')">🏃 切换好动</div>
+  <div class="cmi" onclick="ctxAct('discipline')">✅ 切换纪律好</div>
+  <div class="cmi" onclick="ctxAct('grade')">📚 切换成绩好</div>
+  <div class="cmi" onclick="ctxAct('gleader')">🏅 切换小组长</div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<script>
+const SK='seat_v2_data';
+const PTAGS=['myopia','leader','active','discipline','grade','gleader'];
+const TL={myopia:'👓近视',leader:'⭐班干部',active:'🏃好动',discipline:'✅纪律好',grade:'📚成绩好',gleader:'🏅小组长'};
+const TC={myopia:['#fef3c7','#92400e'],leader:['#d1fae5','#065f46'],active:['#dbeafe','#1e40af'],discipline:['#e0e7ff','#3730a3'],grade:['#f3e8ff','#6b21a8'],gleader:['#fef9c3','#854d0e']};
 
-    <!-- 打印导出专用容器：屏幕隐藏，仅在打印/导出 PDF 时显示 -->
-    <div id="printArea"></div>
+let S={
+  cn:'座位表',mode:'group',
+  groups:4,cpg:2,rows:6,
+  singleCols:7,singleRows:7,
+  smallSplit:6,
+  smallSplit:6, // 小组人数：每个大组前smallSplit人(即前Math.ceil(smallSplit/cpg)排)为A组
+  flipV:false,flipH:false,
+  myopiaRows:2,shortRows:2,
+  rules:{myopia_front:true,short_front:true,gender_alt:false,no_active_pair:true,no_grade_pair:true,leader_spread:true},
+  students:[],seats:{},pairs:[],
+  versions:[],curVer:null,
+  hist:[],hi:-1,
+  swap:false,swap1:null,ctxSeat:null,ctxSid:null,
+  statT:'front',showTags:false,
+  // 锁定座位：{ seatKey:true }，随机排座时不移动这些座位上的学生
+  locked:{},arrangeCount:0,
+  // VIP 座位：讲台左右侧特殊座位数量（0-4），vipSids 为标记为 VIP 的学生 ID
+  vipCount:2,vipSids:[]
+};
 
-    <!-- SheetJS：Excel(.xlsx/.xls) 解析与模板生成。CDN 不可用时自动降级为 CSV 解析 -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-    <!-- html2canvas + jsPDF：前端导出 PDF -->
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <script src="app.js"></script>
+function uid(){return 's'+Date.now()+Math.floor(Math.random()*1e3)}
+function toast(m,t=''){const e=document.getElementById('toast');e.textContent=m;e.className='toast show '+t;setTimeout(()=>e.classList.remove('show'),2500)}
+function cols(){
+  if(S.mode==='single')return S.singleCols;
+  // 小组模式使用大组模式布局
+  return S.groups*S.cpg
+}
+function aisles(){
+  if(S.mode==='single'){const a=[];for(let i=1;i<cols();i++)a.push(i);return a}
+  // 大组和小组模式都按大组分过道
+  const a=[];for(let i=1;i<S.groups;i++)a.push(i*S.cpg);return a
+}
+function totalRows(){
+  if(S.mode==='single')return S.singleRows;
+  // 小组模式使用大组行数
+  return S.rows
+}
+// VIP 座位 key 列表：讲台左右两侧独立座位，不参与正常行/列统计
+function vipSeats(){
+  const n=Math.max(0,Math.min(8,Number(S.vipCount)||0));
+  if(n<=0)return [];
+  return Array.from({length:n},(_,i)=>'vip-'+i);
+}
+function makeVIPSeat(vk,idx){
+  const sid=S.seats[vk];
+  const stu=sid?S.students.find(s=>s.id===sid):null;
+  const seat=document.createElement('div');
+  seat.className='seat vip'+(stu?' occ':'');
+  if(stu)seat.classList.add(stu.gender==='female'?'occ-f':'occ-m');
+  seat.dataset.seat=vk;seat.draggable=!!stu;
+  if(stu){
+    const lbl=document.createElement('div');lbl.className='slbl';lbl.textContent='VIP-'+(idx+1);seat.appendChild(lbl);
+    const isF=stu.gender==='female';
+    const ne=document.createElement('div');ne.className='snm'+(isF?' snm-f':' snm-m');ne.textContent=stu.n;seat.appendChild(ne);
+    const gen=document.createElement('div');gen.className='gen';gen.style.background=isF?'#ec4899':'#3b82f6';gen.textContent=isF?'♀':'♂';seat.appendChild(gen);
+    if(S.locked[vk]){const lk=document.createElement('div');lk.className='slock';lk.textContent='🔒';lk.title='座位已锁定';seat.appendChild(lk)}
+    seat.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',JSON.stringify({type:'seat',from:vk,sid}));seat.classList.add('ds')});
+    seat.addEventListener('dragend',()=>seat.classList.remove('ds'));
+    seat.addEventListener('contextmenu',e=>{e.preventDefault();S.ctxSeat=vk;S.ctxSid=sid;const m=document.getElementById('ctxMenu');m.style.left=e.clientX+'px';m.style.top=e.clientY+'px';m.classList.add('on')});
+    seat.addEventListener('click',()=>seatClick(vk,stu));
+  }else{const h=document.createElement('div');h.className='eh';h.textContent='空';seat.appendChild(h)}
+  seat.addEventListener('dragover',e=>{e.preventDefault();seat.classList.add('dover')});
+  seat.addEventListener('dragleave',()=>seat.classList.remove('dover'));
+  seat.addEventListener('drop',e=>{e.preventDefault();seat.classList.remove('dover');const d=JSON.parse(e.dataTransfer.getData('text/plain'));if(d.type==='student')S.seats[vk]=d.sid;else if(d.type==='seat'){if(S.seats[vk]){const t=S.seats[vk];S.seats[vk]=d.sid;S.seats[d.from]=t}else{delete S.seats[d.from];S.seats[vk]=d.sid}}saveHist();renderAll()});
+  return seat;
+}
+// 讲台区：讲台居中，VIP 座位左右对称排列
+function renderPodiumArea(){
+  const wrap=document.createElement('div');
+  wrap.style.cssText='display:flex;justify-content:center;align-items:stretch;gap:8px;margin:8px 0;flex-wrap:wrap';
+  const vks=vipSeats();
+  const n=vks.length;
+  const leftCount=Math.ceil(n/2);
+  for(let i=0;i<leftCount;i++)wrap.appendChild(makeVIPSeat(vks[i],i));
+  const podium=document.createElement('div');
+  podium.className='podium';
+  podium.style.cssText='margin:0;align-self:center;min-width:90px';
+  podium.textContent='📍 讲 台 📍';
+  wrap.appendChild(podium);
+  for(let i=leftCount;i<n;i++)wrap.appendChild(makeVIPSeat(vks[i],i));
+  return wrap;
+}
+
+function saveL(){try{localStorage.setItem(SK,JSON.stringify({cn:S.cn,mode:S.mode,groups:S.groups,cpg:S.cpg,rows:S.rows,singleCols:S.singleCols,singleRows:S.singleRows,smallSplit:S.smallSplit,flipV:S.flipV,flipH:S.flipH,myopiaRows:S.myopiaRows,shortRows:S.shortRows,rules:S.rules,students:S.students,seats:S.seats,pairs:S.pairs,versions:S.versions,curVer:S.curVer,showTags:S.showTags,locked:S.locked,arrangeCount:S.arrangeCount,vipCount:S.vipCount,vipSids:S.vipSids}))}catch(e){}if(WB_MODE)postWbResult()}
+function loadL(){try{const r=localStorage.getItem(SK);if(!r)return false;const d=JSON.parse(r);Object.assign(S,d);return true}catch(e){return false}}
+
+// 把空座位压实到每个大组/列的最后一行：确保空位不出现在中间
+function compactSeats(){
+  const cl=cols(),tr=totalRows();if(!cl||!tr)return;
+  // 按列分组：每列内把有学生的座位压实到前面行
+  const ns={};
+  for(let c=0;c<cl;c++){
+    const colStudents=[];
+    for(let r=0;r<tr;r++){const sid=S.seats[r+'-'+c];if(sid)colStudents.push(sid)}
+    for(let r=0;r<tr;r++){if(r<colStudents.length)ns[r+'-'+c]=colStudents[r]}
+  }
+  // 保留 VIP 座位（不参与压实）
+  vipSeats().forEach(vk=>{if(S.seats[vk])ns[vk]=S.seats[vk]});
+  S.seats=ns
+}
+
+function saveHist(){
+  const snap=JSON.stringify({students:S.students,seats:S.seats,pairs:S.pairs});
+  S.hist=S.hist.slice(0,S.hi+1);S.hist.push(snap);S.hi++;
+  if(S.hist.length>50){S.hist.shift();S.hi--}
+  saveL();renderHist();
+}
+function undo(){if(S.hi<=0){toast('无可撤销','warning');return}S.hi--;const s=JSON.parse(S.hist[S.hi]);S.students=s.students;S.seats=s.seats;S.pairs=s.pairs;saveL();renderAll();toast('已撤销','success')}
+
+// ===== 上下/左右对调 =====
+function flipV(){S.flipV=!S.flipV;saveL();renderSeats();toast('上下已对调','success')}
+function flipH(){S.flipH=!S.flipH;saveL();renderSeats();toast('左右已对调','success')}
+
+// 把逻辑座位号映射到物理显示位置
+function physRow(r){return S.flipV?(totalRows()-1-r):r}
+function physCol(c){return S.flipH?(cols()-1-c):c}
+// 反向：物理位置→逻辑位置
+function logRow(pr){return S.flipV?(totalRows()-1-pr):pr}
+function logCol(pc){return S.flipH?(cols()-1-pc):pc}
+
+// ===== 学生 =====
+function addStu(){
+  const n=document.getElementById('nsn').value.trim();if(!n){toast('请输入姓名','error');return}
+  S.students.push({id:uid(),n,gender:document.getElementById('nsg').value,height:document.getElementById('nsh').value,tags:[]});
+  document.getElementById('nsn').value='';saveHist();renderAll();toast('已添加 '+n,'success')
+}
+function rmStu(id){
+  const s=S.students.find(x=>x.id===id);if(!s)return;
+  for(const k in S.seats)if(S.seats[k]===id)delete S.seats[k];
+  S.pairs=S.pairs.filter(p=>p[0]!==id&&p[1]!==id);
+  S.students=S.students.filter(x=>x.id!==id);
+  saveHist();renderAll();toast('已删除 '+s.n,'success');
+  if(document.getElementById('stuModal').classList.contains('on'))renderSML()
+}
+// ===== 批量删除学生 =====
+let SML_SEL=new Set();
+function smlSelAll(){SML_SEL=new Set(S.students.map(s=>s.id));renderSML()}
+function smlSelNone(){SML_SEL=new Set();renderSML()}
+function smlDelSel(){
+  const ids=[...SML_SEL];if(!ids.length){toast('请先勾选学生','warning');return}
+  if(!confirm('确定删除所选 '+ids.length+' 名学生？已排座位将一并清空，不可恢复。'))return;
+  S.students=S.students.filter(s=>!ids.includes(s.id));
+  for(const k in S.seats)if(ids.includes(S.seats[k]))delete S.seats[k];
+  S.pairs=S.pairs.filter(p=>!ids.includes(p[0])&&!ids.includes(p[1]));
+  SML_SEL=new Set();
+  saveHist();renderAll();renderSML();toast('已删除 '+ids.length+' 名学生','success')
+}
+function toggleTag(sid,tag){
+  const s=S.students.find(x=>x.id===sid);if(!s)return;s.tags=s.tags||[];
+  const i=s.tags.indexOf(tag);if(i>=0)s.tags.splice(i,1);else s.tags.push(tag);
+  saveHist();renderAll();renderSML()
+}
+function addCTag(){
+  const inp=document.getElementById('nct');const t=inp.value.trim();if(!t){toast('请输入标签名','error');return}
+  const s=S.students.find(x=>x.id===S.ctxSid);if(!s)return;s.tags=s.tags||[];
+  if(!s.tags.includes(t))s.tags.push(t);
+  saveHist();renderTagEditor();inp.value='';toast('标签已添加','success')
+}
+function rmTag(sid,tag){const s=S.students.find(x=>x.id===sid);if(!s)return;s.tags=(s.tags||[]).filter(t=>t!==tag);saveHist();renderTagEditor();renderAll()}
+
+// ===== 批量导入 =====
+function batchImp(){closeM('stuModal');document.getElementById('batchModal').classList.add('on')}
+function confirmBatch(){
+  const t=document.getElementById('bt').value.trim();if(!t){toast('请输入数据','error');return}
+  let c=0;for(const line of t.split('\n')){
+    const p=line.trim().split(',');if(!p[0]?.trim())continue;
+    const n=p[0].trim(),gender=p[1]?.trim()==='女'?'female':'male';
+    const h=p[2]?.trim()==='矮'?'short':p[2]?.trim()==='高'?'tall':'normal';
+    const tags=[];(p[3]?.trim()||'').split('|').forEach(x=>{const t=x.trim();if(t.includes('近视'))tags.push('myopia');else if(t.includes('班干部')||t.includes('班长'))tags.push('leader');else if(t.includes('好动'))tags.push('active');else if(t.includes('纪律'))tags.push('discipline');else if(t.includes('成绩好'))tags.push('grade');else if(t.includes('小组长'))tags.push('gleader');else if(t)tags.push(t)});
+    S.students.push({id:uid(),n,gender,height:h,tags});c++
+  }
+  document.getElementById('bt').value='';closeM('batchModal');saveHist();renderAll();toast('已导入 '+c+' 名学生','success')
+}
+
+function dlTemplate(){
+  if(typeof XLSX==='undefined'){toast('Excel库未加载','error');return}
+  const data=[
+    ['姓名','性别','身高','标签'],
+    ['张三','男','正常','近视'],
+    ['李四','女','矮','班干部|纪律好'],
+    ['王五','男','高','好动'],
+    ['赵六','女','',''],
+    ['','','','']
+  ];
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  ws['!cols']=[{wch:10},{wch:8},{wch:8},{wch:20}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'学生名单');
+  XLSX.writeFile(wb,'座位表导入模板.xlsx');
+  toast('模板已下载','success')
+}
+function importExcel(input){
+  if(typeof XLSX==='undefined'){toast('Excel库未加载','error');return}
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      if(!rows||rows.length<2){toast('文件为空','error');return}
+      // 跳过表头
+      let c=0;
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i];if(!r[0])continue;
+        const n=String(r[0]).trim();if(!n)continue;
+        const gender=String(r[1]||'').trim()==='女'?'female':'male';
+        const hStr=String(r[2]||'').trim();
+        const height=hStr.includes('矮')?'short':hStr.includes('高')?'tall':'normal';
+        const tags=[];(String(r[3]||'')).split('|').forEach(x=>{const t=x.trim();if(t.includes('近视'))tags.push('myopia');else if(t.includes('班干部')||t.includes('班长'))tags.push('leader');else if(t.includes('好动'))tags.push('active');else if(t.includes('纪律'))tags.push('discipline');else if(t.includes('成绩好'))tags.push('grade');else if(t.includes('小组长'))tags.push('gleader');else if(t)tags.push(t)});
+        S.students.push({id:uid(),n,gender,height,tags});c++
+      }
+      input.value='';closeM('batchModal');saveHist();renderAll();toast('从Excel导入 '+c+' 名学生','success')
+    }catch(err){toast('读取失败: '+err.message,'error')}
+  };
+  reader.readAsArrayBuffer(file)
+}
+
+// ===== 座位渲染 =====
+function rebuild(){
+  S.groups=parseInt(document.getElementById('cgg')?.value)||S.groups;
+  S.cpg=parseInt(document.getElementById('cgc')?.value)||S.cpg;
+  S.rows=parseInt(document.getElementById('cgr')?.value)||S.rows;
+  renderSeats()
+}
+function rebuildSingle(){
+  S.singleCols=parseInt(document.getElementById('cgs_col')?.value)||S.singleCols;
+  S.singleRows=parseInt(document.getElementById('cgs_row')?.value)||S.singleRows;
+  renderSeats()
+}
+function rebuildSmall(){
+  S.smallSplit=parseInt(document.getElementById('cgs_n')?.value)||S.smallSplit;
+  renderSeats()
+}
+function updVIP(){
+  S.vipCount=Math.max(0,Math.min(8,parseInt(document.getElementById('cgv')?.value)||0));
+  saveL();renderSeats()
+}
+function setMode(m){
+  S.mode=m;
+  document.getElementById('modeGroup').classList.toggle('on',m==='group');
+  document.getElementById('modeSingle').classList.toggle('on',m==='single');
+  document.getElementById('modeSmall').classList.toggle('on',m==='small');
+  // 大组模式和小组模式都显示大组配置
+  document.getElementById('cfgGroup').style.display=(m==='group'||m==='small')?'block':'none';
+  document.getElementById('cfgSingle').style.display=m==='single'?'block':'none';
+  document.getElementById('cfgSmall').style.display=m==='small'?'block':'none';
+  saveL();renderSeats()
+}
+
+const GCOLORS=[
+  ['#eef2ff','#c7d2fe'],['#fef3c7','#fde68a'],['#d1fae5','#a7f3d0'],['#fce7f3','#fbcfe8'],
+  ['#dbeafe','#bfdbfe'],['#fef9c3','#fde047'],['#e0e7ff','#c7d2fe'],['#fce7f3','#fbcfe8'],
+  ['#f0fdf4','#bbf7d0'],['#fff7ed','#fed7aa'],['#f5f3ff','#ddd6fe'],['#ecfeff','#a5f3fc']
+];
+const GNAMES=['第1组','第2组','第3组','第4组','第5组','第6组','第7组','第8组','第9组','第10组','第11组','第12组'];
+
+function getGroupOfCol(c){
+  if(S.mode==='single')return -1;
+  return Math.floor(c/S.cpg) // 大组和小组模式都用大组列数
+}
+// 获取座位在大组内属于前半组(A)还是后半组(B)，返回0=A,1=B
+function getSubGroup(r,c){
+  if(S.mode!=='small')return -1;
+  // 小组人数 = 前N排，每排cpg人 → 前Math.ceil(smallSplit/cpg)排为A组
+  const splitRows=Math.ceil(S.smallSplit/S.cpg);
+  return r<splitRows?0:1
+}
+function getSmallGroupIndex(sid){
+  if(S.mode!=='small')return -1;
+  // 返回全局小组索引：大组*2+子组
+  for(const[k,id]of Object.entries(S.seats)){
+    if(id===sid){const[r,c]=k.split('-').map(Number);const g=getGroupOfCol(c);const sg=getSubGroup(r,c);return g>=0&&sg>=0?g*2+sg:-1}
+  }
+  return -1
+}
+
+function renderSeats(){
+  const ctn=document.getElementById('sgc');ctn.innerHTML='';
+  const cl=cols(),ai=aisles(),tr=totalRows();
+  // 性别分布违规行列（用于高亮提示）
+  const gv=genderViolationRC(S.seats,cl,tr);
+
+  // 标题行
+  const gh=document.createElement('div');gh.style.cssText='display:flex;justify-content:center;gap:5px;margin-bottom:5px;flex-wrap:wrap';
+  if(S.mode==='group'){
+    for(let g=0;g<S.groups;g++){
+      const e=document.createElement('div');e.className='gh';
+      e.style.width=(S.cpg*78+(S.cpg-1)*5)+'px';
+      const gName='第'+(S.flipH?(S.groups-g):(g+1))+'大组';
+      e.textContent=gName;
+      gh.appendChild(e)
+    }
+  }else if(S.mode==='small'){
+    // 小组模式：和大组模式一样的大组标题
+    for(let g=0;g<S.groups;g++){
+      const e=document.createElement('div');e.className='gh';
+      e.style.width=(S.cpg*78+(S.cpg-1)*5)+'px';
+      const gName='第'+(S.flipH?(S.groups-g):(g+1))+'大组';
+      e.textContent=gName;
+      gh.appendChild(e)
+    }
+  }else{
+    const e=document.createElement('div');e.className='gh';e.style.width='100%';e.textContent='单人单桌';gh.appendChild(e)
+  }
+  ctn.appendChild(gh);
+
+  const grid=document.createElement('div');grid.className='sgrid';
+  grid.style.gridTemplateColumns='repeat('+(cl+ai.length)+',auto)';
+
+  for(let pr=0;pr<tr;pr++){
+    const lr=logRow(pr);
+    for(let pc=0;pc<cl;pc++){
+      if(ai.includes(pc)){const a=document.createElement('div');a.className='aisle';a.textContent='🚶';grid.appendChild(a)}
+      const lc=logCol(pc);
+      const key=lr+'-'+lc;
+      const sid=S.seats[key];const stu=sid?S.students.find(s=>s.id===sid):null;
+      const seat=document.createElement('div');
+      seat.className='seat'+(stu?' occ':'');seat.dataset.seat=key;seat.draggable=!!stu;
+      if(stu)seat.classList.add(stu.gender==='female'?'occ-f':'occ-m');
+      // 性别分布违规行列高亮
+      if(gv.rows.indexOf(lr)>=0||gv.cols.indexOf(lc)>=0)seat.classList.add('gv');
+      // 锁定座位标记
+      if(S.locked[key])seat.classList.add('lk');
+
+      // 小组模式背景色：每个大组的A/B子组用不同色调
+      if(S.mode==='small'){
+        const gIdx=getGroupOfCol(lc); // 大组索引
+        const sgIdx=getSubGroup(lr,lc); // 0=A, 1=B
+        if(gIdx>=0&&sgIdx>=0){
+          const pal=GCOLORS[gIdx%GCOLORS.length];
+          // A组用浅色背景，B组用稍深背景
+          if(sgIdx===0){seat.style.background=pal[0];seat.style.borderColor=pal[1]}
+          else{seat.style.background=pal[1];seat.style.borderColor=pal[1];seat.style.borderStyle='dashed'}
+        }
+      }
+
+      const lbl=document.createElement('div');lbl.className='slbl';
+      lbl.textContent='第'+(lr+1)+'排'+(lc+1)+'列';seat.appendChild(lbl);
+      if(stu){
+        const isF=stu.gender==='female';
+        const ne=document.createElement('div');ne.className='snm'+(isF?' snm-f':' snm-m');ne.textContent=stu.n;seat.appendChild(ne);
+        const gen=document.createElement('div');gen.className='gen';gen.style.background=isF?'#ec4899':'#3b82f6';gen.textContent=isF?'♀':'♂';seat.appendChild(gen);
+        if(S.locked[key]){const lk=document.createElement('div');lk.className='slock';lk.textContent='🔒';lk.title='座位已锁定，随机排座不会移动';seat.appendChild(lk)}
+        if(S.showTags){const te=document.createElement('div');te.className='stg';
+        (stu.tags||[]).forEach(tg=>{
+          const sp=document.createElement('span');const isP=PTAGS.includes(tg);
+          sp.className='tag '+(isP?('tag-'+tg):'tag-custom');
+          if(!isP){sp.style.background='#f3e8ff';sp.style.color='#6b21a8'}
+          sp.textContent=isP?TL[tg]:tg;te.appendChild(sp)
+        });
+        if(te.children.length)seat.appendChild(te)};
+        seat.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',JSON.stringify({type:'seat',from:key,sid}));seat.classList.add('ds')});
+        seat.addEventListener('dragend',()=>seat.classList.remove('ds'));
+        seat.addEventListener('contextmenu',e=>{e.preventDefault();S.ctxSeat=key;S.ctxSid=sid;const m=document.getElementById('ctxMenu');m.style.left=e.clientX+'px';m.style.top=e.clientY+'px';m.classList.add('on')});
+        seat.addEventListener('click',()=>seatClick(key,stu))
+      }else{const h=document.createElement('div');h.className='eh';h.textContent='空';seat.appendChild(h)}
+      seat.addEventListener('dragover',e=>{e.preventDefault();seat.classList.add('dover')});
+      seat.addEventListener('dragleave',()=>seat.classList.remove('dover'));
+      seat.addEventListener('drop',e=>{e.preventDefault();seat.classList.remove('dover');const d=JSON.parse(e.dataTransfer.getData('text/plain'));if(d.type==='student')S.seats[key]=d.sid;else if(d.type==='seat'){if(S.seats[key]){const t=S.seats[key];S.seats[key]=d.sid;S.seats[d.from]=t}else{delete S.seats[d.from];S.seats[key]=d.sid}}saveHist();renderAll()});
+      grid.appendChild(seat)
+    }
+  }
+  ctn.appendChild(gh);
+  ctn.appendChild(grid);
+
+  // 讲台区：讲台居中，VIP 座位在左右两侧
+  const top=document.getElementById('topPodium'),bot=document.getElementById('botPodium');
+  const pa=renderPodiumArea();
+  if(S.flipV){
+    // 讲台在下
+    top.style.display='none';top.innerHTML='';
+    bot.innerHTML='';bot.appendChild(pa);
+  }else{
+    // 讲台在上
+    top.innerHTML='';top.appendChild(pa);
+    bot.innerHTML='';
+  }
+}
 
 
-</body></html>
+
+function seatClick(key,stu){
+  if(S.swap){
+    if(!S.swap1){S.swap1=key;document.querySelector('[data-seat="'+key+'"]').style.outline='3px solid var(--success)';toast('已选 '+stu.n+'，点另一个座位交换','warning')}
+    else if(S.swap1===key){S.swap1=null;document.querySelector('[data-seat="'+key+'"]').style.outline='';toast('已取消','warning')}
+    else{const t=S.seats[S.swap1];S.seats[S.swap1]=S.seats[key];S.seats[key]=t;S.swap1=null;S.swap=false;document.getElementById('swapBtn').classList.remove('on');saveHist();renderAll();toast('已交换','success')}
+  }
+}
+
+// ===== 学生列表 =====
+function renderSList(){
+  const q=document.getElementById('ss').value.toLowerCase();
+  const fG=document.getElementById('sfGender')?.value||'';
+  const fT=document.getElementById('sfTag')?.value||'';
+  const fH=document.getElementById('sfHeight')?.value||'';
+  const fS=document.getElementById('sfSeat')?.value||'';
+  // 更新标签下拉选项
+  const tagSel=document.getElementById('sfTag');
+  if(tagSel){
+    const curV=tagSel.value;
+    const allTags=new Set(PTAGS);
+    S.students.forEach(s=>{(s.tags||[]).forEach(t=>allTags.add(t))});
+    tagSel.innerHTML='<option value="">标签</option>';
+    [...allTags].forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=PTAGS.includes(t)?TL[t]:t;tagSel.appendChild(o)});
+    tagSel.value=curV
+  }
+  const ul=document.getElementById('ul'),al=document.getElementById('al');ul.innerHTML='';al.innerHTML='';
+  const aids=new Set(Object.values(S.seats));let uc=0,ac=0;
+  S.students.forEach(s=>{
+    if(q&&!s.n.toLowerCase().includes(q))return;
+    if(fG&&s.gender!==fG)return;
+    if(fT&&!(s.tags||[]).includes(fT))return;
+    if(fH&&s.height!==fH)return;
+    const isA=aids.has(s.id);
+    if(fS==='unseated'&&isA)return;
+    if(fS==='seated'&&!isA)return;
+    const it=document.createElement('div');it.className='si '+(isA?'as':'un');it.draggable=!isA;
+    const av=document.createElement('div');av.className='sa';av.style.background=s.gender==='female'?'#ec4899':'#3b82f6';av.textContent=s.n[0];it.appendChild(av);
+    const nm=document.createElement('div');nm.className='sn';nm.textContent=s.n;it.appendChild(nm);
+    const tg=document.createElement('div');tg.className='stags';
+    const gt=document.createElement('span');gt.className='tag '+(s.gender==='female'?'tag-female':'tag-male');gt.textContent=s.gender==='female'?'女':'男';tg.appendChild(gt);
+    (s.tags||[]).forEach(t=>{const isP=PTAGS.includes(t);const sp=document.createElement('span');sp.className='tag '+(isP?('tag-'+t):'tag-custom');if(!isP){sp.style.background='#f3e8ff';sp.style.color='#6b21a8'}sp.textContent=isP?TL[t]:t;tg.appendChild(sp)});
+    it.appendChild(tg);
+    const db=document.createElement('span');db.className='si-del';db.textContent='✕';db.title='删除 '+s.n;
+    db.onclick=()=>{if(confirm('确定删除 '+s.n+'？'))rmStu(s.id)};
+    it.appendChild(db);
+    if(!isA){it.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',JSON.stringify({type:'student',sid:s.id}));it.classList.add('dragging')});it.addEventListener('dragend',()=>it.classList.remove('dragging'))}
+    if(isA){al.appendChild(it);ac++}else{ul.appendChild(it);uc++}
+  });
+  document.getElementById('uc').textContent=uc;document.getElementById('ac').textContent=ac
+}
+
+// ===== 学生管理列表 =====
+function renderSML(){
+  const l=document.getElementById('sml');l.innerHTML='';
+  const dB=document.getElementById('smlDelBtn');if(dB)dB.textContent='🗑 删除所选('+SML_SEL.size+')';
+  // 收集所有自定义标签更新筛选项
+  const tagSel=document.getElementById('smlTag');
+  if(tagSel){
+    const curV=tagSel.value;
+    const allTags=new Set(PTAGS);
+    S.students.forEach(s=>{(s.tags||[]).forEach(t=>allTags.add(t))});
+    tagSel.innerHTML='<option value="">全部标签</option>';
+    [...allTags].forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=PTAGS.includes(t)?TL[t]:t;tagSel.appendChild(o)});
+    tagSel.value=curV
+  }
+  // 获取筛选条件
+  const kw=(document.getElementById('smlSearch')?.value||'').trim().toLowerCase();
+  const fG=document.getElementById('smlGender')?.value||'';
+  const fT=document.getElementById('smlTag')?.value||'';
+  const fH=document.getElementById('smlHeight')?.value||'';
+  const filtered=S.students.filter(s=>{
+    if(kw&&!s.n.toLowerCase().includes(kw))return false;
+    if(fG&&s.gender!==fG)return false;
+    if(fT&&!(s.tags||[]).includes(fT))return false;
+    if(fH&&s.height!==fH)return false;
+    return true
+  });
+  // 显示筛选结果计数
+  if(kw||fG||fT||fH){
+    const info=document.createElement('div');info.style.cssText='font-size:11px;color:var(--tm);margin-bottom:6px';info.textContent='筛选结果：'+filtered.length+'/'+S.students.length+' 人';l.appendChild(info)
+  }
+  filtered.forEach(s=>{
+    const r=document.createElement('div');r.style.cssText='display:flex;align-items:center;gap:5px;padding:6px;border-radius:8px;background:#f8fafc;margin-bottom:4px;border:1px solid var(--border);font-size:12px;flex-wrap:wrap';
+    const ck=document.createElement('input');ck.type='checkbox';ck.checked=SML_SEL.has(s.id);
+    ck.style.cssText='width:14px;height:14px;accent-color:#4f46e5;flex-shrink:0';
+    ck.onchange=()=>{if(ck.checked)SML_SEL.add(s.id);else SML_SEL.delete(s.id);const b=document.getElementById('smlDelBtn');if(b)b.textContent='🗑 删除所选('+SML_SEL.size+')'};
+    r.appendChild(ck);
+    const av=document.createElement('div');av.className='sa';av.style.background=s.gender==='female'?'#ec4899':'#3b82f6';av.textContent=s.n[0];r.appendChild(av);
+    const nm=document.createElement('span');nm.style.fontWeight='600';nm.textContent=s.n;r.appendChild(nm);
+    PTAGS.forEach(tag=>{
+      const b=document.createElement('div');const has=(s.tags||[]).includes(tag);
+      b.className='ci'+(has?' on':'');b.style.fontSize='10px';b.style.padding='2px 6px';
+      b.textContent=TL[tag];b.onclick=()=>toggleTag(s.id,tag);r.appendChild(b)
+    });
+    (s.tags||[]).forEach(t=>{
+      if(!PTAGS.includes(t)){
+        const b=document.createElement('div');b.className='ci on';b.style.cssText='font-size:10px;padding:2px 6px;background:#f3e8ff;color:#6b21a8;border-color:#f3e8ff';
+        b.innerHTML=t+' <span style="cursor:pointer;margin-left:2px" onclick="event.stopPropagation();rmTag(\''+s.id+'\',\''+t+'\')">✕</span>';r.appendChild(b)
+      }
+    });
+    const eb=document.createElement('button');eb.className='btn btn-sm btn-s';eb.textContent='🏷️自定义';eb.onclick=()=>openTagEditor(s.id);r.appendChild(eb);
+    const db=document.createElement('button');db.className='btn btn-sm btn-d';db.textContent='删除';db.onclick=()=>{if(confirm('确定删除 '+s.n+'？'))rmStu(s.id)};r.appendChild(db);
+    l.appendChild(r)
+  });
+  if(filtered.length===0){const e=document.createElement('div');e.style.cssText='text-align:center;padding:20px;color:var(--tm);font-size:12px';e.textContent='无匹配学生';l.appendChild(e)}
+  updPairSel()
+}
+
+// ===== 标签编辑器 =====
+function openTagEditor(sid){
+  S.ctxSid=sid;const s=S.students.find(x=>x.id===sid);if(!s)return;
+  document.getElementById('tesn').textContent=s.n;renderTagEditor();document.getElementById('tagModal').classList.add('on')
+}
+function renderTagEditor(){
+  const a=document.getElementById('tea');a.innerHTML='';
+  const s=S.students.find(x=>x.id===S.ctxSid);if(!s)return;
+  const all=[...PTAGS];
+  S.students.forEach(st=>{(st.tags||[]).forEach(t=>{if(!all.includes(t))all.push(t)})});
+  all.forEach(tag=>{
+    const has=(s.tags||[]).includes(tag);
+    const isP=PTAGS.includes(tag);
+    const el=document.createElement('div');el.className='set';
+    el.style.background=isP?TC[tag][0]:'#f3e8ff';el.style.color=isP?TC[tag][1]:'#6b21a8';
+    el.style.border='1px solid '+(has?'var(--primary)':'transparent');
+    el.style.opacity=has?'1':'0.4';
+    el.innerHTML=(isP?TL[tag]:tag)+(has?' <span class="rm" onclick="event.stopPropagation();rmTag(\''+s.id+'\',\''+tag+'\')">✕</span>':'');
+    el.onclick=()=>{
+      if(has){rmTag(s.id,tag)}else{toggleTag(s.id,tag)}
+      renderTagEditor()
+    };
+    a.appendChild(el)
+  })
+}
+
+// ===== 统计 =====
+function renderStats(){
+  const t=S.students.length;
+  const a=Object.keys(S.seats).filter(k=>!k.startsWith('vip-')).length;
+  const u=t-a;
+  const m=S.students.filter(s=>s.gender==='male').length,f=S.students.filter(s=>s.gender==='female').length;
+  const my=S.students.filter(s=>(s.tags||[]).includes('myopia')).length;
+  const fm=S.myopiaRows>0?Object.entries(S.seats).filter(([k,sid])=>{if(k.startsWith('vip-'))return false;const r=parseInt(k.split('-')[0]);const s=S.students.find(x=>x.id===sid);return r<S.myopiaRows&&s&&(s.tags||[]).includes('myopia')}).length:0;
+  document.getElementById('st_t').textContent=t;document.getElementById('st_a').textContent=a;
+  document.getElementById('st_u').textContent=u;document.getElementById('st_m').textContent=m;document.getElementById('st_f').textContent=f;
+  const mp=t>0?Math.round(m/t*100):0,yp=t>0?Math.round(my/t*100):0;
+  document.getElementById('bm').style.width=mp+'%';document.getElementById('bm').textContent=m;
+  document.getElementById('by').style.width=yp+'%';document.getElementById('by').textContent=yp+'%';
+  document.getElementById('bf').style.width=(my>0?Math.round(fm/my*100):0)+'%';document.getElementById('bf').textContent=fm+'/'+my
+}
+
+// ===== 约束 =====
+function renderCons(){
+  const l=document.getElementById('cl');l.innerHTML='';const cs=[];
+  const normalSeats=Object.fromEntries(Object.entries(S.seats).filter(([k])=>!k.startsWith('vip-')));
+  if(S.rules.myopia_front){const ms=S.students.filter(s=>(s.tags||[]).includes('myopia'));let v=0;ms.forEach(s=>{for(const[k,sid]of Object.entries(normalSeats)){if(sid===s.id){if(parseInt(k.split('-')[0])>=S.myopiaRows)v++;break}}});cs.push({i:v===0?'✅':'⚠️',t:'近视前排('+(ms.length-v)+'/'+ms.length+')',ok:v===0})}
+  if(S.rules.short_front){const ss=S.students.filter(s=>s.height==='short');let v=0;ss.forEach(s=>{for(const[k,sid]of Object.entries(normalSeats)){if(sid===s.id){if(parseInt(k.split('-')[0])>=S.shortRows)v++;break}}});cs.push({i:v===0?'✅':'⚠️',t:'矮个前排('+(ss.length-v)+'/'+ss.length+')',ok:v===0})}
+  if(S.rules.no_grade_pair&&S.pairs.length>0){let pv=0;S.pairs.forEach(([a,b])=>{let p1=null,p2=null;for(const[k,sid]of Object.entries(normalSeats)){if(sid===a)p1=k;if(sid===b)p2=k}if(p1&&p2){const[r1,c1]=p1.split('-').map(Number),[r2,c2]=p2.split('-').map(Number);if((r1===r2&&Math.abs(c1-c2)===1)||(c1===c2&&Math.abs(r1-r2)===1))pv++}});cs.push({i:pv===0?'✅':'❌',t:'回避配对('+pv+'对违规)',ok:pv===0})}
+  if(S.rules.leader_spread){const ls=S.students.filter(s=>(s.tags||[]).includes('leader'));const lp={};ls.forEach(s=>{for(const[k,sid]of Object.entries(normalSeats)){if(sid===s.id){const r=parseInt(k.split('-')[0]);lp[r]=(lp[r]||0)+1}}});const mx=Math.max(...Object.values(lp),0);cs.push({i:mx<=2?'✅':'⚠️',t:'班干分散(单排最多'+mx+'名)',ok:mx<=2})}
+  // 性别分布：禁止整行 / 整列单一性别
+  {const gv=genderViolations(S.seats,cols(),totalRows());cs.push({i:gv===0?'✅':'⚠️',t:gv===0?'性别分布均衡':'性别集中('+gv+'处)',ok:gv===0})}
+  // 锁定座位数量提示
+  {const lk=Object.keys(S.locked||{}).length;if(lk>0)cs.push({i:'🔒',t:'已锁定 '+lk+' 个座位',ok:true})}
+  // VIP 座位提示
+  {const vn=vipSeats().length;if(vn>0)cs.push({i:'👑',t:'VIP 座位 '+vn+' 个（讲台左右侧）',ok:true})}
+  cs.forEach(c=>{const it=document.createElement('div');it.className='ci2 '+(c.ok?'s':'v');it.innerHTML='<span>'+c.i+'</span><span>'+c.t+'</span>';l.appendChild(it)})
+}
+
+// ===== 历史 =====
+function renderHist(){const l=document.getElementById('hl');l.innerHTML='';S.hist.slice(-8).reverse().forEach((_,i)=>{const idx=S.hist.length-1-i;const it=document.createElement('div');it.className='hi'+(idx===S.hi?' on':'');it.innerHTML='<span style="color:var(--tm);font-size:10px">#'+(idx+1)+'</span><span>操作 '+(idx+1)+'</span>';it.onclick=()=>{S.hi=idx;const s=JSON.parse(S.hist[idx]);S.students=s.students;S.seats=s.seats;S.pairs=s.pairs;renderAll()};l.appendChild(it)})}
+
+// ===== 随机排座（真随机 + 性别分布约束 + 座位锁定） =====
+
+// Fisher-Yates 洗牌：每次调用产生不同顺序，保证每次点击都是新方案
+function shuffleArr(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    const t=arr[i];arr[i]=arr[j];arr[j]=t;
+  }
+  return arr;
+}
+
+// id → 性别映射（避免逐座位 find，校验复杂度从 O(座位×学生) 降到 O(座位)）
+function genderMap(){
+  const gm={};S.students.forEach(s=>{gm[s.id]=s.gender});return gm;
+}
+// 取一行 / 一列的性别序列
+function lineGenders(seats,gm,n,idx,isRow,other){
+  const g=[];
+  for(let i=0;i<other;i++){
+    const k=isRow?(idx+'-'+i):(i+'-'+idx);
+    const gd=seats[k]?gm[seats[k]]:null;
+    if(gd)g.push(gd);
+  }
+  return g;
+}
+// 性别分布违规统计：整行或整列全部为同一性别的行列数量（0 表示均衡）
+function genderViolations(seats,cl,tr){
+  const gm=genderMap();let bad=0;
+  for(let r=0;r<tr;r++){
+    const g=lineGenders(seats,gm,cl,r,true,cl);
+    if(g.length>=2&&g.every(x=>x===g[0]))bad++;
+  }
+  for(let c=0;c<cl;c++){
+    const g=lineGenders(seats,gm,tr,c,false,tr);
+    if(g.length>=2&&g.every(x=>x===g[0]))bad++;
+  }
+  return bad;
+}
+// 返回违规的行号 / 列号，用于座位表高亮提示
+function genderViolationRC(seats,cl,tr){
+  const gm=genderMap();const rows=[],cols=[];
+  for(let r=0;r<tr;r++){
+    const g=lineGenders(seats,gm,cl,r,true,cl);
+    if(g.length>=2&&g.every(x=>x===g[0]))rows.push(r);
+  }
+  for(let c=0;c<cl;c++){
+    const g=lineGenders(seats,gm,tr,c,false,tr);
+    if(g.length>=2&&g.every(x=>x===g[0]))cols.push(c);
+  }
+  return {rows:rows,cols:cols};
+}
+
+// 兜底局部调优：交换异性学生以降低违规数（仅在多方案尝试后仍违规时执行）
+function fixGenderSpread(seats,cl,tr){
+  const s=Object.assign({},seats);
+  let v=genderViolations(s,cl,tr);
+  if(v===0)return s;
+  const gm=genderMap();
+  const keys=Object.keys(s).filter(k=>!k.startsWith('vip-'));
+  for(let iter=0;iter<8&&v>0;iter++){
+    let improved=false;
+    for(let i=0;i<keys.length&&!improved;i++){
+      const g1=s[keys[i]]?gm[s[keys[i]]]:null;if(!g1)continue;
+      for(let j=i+1;j<keys.length;j++){
+        const g2=s[keys[j]]?gm[s[keys[j]]]:null;if(!g2)continue;
+        if(g1===g2)continue;
+        const a=keys[i],b=keys[j];
+        const t=s[a];s[a]=s[b];s[b]=t;
+        const nv=genderViolations(s,cl,tr);
+        if(nv<v){v=nv;improved=true;break}
+        s[a]=s[b];s[b]=t;
+      }
+    }
+    if(!improved)break;
+  }
+  return s;
+}
+
+function autoArrange(){
+  if(!S.students.length){toast('请先添加学生','error');return}
+  const cl=cols(),tr=totalRows();
+  const so=[];for(let r=0;r<tr;r++)for(let c=0;c<cl;c++)so.push(r+'-'+c);
+
+  // 0) 按 id 去重（统一 String 比较，防数字/字符串不一致）
+  const uniq=new Map();
+  S.students.forEach(s=>{const k=String(s.id);if(!uniq.has(k))uniq.set(k,s)});
+  const allStudents=[...uniq.values()];
+  if(allStudents.length!==S.students.length)S.students=allStudents;
+
+  // id → 学生对象 映射，供 leader/标签判断使用（不能用 genderMap！）
+  const sidMap=new Map(allStudents.map(s=>[String(s.id),s]));
+
+  // 1) 保留已锁定座位上的学生，并过滤僵尸锁座（学生已不存在的 id 直接丢弃）
+  const lockedSeats={},lockedSids=new Set();
+  Object.keys(S.locked||{}).forEach(k=>{
+    const sid=String(S.seats[k]||'');
+    if(sid&&sidMap.has(sid)){lockedSeats[k]=sid;lockedSids.add(sid)}
+  });
+
+  // 参数钳位：防止配置越界
+  const myopiaRows=Math.max(0,Math.min(tr,Number(S.myopiaRows)||0));
+  const shortRows=Math.max(0,Math.min(tr,Number(S.shortRows)||0));
+
+  const pool=allStudents.filter(s=>!lockedSids.has(String(s.id)));
+
+  // 2) 按约束优先级排序 + 随机打散同分者
+  const base=pool.sort((a,b)=>{
+    const as=((a.tags||[]).includes('myopia')?2:0)+((a.height==='short')?1:0);
+    const bs=((b.tags||[]).includes('myopia')?2:0)+((b.height==='short')?1:0);
+    if(as!==bs)return bs-as;
+    if((a.tags||[]).includes('active')&&!(b.tags||[]).includes('active'))return 1;
+    if(!(a.tags||[]).includes('active')&&(b.tags||[]).includes('active'))return-1;
+    return Math.random()-0.5
+  });
+
+  // 3) 落座：统一贪心打分，gender_alt 作为打分项而非独立分支
+  function place(orderSrc){
+    const seats=Object.assign({},lockedSeats);
+    const gm=genderMap();
+    const queue=[...orderSrc];
+
+    // 先分配 VIP 学生到 VIP 座位：优先右键标记者，未标记够时自动按优先级补位
+    const vips=vipSeats().filter(vk=>!seats[vk]);
+    if(vips.length){
+      const vipQueue=[];
+      if(S.vipSids&&S.vipSids.length){
+        for(let i=0;i<queue.length;i++){
+          if(S.vipSids.indexOf(String(queue[i].id))>=0){vipQueue.push(queue[i]);queue.splice(i,1);i--}
+        }
+      }
+      // 自动补位：讲台旁离黑板最近，优先选近视/矮个（优先级最高）的学生
+      while(vipQueue.length<vips.length&&queue.length){
+        let bi=0,bp=-1;
+        queue.forEach((q,i)=>{
+          const p=((q.tags||[]).includes('myopia')?2:0)+((q.height==='short')?1:0);
+          if(p>bp){bp=p;bi=i}
+        });
+        vipQueue.push(queue.splice(bi,1)[0]);
+      }
+      // 标记数多于座位数时，多出的学生放回普通池（随机插入避免扎堆）
+      while(vipQueue.length>vips.length){
+        const ex=vipQueue.pop();
+        queue.splice(Math.floor(Math.random()*queue.length),0,ex);
+      }
+      vips.forEach((vk,i)=>{if(vipQueue[i])seats[vk]=String(vipQueue[i].id)});
+    }
+
+    while(queue.length>0){
+      const s=queue.shift();
+      let best=null,bs=-Infinity;
+      for(const k of so){
+        if(seats[k])continue;
+        const[r,c]=k.split('-').map(Number);
+        let sc=Math.random()*5;
+
+        // 近视 / 矮个子前排
+        if((s.tags||[]).includes('myopia'))sc+=r<myopiaRows?10:-10;
+        if(s.height==='short')sc+=r<shortRows?5:-5;
+
+        // 班干部分散：同行已有班干部越多分越低（用 sidMap 取真实标签）
+        if((s.tags||[]).includes('leader')){
+          let sl=0;
+          for(let cc=0;cc<cl;cc++){
+            const sid=seats[r+'-'+cc];
+            if(!sid)continue;
+            const other=sidMap.get(sid);
+            if(other&&(other.tags||[]).includes('leader'))sl++;
+          }
+          sc-=sl*4;
+        }
+
+        // 冤家互斥：上下左右邻座扣分（统一 String 比较）
+        S.pairs.forEach(([a,b])=>{
+          const oid=s.id===a?b:(s.id===b?a:null);
+          if(oid){
+            [r+'-'+(c-1),r+'-'+(c+1),(r-1)+'-'+c,(r+1)+'-'+c].forEach(nk=>{
+              if(seats[nk]===String(oid))sc-=30;
+            });
+          }
+        });
+
+        // 同排同列同性扣分
+        let sameGenderRow=0,sameGenderCol=0;
+        for(let cc=0;cc<cl;cc++){const sid=seats[r+'-'+cc];if(sid&&gm[sid]===s.gender)sameGenderRow++}
+        for(let rr=0;rr<tr;rr++){const sid=seats[rr+'-'+c];if(sid&&gm[sid]===s.gender)sameGenderCol++}
+        sc-=sameGenderRow*2.5;
+        sc-=sameGenderCol*2.5;
+
+        // 男女交替：作为打分项，相邻异性加分、同性减分（所有规则同时生效）
+        if(S.rules&&S.rules.gender_alt){
+          [seats[r+'-'+(c-1)],seats[r+'-'+(c+1)]].forEach(nsid=>{
+            if(nsid&&gm[nsid]&&gm[nsid]!==s.gender)sc+=6;
+            else if(nsid&&gm[nsid]===s.gender)sc-=4;
+          });
+        }
+
+        if(sc>bs){bs=sc;best=k}
+      }
+      if(best){
+        seats[best]=String(s.id);
+      }else{
+        // 座位不足：告警而不是无声丢弃
+        const remain=queue.length+1;
+        toast('座位不足，尚有 '+remain+' 名学生无法分配','warning');
+        break;
+      }
+    }
+    return seats;
+  }
+
+  // 4) 多方案尝试（最多 40 次），优先取性别分布无违规的方案
+  let bestSeats=null,bestV=Infinity;
+  for(let attempt=0;attempt<40;attempt++){
+    const cand=place(shuffleArr([...base]));
+    const v=genderViolations(cand,cl,tr);
+    if(v<bestV){bestV=v;bestSeats=cand}
+    if(v===0)break;
+  }
+  // 5) 兜底：仍有违规则做局部异性交换调优
+  if(bestV>0)bestSeats=fixGenderSpread(bestSeats,cl,tr);
+
+  S.seats=bestSeats;
+  S.arrangeCount=(S.arrangeCount||0)+1;
+  saveHist();renderAll();
+  const v=genderViolations(S.seats,cl,tr);
+  toast('已生成第'+S.arrangeCount+'套方案'+(v===0?' · 性别分布均衡':' · 仍有'+v+'处性别集中'),v===0?'success':'warning');
+}
+
+// ===== 操作 =====
+function doRotateForward(){
+  if(S.mode==='single'){toast('单人模式不支持轮换','warning');return}
+  const ns={};
+  for(const[k,sid]of Object.entries(S.seats)){if(k.startsWith('vip-')){ns[k]=sid;continue}const[r,c]=k.split('-').map(Number);const g=Math.floor(c/S.cpg);const ng=(g+1)%S.groups;const nc=ng*S.cpg+(c%S.cpg);ns[r+'-'+nc]=sid}
+  S.seats=ns;saveHist();renderAll();toast('依次轮换完成（1→2, 2→3, ... →1）','success')
+}
+function openCustomRotate(){
+  if(S.mode==='single'){toast('单人模式不支持轮换','warning');return}
+  const list=document.getElementById('rotateCustomList');list.innerHTML='';
+  for(let g=0;g<S.groups;g++){
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';
+    const lbl=document.createElement('span');lbl.style.cssText='font-size:13px;min-width:70px';lbl.textContent='第'+(g+1)+'大组 →';row.appendChild(lbl);
+    const sel=document.createElement('select');sel.style.cssText='padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;flex:1';sel.id='rotSel'+g;
+    for(let t=0;t<S.groups;t++){const o=document.createElement('option');o.value=t;o.textContent='移到第'+(t+1)+'大组位';sel.appendChild(o)}
+    sel.value=g;row.appendChild(sel);
+    list.appendChild(row)
+  }
+  document.getElementById('rotateModal').classList.add('on')
+}
+function confirmCustomRotate(){
+  const map=[];for(let g=0;g<S.groups;g++)map.push(parseInt(document.getElementById('rotSel'+g).value));
+  const sorted=[...map].sort();for(let i=0;i<S.groups;i++)if(sorted[i]!==i){toast('目标位置必须一一对应，不能重复','error');return}
+  const ns={};
+  for(const[k,sid]of Object.entries(S.seats)){if(k.startsWith('vip-')){ns[k]=sid;continue}const[r,c]=k.split('-').map(Number);const g=Math.floor(c/S.cpg);const ng=map[g];const nc=ng*S.cpg+(c%S.cpg);ns[r+'-'+nc]=sid}
+  S.seats=ns;saveHist();renderAll();closeM('rotateModal');toast('自定义轮换完成','success')
+}
+function toggleSwap(){S.swap=!S.swap;S.swap1=null;const b=document.getElementById('swapBtn');if(S.swap){b.classList.add('on');toast('交换模式：点两个座位','warning')}else{b.classList.remove('on');toast('交换已关闭','success')}renderSeats()}
+function toggleShowTags(){S.showTags=!S.showTags;const b=document.getElementById('tagBtn');if(S.showTags){b.classList.add('on');b.textContent='🏷️ 隐藏标签'}else{b.classList.remove('on');b.textContent='🏷️ 显示标签'}saveL();renderSeats()}
+function clearSeats(){if(!Object.keys(S.seats).length){toast('已为空','warning');return}if(confirm('确定清空？')){S.seats={};saveHist();renderAll();toast('已清空','success')}}
+
+// ===== 右键 =====
+function ctxAct(a){document.getElementById('ctxMenu').classList.remove('on');const k=S.ctxSeat;if(!k)return;const sid=S.seats[k];const s=sid?S.students.find(x=>x.id===sid):null;if(!s)return;
+  switch(a){case'remove':delete S.seats[k];saveHist();renderAll();toast(s.n+' 已移出','success');break;case'swap':S.swap=true;S.swap1=k;document.getElementById('swapBtn').classList.add('on');toast('已选 '+s.n+'，点另一座位','warning');break;case'editTags':openTagEditor(sid);break;case'vip':{S.vipSids=S.vipSids||[];const vn=vipSeats().length;const i=S.vipSids.indexOf(String(sid));if(i>=0){S.vipSids.splice(i,1);toast(s.n+' 已取消 VIP','warning')}else{if(vn<=0){toast('请先在「座位管理」中设置 VIP 座位数','warning');break}if(S.vipSids.length>=vn){toast('VIP 座位已满（'+vn+'个），可先在设置中增加数量','warning');break}S.vipSids.push(String(sid));toast('已设 VIP，排座时优先安排到讲台旁','success')}saveL();renderAll();break}case'myopia':toggleTag(sid,'myopia');break;case'short':s.height=s.height==='short'?'normal':'short';saveHist();renderAll();break;case'leader':toggleTag(sid,'leader');break;case'active':toggleTag(sid,'active');break;case'discipline':toggleTag(sid,'discipline');break;case'grade':toggleTag(sid,'grade');break;case'gleader':toggleTag(sid,'gleader');break;case'lock':if(S.locked[k]){delete S.locked[k];saveL();renderAll();toast('座位已解锁','success')}else{S.locked[k]=true;saveL();renderAll();toast('座位已锁定，随机排座不会移动','success')}break;}}
+
+// ===== 配对 =====
+function updPairSel(){const s1=document.getElementById('p1'),s2=document.getElementById('p2');if(!s1)return;s1.innerHTML='<option value="">选学生...</option>';s2.innerHTML='<option value="">选学生...</option>';S.students.forEach(s=>{s1.innerHTML+='<option value="'+s.id+'">'+s.n+'</option>';s2.innerHTML+='<option value="'+s.id+'">'+s.n+'</option>'});renderPairs()}
+function addPair(){const a=document.getElementById('p1').value,b=document.getElementById('p2').value;if(!a||!b||a===b){toast('请选两个不同学生','error');return}if(S.pairs.some(([x,y])=>(x===a&&y===b)||(x===b&&y===a))){toast('已存在','warning');return}S.pairs.push([a,b]);saveHist();renderPairs();toast('已添加','success')}
+function rmPair(i){S.pairs.splice(i,1);saveHist();renderPairs()}
+function renderPairs(){const l=document.getElementById('pl');if(!l)return;l.innerHTML='';S.pairs.forEach((p,i)=>{const a=S.students.find(s=>s.id===p[0]),b=S.students.find(s=>s.id===p[1]);if(!a||!b)return;const it=document.createElement('div');it.className='pi';it.innerHTML='<span>🚫 '+a.n+' ↔ '+b.n+'</span><span class="rm" onclick="rmPair('+i+')">✕</span>';l.appendChild(it)})}
+
+// ===== 规则 =====
+function toggleRule(el,r){S.rules[r]=!S.rules[r];el.classList.toggle('on');renderCons();saveL()}
+function updCN(){S.cn=document.getElementById('cgn').value;document.getElementById('cn').textContent=S.cn;saveL()}
+
+// ===== 版本 =====
+function saveCur(){saveL();toast('已保存','success')}
+function saveVer(){
+  const n=document.getElementById('vn').value.trim();if(!n){toast('请输入版本名','error');return}
+  const v={id:uid(),n,date:new Date().toISOString(),data:{cn:S.cn,mode:S.mode,groups:S.groups,cpg:S.cpg,rows:S.rows,singleCols:S.singleCols,singleRows:S.singleRows,smallSplit:S.smallSplit,flipV:S.flipV,flipH:S.flipH,myopiaRows:S.myopiaRows,shortRows:S.shortRows,rules:S.rules,vipCount:S.vipCount||0,vipSids:S.vipSids||[],students:JSON.parse(JSON.stringify(S.students)),seats:JSON.parse(JSON.stringify(S.seats)),pairs:JSON.parse(JSON.stringify(S.pairs))}};
+  S.versions.push(v);S.curVer=v.id;document.getElementById('vn').value='';saveL();renderVerL();toast('版本「'+n+'」已保存','success')
+}
+function loadVer(id){const v=S.versions.find(x=>x.id===id);if(!v)return;const d=v.data;S.cn=d.cn;S.mode=d.mode||'group';S.groups=d.groups;S.cpg=d.cpg;S.rows=d.rows;S.singleCols=d.singleCols||7;S.singleRows=d.singleRows||7;S.smallSplit=d.smallSplit||6;S.flipV=d.flipV;S.flipH=d.flipH;S.myopiaRows=d.myopiaRows;S.shortRows=d.shortRows;S.rules=d.rules;S.vipCount=d.vipCount||0;S.vipSids=d.vipSids||[];S.students=JSON.parse(JSON.stringify(d.students));S.seats=JSON.parse(JSON.stringify(d.seats));S.pairs=JSON.parse(JSON.stringify(d.pairs));S.curVer=id;
+  document.getElementById('cgg').value=S.groups;document.getElementById('cgc').value=S.cpg;document.getElementById('cgr').value=S.rows;document.getElementById('cgm').value=S.myopiaRows;document.getElementById('cgs').value=S.shortRows;document.getElementById('cgn').value=S.cn;document.getElementById('cn').textContent=S.cn;
+  saveL();renderAll();renderVerL();toast('已切换到「'+v.n+'」','success')}
+function delVer(id){if(!confirm('确定删除？'))return;S.versions=S.versions.filter(v=>v.id!==id);if(S.curVer===id)S.curVer=null;saveL();renderVerL();toast('已删除','success')}
+function renderVerL(){const l=document.getElementById('vl');l.innerHTML='';if(!S.versions.length){l.innerHTML='<div style="text-align:center;color:var(--tm);padding:20px">暂无版本<br>点击上方保存为新版本</div>';return}S.versions.slice().reverse().forEach(v=>{const d=new Date(v.date);const it=document.createElement('div');it.className='vi'+(v.id===S.curVer?' on':'');it.innerHTML='<div class="vn">📦 '+v.n+'</div><div class="vd">'+d.toLocaleString('zh-CN')+'</div><div class="va"><button class="btn btn-sm btn-s" onclick="event.stopPropagation();loadVer(\''+v.id+'\')">切换</button><button class="btn btn-sm btn-d" onclick="event.stopPropagation();delVer(\''+v.id+'\')">删除</button></div>';it.onclick=()=>loadVer(v.id);l.appendChild(it)})}
+
+// ===== 统计 =====
+function statTab(t,b){S.statT=t;document.querySelectorAll('.tbb').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderStatC()}
+function renderStatC(){const c=document.getElementById('sc');c.innerHTML='';if(!S.versions.length){c.innerHTML='<div style="text-align:center;color:var(--tm);padding:30px">暂无版本数据<br>保存版本后可统计</div>';return}
+  const all=S.versions.map(v=>v.data);
+  if(S.statT==='front'){
+    const cnt={};S.students.forEach(s=>cnt[s.id]=0);all.forEach(d=>{for(const[k,sid]of Object.entries(d.seats)){if(k.startsWith('vip-'))continue;if(parseInt(k.split('-')[0])===0)cnt[sid]=(cnt[sid]||0)+1}});
+    const sorted=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+    const t=document.createElement('div');t.className='srt';t.textContent='第一排就座次数（'+all.length+'个版本）';c.appendChild(t);
+    sorted.forEach(([sid,n])=>{const s=S.students.find(x=>x.id===sid);if(!s)return;const r=document.createElement('div');r.className='srr';r.innerHTML='<span>'+s.n+'</span><span style="font-weight:600;color:'+(n>0?'var(--success)':'var(--tm)')+'">'+n+' 次</span>';c.appendChild(r)})
+  }else if(S.statT==='deskmate'){
+    const pc={};all.forEach(d=>{const cl=d.groups*d.cpg;for(let r=0;r<d.rows;r++)for(let c=0;c<cl;c++){const k1=r+'-'+c,k2=r+'-'+(c+1),s1=d.seats[k1],s2=d.seats[k2];if(s1&&s2){const key=[s1,s2].sort().join('|');pc[key]=(pc[key]||0)+1}}});
+    const sorted=Object.entries(pc).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+    const t=document.createElement('div');t.className='srt';t.textContent='同桌次数（相邻列同排）';c.appendChild(t);
+    if(!sorted.length){c.innerHTML+='<div style="text-align:center;color:var(--tm);padding:20px">暂无数据</div>';return}
+    sorted.forEach(([k,n])=>{const[a,b]=k.split('|');const s1=S.students.find(x=>x.id===a),s2=S.students.find(x=>x.id===b);if(!s1||!s2)return;const r=document.createElement('div');r.className='srr';r.innerHTML='<span>'+s1.n+' ↔ '+s2.n+'</span><span style="font-weight:600">'+n+'次</span>';c.appendChild(r)})
+  }else if(S.statT==='group'){
+    const gc={};all.forEach(d=>{const cl=d.groups*d.cpg;const grps={};for(let r=0;r<d.rows;r++)for(let c=0;c<cl;c++){const sid=d.seats[r+'-'+c];if(sid){const g=Math.floor(c/d.cpg);grps[g]=grps[g]||[];grps[g].push(sid)}}Object.values(grps).forEach(m=>{for(let i=0;i<m.length;i++)for(let j=i+1;j<m.length;j++){const key=[m[i],m[j]].sort().join('|');gc[key]=(gc[key]||0)+1}})});
+    const sorted=Object.entries(gc).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,80);
+    const t=document.createElement('div');t.className='srt';t.textContent='同组次数（前80对）';c.appendChild(t);
+    if(!sorted.length){c.innerHTML+='<div style="text-align:center;color:var(--tm);padding:20px">暂无数据</div>';return}
+    sorted.forEach(([k,n])=>{const[a,b]=k.split('|');const s1=S.students.find(x=>x.id===a),s2=S.students.find(x=>x.id===b);if(!s1||!s2)return;const r=document.createElement('div');r.className='srr';r.innerHTML='<span>'+s1.n+' & '+s2.n+'</span><span style="font-weight:600">'+n+'次</span>';c.appendChild(r)})
+  }else if(S.statT==='position'){
+    const t=document.createElement('div');t.className='srt';t.textContent='学生位置分布（平均排数）';c.appendChild(t);
+    S.students.forEach(s=>{const ps=[];all.forEach(d=>{for(const[k,sid]of Object.entries(d.seats))if(sid===s.id)ps.push(parseInt(k.split('-')[0]))});if(!ps.length)return;const avg=(ps.reduce((a,b)=>a+b,0)/ps.length).toFixed(1);const r=document.createElement('div');r.className='srr';r.innerHTML='<span>'+s.n+'</span><span>平均第'+avg+'排 ('+ps.length+'版本)</span>';c.appendChild(r)})
+  }
+}
+
+// ===== 导出 Word (A4横版) =====
+async function exportDocx(){
+  if(typeof docx==='undefined'){toast('Word库未加载','error');return}
+  const{Document,Packer,Paragraph,Table,TableRow,TableCell,TextRun,WidthType,AlignmentType,BorderStyle,PageOrientation,HeightRule,VerticalAlign}=docx;
+  const cl=cols(),ai=aisles(),totalCols=cl+ai.length;
+  // 构建物理列序：交替排列座位列和间隔列
+  // aisles()返回的是座位列索引(0-based)，表示在该座位列之前插入间隔列
+  // 例如 groups=4,cpg=2 → aisles()=[2,4,6] → 物理列: S0,S1,A,S2,S3,A,S4,S5,A,S6,S7
+  const physCols=[]; // {type:'seat'|'aisle', seatIdx}
+  let aiSet=new Set(ai);
+  for(let sc=0;sc<cl;sc++){
+    if(aiSet.has(sc))physCols.push({type:'aisle'});
+    physCols.push({type:'seat',seatIdx:sc});
+  }
+  // 确保physCols长度===totalCols
+  // 列宽：座位列1728 DXA，间隔列271 DXA
+  const SEAT_W=1728, AISLE_W=271;
+  const colWidths=physCols.map(p=>p.type==='seat'?SEAT_W:AISLE_W);
+  // 微调最后一列使总宽=14620
+  const tblW=14620;
+  const sumW=colWidths.reduce((a,b)=>a+b,0);
+  if(sumW!==tblW)colWidths[colWidths.length-1]+=(tblW-sumW);
+  // 边框定义
+  const seatBorder={style:BorderStyle.SINGLE,size:4,color:'000000'};
+  const noBorder={style:BorderStyle.NONE,size:0,color:'FFFFFF'};
+  const cellBordersSeat={top:seatBorder,bottom:seatBorder,left:seatBorder,right:seatBorder};
+  const cellBordersAisle={top:noBorder,bottom:noBorder,left:noBorder,right:noBorder};
+  // 单元格内边距
+  const cellMargin={top:0,left:108,bottom:0,right:108};
+  // 字体
+  const FONT='宋体';
+  const rows=[];
+  // 辅助：创建段落
+  const mkPara=(text,size)=>new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text,font:FONT,size})]});
+  // 辅助：创建座位单元格（hasBorder=false时无边框，用于尾部空座位）
+  const mkSeatCell=(text,span,hasBorder=true)=>new TableCell({
+    children:[mkPara(text,40)],
+    columnSpan:span,
+    verticalAlign:VerticalAlign.CENTER,
+    borders:hasBorder?cellBordersSeat:cellBordersAisle,
+    margins:cellMargin
+  });
+  // 辅助：创建间隔列单元格
+  const mkAisleCell=()=>new TableCell({
+    children:[new Paragraph({children:[]})],
+    verticalAlign:VerticalAlign.CENTER,
+    borders:cellBordersAisle,
+    margins:cellMargin
+  });
+
+  // 第1行：座位表标题（合并所有列）
+  rows.push(new TableRow({
+    height:{value:1000,rule:HeightRule.ATLEAST},
+    children:[new TableCell({
+      children:[mkPara('座位表',52)],
+      columnSpan:totalCols,
+      verticalAlign:VerticalAlign.CENTER,
+      borders:cellBordersAisle,
+      margins:cellMargin
+    })]
+  }));
+
+  // 第2行：讲台（合并所有列）
+  rows.push(new TableRow({
+    height:{value:1000,rule:HeightRule.ATLEAST},
+    children:[new TableCell({
+      children:[mkPara('【 讲 台 】',40)],
+      columnSpan:totalCols,
+      verticalAlign:VerticalAlign.CENTER,
+      borders:cellBordersAisle,
+      margins:cellMargin
+    })]
+  }));
+
+  // 第3行：大组标题（仅group/small模式，单人模式跳过）
+  if(S.mode==='group'||S.mode==='small'){
+    const grpRowCells=[];
+    for(let g=0;g<S.groups;g++){
+      const gName='第'+(S.flipH?(S.groups-g):(g+1))+'大组';
+      if(g>0)grpRowCells.push(mkAisleCell());
+      grpRowCells.push(new TableCell({
+        children:[mkPara(gName,40)],
+        columnSpan:S.cpg,
+        verticalAlign:VerticalAlign.CENTER,
+        borders:cellBordersSeat,
+        margins:cellMargin
+      }));
+    }
+    rows.push(new TableRow({
+      height:{value:760,rule:HeightRule.ATLEAST},
+      children:grpRowCells
+    }));
+  }
+
+  // 座位行
+  // 判断某座位格是否为尾部空座位（该列中此行之后不再有学生）
+  const isTailEmpty=(rowIdx,seatColIdx)=>{
+    const tr=totalRows();
+    for(let r=rowIdx+1;r<tr;r++){const lr=logRow(r),lc=logCol(seatColIdx);if(S.seats[lr+'-'+lc])return false}
+    return true
+  };
+  for(let pr=0;pr<totalRows();pr++){
+    const lr=logRow(pr);
+    const cells=[];
+    for(const pc of physCols){
+      if(pc.type==='aisle'){
+        cells.push(mkAisleCell());
+      }else{
+        const lc=logCol(pc.seatIdx);
+        const key=lr+'-'+lc;
+        const sid=S.seats[key];
+        const s=sid?S.students.find(x=>x.id===sid):null;
+        // 空座位：尾部空位无边框，中间空位有边框
+        const hasB=sid?true:!isTailEmpty(pr,pc.seatIdx);
+        cells.push(mkSeatCell(s?s.n:'',1,hasB));
+      }
+    }
+    rows.push(new TableRow({
+      height:{value:760,rule:HeightRule.ATLEAST},
+      children:cells
+    }));
+  }
+
+  // flipV重排
+  let finalRows;
+  if(S.flipV){
+    const hasGrp=S.mode==='group'||S.mode==='small';
+    // 默认顺序：rows[0]=标题, rows[1]=讲台, [rows[2]=大组标题], 座位行...
+    // flipV: 标题, 座位行..., [大组标题], 讲台
+    finalRows=[rows[0]];
+    const seatStart=hasGrp?3:2;
+    finalRows=finalRows.concat(rows.slice(seatStart));
+    if(hasGrp)finalRows.push(rows[2]);
+    finalRows.push(rows[1]);
+  }else{
+    finalRows=rows;
+  }
+
+  const doc=new Document({
+    sections:[{
+      properties:{
+        page:{
+          size:{width:11906,height:16838,orientation:PageOrientation.LANDSCAPE},
+          margin:{top:850,bottom:850,left:1134,right:1134}
+        }
+      },
+      children:[new Table({
+        rows:finalRows,
+        width:{size:tblW,type:WidthType.DXA},
+        columnWidths:colWidths,
+        indent:{size:88,type:WidthType.DXA}
+      })]
+    }]
+  });
+  const blob=await Packer.toBlob(doc);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=S.cn+'_座位表.docx';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Word已导出','success')
+}
+
+// ===== 导出 Excel (A4横版格式) =====
+function exportXlsx(){
+  if(typeof XLSX==='undefined'){toast('Excel库未加载','error');return}
+  const cl=cols(),ai=aisles(),totalCols=cl+ai.length;
+  const physCols=[];
+  let aiSet=new Set(ai);
+  for(let sc=0;sc<cl;sc++){if(aiSet.has(sc))physCols.push({type:'aisle'});physCols.push({type:'seat',colIdx:sc})}
+  // 样式
+  const FN='宋体';
+  const tB={style:'thin',color:{rgb:'000000'}};
+  const nB={style:'none'};
+  const bAll={top:tB,bottom:tB,left:tB,right:tB};
+  const bNone={top:nB,bottom:nB,left:nB,right:nB};
+  const sTitle={font:{name:FN,sz:26,color:{rgb:'000000'}},alignment:{horizontal:'center',vertical:'center'},border:bNone};
+  const sPodium={font:{name:FN,sz:20,color:{rgb:'000000'}},alignment:{horizontal:'center',vertical:'center'},border:bNone};
+  const sGroup={font:{name:FN,sz:20,color:{rgb:'000000'}},alignment:{horizontal:'center',vertical:'center'},border:bAll};
+  const sSeat={font:{name:FN,sz:20,color:{rgb:'000000'}},alignment:{horizontal:'center',vertical:'center'},border:bAll};
+  const sEmpty={font:{name:FN,sz:20},alignment:{horizontal:'center',vertical:'center'},border:bNone};
+  const sAisle={font:{name:FN,sz:20},alignment:{horizontal:'center',vertical:'center'},border:bNone};
+  // 找大组起始列
+  const gStart=(g)=>{for(let i=0;i<physCols.length;i++){if(physCols[i].type==='seat'&&physCols[i].colIdx===g*S.cpg)return i}return -1};
+  const gRanges=[];
+  if(S.mode==='group'||S.mode==='small'){for(let g=0;g<S.groups;g++){const s=gStart(g);gRanges.push({start:s,end:s+S.cpg-1})}}
+  // 判断某座位格是否为尾部空座位（该列中此行之后不再有学生）
+  const isTailEmpty=(rowIdx,colIdx)=>{
+    const tr=totalRows();
+    for(let r=rowIdx+1;r<tr;r++){const lr=logRow(r),lc=logCol(colIdx);if(S.seats[lr+'-'+lc])return false}
+    return true
+  };
+  // 构建数据
+  const aoa=[],heights=[],merges=[];
+  let curRow=0;
+  const buildRow=(vals,styles,h)=>{const row={};vals.forEach((v,i)=>{const a=XLSX.utils.encode_cell({r:curRow,c:i});row[a]={t:'s',v:v,s:styles[i]||sAisle}});aoa.push(row);heights.push({hpt:h});curRow++};
+  // 列宽：座位12.5，过道2.5
+  const wsCols=physCols.map(p=>p.type==='seat'?{wch:12.5}:{wch:2.5});
+  // 标题行
+  const tRow=physCols.map(()=>'');tRow[0]='座位表';
+  buildRow(tRow,physCols.map(()=>sTitle),50);
+  merges.push({s:{r:0,c:0},e:{r:0,c:totalCols-1}});
+  // 讲台行
+  const pRow=physCols.map(()=>'');pRow[0]='【 讲 台 】';
+  buildRow(pRow,physCols.map(()=>sPodium),50);
+  merges.push({s:{r:1,c:0},e:{r:1,c:totalCols-1}});
+  // 大组标题行（单人模式跳过）
+  const hasGroupRow=S.mode==='group'||S.mode==='small';
+  if(hasGroupRow){
+    const gRow=physCols.map(()=>'');
+    const gSts=physCols.map(()=>sAisle);
+    for(let g=0;g<S.groups;g++){
+      const gName='第'+(S.flipH?(S.groups-g):(g+1))+'大组';
+      const r=gRanges[g];
+      gRow[r.start]=gName;
+      for(let c=r.start;c<=r.end;c++)gSts[c]=sGroup;
+      if(S.cpg>1)merges.push({s:{r:2,c:r.start},e:{r:2,c:r.end}})
+    }
+    buildRow(gRow,gSts,38);
+  }
+  // 座位行
+  const seatRowStart=curRow;
+  for(let pr=0;pr<totalRows();pr++){
+    const lr=logRow(pr);
+    const vals=physCols.map(p=>{if(p.type==='aisle')return'';
+      const lc=logCol(p.colIdx);const key=lr+'-'+lc;const sid=S.seats[key];const s=sid?S.students.find(x=>x.id===sid):null;return s?s.n:''
+    });
+    const sts=physCols.map((p,i)=>{if(p.type==='aisle')return sAisle;
+      // 空座位：判断是否为尾部空座位
+      const lc=logCol(p.colIdx);const key=lr+'-'+lc;const sid=S.seats[key];
+      if(!sid){
+        // 空座位：中间空位有边框，尾部空位无边框
+        return isTailEmpty(pr,p.colIdx)?sEmpty:sSeat
+      }
+      return sSeat
+    });
+    buildRow(vals,sts,50)
+  }
+  // flipV重排
+  if(S.flipV){
+    const tr=totalRows();
+    // 默认：标题0 讲台1 [大组2] 座位3..
+    // flipV：标题 座位 [大组] 讲台
+    const groupIdx=hasGroupRow?2:-1;
+    const seatStart=hasGroupRow?3:2;
+    const newArr=[aoa[0],...aoa.slice(seatStart)];
+    const newH=[heights[0],...heights.slice(seatStart)];
+    if(hasGroupRow){newArr.push(aoa[2]);newH.push(heights[2])}
+    newArr.push(aoa[1]);newH.push(heights[1]);
+    // 重建merges
+    const newMerges=[{s:{r:0,c:0},e:{r:0,c:totalCols-1}}];
+    let mergeOffset=tr+1;
+    if(hasGroupRow){
+      for(let g=0;g<S.groups;g++){const r=gRanges[g];if(S.cpg>1)newMerges.push({s:{r:tr+1,c:r.start},e:{r:tr+1,c:r.end}})}
+      mergeOffset=tr+2
+    }
+    newMerges.push({s:{r:mergeOffset,c:0},e:{r:mergeOffset,c:totalCols-1}});
+    const finalAoa=[];
+    newArr.forEach((rowObj,rIdx)=>{const newRow={};for(const[addr,cell]of Object.entries(rowObj)){const col=XLSX.utils.decode_cell(addr).c;const newAddr=XLSX.utils.encode_cell({r:rIdx,c:col});newRow[newAddr]={...cell}}finalAoa.push(newRow)});
+    aoa.length=0;aoa.push(...finalAoa);
+    heights.length=0;heights.push(...newH);
+    merges.length=0;merges.push(...newMerges)
+  }
+  // 创建worksheet
+  const ws=XLSX.utils.aoa_to_sheet([]);
+  for(let r=0;r<aoa.length;r++){const rowObj=aoa[r];for(const[addr,cell]of Object.entries(rowObj)){ws[addr]=cell}if(!ws['!rows'])ws['!rows']=[];ws['!rows'][r]=heights[r]}
+  ws['!cols']=wsCols;
+  ws['!merges']=merges;
+  ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:aoa.length-1,c:totalCols-1}});
+  ws['!margins']={left:0.5,right:0.5,top:0.5,bottom:0.5,header:0.3,footer:0.3};
+  // xlsx-js-style 使用 !page 设置页面方向
+  ws['!page']={orientation:'landscape',paperSize:9,fitToWidth:1,fitToHeight:1};
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'座位表');
+  XLSX.writeFile(wb,S.cn+'_座位表.xlsx',{cellStyles:true});
+  toast('Excel已导出','success')
+}
+
+// ===== 弹窗 =====
+function openStu(){SML_SEL=new Set();renderSML();document.getElementById('stuModal').classList.add('on')}
+function openCfg(){
+  document.getElementById('cgn').value=S.cn;
+  document.getElementById('cgg').value=S.groups;document.getElementById('cgc').value=S.cpg;document.getElementById('cgr').value=S.rows;
+  document.getElementById('cgm').value=S.myopiaRows;document.getElementById('cgs').value=S.shortRows;
+  if(document.getElementById('cgv'))document.getElementById('cgv').value=S.vipCount||0;
+  if(document.getElementById('cgs_col'))document.getElementById('cgs_col').value=S.singleCols;
+  if(document.getElementById('cgs_row'))document.getElementById('cgs_row').value=S.singleRows;
+  if(document.getElementById('cgs_n'))document.getElementById('cgs_n').value=S.smallSplit;
+  // 同步模式按钮
+  document.getElementById('modeGroup').classList.toggle('on',S.mode==='group');
+  document.getElementById('modeSingle').classList.toggle('on',S.mode==='single');
+  document.getElementById('modeSmall').classList.toggle('on',S.mode==='small');
+  document.getElementById('cfgGroup').style.display=S.mode==='group'?'block':'none';
+  document.getElementById('cfgSingle').style.display=S.mode==='single'?'block':'none';
+  document.getElementById('cfgSmall').style.display=S.mode==='small'?'block':'none';
+  updPairSel();document.getElementById('cfgModal').classList.add('on')
+}
+function openVer(){renderVerL();document.getElementById('verModal').classList.add('on')}
+function openStat(){renderStatC();document.getElementById('statModal').classList.add('on')}
+function closeM(id){document.getElementById(id).classList.remove('on')}
+document.addEventListener('click',e=>{if(!e.target.closest('#ctxMenu'))document.getElementById('ctxMenu').classList.remove('on')});
+
+// ===== 渲染 =====
+function renderAll(){renderSeats();renderSList();renderStats();renderCons()}
+
+// ===== 工作台同步模式 (wb=1) =====
+// 由班主任工作台以 iframe(?wb=1) 嵌入时启用：
+//   1) 启动/收到 storage 事件时，从 localStorage 读取工作台花名册并合并为学生
+//   2) 每次数据变更(saveL)后，通过 postMessage 把最新座次回传给父页面
+const WB_ROSTER_KEY='wb_seatmap_roster';
+const WB_MODE=new URLSearchParams(location.search).has('wb');
+let wbRoster=[];
+function readWbRoster(){try{wbRoster=JSON.parse(localStorage.getItem(WB_ROSTER_KEY)||'[]')}catch(e){wbRoster=[]}}
+function parseWbTags(remark){
+  const tags=[];const map={近视:'myopia',班干部:'leader',好动:'active',纪律好:'discipline',成绩好:'grade',小组长:'gleader'};
+  String(remark||'').split(/[|,，、;；\s]+/).forEach(x=>{if(map[x])tags.push(map[x])});
+  return tags
+}
+// 工作台花名册 → 学生列表（按姓名去重合并）
+function mergeWbRoster(){
+  readWbRoster();
+  const byName={};S.students.forEach(s=>byName[s.n]=s);
+  wbRoster.forEach(r=>{
+    const n=String(r.name||'').trim();if(!n)return;
+    if(byName[n]){if(r.studentNo)byName[n].studentNo=r.studentNo;return}
+    const s={id:uid(),n,gender:(r.gender==='女'||r.gender==='female')?'female':'male',height:'normal',tags:parseWbTags(r.remark)};
+    S.students.push(s);byName[n]=s
+  })
+}
+// 把当前座次回传给工作台（结构与父页面 onSeatMapMessage 约定一致）
+function postWbResult(){
+  if(!WB_MODE)return;
+  const cl=cols(),tr=totalRows(),ai=aisles(),aiSet=new Set(ai);
+  const phys=[];for(let sc=0;sc<cl;sc++){if(aiSet.has(sc))phys.push({type:'aisle'});phys.push({type:'seat',seatIdx:sc})}
+  const seating=[];
+  for(let pr=0;pr<tr;pr++){
+    const lr=logRow(pr);const row=[];
+    phys.forEach(p=>{
+      if(p.type==='aisle'){row.push({isEmpty:true});return}
+      const lc=logCol(p.seatIdx),key=lr+'-'+lc,sid=S.seats[key];
+      const s=sid?S.students.find(x=>x.id===sid):null;
+      if(s)row.push({student_id:s.studentNo||'',name:s.n,gender:s.gender==='female'?'女':'男',height:s.height,vision:(s.tags||[]).includes('myopia')?1:0,score:null});
+      else row.push({isEmpty:true})
+    });
+    seating.push(row)
+  }
+  const columnGroups=phys.map(p=>p.type==='aisle'?0:(S.mode==='single'?0:Math.floor(p.seatIdx/S.cpg)+1));
+  window.parent.postMessage({type:'wb-seatmap-result',seating,columnGroups},'*')
+}
+// 工作台修改花名册后（同源 localStorage），实时合并
+window.addEventListener('storage',e=>{
+  if(WB_MODE&&e.key===WB_ROSTER_KEY){mergeWbRoster();saveL();renderAll();toast('已同步花名册变更','success')}
+});
+
+// ===== 初始化 =====
+function init(){
+  loadL();
+  // 工作台同步模式：启动时合并花名册
+  if(WB_MODE)mergeWbRoster();
+  // 清理旧标签：删除已废弃的 quiet/trouble
+  const deprecatedTags=new Set(['quiet','trouble']);
+  S.students.forEach(s=>{if(s.tags)s.tags=s.tags.filter(t=>!deprecatedTags.has(t))});
+  document.getElementById('cgg').value=S.groups;document.getElementById('cgc').value=S.cpg;document.getElementById('cgr').value=S.rows;
+  document.getElementById('cgm').value=S.myopiaRows;document.getElementById('cgs').value=S.shortRows;
+  document.getElementById('cgn').value=S.cn;document.getElementById('cn').textContent=S.cn;
+  if(document.getElementById('cgs_col'))document.getElementById('cgs_col').value=S.singleCols;
+  if(document.getElementById('cgs_row'))document.getElementById('cgs_row').value=S.singleRows;
+  if(document.getElementById('cgs_n'))document.getElementById('cgs_n').value=S.smallSplit;
+  const tb=document.getElementById('tagBtn');if(S.showTags){tb.classList.add('on');tb.textContent='🏷️ 隐藏标签'}else{tb.classList.remove('on');tb.textContent='🏷️ 显示标签'}
+  saveHist();renderAll()
+}
+init();
+</script>
+</body>
+</html>

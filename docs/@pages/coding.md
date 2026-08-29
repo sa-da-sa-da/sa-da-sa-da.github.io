@@ -86,7 +86,7 @@ copyright: false
         font-size: 14px;
         transition: background-color 0.2s ease;
       ">重试</button>
-      <a href="https://e.sakaay.com/" target="_blank" rel="noopener noreferrer" style="
+      <a href="https://ee.sakaay.com/" target="_blank" rel="noopener noreferrer" style="
         padding: 8px 16px;
         background: #f5f5f5;
         color: #333;
@@ -170,7 +170,7 @@ function loadTimeWebsite() {
   
   // 创建iframe元素
   const iframe = document.createElement('iframe');
-  iframe.src = 'https://e.sakaay.com/';
+  iframe.src = 'https://ee.sakaay.com/';
   iframe.style.width = '100%';
   iframe.style.minHeight = '100vh';
   iframe.style.height = 'auto';

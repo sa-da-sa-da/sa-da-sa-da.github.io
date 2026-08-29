@@ -11,7 +11,7 @@ hero:
   actions:
     - theme: brand
       text: 编程
-      link: https://e.sakaay.com
+      link: https://ee.sakaay.com
     - theme: alt
       text: 机器人
       link: /reference/config

@@ -15,6 +15,7 @@
       <button class="btn-icon menu-toggle" id="btn-menu" aria-label="打开菜单">☰</button>
       <div class="crumb" id="crumb">加载中…</div>
       <div class="top-actions">
+        <button class="btn btn-ghost" id="btn-version">📦 版本</button>
         <button class="btn btn-ghost" id="btn-backup">💾 备份</button>
         <button class="btn btn-ghost" id="btn-restore">♻ 恢复</button>
       </div>
@@ -23,6 +24,8 @@
   </main>
 </div>
 <div class="modal-mask" id="modal-mask"></div>
+<!-- 第二层弹窗：供学生选择器等嵌套场景使用，避免覆盖下层表单弹窗 -->
+<div class="modal-mask" id="modal-mask-2"></div>
 <div class="toast" id="toast"></div>
 <input type="file" id="file-restore" accept=".json" style="display:none">
 <input type="file" id="file-import" accept=".xlsx,.xls,.csv" style="display:none">
@@ -30,14 +33,41 @@
 <script src="class-workbench-config.js"></script>
 <script src="class-workbench.js"></script>
 <script src="class-workbench-views.js"></script>
-<!-- SheetJS：Excel 导入/导出。CDN 加载失败时回退到本地 vendor/sheetjs.min.js -->
-<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<!-- SheetJS：Excel 导入/导出。
+     异步加载不阻塞页面渲染；CDN 优先，失败自动回退本地 vendor/sheetjs.min.js。
+     加载状态通过 window.WB_XLSX_STATE 暴露：loading / ready / failed。
+     页面不等库就绪即可渲染，点击导入时会按三态给出准确提示。 -->
 <script>
-  if (typeof XLSX === 'undefined') {
+(function () {
+  var CDN = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
+  var LOCAL = 'vendor/sheetjs.min.js';
+  window.WB_XLSX_STATE = 'loading';
+
+  function load(src, onFail) {
     var s = document.createElement('script');
-    s.src = 'vendor/sheetjs.min.js';
+    s.src = src;
+    s.onload = function () {
+      // 占位文件不会定义 XLSX，因此这里能正确识别"回退也失败"
+      if (typeof XLSX !== 'undefined' && XLSX.read) {
+        window.WB_XLSX_STATE = 'ready';
+        console.info('[班主任工作台] SheetJS 就绪：' + src);
+      } else {
+        onFail();
+      }
+    };
+    s.onerror = onFail;
     document.head.appendChild(s);
   }
+
+  load(CDN, function () {
+    // CDN 不可达，回退本地
+    load(LOCAL, function () {
+      // 两者均不可用，降级为 CSV
+      window.WB_XLSX_STATE = 'failed';
+      console.warn('[班主任工作台] SheetJS 不可用（CDN 与本地均失败），导入导出降级为 CSV');
+    });
+  });
+})();
 </script>
 </body>
 </html>
