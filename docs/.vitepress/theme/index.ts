@@ -66,6 +66,8 @@ import ThreeDModelViewer from './components/ThreeDModelViewer.vue'
 import MultipleChoiceQuestion from './components/MultipleChoiceQuestion.vue'
 import FillInTheBlank from './components/FillInTheBlank.vue'
 import PythonEditor from './components/PythonEditor.vue'
+import ToolsGallery from './components/ToolsGallery.vue'
+import AdPopup from './components/AdPopup.vue'
 
 // 引入复制事件（复制后弹窗提示）
 import { useCopyEvent } from "./composables/useCopyEvent.ts";
@@ -167,6 +169,8 @@ export default {
     app.component('MultipleChoiceQuestion', MultipleChoiceQuestion);
     app.component('FillInTheBlank', FillInTheBlank);
     app.component('PythonEditor', PythonEditor);
+    app.component('ToolsGallery', ToolsGallery); // 注册工具展示组件
+    app.component('AdPopup', AdPopup); // 注册广告弹窗组件
     app.component('GoogleAd', GoogleAd); // 注册GoogleAd组件
 
     app.component("emoji-Shiroki", EmojiShiroki); // ◀️ 注入 Emoji 表情库组件布局
