@@ -5,11 +5,11 @@ export const Nav = [
   { text: "🏡首页", link: "/" },
   { text: "📚快捷", 
     items: [
-      { text: "校园文创", link: "/culture" },
+     // { text: "校园文创", link: "/culture" },
       { text: "🔍搜索", link: "/nav" },
       { text: "⏰时间", link: "/time" },
       { text: "📚编程", link: "/program" },
-      { text: "🎯随机点名", link: "/tools/random-roll-call" },
+      { text: "📚工具", link: "/tools/tools-index" },
 
     ],
   },

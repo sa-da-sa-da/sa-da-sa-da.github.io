@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>图像卷积滤镜实验室 · 模糊锐化与边缘检测 · TeachVision 创境</title>
+<style>
+
+html,body{margin:0;padding:0;height:100%;background:#0d0d12;overflow:hidden;}
+#lab-root{position:absolute;inset:0;overflow:hidden;}
+canvas{display:block;}
+button{font-family:inherit;cursor:pointer;}
+input,select{font-family:inherit;}
+
+*{ box-sizing: border-box; margin: 0; padding: 0; }
+.view.active{ display: flex; }
+@keyframes fadeIn{from{ opacity: 0; transform: translateY(8px); }to{ opacity: 1; transform: translateY(0); }}
+@keyframes dialogSlideUp{from{ opacity: 0; transform: translateY(30px); }to{ opacity: 1; transform: translateY(0); }}
+@keyframes blink{50%{ opacity: 0; }}
+@keyframes bob{0%,100%{ transform: translateY(0); }50%{ transform: translateY(-3px); }}
+.choice-panel.active{ display: flex; }
+.lab-wrap{
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.lab-panel{
+  flex: 0 0 288px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 14px;
+  background: linear-gradient(180deg, rgba(16,22,40,0.96), rgba(9,12,24,0.96));
+  border-right: 1px solid rgba(201,162,75,0.28);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,162,75,0.35) transparent;
+}
+.lab-panel::-webkit-scrollbar{ width: 6px; }
+.lab-panel::-webkit-scrollbar-thumb{ background: rgba(201,162,75,0.35); border-radius: 3px; }
+.lab-head{ padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.10); }
+.lab-title{
+  font-size: 19px;
+  letter-spacing: 0.10em;
+  color: #ffd98a;
+}
+.lab-sub{
+  margin-top: 4px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.55);
+}
+.lab-group{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 10px 12px;
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.028);
+}
+.lab-group-title{
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  color: rgba(201,162,75,0.95);
+}
+.lab-btn-row{ display: flex; flex-wrap: wrap; gap: 6px; }
+.lab-btn{
+  flex: 1 1 auto;
+  padding: 7px 10px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  font-family: inherit;
+  color: rgba(255,255,255,0.82);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.lab-btn:hover{ background: rgba(255,255,255,0.13); border-color: rgba(255,217,138,0.5); }
+.lab-btn.active{
+  color: #ffe6ab;
+  background: rgba(201,162,75,0.18);
+  border-color: rgba(201,162,75,0.6);
+}
+.lab-btn.primary{
+  color: #0b1020;
+  background: #ffd98a;
+  border-color: #ffd98a;
+  font-weight: 600;
+}
+.lab-btn.back{
+  margin-top: auto;
+  flex: 0 0 auto;
+  padding: 9px 10px;
+}
+.mol-tab.active{
+  background: rgba(95,182,224,0.18);
+  border-color: rgba(95,182,224,0.6);
+  color: #7fcfee;
+}
+.mol-tab.reaction.active{
+  background: rgba(201,162,75,0.20);
+  border-color: rgba(201,162,75,0.6);
+  color: #e8d49a;
+}
+.lab-canvas-wrap{
+  flex: 1;
+  position: relative;
+  background: #0a0e1a;
+  overflow: hidden;
+  cursor: grab;
+}
+.lab-canvas-wrap:active{ cursor: grabbing; }
+.lab-canvas-wrap canvas{
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.lab-exit{
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.10);
+}
+@media (max-width: 1100px){.lab-panel{ flex-basis: 250px; }}
+#menu-view.active ~ #about-btn{ display: block; }
+.conv-canvas2d{
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #04111c;
+  border-radius: 10px;
+  image-rendering: pixelated;
+}
+.kernel-grid{
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+  justify-content: start;
+}
+.lab-slider-row{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+.lab-slider-row input[type=range]{ flex: 1; accent-color: var(--gold); }
+.lab-slider-row .val{ min-width: 42px; text-align: right; color: var(--gold); font-family: monospace; }
+.lab-presets{ display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.lab-readout{
+  font-size: 12px;
+  color: rgba(232, 238, 246, 0.6);
+  line-height: 1.7;
+  margin-top: 6px;
+  font-family: "JetBrains Mono", "Consolas", monospace;
+}
+#lab-view .lab-wrap{ background: linear-gradient(180deg, #0a1626 0%, #04101c 100%); }
+</style>
+</head>
+<body>
+<div id="lab-root"></div>
+<script type="module">
+import { FilterLab } from './filter-lab.js';
+const root = document.getElementById('lab-root');
+const lab = new FilterLab(root);
+lab.onExit = () => {
+  if (window.parent !== window) window.parent.postMessage({ type: 'lab-exit' }, '*');
+  else history.back();
+};
+lab.start();
+</script>
+</body>
+</html>

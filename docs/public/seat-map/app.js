@@ -6,13 +6,51 @@ let lastSeating = null;  // 最近一次生成的座次（rows×cols 二维数�
 let vipAssignments = []; // VIP 座位分配：长度 = VIP 数，每项为 seat 对象或 null（空 VIP）
 let layoutLocked = false; // 布局是否已锁定（确定布局后为 true，修改布局后为 false）
 
+// 工作台嵌入模式：URL 带 ?wb=1 时启用
+// - 从 localStorage(wb_seatmap_roster) 同步全班花名册
+// - 生成座次后 postMessage 回传给父页面写回 seating 表
+const WB_MODE = new URLSearchParams(location.search).has('wb');
+
 // ==================== 初始化 ====================
 document.addEventListener('DOMContentLoaded', () => {
+    // 工作台嵌入模式：从 localStorage 同步花名册到 currentStudents
+    if (WB_MODE) syncRosterFromWorkbench();
     applyLayoutLive(false);
     bindLayoutInputs();
     updateRuleAvailability(); // 初始布局未确认，禁用所有规则复选框
     updateLayoutButtonAvailability(); // 初始未上传名单，禁用「确定布局」
 });
+
+// 从工作台 localStorage 读取花名册并填入 currentStudents
+// 数据源：parent 页面写入的 wb_seatmap_roster（结构 [{name, studentNo, gender, remark}]）
+function syncRosterFromWorkbench() {
+    try {
+        const raw = localStorage.getItem('wb_seatmap_roster');
+        if (!raw) {
+            showToast('工作台未提供花名册数据', 'warning');
+            return;
+        }
+        const roster = JSON.parse(raw);
+        if (!Array.isArray(roster) || roster.length === 0) {
+            showToast('花名册为空，请先到「学生档案库 · 全班花名册」添加学生', 'warning');
+            return;
+        }
+        currentStudents = roster.map((r, i) => ({
+            name: r.name || `学生${i + 1}`,
+            student_id: r.studentNo || r.name || ('S' + (i + 1)),
+            gender: r.gender || '未知',
+            height: r.height || null,
+            vision: r.vision || null,
+            score: r.score != null ? r.score : null
+        }));
+        updateRuleAvailability();
+        updateLayoutButtonAvailability();
+        showToast(`已从工作台同步 ${currentStudents.length} 名学生`);
+    } catch (e) {
+        console.error('同步花名册失败:', e);
+        showToast('同步花名册失败：' + (e.message || e), 'error');
+    }
+}
 
 // 列数/行数输入框实时（所见即所得）刷新座位网格
 function bindLayoutInputs() {

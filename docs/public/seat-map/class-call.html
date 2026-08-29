@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>创意课堂随机点名器</title>
+<style>
+/* ===== Global Reset & Theme ===== */
+:root{
+  --bg:#060a1d;--bg2:#0e1333;--bg3:#161d48;
+  --tx:#eae8f4;--tx2:#7d7a96;--tx3:#4a4770;
+  --ac:#7c6aff;--ac2:#b0a4ff;--gold:#ffd700;--gold2:#ffed4a;
+  --rare:#00c8ff;--elite:#2ecc71;--legend:#ff6b35;--epic:#e84393;
+  --comm:#6b7280;--border:#252d60;--danger:#ff6b6b;
+  --cw:136px;--ch:190px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden}
+body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--tx);user-select:none;-webkit-user-select:none}
+
+/* ===== Page System ===== */
+.page{display:none;position:absolute;inset:0;z-index:1;overflow:hidden}
+.page.active{display:flex;flex-direction:column}
+
+/* ===== Home Page ===== */
+.home-bg{position:absolute;inset:0;z-index:0}
+.home-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;height:100%;padding:20px 20px 40px;gap:20px;overflow-y:auto;scroll-behavior:smooth}
+.home-title{font-size:clamp(28px,6vw,52px);font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,var(--ac2),var(--gold),var(--epic),var(--ac2));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:titleShift 6s ease infinite;text-align:center;line-height:1.3;margin-top:24px}
+@keyframes titleShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.home-sub{font-size:clamp(13px,2.5vw,16px);color:var(--tx2);text-align:center;max-width:500px;line-height:1.6}
+.home-class-bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:600px}
+.home-chip{padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;background:var(--bg3);border:1px solid var(--border);color:var(--tx2);cursor:pointer;transition:.2s}
+.home-chip:hover{border-color:var(--ac);color:var(--tx)}
+.home-chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.home-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;max-width:800px;width:100%;padding:0 10px}
+.mode-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 12px;border-radius:18px;background:linear-gradient(145deg,var(--bg2),var(--bg3));border:2px solid var(--border);cursor:pointer;transition:all .3s;overflow:hidden;text-align:center;min-height:130px}
+.mode-card:hover{transform:translateY(-6px) scale(1.03);border-color:var(--ac);box-shadow:0 12px 40px rgba(124,106,255,.25)}
+.mode-card:active{transform:scale(.97)}
+.mode-card .mc-icon{font-size:36px;margin-bottom:8px;transition:transform .3s}
+.mode-card:hover .mc-icon{transform:scale(1.15) rotate(-5deg)}
+.mode-card .mc-name{font-size:15px;font-weight:700;color:var(--tx);margin-bottom:4px}
+.mode-card .mc-desc{font-size:11px;color:var(--tx2);line-height:1.4}
+.mode-card .mc-glow{position:absolute;inset:0;opacity:0;transition:opacity .3s;pointer-events:none;border-radius:16px}
+.mode-card:hover .mc-glow{opacity:1}
+.home-mgmt{display:flex;gap:10px;margin-top:8px}
+.home-mgmt button{padding:8px 20px;border-radius:14px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;border:1px solid var(--border);background:var(--bg3);color:var(--tx2)}
+.home-mgmt button:hover{border-color:var(--ac2);color:var(--ac2)}
+.home-mgmt .mgmt-primary{background:linear-gradient(135deg,var(--ac),#8b6cf6);border:none;color:#fff;box-shadow:0 4px 16px rgba(124,106,255,.3)}
+.home-mgmt .mgmt-primary:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(124,106,255,.5)}
+.home-session{margin-top:16px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:16px;padding:0;overflow:hidden;max-height:320px;display:flex;flex-direction:column}
+.hs-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.hs-title{font-size:14px;font-weight:700;color:var(--tx)}
+.hs-clear{font-size:11px;padding:4px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--tx2);cursor:pointer;transition:.2s}
+.hs-clear:hover{border-color:#e74c3c;color:#e74c3c}
+.hs-body{flex:1;overflow-y:auto;padding:8px 12px}
+.hs-empty{text-align:center;padding:20px;color:var(--tx2);font-size:13px}
+.hs-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;margin-bottom:4px;background:rgba(255,255,255,.03);transition:.2s}
+.hs-item:hover{background:rgba(255,255,255,.07)}
+.hs-ava{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.hs-info{flex:1;min-width:0}
+.hs-nm{font-size:13px;font-weight:600;color:var(--tx)}
+.hs-meta{font-size:11px;color:var(--tx2);margin-top:1px}
+.hs-rating{font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600;flex-shrink:0}
+.hs-rating.ex{background:rgba(255,215,0,.15);color:#ffd700}
+.hs-rating.good{background:rgba(46,204,113,.15);color:#2ecc71}
+.hs-rating.try{background:rgba(52,152,219,.15);color:#3498db}
+.hs-rating.none{background:rgba(255,255,255,.06);color:var(--tx2)}
+.hs-reward{font-size:11px;padding:3px 10px;border-radius:8px;border:1px solid rgba(255,215,0,.3);background:rgba(255,215,0,.08);color:#ffd700;cursor:pointer;transition:.2s;flex-shrink:0}
+.hs-reward:hover{background:rgba(255,215,0,.2);border-color:rgba(255,215,0,.5)}
+.hs-reward.given{border-color:rgba(255,215,0,.6);background:rgba(255,215,0,.2);pointer-events:none}
+
+/* ===== Back Button (shared across mode pages) ===== */
+.back-btn{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:14px;font-size:13px;font-weight:600;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--tx2);cursor:pointer;transition:.2s;flex-shrink:0}
+.back-btn:hover{border-color:var(--ac);color:var(--ac)}
+
+/* ===== Class Management Modal ===== */
+.modal-bg{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.modal-bg.active{display:flex}
+.modal{width:92%;max-width:520px;max-height:82vh;background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.modal-head h2{font-size:17px;font-weight:700}
+.modal-close{width:30px;height:30px;border-radius:50%;background:0;border:1px solid var(--border);color:var(--tx2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.modal-close:hover{border-color:var(--danger);color:var(--danger)}
+.modal-body{padding:18px;overflow-y:auto;flex:1}
+.class-list{display:flex;flex-direction:column;gap:8px}
+.class-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;transition:.2s}
+.class-item:hover{border-color:var(--ac)}
+.class-item.on{border-color:var(--ac);background:rgba(124,106,255,.1)}
+.class-item .ci-name{font-size:14px;font-weight:600}
+.class-item .ci-count{font-size:11px;color:var(--tx2);margin-left:8px}
+.class-item .ci-actions{display:flex;gap:6px}
+.class-item .ci-actions button{padding:3px 8px;border-radius:6px;font-size:11px;background:0;border:1px solid var(--border);color:var(--tx2);cursor:pointer;transition:.15s}
+.class-item .ci-actions button:hover{border-color:var(--ac2);color:var(--ac2)}
+.class-item .ci-actions .del-btn:hover{border-color:var(--danger);color:var(--danger)}
+.add-form{margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.add-form h3{font-size:13px;color:var(--tx2);margin-bottom:10px}
+.form-group{margin-bottom:10px}
+.form-group label{display:block;font-size:12px;color:var(--tx2);margin-bottom:4px}
+.form-input{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--tx);font-size:13px;font-family:inherit}
+.form-input:focus{outline:0;border-color:var(--ac)}
+textarea.form-input{min-height:90px;resize:vertical}
+.form-btn{padding:8px 20px;border-radius:8px;background:var(--ac);border:0;color:#fff;font-size:13px;cursor:pointer;transition:.2s}
+.form-btn:hover{background:#6b5ae0}
+
+/* ===== Mode Page Top Bar ===== */
+.mode-top{position:relative;z-index:10;display:flex;align-items:center;padding:8px 12px;height:48px;gap:10px}
+.mode-top .mode-title{font-size:17px;font-weight:800;white-space:nowrap;letter-spacing:1px}
+.mode-top .mode-chips{display:flex;gap:6px;flex:1;justify-content:center;overflow:hidden}
+.mode-top .chip{padding:4px 12px;border-radius:16px;font-size:12px;font-weight:500;background:var(--bg3);border:1px solid var(--border);color:var(--tx2);cursor:pointer;transition:.2s;white-space:nowrap}
+.mode-top .chip:hover{border-color:var(--ac);color:var(--tx)}.mode-top .chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.mode-top .mode-btns{display:flex;gap:6px}
+.mode-top .ibtn{width:32px;height:32px;border-radius:50%;background:0;border:1px solid var(--border);color:var(--tx2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.mode-top .ibtn:hover{border-color:var(--ac2);color:var(--ac2)}
+
+/* ===== Mode Page Bottom Bar ===== */
+.mode-bbar{position:relative;z-index:10;display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 16px;min-height:56px}
+.mode-bbar .chk{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--tx2)}
+.mode-bbar .chk input{width:14px;height:14px;accent-color:var(--ac)}
+.mode-bbar .sbtn{padding:6px 14px;border-radius:14px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--tx2);cursor:pointer;transition:.2s}
+.mode-bbar .sbtn:hover{border-color:var(--ac2);color:var(--ac2)}
+.mode-bbar .action-btn{padding:10px 32px;border-radius:24px;font-size:16px;font-weight:700;letter-spacing:2px;border:none;color:#fff;cursor:pointer;transition:.3s}
+.mode-bbar .action-btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+
+/* ===== Status Pill ===== */
+.status-pill{position:fixed;top:54px;right:12px;z-index:15;padding:4px 10px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);font-size:11px;color:var(--tx2);cursor:pointer;transition:.2s;display:flex;align-items:center;gap:5px}
+.status-dot{width:5px;height:5px;border-radius:50%;background:var(--elite)}
+
+/* ===== Level Up Toast ===== */
+.lvl-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);z-index:60;padding:16px 32px;border-radius:16px;background:rgba(6,10,29,.95);border:2px solid var(--gold);box-shadow:0 0 40px rgba(255,215,0,.3);text-align:center;transition:transform .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
+.lvl-toast.show{transform:translate(-50%,-50%) scale(1)}
+.lvl-toast h3{font-size:20px;color:var(--gold);margin-bottom:4px}
+.lvl-toast p{font-size:13px;color:var(--tx2)}
+
+/* ===== Confetti Canvas (shared) ===== */
+#globalConfetti{position:fixed;inset:0;z-index:300;pointer-events:none}
+
+/* ===== Rating (shared) ===== */
+.rate-area{display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0;transform:translateY(8px);transition:.4s}
+.rate-area.show{opacity:1;transform:translateY(0)}
+.rate-label{font-size:13px;color:var(--tx2)}
+.rate-btns{display:flex;gap:10px}
+.rbtn{padding:10px 20px;border-radius:20px;font-size:14px;font-weight:700;border:2px solid;cursor:pointer;transition:.25s;background:transparent;display:flex;align-items:center;gap:6px}
+.rbtn:hover{transform:translateY(-2px)}.rbtn:active{transform:scale(.95)}
+.rbtn-ex{border-color:var(--gold);color:var(--gold)}.rbtn-ex:hover{background:rgba(255,215,0,.1);box-shadow:0 4px 16px rgba(255,215,0,.2)}
+.rbtn-good{border-color:var(--elite);color:var(--elite)}.rbtn-good:hover{background:rgba(46,204,113,.1);box-shadow:0 4px 16px rgba(46,204,113,.2)}
+.rbtn-try{border-color:var(--rare);color:var(--rare)}.rbtn-try:hover{background:rgba(0,200,255,.1);box-shadow:0 4px 16px rgba(0,200,255,.2)}
+.rate-result{font-size:14px;font-weight:600;opacity:0;transition:.3s;color:var(--tx)}
+.rate-result.show{opacity:1}
+.lvlup{color:var(--gold);animation:pulse .6s ease 2}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.cont-btn{padding:10px 28px;border-radius:22px;font-size:14px;font-weight:600;border:none;color:#fff;cursor:pointer;transition:.25s;box-shadow:0 3px 16px rgba(124,106,255,.3);opacity:0;transition:opacity .3s;background:linear-gradient(135deg,var(--ac),#8b6cf6)}
+.cont-btn.show{opacity:1}.cont-btn:hover{transform:translateY(-2px)}
+
+/* ===== Responsive ===== */
+@media(max-width:768px){
+  .home-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .mode-card{min-height:110px;padding:18px 8px}
+  .mode-card .mc-icon{font-size:28px}
+  .mode-card .mc-name{font-size:13px}
+}
+@media(max-width:400px){
+  .home-grid{grid-template-columns:1fr 1fr;gap:8px}
+}
+</style>
+
+<!-- ==================== MODE 1: 命运卡牌 CSS ==================== -->
+<style id="css-fate">
+/* ===== Fate Card Back ===== */
+.cback{width:100%;height:100%;border-radius:10px;position:relative;overflow:hidden;background:linear-gradient(150deg,#120e3a 0%,#1e1560 40%,#120e3a 100%);border:2px solid rgba(124,106,255,.5);box-shadow:0 2px 16px rgba(124,106,255,.15),inset 0 0 30px rgba(124,106,255,.06)}
+.cback::before{content:'';position:absolute;inset:5px;border-radius:6px;border:1px solid rgba(124,106,255,.2);background:radial-gradient(circle at 50% 50%,rgba(124,106,255,.08) 0%,transparent 60%),repeating-conic-gradient(rgba(124,106,255,.03) 0% 25%,transparent 0% 50%) 0 0/10px 10px}
+.cback-sym{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:30px;color:rgba(124,106,255,.45);text-shadow:0 0 12px rgba(124,106,255,.3);z-index:2;pointer-events:none}
+.cback-gem{position:absolute;width:10px;height:10px;z-index:2;pointer-events:none}
+.cback-gem::before,.cback-gem::after{content:'';position:absolute;background:rgba(124,106,255,.35)}
+.cback-gem::before{width:100%;height:2px;top:4px}.cback-gem::after{width:2px;height:100%;left:4px}
+.cback-gem.tl{top:10px;left:10px}.cback-gem.tr{top:10px;right:10px}.cback-gem.bl{bottom:10px;left:10px}.cback-gem.br{bottom:10px;right:10px}
+.cback-shim{position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.03) 44%,rgba(255,255,255,.07) 50%,rgba(255,255,255,.03) 56%,transparent 62%);background-size:250% 100%;animation:shim 5s infinite linear}
+.cback,.cback *{pointer-events:none}
+@keyframes shim{0%{background-position:250% 0}100%{background-position:-250% 0}}
+.cback-glow{position:absolute;inset:-2px;border-radius:12px;z-index:-1;background:conic-gradient(from 0deg,rgba(124,106,255,.15),transparent,rgba(124,106,255,.15),transparent,rgba(124,106,255,.15),transparent);animation:glowSpin 8s linear infinite;filter:blur(4px);pointer-events:none}
+@keyframes glowSpin{to{transform:rotate(360deg)}}
+.cback.t-elite{border-color:rgba(46,204,113,.5);box-shadow:0 2px 16px rgba(46,204,113,.15),inset 0 0 30px rgba(46,204,113,.06)}
+.cback.t-elite::before{border-color:rgba(46,204,113,.2)}
+.cback.t-elite .cback-sym{color:rgba(46,204,113,.5);text-shadow:0 0 12px rgba(46,204,113,.3)}
+.cback.t-rare{border-color:rgba(0,200,255,.5);box-shadow:0 2px 16px rgba(0,200,255,.2),inset 0 0 30px rgba(0,200,255,.06)}
+.cback.t-rare::before{border-color:rgba(0,200,255,.25)}
+.cback.t-rare .cback-sym{color:rgba(0,200,255,.5);text-shadow:0 0 14px rgba(0,200,255,.35)}
+.cback.t-legend{border-color:rgba(255,107,53,.6);box-shadow:0 2px 20px rgba(255,107,53,.25),inset 0 0 30px rgba(255,107,53,.08)}
+.cback.t-legend .cback-sym{color:rgba(255,107,53,.55);text-shadow:0 0 16px rgba(255,107,53,.4);font-size:34px}
+.cback.t-epic{border-color:rgba(232,67,147,.6);box-shadow:0 2px 24px rgba(232,67,147,.25),inset 0 0 30px rgba(232,67,147,.08)}
+.cback.t-epic .cback-sym{color:rgba(232,67,147,.6);text-shadow:0 0 18px rgba(232,67,147,.45);font-size:36px}
+
+/* ===== Fate Card Front ===== */
+.cfront{width:100%;height:100%;border-radius:10px;position:relative;overflow:hidden;background:linear-gradient(180deg,#161e52 0%,#0c1235 100%);display:flex;flex-direction:column;align-items:center;padding:8px 6px;backface-visibility:hidden}
+.cfront.t-comm{border:2px solid var(--comm)}.cfront.t-elite{border:2px solid var(--elite);box-shadow:0 0 12px rgba(46,204,113,.25)}
+.cfront.t-rare{border:2px solid var(--rare);box-shadow:0 0 16px rgba(0,200,255,.3)}
+.cfront.t-legend{border:2px solid var(--legend);box-shadow:0 0 20px rgba(255,107,53,.35)}
+.cfront.t-epic{border:2px solid var(--epic);box-shadow:0 0 24px rgba(232,67,147,.35)}
+.cf-tag{position:absolute;top:5px;right:5px;font-size:8px;padding:1px 6px;border-radius:8px;font-weight:700}
+.cf-tag.comm{background:rgba(107,114,128,.25);color:#9ca3af}.cf-tag.elite{background:rgba(46,204,113,.15);color:var(--elite)}
+.cf-tag.rare{background:rgba(0,200,255,.15);color:var(--rare)}.cf-tag.legend{background:rgba(255,107,53,.15);color:var(--legend)}.cf-tag.epic{background:rgba(232,67,147,.15);color:var(--epic)}
+.cf-ava{width:56px;height:56px;border-radius:50%;overflow:hidden;border:2px solid var(--ac2);margin-bottom:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.cf-ava img,.cf-ava div{width:100%;height:100%;display:block;object-fit:cover}
+.cf-name{font-size:14px;font-weight:700;margin-bottom:2px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}
+.cf-stars{font-size:10px;letter-spacing:1px;margin-bottom:3px}.cf-stars .on{color:var(--gold)}.cf-stars .off{color:var(--border)}
+.cf-attrs{width:100%;display:flex;flex-direction:column;gap:2px}
+.cf-attr{display:flex;align-items:center;gap:3px;font-size:8px}
+.cf-al{color:var(--tx2);min-width:22px}.cf-ab{flex:1;height:4px;background:rgba(0,0,0,.3);border-radius:2px;overflow:hidden}
+.cf-af{height:100%;border-radius:2px;width:0;transition:width .6s ease .4s}
+.cf-af.w{background:linear-gradient(90deg,#7c6aff,#b0a4ff)}.cf-af.c{background:linear-gradient(90deg,#ff6b35,#ff9f43)}.cf-af.r{background:linear-gradient(90deg,#00b894,#55efc4)}
+.cf-av{color:var(--tx2);min-width:18px;text-align:right;font-size:8px}
+
+/* ===== Fate: Card Wrapper ===== */
+.card-w{width:var(--cw);height:var(--ch);position:relative;flex-shrink:0}
+
+/* ===== Fate: Fan Layout ===== */
+.fan{position:relative;width:100%;max-width:880px;height:260px;display:flex;align-items:flex-end;justify-content:center}
+.fan .card-w{position:absolute;transform-origin:center bottom;transition:transform .5s cubic-bezier(.34,1.56,.64,1),filter .3s;cursor:default}
+.fan .card-w:hover{filter:brightness(1.15) drop-shadow(0 0 12px rgba(124,106,255,.3))}
+
+/* ===== Fate: Grid Layout ===== */
+.grid-wrap{width:100%;max-width:900px;max-height:100%;overflow-y:auto;overflow-x:hidden;padding:8px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:flex-start}
+.grid-wrap::-webkit-scrollbar{width:4px}.grid-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.grid-card{cursor:pointer;transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s;position:relative}
+.grid-card:hover{transform:translateY(-6px);z-index:2}
+.grid-card.selected .cback{border-color:var(--gold)!important;box-shadow:0 0 24px rgba(255,215,0,.4)!important}
+.grid-card.picked{opacity:.35;pointer-events:none;filter:grayscale(.5)}
+
+/* ===== Fate: Shuffle FX ===== */
+.shuf-area{position:relative;width:100%;max-width:700px;height:280px;display:flex;align-items:center;justify-content:center}
+
+/* ===== Fate: Reveal Overlay ===== */
+.rov{display:none;position:fixed;inset:0;z-index:50;background:rgba(6,10,29,.94);flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
+.rov.active{display:flex}
+.rc{position:relative;width:240px;height:336px;perspective:1200px}
+.rc-in{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .9s cubic-bezier(.4,0,.2,1)}
+.rc.flipped .rc-in{transform:rotateY(180deg)}
+.rc-f{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;overflow:hidden}
+.rc-b{display:flex;align-items:center;justify-content:center}
+.rc-b .cback{width:100%;height:100%;border-radius:14px}
+.rc-b .cback-sym{font-size:48px}
+.rc-b .cback-gem{width:14px;height:14px}
+.rc-b .cback-gem::before{height:3px;top:5px}.rc-b .cback-gem::after{width:3px;left:5px}
+.rc-b .cback-gem.tl{top:14px;left:14px}.rc-b .cback-gem.tr{top:14px;right:14px}.rc-b .cback-gem.bl{bottom:14px;left:14px}.rc-b .cback-gem.br{bottom:14px;right:14px}
+.rc-fr{transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center}
+.rc-fr-inner{background:linear-gradient(180deg,#1a2255,#0d1438);display:flex;flex-direction:column;align-items:center;padding:16px 12px;width:100%;height:100%;box-sizing:border-box}
+.rc-fr-inner.t-comm{border:3px solid var(--comm)}.rc-fr-inner.t-elite{border:3px solid var(--elite);box-shadow:0 0 20px rgba(46,204,113,.3)}
+.rc-fr-inner.t-rare{border:3px solid var(--rare);box-shadow:0 0 24px rgba(0,200,255,.35)}
+.rc-fr-inner.t-legend{border:3px solid var(--legend);box-shadow:0 0 28px rgba(255,107,53,.4)}
+.rc-fr-inner.t-epic{border:3px solid var(--epic);box-shadow:0 0 32px rgba(232,67,147,.4)}
+.rc-ava{width:84px;height:84px;border-radius:50%;border:3px solid var(--ac2);overflow:hidden;margin-bottom:6px;box-shadow:0 0 16px rgba(124,106,255,.3);display:flex;align-items:center;justify-content:center}
+.rc-ava img,.rc-ava div{width:100%;height:100%;display:block;object-fit:cover}
+.rc-name{font-size:24px;font-weight:800;letter-spacing:2px;margin-bottom:4px;color:#fff}
+.rc-stars{font-size:14px;letter-spacing:3px;margin-bottom:8px}
+.rc-attrs{width:100%;display:flex;flex-direction:column;gap:5px}
+.rc-attr{display:flex;align-items:center;gap:5px;font-size:12px}
+.rc-al{color:var(--tx2);min-width:30px}.rc-ab{flex:1;height:7px;background:rgba(0,0,0,.3);border-radius:4px;overflow:hidden}
+.rc-af{height:100%;border-radius:4px;width:0;transition:width .7s ease .5s}
+.rc-af.w{background:linear-gradient(90deg,#7c6aff,#b0a4ff)}.rc-af.c{background:linear-gradient(90deg,#ff6b35,#ff9f43)}.rc-af.r{background:linear-gradient(90deg,#00b894,#55efc4)}
+.rc-av{color:var(--tx2);min-width:22px;text-align:right;font-weight:600}
+.rc-xp{font-size:11px;color:var(--tx2);margin-top:6px}
+.rname{font-size:34px;font-weight:800;letter-spacing:3px;background:linear-gradient(135deg,var(--gold),var(--ac2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0;transform:translateY(8px);transition:.4s}
+.rname.show{opacity:1;transform:translateY(0)}
+
+/* ===== Fate: Mode Tabs ===== */
+.mtabs{position:relative;z-index:10;display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 0;border-bottom:1px solid var(--border)}
+.mtab{padding:6px 20px;border-radius:18px;font-size:13px;font-weight:600;background:0;border:1px solid var(--border);color:var(--tx2);cursor:pointer;transition:.25s}
+.mtab:hover{border-color:var(--ac);color:var(--tx)}.mtab.on{background:var(--ac);border-color:var(--ac);color:#fff}
+
+/* ===== Fate: History Panel ===== */
+.hpan{position:fixed;top:54px;right:0;bottom:0;width:240px;z-index:20;background:var(--bg2);border-left:1px solid var(--border);transform:translateX(100%);transition:.3s;display:flex;flex-direction:column;overflow:hidden}
+.hpan.open{transform:translateX(0)}
+.hp-h{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600}
+.hp-ls{flex:1;overflow-y:auto;padding:6px}
+.hi{padding:4px 8px;border-radius:4px;font-size:11px;display:flex;align-items:center;gap:5px;margin-bottom:2px}
+.hi.pk{color:var(--tx2);opacity:.5}.hi.pd{color:var(--tx)}
+.hi-d{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.hi.pk .hi-d{background:var(--tx3)}.hi.pd .hi-d{background:var(--elite)}
+
+/* ===== Fate: Main ===== */
+.fate-main{position:relative;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;overflow:hidden;padding:12px}
+.fate-main.scroll-mode{overflow-y:auto}
+
+/* ===== Fate: Bottom Bar Buttons ===== */
+.go-btn{padding:12px 44px;font-size:17px;font-weight:700;letter-spacing:2px;border:none;border-radius:26px;background:linear-gradient(135deg,var(--ac),#8b6cf6);color:#fff;cursor:pointer;box-shadow:0 4px 20px rgba(124,106,255,.3);transition:.3s}
+.go-btn:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(124,106,255,.5)}
+.go-btn:active{transform:translateY(0)}.go-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.shuf-btn{padding:10px 22px;border-radius:22px;font-size:14px;font-weight:600;background:0;border:1px solid var(--border);color:var(--tx2);cursor:pointer;transition:.2s}
+.shuf-btn:hover{border-color:var(--ac2);color:var(--ac2)}
+
+@media(max-width:768px){:root{--cw:100px;--ch:140px}.fan{height:200px}.rc{width:180px;height:252px}.rc-ava{width:60px;height:60px}.rc-name{font-size:18px}.hpan{width:180px}}
+@media(min-width:1400px){:root{--cw:155px;--ch:217px}}
+</style>
+
+<!-- ==================== MODE 2: 深海寻宝 CSS ==================== -->
+<style id="css-ocean">
+/* ===== Ocean Canvas ===== */
+#oceanC{position:absolute;inset:0;z-index:0}
+.ocean-stage{position:relative;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:12px;pointer-events:none}
+.ocean-stage *{pointer-events:auto}
+.creature-area{position:relative;width:100%;max-width:900px;flex:1;min-height:0;overflow:hidden}
+.dive-btn{padding:16px 48px;font-size:20px;font-weight:800;letter-spacing:3px;border:none;border-radius:50px;cursor:pointer;background:linear-gradient(135deg,#006994,#00b4d8,#00d4ff);color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.3);box-shadow:0 4px 24px rgba(0,212,255,.4),inset 0 1px 0 rgba(255,255,255,.2);transition:.3s;position:relative;overflow:hidden;animation:btnGlow 3s ease-in-out infinite}
+.dive-btn:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 6px 32px rgba(0,212,255,.6)}
+.dive-btn:active{transform:scale(.97)}.dive-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none;animation:none}
+@keyframes btnGlow{0%,100%{box-shadow:0 4px 24px rgba(0,212,255,.4)}50%{box-shadow:0 4px 36px rgba(0,212,255,.65),0 0 60px rgba(0,212,255,.15)}}
+.bubble-trail{position:absolute;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.3),rgba(0,180,255,.08));border:1px solid rgba(255,255,255,.1);animation:bubbleUp 2s ease-in forwards;pointer-events:none}
+@keyframes bubbleUp{0%{opacity:.7;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-200px) scale(.3)}}
+.capture-flash{position:fixed;inset:0;z-index:40;background:radial-gradient(circle at 50% 50%,rgba(0,212,255,.4),rgba(0,100,180,.15));animation:flash .6s ease-out forwards;pointer-events:none}
+@keyframes flash{0%{opacity:1}100%{opacity:0}}
+.capture-overlay{display:none;position:fixed;inset:0;z-index:45;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px;background:rgba(2,11,24,.85);backdrop-filter:blur(4px)}
+.capture-overlay.active{display:flex}
+.captured-creature{width:200px;height:200px;position:relative;display:flex;align-items:center;justify-content:center}
+.captured-creature svg{width:100%;height:100%;filter:drop-shadow(0 0 30px rgba(0,212,255,.5))}
+.captured-creature .glow-ring{position:absolute;inset:-20px;border-radius:50%;border:3px solid rgba(0,212,255,.3);animation:ringPulse 1.5s ease-in-out infinite}
+@keyframes ringPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.1);opacity:1}}
+.ocean-name{font-size:42px;font-weight:900;letter-spacing:4px;color:transparent;background:linear-gradient(135deg,#fff,var(--gold2),var(--ac2));-webkit-background-clip:text;background-clip:text;opacity:0;transform:translateY(20px) scale(.8);transition:all .8s cubic-bezier(.34,1.56,.64,1);text-shadow:none;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
+.ocean-name.show{opacity:1;transform:translateY(0) scale(1)}
+.shell-frame{padding:20px 40px;border-radius:24px;position:relative;background:linear-gradient(180deg,rgba(0,40,80,.7),rgba(0,20,50,.8));border:2px solid rgba(0,212,255,.3);box-shadow:0 8px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(10px);opacity:0;transform:scale(.6);transition:all .6s cubic-bezier(.34,1.56,.64,1)}
+.shell-frame.show{opacity:1;transform:scale(1)}
+.shell-frame::before,.shell-frame::after{content:'';position:absolute;width:20px;height:20px;border:2px solid rgba(255,215,0,.3)}
+.shell-frame::before{top:6px;left:6px;border-right:0;border-bottom:0;border-radius:4px 0 0 0}
+.shell-frame::after{bottom:6px;right:6px;border-left:0;border-top:0;border-radius:0 0 4px 0}
+.depth-meter{position:fixed;left:16px;top:50%;transform:translateY(-50%);z-index:8;display:flex;flex-direction:column;align-items:center;gap:4px}
+.depth-bar{width:4px;height:120px;border-radius:2px;background:var(--border);position:relative;overflow:hidden}
+.depth-fill{position:absolute;bottom:0;width:100%;background:linear-gradient(0deg,#00d4ff,#006994);border-radius:2px;transition:height 1.5s ease}
+.depth-label{font-size:10px;color:var(--tx2);writing-mode:vertical-rl;letter-spacing:2px}
+.ocean-bbar{background:linear-gradient(0deg,rgba(2,11,24,.98),rgba(2,11,24,.75));border-top:1px solid #0a3a60}
+.tap-hint{padding:8px 24px;border-radius:20px;background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.3);font-size:14px;color:#80e8ff;pointer-events:none}
+.mode-chip{padding:6px 16px;border-radius:16px;font-size:12px;font-weight:600;background:var(--bg3);border:1px solid var(--border);color:var(--tx2);cursor:pointer;transition:.2s;white-space:nowrap}
+.mode-chip:hover{border-color:var(--ac);color:var(--tx)}
+.mode-chip.on{border-color:#00d4ff;color:#00d4ff}
+@media(max-width:768px){.dive-btn{padding:14px 36px;font-size:17px}.ocean-name{font-size:32px}.shell-frame{padding:16px 28px}.depth-meter{display:none}}
+</style>
+
+<!-- ==================== MODE 3: 魔法转盘 CSS ==================== -->
+<style id="css-wheel">
+#starC{position:absolute;inset:0;z-index:0}
+#wheelConfettiC{position:fixed;inset:0;z-index:50;pointer-events:none}
+.wheel-wrap{position:relative;display:flex;align-items:center;justify-content:center;flex:1;min-height:0;width:100%;max-width:700px}
+.spin-btn{padding:14px 44px;font-size:18px;font-weight:800;letter-spacing:3px;border:none;border-radius:50px;cursor:pointer;background:linear-gradient(135deg,#7c3aed,#a855f7,#c084fc);color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.3);box-shadow:0 4px 24px rgba(168,85,247,.4),inset 0 1px 0 rgba(255,255,255,.2);transition:.3s;animation:spinGlow 3s ease-in-out infinite}
+.spin-btn:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 6px 32px rgba(168,85,247,.6)}
+.spin-btn:active{transform:scale(.97)}.spin-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none;animation:none}
+@keyframes spinGlow{0%,100%{box-shadow:0 4px 24px rgba(168,85,247,.4)}50%{box-shadow:0 4px 36px rgba(168,85,247,.65),0 0 60px rgba(168,85,247,.15)}}
+.theme-bar{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.theme-chip{padding:5px 14px;border-radius:16px;font-size:11px;font-weight:600;background:var(--bg3);border:1px solid var(--border);color:var(--tx2);cursor:pointer;transition:.2s;white-space:nowrap}
+.theme-chip:hover{border-color:var(--ac);color:var(--tx)}
+.theme-chip.on{border-color:var(--ac);color:var(--ac)}
+.pointer{position:absolute;top:-8px;left:50%;transform:translateX(-50%);z-index:20;width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:32px solid var(--gold);filter:drop-shadow(0 2px 8px rgba(251,191,36,.6));transition:filter .2s}
+.pointer.tick{filter:drop-shadow(0 2px 16px rgba(251,191,36,1))}
+.wheel-reveal-overlay{display:none;position:fixed;inset:0;z-index:45;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px;background:rgba(10,10,26,.88);backdrop-filter:blur(6px)}
+.wheel-reveal-overlay.active{display:flex}
+.wheel-avatar-circle{width:140px;height:140px;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,rgba(168,85,247,.3),rgba(10,10,26,.8));border:3px solid rgba(168,85,247,.5);box-shadow:0 0 40px rgba(168,85,247,.3);animation:avatarPulse 2s ease-in-out infinite}
+.wheel-avatar-circle svg{width:80%;height:80%;filter:drop-shadow(0 0 12px rgba(168,85,247,.5))}
+@keyframes avatarPulse{0%,100%{box-shadow:0 0 40px rgba(168,85,247,.3)}50%{box-shadow:0 0 60px rgba(168,85,247,.6)}}
+.wheel-name-card{padding:24px 48px;border-radius:20px;position:relative;background:linear-gradient(180deg,rgba(26,26,58,.9),rgba(18,18,42,.95));border:2px solid rgba(168,85,247,.4);box-shadow:0 8px 40px rgba(0,0,0,.5);backdrop-filter:blur(10px);opacity:0;transform:scale(.6) translateY(20px);transition:all .7s cubic-bezier(.34,1.56,.64,1)}
+.wheel-name-card.show{opacity:1;transform:scale(1) translateY(0)}
+.wheel-name{font-size:42px;font-weight:900;letter-spacing:4px;color:transparent;background:linear-gradient(135deg,#fff,var(--gold2),var(--ac2));-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
+.wheel-sub{font-size:13px;color:var(--tx2);margin-top:6px;text-align:center}
+.wheel-rate-row{display:flex;gap:12px;opacity:0;transform:translateY(10px);transition:all .5s .3s}
+.wheel-rate-row.show{opacity:1;transform:translateY(0)}
+.wheel-bbar{background:linear-gradient(0deg,rgba(10,10,26,.98),rgba(10,10,26,.75));border-top:1px solid #2d2555}
+.magic-particle{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;animation:particleFly 1s ease-out forwards}
+@keyframes particleFly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0)}}
+</style>
+
+<!-- ==================== MODE 4: 扭蛋机 CSS ==================== -->
+<style id="css-gacha">
+.gacha-bg{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse at 30% 80%,rgba(196,77,255,.12),transparent 60%),radial-gradient(ellipse at 70% 20%,rgba(255,107,157,.1),transparent 50%)}
+.gacha-stars{position:absolute;inset:0;z-index:0}
+.gacha-star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--d) ease-in-out infinite alternate}
+@keyframes twinkle{0%{opacity:.2;transform:scale(.8)}100%{opacity:1;transform:scale(1.2)}}
+.machine-wrap{position:relative;width:min(88vw,420px);margin-top:50px;filter:drop-shadow(0 20px 50px rgba(196,77,255,.25))}
+.machine-svg{width:100%;display:block}
+.capsule-zone{position:absolute;bottom:42%;left:18%;width:64%;height:36%;overflow:hidden;border-radius:6px;pointer-events:none}
+.capsule{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:transform .2s,filter .2s;pointer-events:none}
+.capsule::before{content:'';position:absolute;top:0;left:0;right:0;height:35%;background:linear-gradient(180deg,rgba(255,255,255,.4),transparent);border-radius:50% 50% 0 0;pointer-events:none}
+.capsule::after{content:'';position:absolute;left:0;right:0;top:47%;height:2px;background:rgba(255,255,255,.25);transform:rotate(-5deg)}
+.capsule.picked{opacity:.25;transform:scale(.85)!important}
+.capsule-half{position:absolute;border-radius:50%;overflow:hidden;transition:all .6s cubic-bezier(.34,1.56,.64,1)}
+.capsule-half::before{content:'';position:absolute;top:0;left:0;right:0;height:40%;background:linear-gradient(180deg,rgba(255,255,255,.35),transparent)}
+.gacha-rate-row{display:flex;gap:10px;opacity:0;transform:translateY(20px);transition:all .4s .3s}
+.gacha-rate-row.show{opacity:1;transform:translateY(0)}
+.gacha-rate-btn{padding:10px 20px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:14px;cursor:pointer;transition:all .2s}
+.gacha-rate-btn:hover{transform:scale(1.08)}
+.gacha-rate-btn.ex{border-color:#ffd700;color:#ffd700}.gacha-rate-btn.good{border-color:#2ecc71;color:#2ecc71}.gacha-rate-btn.try{border-color:#e74c3c;color:#e74c3c}
+.gacha-cont-btn{padding:10px 28px;border-radius:16px;border:1px solid #ff6b9d;background:linear-gradient(135deg,rgba(255,107,157,.25),rgba(196,77,255,.2));color:#ff6b9d;font-size:14px;cursor:pointer;opacity:0;transform:translateY(10px);transition:all .3s}
+.gacha-cont-btn.show{opacity:1;transform:translateY(0)}
+.lvlup-ov{position:fixed;inset:0;z-index:250;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.8);opacity:0;pointer-events:none;transition:opacity .4s}
+.lvlup-ov.active{opacity:1;pointer-events:auto}
+.lvlup-card{padding:40px;border-radius:24px;background:linear-gradient(135deg,rgba(255,215,0,.15),rgba(255,107,157,.1));border:2px solid rgba(255,215,0,.4);text-align:center;transform:scale(.5);transition:all .5s cubic-bezier(.34,1.56,.64,1)}
+.lvlup-ov.active .lvlup-card{transform:scale(1)}
+.lvlup-title{font-size:14px;color:rgba(255,255,255,.5);margin-bottom:8px}
+.lvlup-name{font-size:32px;font-weight:800;color:#ffd700}
+.lvlup-dismiss{margin-top:16px;padding:8px 20px;border-radius:12px;border:1px solid rgba(255,215,0,.3);background:rgba(255,215,0,.15);color:#ffd700;cursor:pointer;font-size:13px}
+.shake{animation:machineShake .6s ease-in-out}
+@keyframes machineShake{0%,100%{transform:translateX(0)}10%{transform:translateX(-3px) rotate(-.3deg)}20%{transform:translateX(3px) rotate(.3deg)}30%{transform:translateX(-2px)}40%{transform:translateX(2px)}50%{transform:translateX(-1px)}60%{transform:translateX(1px)}}
+.gacha-reveal-ov{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;opacity:0;pointer-events:none;transition:opacity .4s}
+.gacha-reveal-ov.active{opacity:1;pointer-events:auto}
+.gacha-reveal-card{position:relative;width:280px;padding:36px 28px;border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(20px);text-align:center;transform:scale(.6);opacity:0;transition:all .5s cubic-bezier(.34,1.56,.64,1)}
+.gacha-reveal-card.show{transform:scale(1);opacity:1}
+.gacha-avatar-wrap{width:80px;height:80px;margin:0 auto 16px;border-radius:50%;overflow:hidden;border:3px solid #ff6b9d;box-shadow:0 0 20px rgba(255,107,157,.4)}
+.gacha-avatar-wrap svg{width:100%;height:100%}
+.gacha-rev-name{font-size:28px;font-weight:800;margin-bottom:4px;background:linear-gradient(135deg,#fff,#ff6b9d);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.gacha-rev-lv{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:12px}
+.gacha-rev-xp{font-size:12px;color:#ff6b9d;margin-bottom:16px}
+.gacha-rate-res{font-size:14px;color:#ff6b9d;min-height:20px;margin-top:4px}
+</style>
+
+<!-- ==================== MODE 5: 盲盒开箱 CSS ==================== -->
+<style id="css-blindbox">
+.blindbox-bg{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse at 50% 80%,rgba(139,111,78,.15),transparent 60%),radial-gradient(ellipse at 20% 30%,rgba(255,107,157,.06),transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(196,77,255,.06),transparent 50%)}
+.wall-pattern{position:absolute;inset:0;z-index:0;opacity:.03;background-image:repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(255,255,255,.5) 60px,rgba(255,255,255,.5) 61px),repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(255,255,255,.5) 60px,rgba(255,255,255,.5) 61px)}
+.shelf-area{position:relative;z-index:1;flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 30px 40px;display:flex;flex-direction:column;align-items:center;gap:0}
+.shelf-area::-webkit-scrollbar{width:6px}.shelf-area::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+.shelf-row{width:100%;max-width:720px;position:relative;margin-bottom:0}
+.box-row{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:12px 16px 4px;position:relative;z-index:2}
+.shelf-board{width:104%;margin-left:-2%;height:18px;background:linear-gradient(180deg,#a68962,#8b6f4e);border-radius:3px;position:relative;z-index:3;box-shadow:0 4px 12px rgba(0,0,0,.4),0 2px 4px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.1)}
+.shelf-board::after{content:'';position:absolute;bottom:-6px;left:2%;right:2%;height:6px;background:linear-gradient(180deg,rgba(0,0,0,.2),transparent);border-radius:0 0 4px 4px}
+.blind-box{width:72px;height:72px;perspective:300px;cursor:default;position:relative;transition:transform .3s,filter .3s}
+.blind-box.selectable{cursor:pointer}
+.blind-box.selectable:hover{transform:translateY(-6px);filter:brightness(1.2)}
+.blind-box.picked{opacity:.25;pointer-events:none}
+.box-body{width:100%;height:100%;position:relative;transform-style:preserve-3d}
+.box-front{position:absolute;inset:0;background:linear-gradient(135deg,#3a3a5c,#2a2a48);border-radius:6px;border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;overflow:hidden;backface-visibility:hidden}
+.box-front .logo{font-size:22px;opacity:.6}
+.box-front .q-mark{position:absolute;font-size:28px;font-weight:900;color:rgba(255,255,255,.12);top:50%;left:50%;transform:translate(-50%,-50%)}
+.seal-strip{position:absolute;top:50%;left:-1px;right:-1px;height:10px;transform:translateY(-50%);display:flex;z-index:3;overflow:hidden}
+.seal-left,.seal-right{flex:1;height:100%;background:#ffd700;display:flex;align-items:center;justify-content:center;transition:all 1.2s cubic-bezier(.25,.46,.45,.94)}
+.seal-left{border-radius:2px 0 0 2px;border-right:1px dashed rgba(0,0,0,.2)}
+.seal-right{border-radius:0 2px 2px 0;border-left:1px dashed rgba(0,0,0,.2)}
+.seal-strip .seal-icon{font-size:7px;color:rgba(0,0,0,.3)}
+.seal-torn .seal-left{transform:translateX(-30px) rotateZ(-20deg);opacity:0}
+.seal-torn .seal-right{transform:translateX(30px) rotateZ(20deg);opacity:0}
+.blind-box.highlight .box-front{box-shadow:0 0 20px rgba(255,107,157,.6),0 0 40px rgba(255,107,157,.3)}
+.blind-box.highlight{transform:scale(1.1)}
+@keyframes boxFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+.blind-box:not(.picked):not(.highlight){animation:boxFloat 3s ease-in-out infinite}
+.blind-box:nth-child(2n){animation-delay:.5s}
+.blind-box:nth-child(3n){animation-delay:1s}
+.box-lid{position:absolute;top:-4px;left:-2px;right:-2px;height:16px;background:linear-gradient(135deg,#4a4a6c,#3a3a5c);border-radius:5px 5px 2px 2px;border:1px solid rgba(255,255,255,.1);z-index:2;transform-origin:top center;box-shadow:0 -2px 4px rgba(0,0,0,.2)}
+.blindbox-mode-chip{padding:6px 16px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.4);font-size:13px;cursor:pointer;transition:all .2s}
+.blindbox-mode-chip.on{border-color:#ff6b9d;color:#ff6b9d;background:rgba(255,107,157,.1)}
+.open-overlay{position:fixed;inset:0;z-index:190;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.open-box{position:relative;width:140px;height:140px;transition:all .5s}
+.open-box .box-front{position:absolute;inset:0;background:linear-gradient(135deg,#3a3a5c,#2a2a48);border-radius:12px;border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.open-box .q-mark{font-size:54px;font-weight:900;color:rgba(255,255,255,.1)}
+.open-box .box-lid{position:absolute;top:-8px;left:-4px;right:-4px;height:28px;background:linear-gradient(135deg,#4a4a6c,#3a3a5c);border-radius:8px 8px 3px 3px;border:1px solid rgba(255,255,255,.1);z-index:2;transform-origin:top center;box-shadow:0 -3px 6px rgba(0,0,0,.3)}
+.open-box .seal-strip{position:absolute;top:50%;left:-2px;right:-2px;height:16px;transform:translateY(-50%);display:flex;z-index:3;overflow:hidden}
+.open-box .seal-left,.open-box .seal-right{flex:1;height:100%;background:#ffd700;display:flex;align-items:center;justify-content:center}
+.open-box .seal-left{border-radius:3px 0 0 3px;border-right:1px dashed rgba(0,0,0,.2)}
+.open-box .seal-right{border-radius:0 3px 3px 0;border-left:1px dashed rgba(0,0,0,.2)}
+.open-box .seal-icon{font-size:10px;color:rgba(0,0,0,.3)}
+.lid-fly{position:fixed;z-index:191;pointer-events:none;transition:all 1.2s cubic-bezier(.25,.46,.45,.94)}
+.light-burst{position:fixed;z-index:188;pointer-events:none;border-radius:50%;transform:translate(-50%,-50%)}
+.scan-highlight{box-shadow:0 0 25px rgba(255,107,157,.8),0 0 50px rgba(255,107,157,.4)!important;transform:scale(1.08)!important}
+.shelf-shake{animation:shelfShake .4s ease-in-out}
+@keyframes shelfShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}50%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
+@keyframes boxShake{0%,100%{transform:translate(0,0) rotate(0)}10%{transform:translate(-3px,-1px) rotate(-1deg)}20%{transform:translate(3px,1px) rotate(1deg)}30%{transform:translate(-2px,2px) rotate(-.5deg)}40%{transform:translate(2px,-1px) rotate(.5deg)}50%{transform:translate(-3px,1px) rotate(-1deg)}60%{transform:translate(3px,-1px) rotate(1deg)}70%{transform:translate(-1px,2px) rotate(-.5deg)}80%{transform:translate(1px,-2px) rotate(.5deg)}90%{transform:translate(-2px,1px) rotate(0)}}
+.open-box.shaking{animation:boxShake .6s ease-in-out}
+@keyframes glowCharge{0%{box-shadow:0 0 5px rgba(255,215,0,.2)}50%{box-shadow:0 0 30px rgba(255,215,0,.6),0 0 60px rgba(255,107,157,.3)}100%{box-shadow:0 0 50px rgba(255,215,0,.8),0 0 100px rgba(255,107,157,.5),0 0 150px rgba(196,77,255,.3)}}
+.open-box.charging .box-front{animation:glowCharge 1.2s ease-in-out forwards}
+</style>
+</head>
+<body>
+<!-- ===== Global Confetti Canvas ===== -->
+<canvas id="globalConfetti"></canvas>
+
+<!-- ===== Class Management Modal ===== -->
+<div class="modal-bg" id="classModal">
+  <div class="modal">
+    <div class="modal-head"><h2>📚 班级管理</h2><button class="modal-close" onclick="closeClassModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="class-list" id="classListEl"></div>
+      <div class="add-form">
+        <h3>新增班级</h3>
+        <div class="form-group"><label>班级名称</label><input class="form-input" id="newClassName" placeholder="如：七(1)班"></div>
+        <div class="form-group"><label>学生名单（每行一个名字）</label><textarea class="form-input" id="newClassStudents" placeholder="张三&#10;李四&#10;王五"></textarea></div>
+        <div class="form-group"><label>或导入JSON</label><input type="file" id="importFile" accept=".json" class="form-input" style="padding:5px"></div>
+        <button class="form-btn" onclick="addClass()">添加</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Level Up Toast ===== -->
+<div class="lvl-toast" id="lvlToast"><h3 id="lvlH"></h3><p id="lvlP"></p></div>
+
+<!-- ==================== HOME PAGE ==================== -->
+<div class="page active" id="page-home">
+  <canvas class="home-bg" id="homeBgC"></canvas>
+  <div class="home-content">
+    <div class="home-title">创意课堂随机点名器</div>
+    <div class="home-sub">五种创意模式，让课堂点名变成一场游戏</div>
+    <div class="home-class-bar" id="homeClassBar"></div>
+    <div class="home-grid">
+      <div class="mode-card" onclick="goMode('fate')">
+        <div class="mc-glow" style="background:radial-gradient(circle,rgba(124,106,255,.15),transparent)"></div>
+        <div class="mc-icon">✦</div>
+        <div class="mc-name">命运卡牌</div>
+        <div class="mc-desc">卡牌抽取 · 扇形展开 · 翻转揭示</div>
+      </div>
+      <div class="mode-card" onclick="goMode('ocean')">
+        <div class="mc-glow" style="background:radial-gradient(circle,rgba(0,212,255,.15),transparent)"></div>
+        <div class="mc-icon">🌊</div>
+        <div class="mc-name">深海寻宝</div>
+        <div class="mc-desc">海洋生物 · 下潜捕获 · 点击捕获</div>
+      </div>
+      <div class="mode-card" onclick="goMode('wheel')">
+        <div class="mc-glow" style="background:radial-gradient(circle,rgba(168,85,247,.15),transparent)"></div>
+        <div class="mc-icon">🌀</div>
+        <div class="mc-name">魔法转盘</div>
+        <div class="mc-desc">旋转命运 · 五种主题 · 魔法粒子</div>
+      </div>
+      <div class="mode-card" onclick="goMode('gacha')">
+        <div class="mc-glow" style="background:radial-gradient(circle,rgba(255,107,157,.15),transparent)"></div>
+        <div class="mc-icon">🥚</div>
+        <div class="mc-name">扭蛋机</div>
+        <div class="mc-desc">摇杆转动 · 彩球滚动 · 扭蛋开箱</div>
+      </div>
+      <div class="mode-card" onclick="goMode('blindbox')">
+        <div class="mc-glow" style="background:radial-gradient(circle,rgba(255,215,0,.15),transparent)"></div>
+        <div class="mc-icon">🎁</div>
+        <div class="mc-name">盲盒开箱</div>
+        <div class="mc-desc">潮玩商店 · 撕封条 · 掀盖开箱</div>
+      </div>
+    </div>
+    <div class="home-mgmt">
+      <button onclick="openClassModal()">⚙ 班级管理</button>
+    </div>
+    <div class="home-session" id="homeSession">
+      <div class="hs-head">
+        <div class="hs-title">📋 本节课点名记录</div>
+        <button class="hs-clear" onclick="clearSession()">清空记录</button>
+      </div>
+      <div class="hs-body" id="hsBody">
+        <div class="hs-empty">暂无点名记录</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODE 1: 命运卡牌 ==================== -->
+<div class="page" id="page-fate">
+  <canvas id="fateBgC" style="position:absolute;inset:0;z-index:0;pointer-events:none"></canvas>
+  <div class="mode-top" style="background:linear-gradient(180deg,rgba(6,10,29,.97),rgba(6,10,29,.7));border-bottom:1px solid var(--border)">
+    <button class="back-btn" onclick="goHome()">← 返回</button>
+    <div class="mode-title" style="background:linear-gradient(135deg,var(--ac2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent">✦ 命运点名</div>
+    <div class="mode-chips" id="fateCbar"></div>
+    <div class="mode-btns">
+      <button class="ibtn" onclick="togFateHist()" title="点名记录">📋</button>
+    </div>
+  </div>
+  <div class="mtabs"><button class="mtab on" id="fateTab1" onclick="fateSetMode(1)">✦ 命运抽取</button><button class="mtab" id="fateTab2" onclick="fateSetMode(2)">🃏 选牌模式</button></div>
+  <div class="status-pill" onclick="togFateHist()"><span class="status-dot"></span><span id="fateStxt">0/0</span></div>
+  <div class="fate-main" id="fateMain"><div id="fateStage"></div></div>
+  <div class="mode-bbar fate-bbar" id="fateBbar" style="background:linear-gradient(0deg,rgba(6,10,29,.98),rgba(6,10,29,.75));border-top:1px solid var(--border)">
+    <div class="chk"><input type="checkbox" id="fateNoRep" checked><label for="fateNoRep">不重复</label></div>
+    <button class="go-btn" id="fateGoBtn" onclick="fateDoAction()">✦ 抽取命运</button>
+    <button class="sbtn" onclick="fateResetDr()">重置</button>
+  </div>
+  <div class="hpan" id="fateHpan"><div class="hp-h"><span>点名记录</span><button class="ibtn" onclick="togFateHist()" style="width:22px;height:22px;font-size:10px">✕</button></div><div class="hp-ls" id="fateHls"></div></div>
+  <div class="rov" id="fateRov">
+    <div id="fateRcC"></div>
+    <div class="rname" id="fateRNm"></div>
+    <div class="rate-area" id="fateRateArea">
+      <div class="rate-label">答题评价</div>
+      <div class="rate-btns">
+        <button class="rbtn rbtn-ex" onclick="fateRate('ex')">⭐ 优秀</button>
+        <button class="rbtn rbtn-good" onclick="fateRate('good')">✅ 良好</button>
+        <button class="rbtn rbtn-try" onclick="fateRate('try')">💪 加油</button>
+      </div>
+      <div class="rate-result" id="fateRateRes"></div>
+    </div>
+    <button class="cont-btn" id="fateContBtn" onclick="fateCloseRov()">继续点名</button>
+  </div>
+</div>
+
+<!-- ==================== MODE 2: 深海寻宝 ==================== -->
+<div class="page" id="page-ocean">
+  <canvas id="oceanC"></canvas>
+  <div class="mode-top" style="background:linear-gradient(180deg,rgba(2,11,24,.95),rgba(2,11,24,.6));border-bottom:1px solid #0a3a60">
+    <button class="back-btn" onclick="goHome()">← 返回</button>
+    <div class="mode-title" style="background:linear-gradient(135deg,#80e8ff,#ffd700);-webkit-background-clip:text;-webkit-text-fill-color:transparent">🌊 深海寻宝</div>
+    <div class="mode-chips" id="oceanCbar"></div>
+    <div class="mode-btns">
+      <button class="ibtn" onclick="togOceanHist()" title="点名记录">📋</button>
+    </div>
+  </div>
+  <div class="status-pill" onclick="togOceanHist()" style="top:54px"><span class="status-dot"></span><span id="oceanStxt">0/0</span></div>
+  <div class="depth-meter" id="depthMeter"><div class="depth-label">深度</div><div class="depth-bar"><div class="depth-fill" id="depthFill" style="height:0%"></div></div></div>
+  <div class="ocean-stage" id="oceanStage">
+    <div class="creature-area" id="creatureArea"></div>
+    <button class="dive-btn" id="diveBtn" onclick="oceanStartDive()">🤿 下潜寻宝</button>
+    <div class="tap-hint" id="tapHint" style="display:none">👆 点击任意海洋生物捕获</div>
+  </div>
+  <div class="mode-bbar ocean-bbar" id="oceanBbar">
+    <div class="chk"><input type="checkbox" id="oceanNoRep" checked><label for="oceanNoRep">不重复</label></div>
+    <button class="mode-chip on" data-mode="dive" onclick="oceanSetMode('dive')">🤿 下潜寻宝</button>
+    <button class="mode-chip" data-mode="tap" onclick="oceanSetMode('tap')">👆 点击捕获</button>
+    <button class="sbtn" onclick="oceanResetDr()">重置</button>
+  </div>
+  <div class="hpan" id="oceanHpan"><div class="hp-h"><span>点名记录</span><button class="ibtn" onclick="togOceanHist()" style="width:22px;height:22px;font-size:10px">✕</button></div><div class="hp-ls" id="oceanHls"></div></div>
+  <div class="capture-overlay" id="capOv">
+    <div class="captured-creature" id="capCreature"></div>
+    <div class="shell-frame" id="shellFrame"><div class="ocean-name" id="oceanName"></div></div>
+    <div class="rate-area" id="oceanRateArea">
+      <div class="rate-label">答题评价</div>
+      <div class="rate-btns">
+        <button class="rbtn rbtn-ex" onclick="oceanRate('ex')">⭐ 优秀</button>
+        <button class="rbtn rbtn-good" onclick="oceanRate('good')">✅ 良好</button>
+        <button class="rbtn rbtn-try" onclick="oceanRate('try')">💪 加油</button>
+      </div>
+      <div class="rate-result" id="oceanRateRes"></div>
+    </div>
+    <button class="cont-btn" id="oceanContBtn" onclick="oceanCloseCap()">继续寻宝</button>
+  </div>
+</div>
+
+<!-- ==================== MODE 3: 魔法转盘 ==================== -->
+<div class="page" id="page-wheel">
+  <canvas id="starC"></canvas>
+  <canvas id="wheelConfettiC"></canvas>
+  <div class="mode-top" style="background:linear-gradient(180deg,rgba(10,10,26,.95),rgba(10,10,26,.6));border-bottom:1px solid #2d2555">
+    <button class="back-btn" onclick="goHome()">← 返回</button>
+    <div class="mode-title" style="background:linear-gradient(135deg,var(--ac2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent">✨ 魔法转盘</div>
+    <div class="mode-chips" id="wheelCbar"></div>
+    <div class="mode-btns"><button class="ibtn" onclick="wheelShowHist()" title="历史">📋</button></div>
+  </div>
+  <div style="position:relative;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:12px;pointer-events:none">
+    <div class="wheel-wrap" id="wheelWrap" style="pointer-events:auto">
+      <div class="pointer" id="pointer"></div>
+      <canvas id="wheelC"></canvas>
+    </div>
+    <button class="spin-btn" id="spinBtn" onclick="wheelSpin()" style="pointer-events:auto">🌀 转动命运</button>
+    <div class="theme-bar" id="themeBar" style="pointer-events:auto"></div>
+  </div>
+  <div class="mode-bbar wheel-bbar">
+    <div class="chk"><input type="checkbox" id="wheelNoRep" checked><label for="wheelNoRep">不重复</label></div>
+    <span id="wheelDrawnInfo" style="font-size:12px;color:var(--tx2)"></span>
+    <button class="sbtn" onclick="wheelResetDr()">重置</button>
+  </div>
+  <div class="wheel-reveal-overlay" id="wheelRevealOv">
+    <div class="wheel-avatar-circle" id="wheelAvCircle"></div>
+    <div class="wheel-name-card" id="wheelNmCard"><div class="wheel-name" id="wheelRvName"></div><div class="wheel-sub" id="wheelRvSub"></div></div>
+    <div class="wheel-rate-row" id="wheelRateRow">
+      <button class="rbtn rbtn-ex" onclick="wheelRate('ex')">⭐ 优秀</button>
+      <button class="rbtn rbtn-good" onclick="wheelRate('good')">👍 良好</button>
+      <button class="rbtn rbtn-try" onclick="wheelRate('try')">💪 加油</button>
+    </div>
+    <button class="cont-btn" id="wheelContBtn" onclick="wheelContinue()">继续转盘</button>
+  </div>
+  <div class="hpan" id="wheelHpan"><div class="hp-h"><span>点名记录</span><button class="ibtn" onclick="togWheelHist()" style="width:22px;height:22px;font-size:10px">✕</button></div><div class="hp-ls" id="wheelHls"></div></div>
+</div>
+
+<!-- ==================== MODE 4: 扭蛋机 ==================== -->
+<div class="page" id="page-gacha">
+  <div class="gacha-bg"></div>
+  <div class="gacha-stars" id="gachaStarsC"></div>
+  <div class="mode-top" style="background:rgba(13,13,36,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06)">
+    <button class="back-btn" onclick="goHome()">← 返回</button>
+    <div class="mode-title" style="background:linear-gradient(135deg,#ff6b9d,#c44dff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">🥚 扭蛋机</div>
+    <div style="flex:1;display:flex;align-items:center;gap:12px;justify-content:center">
+      <div class="mode-chips" id="gachaCbar"></div>
+    </div>
+    <div class="chk"><input type="checkbox" id="gachaNoRep" checked><label for="gachaNoRep" style="font-size:12px;color:rgba(255,255,255,.6)">不重复</label></div>
+    <button class="ibtn" onclick="togGachaHist()" title="点名记录">📋</button>
+  </div>
+  <div style="position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden">
+    <div class="machine-wrap" id="machineWrap">
+      <svg class="machine-svg" viewBox="0 0 400 580" id="machineSvg">
+        <defs>
+          <linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e8294e"/><stop offset="30%" stop-color="#d42045"/><stop offset="70%" stop-color="#b01a38"/><stop offset="100%" stop-color="#8a1430"/></linearGradient>
+          <linearGradient id="bodySide" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8a1430"/><stop offset="100%" stop-color="#6a0f24"/></linearGradient>
+          <radialGradient id="domeGrad" cx="40%" cy="30%" r="60%"><stop offset="0%" stop-color="rgba(255,255,255,.12)"/><stop offset="70%" stop-color="rgba(255,255,255,.04)"/><stop offset="100%" stop-color="rgba(200,200,255,.06)"/></radialGradient>
+          <linearGradient id="baseGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c42040"/><stop offset="100%" stop-color="#7a1028"/></linearGradient>
+          <linearGradient id="capGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff4060"/><stop offset="100%" stop-color="#d42045"/></linearGradient>
+          <linearGradient id="metalGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ddd"/><stop offset="30%" stop-color="#bbb"/><stop offset="70%" stop-color="#999"/><stop offset="100%" stop-color="#777"/></linearGradient>
+          <linearGradient id="coinSlotGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffd700"/><stop offset="50%" stop-color="#ffaa00"/><stop offset="100%" stop-color="#cc8800"/></linearGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="3" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <rect x="75" y="555" width="55" height="18" rx="6" fill="#5a0a1e"/><rect x="270" y="555" width="55" height="18" rx="6" fill="#5a0a1e"/>
+        <rect x="55" y="460" width="290" height="100" rx="10" fill="url(#baseGrad)" stroke="#5a0a1e" stroke-width="1.5"/>
+        <rect x="60" y="462" width="280" height="3" rx="1.5" fill="rgba(255,255,255,.15)"/>
+        <rect x="70" y="475" width="260" height="72" rx="8" fill="rgba(0,0,0,.2)"/>
+        <rect x="70" y="280" width="260" height="185" rx="6" fill="url(#bodyGrad)" stroke="#5a0a1e" stroke-width="1.5"/>
+        <rect x="70" y="280" width="12" height="185" rx="3" fill="url(#bodySide)"/><rect x="318" y="280" width="12" height="185" rx="3" fill="url(#bodySide)"/>
+        <rect x="60" y="278" width="280" height="6" rx="3" fill="url(#metalGrad)"/><rect x="60" y="461" width="280" height="6" rx="3" fill="url(#metalGrad)"/>
+        <rect x="185" y="295" width="30" height="6" rx="3" fill="url(#coinSlotGrad)" stroke="#aa7700" stroke-width=".5"/>
+        <rect x="260" y="370" width="55" height="75" rx="8" fill="#2a0a15" stroke="#5a0a1e" stroke-width="1.5"/>
+        <ellipse cx="287" cy="430" rx="20" ry="18" fill="#1a0510" stroke="#4a0a1e" stroke-width="1"/>
+        <g id="leverArm" style="transform-origin:330px 340px;cursor:pointer;transition:transform .3s cubic-bezier(.34,1.56,.64,1)">
+          <circle cx="330" cy="340" r="10" fill="url(#metalGrad)" stroke="#666" stroke-width="1"/><circle cx="330" cy="340" r="5" fill="#888"/>
+          <rect x="325" y="295" width="10" height="50" rx="5" fill="url(#metalGrad)" stroke="#777" stroke-width=".5"/>
+          <circle cx="330" cy="288" r="14" fill="#ff3060" stroke="#cc1840" stroke-width="1.5" filter="url(#glow)"/><circle cx="328" cy="285" r="5" fill="rgba(255,255,255,.3)"/>
+        </g>
+        <ellipse cx="200" cy="285" rx="128" ry="10" fill="url(#metalGrad)" stroke="#888" stroke-width=".5"/>
+        <path d="M72,285 Q72,80 200,50 Q328,80 328,285 Z" fill="url(#domeGrad)" stroke="rgba(200,200,255,.25)" stroke-width="2"/>
+        <path d="M115,140 Q130,100 165,80" stroke="rgba(255,255,255,.25)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <ellipse cx="200" cy="55" rx="30" ry="12" fill="url(#capGrad)" stroke="#aa1835" stroke-width="1"/>
+        <circle cx="200" cy="45" r="8" fill="url(#metalGrad)" stroke="#888" stroke-width=".5"/>
+        <text x="170" y="445" text-anchor="middle" fill="rgba(255,200,200,.4)" font-size="16" font-weight="800" letter-spacing="3" font-family="Arial,sans-serif">GACHA</text>
+        <circle cx="88" cy="310" r="3.5" fill="#ff6b9d" opacity=".6"><animate attributeName="opacity" values=".2;.9;.2" dur="1.5s" repeatCount="indefinite"/></circle>
+        <circle cx="312" cy="310" r="3.5" fill="#ffd700" opacity=".6"><animate attributeName="opacity" values=".2;.9;.2" dur="1.8s" repeatCount="indefinite"/></circle>
+        <circle cx="88" cy="370" r="3.5" fill="#00d4ff" opacity=".6"><animate attributeName="opacity" values=".2;.9;.2" dur="2s" repeatCount="indefinite"/></circle>
+        <circle cx="312" cy="370" r="3.5" fill="#2ecc71" opacity=".6"><animate attributeName="opacity" values=".2;.9;.2" dur="1.3s" repeatCount="indefinite"/></circle>
+      </svg>
+      <div class="capsule-zone" id="capsuleZone"></div>
+    </div>
+  </div>
+  <div class="mode-bbar" style="background:rgba(13,13,36,.9);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.06)">
+    <button class="action-btn" id="gachaDrawBtn" onclick="gachaDraw()" style="background:linear-gradient(135deg,#ff6b9d,#c44dff);box-shadow:0 4px 20px rgba(255,107,157,.3)">🥚 扭一扭</button>
+    <button class="sbtn" onclick="gachaResetDr()">重置</button>
+  </div>
+  <div class="gacha-reveal-ov" id="gachaRevealOv">
+    <div class="gacha-reveal-card" id="gachaRevealCard">
+      <div class="gacha-avatar-wrap" id="gachaAvatarW"></div>
+      <div class="gacha-rev-name" id="gachaRevName"></div>
+      <div class="gacha-rev-lv" id="gachaRevLv"></div>
+      <div class="gacha-rev-xp" id="gachaRevXp"></div>
+      <div class="gacha-rate-row" id="gachaRateRow">
+        <button class="gacha-rate-btn ex" onclick="gachaRate('ex')">⭐ 优秀</button>
+        <button class="gacha-rate-btn good" onclick="gachaRate('good')">👍 良好</button>
+        <button class="gacha-rate-btn try" onclick="gachaRate('try')">💪 加油</button>
+      </div>
+      <div class="gacha-rate-res" id="gachaRateRes"></div>
+      <button class="gacha-cont-btn" id="gachaContBtn" onclick="gachaContinue()">继续</button>
+    </div>
+  </div>
+  <div class="lvlup-ov" id="gachaLvlupOv" onclick="this.classList.remove('active')"><div class="lvlup-card"><div class="lvlup-title">等级提升！</div><div class="lvlup-name" id="gachaLvlupName"></div><button class="lvlup-dismiss">继续</button></div></div>
+  <div class="hpan" id="gachaHpan"><div class="hp-h"><span>点名记录</span><button class="ibtn" onclick="togGachaHist()" style="width:22px;height:22px;font-size:10px">✕</button></div><div class="hp-ls" id="gachaHls"></div></div>
+</div>
+
+<!-- ==================== MODE 5: 盲盒开箱 ==================== -->
+<div class="page" id="page-blindbox">
+  <div class="blindbox-bg"></div>
+  <div class="wall-pattern"></div>
+  <div class="mode-top" style="background:rgba(26,21,32,.9);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06)">
+    <button class="back-btn" onclick="goHome()">← 返回</button>
+    <div class="mode-title" style="background:linear-gradient(135deg,#ff6b9d,#c44dff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">🎁 盲盒开箱</div>
+    <div class="mode-chips" id="blindboxCbar"></div>
+    <div class="chk"><input type="checkbox" id="blindboxNoRep" checked><label for="blindboxNoRep" style="font-size:12px;color:rgba(255,255,255,.6)">不重复</label></div>
+    <button class="ibtn" onclick="togBlindboxHist()" title="点名记录">📋</button>
+  </div>
+  <div class="shelf-area" id="shelfArea"></div>
+  <div class="mode-bbar" style="background:rgba(26,21,32,.92);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.06)">
+    <button class="blindbox-mode-chip on" data-mode="random" onclick="blindboxSetMode('random')">🎲 随机抽取</button>
+    <button class="blindbox-mode-chip" data-mode="select" onclick="blindboxSetMode('select')">👆 选盲盒</button>
+    <button class="action-btn" id="blindboxDrawBtn" onclick="blindboxDraw()" style="background:linear-gradient(135deg,#ff6b9d,#c44dff);box-shadow:0 4px 16px rgba(255,107,157,.3)">🎁 抽盲盒</button>
+    <button class="sbtn" onclick="blindboxResetDr()">重置</button>
+  </div>
+  <div class="gacha-reveal-ov" id="blindboxRevealOv">
+    <div class="gacha-reveal-card" id="blindboxRevealCard">
+      <div class="gacha-avatar-wrap" id="blindboxAvatarW"></div>
+      <div class="gacha-rev-name" id="blindboxRevName"></div>
+      <div class="gacha-rev-lv" id="blindboxRevLv"></div>
+      <div class="gacha-rev-xp" id="blindboxRevXp"></div>
+      <div class="gacha-rate-row" id="blindboxRateRow">
+        <button class="gacha-rate-btn ex" onclick="blindboxRate('ex')">⭐ 优秀</button>
+        <button class="gacha-rate-btn good" onclick="blindboxRate('good')">👍 良好</button>
+        <button class="gacha-rate-btn try" onclick="blindboxRate('try')">💪 加油</button>
+      </div>
+      <div class="gacha-rate-res" id="blindboxRateRes"></div>
+      <button class="gacha-cont-btn" id="blindboxContBtn" onclick="blindboxContinue()">继续</button>
+    </div>
+  </div>
+  <div class="lvlup-ov" id="blindboxLvlupOv" onclick="this.classList.remove('active')"><div class="lvlup-card"><div class="lvlup-title">等级提升！</div><div class="lvlup-name" id="blindboxLvlupName"></div><button class="lvlup-dismiss">继续</button></div></div>
+  <div class="hpan" id="blindboxHpan"><div class="hp-h"><span>点名记录</span><button class="ibtn" onclick="togBlindboxHist()" style="width:22px;height:22px;font-size:10px">✕</button></div><div class="hp-ls" id="blindboxHls"></div></div>
+</div>
+
+<script>
+/* ================================================================
+   创意课堂随机点名器 · 整合版
+   五种模式：命运卡牌 | 深海寻宝 | 魔法转盘 | 扭蛋机 | 盲盒开箱
+   共享数据层 cp_v4
+   ================================================================ */
+
+/* ===== Shared Data Layer ===== */
+const SK='cp_v4';
+let D=ld(),cid=D.cid||null,actx=null;
+
+function ld(){
+  try{
+    ['cp_v3','cp_data_v2'].forEach(old=>{
+      const v=localStorage.getItem(old);
+      if(v){try{const d=JSON.parse(v);if(d&&d.classes&&d.classes.length){localStorage.setItem(SK,v);localStorage.removeItem(old)}}catch(e){localStorage.removeItem(old)}}
+    });
+    const r=localStorage.getItem(SK);if(r)return JSON.parse(r);
+  }catch(e){}
+  return{classes:[],cid:null};
+}
+function sv(){D.cid=cid;try{localStorage.setItem(SK,JSON.stringify(D))}catch(e){}}
+function cc(){return D.classes.find(c=>c.id===cid)||null}
+
+/* ===== Shared Demo ===== */
+function ensureDemo(){
+  if(D.classes.length)return;
+  const ss=['陈思远','林雨萱','张浩然','王子涵','刘梓轩','赵心怡','黄梦琪','周天翔','吴语彤','郑雅琪','孙浩宇','杨诗涵','朱子墨','何思琪','马骏逸','胡雨桐','郭乐瑶','高文博','罗语嫣','梁晨曦','谢子豪','韩紫萱','唐瑞霖','冯诗雅','董子瑜','彭若曦','曹一鸣','邓雨泽','许嘉欣','叶明轩'];
+  const preRated={'陈思远':{ex:1,good:1,try:0,picks:3},'林雨萱':{ex:2,good:0,try:0,picks:4},'张浩然':{ex:0,good:1,try:1,picks:2},'王子涵':{ex:3,good:0,try:0,picks:5},'刘梓轩':{ex:0,good:0,try:0,picks:1}};
+  D.classes.push({id:'demo1',name:'七(1)班',students:ss,ratings:preRated});
+  cid='demo1';sv();
+}
+
+/* ===== Shared Level System ===== */
+function getLevel(xp){
+  if(xp>=15)return{tier:'epic',name:'史诗',color:'#e84393'};
+  if(xp>=8)return{tier:'legend',name:'传说',color:'#ff6b35'};
+  if(xp>=4)return{tier:'rare',name:'稀有',color:'#00c8ff'};
+  if(xp>=2)return{tier:'elite',name:'精锐',color:'#2ecc71'};
+  return{tier:'comm',name:'普通',color:'#6b7280'};
+}
+function getStudentStats(name,cls){
+  const r=(cls.ratings&&cls.ratings[name])||{ex:0,good:0,try:0,picks:0};
+  const xp=r.ex*3+r.good*1;const lv=getLevel(xp);
+  const wis=Math.min(100,20+r.ex*15+r.good*5);
+  const cou=Math.min(100,20+r.picks*8);
+  const cre=Math.min(100,20+r.ex*10+r.good*3+r.try*4);
+  const total=wis+cou+cre;
+  const stars=total>240?5:total>190?4:total>140?3:total>90?2:1;
+  return{wis,cou,cre,stars,xp,lv,...r};
+}
+function starsH(n){return Array.from({length:5},(_,i)=>`<span class="${i<n?'on':'off'}">★</span>`).join('')}
+
+/* ===== Shared Avatar (纯 HTML/CSS，不依赖 SVG data URI) ===== */
+function avaSVG(nm,sz){
+  let h=0;for(let i=0;i<nm.length;i++){h=((h<<5)-h)+nm.charCodeAt(i);h|=0}
+  const a=Math.abs(h);let ini;
+  if(/[\u4e00-\u9fff]/.test(nm)){ini=nm.length>=2?nm.slice(-2):nm}
+  else{ini=nm.slice(0,2).toUpperCase()}
+  const fs=Math.round(sz*.28);
+  return`<div style="width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,hsl(${a%360},50%,40%),hsl(${(a>>8)%360},50%,52%));font-size:${fs}px;font-weight:700;color:#fff;line-height:1">${ini}</div>`;
+}
+
+/* ===== Shared Audio ===== */
+function initA(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume()}
+function tn(f,d,t,v){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();o.type=t||'sine';o.frequency.value=f;g.gain.value=v||.08;g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d);o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+d)}
+
+/* ===== Shared Confetti ===== */
+function spawnConfetti(cvEl){
+  const cv=cvEl||document.getElementById('globalConfetti');
+  cv.width=innerWidth;cv.height=innerHeight;
+  const cx=cv.getContext('2d'),ps=[];
+  const cols=['#ffd700','#ff6b35','#7c6aff','#00c8ff','#ff6b6b','#55efc4','#e84393'];
+  for(let i=0;i<100;i++)ps.push({x:cv.width/2,y:cv.height/2,vx:(Math.random()-.5)*14,vy:(Math.random()-.5)*14-3,sz:Math.random()*8+3,c:cols[i%cols.length],life:1,dec:.008+Math.random()*.012,rot:Math.random()*360,rv:(Math.random()-.5)*10});
+  function go(){
+    ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.18;p.life-=p.dec;p.rot+=p.rv;p.vx*=.99});
+    cx.clearRect(0,0,cv.width,cv.height);
+    ps.forEach(p=>{if(p.life<=0)return;cx.save();cx.globalAlpha=p.life;cx.translate(p.x,p.y);cx.rotate(p.rot*Math.PI/180);cx.fillStyle=p.c;cx.fillRect(-p.sz/2,-p.sz*.3,p.sz,p.sz*.6);cx.restore()});
+    if(ps.some(p=>p.life>0))requestAnimationFrame(go);else cx.clearRect(0,0,cv.width,cv.height);
+  }
+  go();
+}
+
+/* ===== Navigation ===== */
+let currentPage='home';
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  currentPage=id;
+  if(id==='home')renderHomeClassBar();
+}
+function goMode(mode){
+  ensureDemo();if(!cid&&D.classes.length){cid=D.classes[0].id;sv()}
+  initMode(mode);showPage(mode);
+}
+function goHome(){
+  // cleanup current mode
+  if(currentPage==='ocean'){oceanStopSwimming();oceanRAF&&cancelAnimationFrame(oceanRAF)}
+  showPage('home');renderSession();
+}
+
+/* ===== Class Management Modal ===== */
+function openClassModal(){renderClassList();document.getElementById('classModal').classList.add('active')}
+function closeClassModal(){document.getElementById('classModal').classList.remove('active')}
+function renderClassList(){
+  const el=document.getElementById('classListEl');
+  if(!D.classes.length){el.innerHTML='<div style="text-align:center;padding:14px;color:var(--tx2);font-size:12px">暂无班级，请添加</div>';return}
+  el.innerHTML=D.classes.map(c=>`
+    <div class="class-item ${c.id===cid?'on':''}" onclick="swCls('${c.id}')">
+      <div><span class="ci-name">${c.name}</span><span class="ci-count">${c.students.length}人</span></div>
+      <div class="ci-actions">
+        <button onclick="event.stopPropagation();expCls('${c.id}')">导出</button>
+        <button class="del-btn" onclick="event.stopPropagation();delCls('${c.id}')">删除</button>
+      </div>
+    </div>`).join('');
+}
+function swCls(id){cid=id;drawn={};sv();renderHomeClassBar();renderClassList();closeClassModal()}
+function addClass(){
+  const nm=document.getElementById('newClassName').value.trim();
+  const raw=document.getElementById('newClassStudents').value.trim();
+  const file=document.getElementById('importFile').files[0];
+  if(file){
+    const r=new FileReader();
+    r.onload=e=>{try{const j=JSON.parse(e.target.result);const ss=j.students||j;const arr=Array.isArray(ss)?ss:[];
+      if(!arr.length){alert('无有效名单');return}
+      const cls={id:'c'+Date.now(),name:j.name||nm||'导入班级',students:arr.map(s=>typeof s==='string'?s.trim():(s.name||'')).filter(Boolean),ratings:{}};
+      D.classes.push(cls);cid=cls.id;drawn={};sv();
+      document.getElementById('newClassName').value='';document.getElementById('newClassStudents').value='';document.getElementById('importFile').value='';
+      renderHomeClassBar();renderClassList();
+    }catch(err){alert('JSON解析失败')}};r.readAsText(file);return;
+  }
+  if(!nm){alert('请输入班级名称');return}if(!raw){alert('请输入学生名单');return}
+  const ss=raw.split(/[\n,，;；]+/).map(s=>s.trim()).filter(Boolean);
+  if(!ss.length){alert('请输入至少一个学生');return}
+  const cls={id:'c'+Date.now(),name:nm,students:ss,ratings:{}};
+  D.classes.push(cls);cid=cls.id;drawn={};sv();
+  document.getElementById('newClassName').value='';document.getElementById('newClassStudents').value='';
+  renderHomeClassBar();renderClassList();
+}
+function delCls(id){if(!confirm('确定删除？'))return;D.classes=D.classes.filter(c=>c.id!==id);if(cid===id){cid=D.classes.length?D.classes[0].id:null;drawn={}}sv();renderHomeClassBar();renderClassList()}
+function expCls(id){
+  const c=D.classes.find(x=>x.id===id);if(!c)return;
+  const b=new Blob([JSON.stringify(c,null,2)],{type:'application/json'});
+  const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=c.name+'.json';a.click();URL.revokeObjectURL(u);
+}
+
+/* ===== Home Class Bar ===== */
+function renderHomeClassBar(){
+  const el=document.getElementById('homeClassBar');
+  el.innerHTML=D.classes.map(c=>`<button class="home-chip ${c.id===cid?'on':''}" onclick="cid='${c.id}';drawn={};sv();renderHomeClassBar()">${c.name}</button>`).join('');
+}
+
+/* ===== Per-mode drawn tracking ===== */
+let drawn={}; // {modeKey: [names]}
+
+function getDrawn(key){return drawn[key]||[]}
+function addDrawn(key,name){if(!drawn[key])drawn[key]=[];drawn[key].push(name);addSessionLog(key,name)}
+let sessionLog=[];
+const modeIcons={fate:'✦',ocean:'🌊',wheel:'🌀',gacha:'🥚',blindbox:'🎁'};
+const modeNames={fate:'命运卡牌',ocean:'深海寻宝',wheel:'魔法转盘',gacha:'扭蛋机',blindbox:'盲盒开箱'};
+function addSessionLog(mode,name){
+  const c=cc();const st=c?getStudentStats(name,c):{lv:{name:'学徒',tier:'comm'},stars:0};
+  const now=new Date();const ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  sessionLog.push({mode,name,time:ts,tier:st.lv.tier,lvName:st.lv.name,rating:null,rewarded:false});
+  renderSession();
+}
+function rateSessionItem(idx,type){
+  if(idx<0||idx>=sessionLog.length)return;
+  const entry=sessionLog[idx];if(entry.rating)return;entry.rating=type;
+  const c=cc();if(!c)return;const nm=entry.name;
+  if(!c.ratings)c.ratings={};if(!c.ratings[nm])c.ratings[nm]={ex:0,good:0,try:0,picks:0};
+  if(type==='ex')c.ratings[nm].ex++;else if(type==='good')c.ratings[nm].good++;else c.ratings[nm].try++;
+  sv();renderSession();
+}
+function rewardSessionItem(idx){
+  if(idx<0||idx>=sessionLog.length)return;
+  const entry=sessionLog[idx];if(entry.rewarded)return;entry.rewarded=true;
+  const c=cc();if(!c)return;const nm=entry.name;
+  if(!c.ratings)c.ratings={};if(!c.ratings[nm])c.ratings[nm]={ex:0,good:0,try:0,picks:0};
+  c.ratings[nm].ex+=2;sv();
+  initA();tn(880,.2,'sine',.08);setTimeout(()=>tn(1100,.2,'sine',.07),100);setTimeout(()=>tn(1320,.2,'sine',.06),200);
+  renderSession();
+}
+function clearSession(){sessionLog=[];renderSession()}
+function syncSessionRating(mode,name,rating){
+  for(let i=sessionLog.length-1;i>=0;i--){
+    if(sessionLog[i].mode===mode&&sessionLog[i].name===name&&!sessionLog[i].rating){
+      sessionLog[i].rating=rating;renderSession();return;
+    }
+  }
+}
+function renderSession(){
+  const body=document.getElementById('hsBody');
+  if(!sessionLog.length){body.innerHTML='<div class="hs-empty">暂无点名记录</div>';return}
+  let h='';const tierColors={comm:'hsl(200,15%,45%)',elite:'hsl(140,55%,45%)',rare:'hsl(200,70%,55%)',legend:'hsl(25,90%,55%)',epic:'hsl(320,70%,55%)'};
+  for(let i=sessionLog.length-1;i>=0;i--){
+    const e=sessionLog[i];
+    let h2=0;for(let j=0;j<e.name.length;j++){h2=((h2<<5)-h2)+e.name.charCodeAt(j);h2|=0}
+    const hue=Math.abs(h2)%360;
+    const ini=/[\u4e00-\u9fff]/.test(e.name)?e.name.slice(-2):e.name.slice(0,2);
+    const ratingCls=e.rating?e.rating:'none';
+    const ratingText=e.rating==='ex'?'⭐优秀':e.rating==='good'?'✅良好':e.rating==='try'?'💪加油':'未评价';
+    h+=`<div class="hs-item"><div class="hs-ava" style="background:linear-gradient(135deg,hsl(${hue},50%,40%),hsl(${(hue+60)%360},50%,52%))">${ini}</div><div class="hs-info"><div class="hs-nm">${e.name}</div><div class="hs-meta">${modeIcons[e.mode]||''} ${modeNames[e.mode]||e.mode} · ${e.time}</div></div>${!e.rating?`<button class="hs-rating none" onclick="rateSessionItem(${i},'ex')">⭐</button><button class="hs-rating none" onclick="rateSessionItem(${i},'good')">✅</button><button class="hs-rating none" onclick="rateSessionItem(${i},'try')">💪</button>`:`<span class="hs-rating ${ratingCls}">${ratingText}</span>`}<button class="hs-reward${e.rewarded?' given':''}" onclick="rewardSessionItem(${i})">${e.rewarded?'🏅 已奖励':'🏅 奖励'}</button></div>`;
+  }
+  body.innerHTML=h;
+}
+function resetDrawn(key){drawn[key]=[]}
+
+/* ===== Home BG Particles ===== */
+function initHomeBG(){
+  const cv=document.getElementById('homeBgC'),cx=cv.getContext('2d');let W,H;const ps=[];const N=50;
+  function rsz(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+  function mk(){return{x:Math.random()*W,y:Math.random()*H,sz:Math.random()*1.8+.3,sx:(Math.random()-.5)*.25,sy:-Math.random()*.3-.05,op:Math.random()*.3+.05,hue:220+Math.random()*80}}
+  rsz();for(let i=0;i<N;i++)ps.push(mk());
+  function draw(){
+    cx.clearRect(0,0,W,H);
+    const grd=cx.createRadialGradient(W/2,H/2,0,W/2,H/2,W*.6);
+    grd.addColorStop(0,'rgba(30,20,80,.08)');grd.addColorStop(1,'transparent');
+    cx.fillStyle=grd;cx.fillRect(0,0,W,H);
+    ps.forEach(p=>{
+      p.x+=p.sx;p.y+=p.sy;if(p.y<-10){p.y=H+10;p.x=Math.random()*W}if(p.x<-10)p.x=W+10;if(p.x>W+10)p.x=-10;
+      cx.beginPath();cx.arc(p.x,p.y,p.sz,0,Math.PI*2);cx.fillStyle=`hsla(${p.hue},50%,65%,${p.op})`;cx.fill();
+    });
+    if(currentPage==='home')requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+/* ===== Mode Initialization ===== */
+let modeInited={};
+function initMode(mode){
+  if(!modeInited[mode]){
+    modeInited[mode]=true;
+    if(mode==='fate')initFate();
+    else if(mode==='ocean')initOcean();
+    else if(mode==='wheel')initWheel();
+    else if(mode==='gacha')initGacha();
+    else if(mode==='blindbox')initBlindbox();
+  }
+  // Refresh each mode on enter
+  if(mode==='fate'){fateRenderCbar();fateRenderStage();fateRenderHist()}
+  else if(mode==='ocean'){oceanRenderCbar();oceanStopSwimming();oceanSpawnCreatures();setTimeout(()=>oceanStartSwimming(),300);oceanRenderHist()}
+  else if(mode==='wheel'){wheelRenderUI()}
+  else if(mode==='gacha'){gachaRenderCbar();gachaPopulateCapsules();gachaUpdateCounter()}
+  else if(mode==='blindbox'){blindboxRenderCbar();blindboxBuildShelves();blindboxUpdateCounter()}
+}
+
+/* ================================================================
+   MODE 1: 命运卡牌
+   ================================================================ */
+let fateMode=1,fateSelCard=null,fateBusy=false,fateRated=false,fateRevealedName='';
+
+function initFate(){
+  const cv=document.getElementById('fateBgC'),cx=cv.getContext('2d');let W,H;const ps=[];const N=40;
+  function rsz(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+  function mk(){return{x:Math.random()*W,y:Math.random()*H,sz:Math.random()*1.5+.3,sx:(Math.random()-.5)*.2,sy:-Math.random()*.3-.05,op:Math.random()*.3+.05,hue:220+Math.random()*80}}
+  rsz();for(let i=0;i<N;i++)ps.push(mk());
+  function draw(){if(currentPage!=='fate')return;cx.clearRect(0,0,W,H);ps.forEach(p=>{p.x+=p.sx;p.y+=p.sy;if(p.y<-10){p.y=H+10;p.x=Math.random()*W}if(p.x<-10)p.x=W+10;if(p.x>W+10)p.x=-10;cx.beginPath();cx.arc(p.x,p.y,p.sz,0,Math.PI*2);cx.fillStyle=`hsla(${p.hue},50%,65%,${p.op})`;cx.fill()});requestAnimationFrame(draw)}
+  addEventListener('resize',rsz);draw();
+}
+function fateRenderCbar(){document.getElementById('fateCbar').innerHTML=D.classes.map(c=>`<button class="chip ${c.id===cid?'on':''}" onclick="fateSwCls('${c.id}')">${c.name}</button>`).join('');fateUpdSt()}
+function fateUpdSt(){const c=cc();document.getElementById('fateStxt').textContent=c?`${getDrawn('fate').length}/${c.students.length}`:'0/0'}
+function fateSwCls(id){cid=id;resetDrawn('fate');sv();fateRenderCbar();fateRenderStage();fateRenderHist()}
+
+function backHTML(tier){
+  const t=tier||'comm';
+  return`<div class="cback t-${t}"><div class="cback-glow"></div><div class="cback-sym">✦</div><span class="cback-gem tl"></span><span class="cback-gem tr"></span><span class="cback-gem bl"></span><span class="cback-gem br"></span><div class="cback-shim"></div></div>`;
+}
+function cardArt(tier,nm){
+  let h=0;for(let i=0;i<nm.length;i++){h=((h<<5)-h)+nm.charCodeAt(i);h|=0}
+  const a=Math.abs(h);const v=a%360;
+  const arts={
+    comm:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" rx="40" fill="hsl(${v},25%,18%)"/><circle cx="40" cy="40" r="24" fill="none" stroke="hsl(${v},35%,40%)" stroke-width="1.5" stroke-dasharray="6 4"/><circle cx="40" cy="40" r="14" fill="hsl(${v},30%,30%)" opacity=".6"/><polygon points="40,22 46,34 58,34 48,42 52,54 40,46 28,54 32,42 22,34 34,34" fill="hsl(${v},40%,55%)" opacity=".5"/></svg>`,
+    elite:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" rx="40" fill="hsl(${v},30%,14%)"/><circle cx="40" cy="40" r="30" fill="none" stroke="hsl(140,50%,45%)" stroke-width="1.5"/><circle cx="40" cy="40" r="20" fill="none" stroke="hsl(140,50%,50%)" stroke-width="1" stroke-dasharray="3 5"/><path d="M40,14 L44,30 L56,24 L48,36 L60,40 L48,44 L56,56 L44,50 L40,66 L36,50 L24,56 L32,44 L20,40 L32,36 L24,24 L36,30 Z" fill="hsl(140,55%,50%)" opacity=".45"/></svg>`,
+    rare:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="ra${v}"><stop offset="0%" stop-color="hsl(200,70%,55%)" stop-opacity=".4"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs><rect width="80" height="80" rx="40" fill="hsl(${v},35%,12%)"/><circle cx="40" cy="40" r="35" fill="url(#ra${v})"/><circle cx="40" cy="40" r="26" fill="none" stroke="hsl(200,65%,55%)" stroke-width="1.5"/><circle cx="40" cy="40" r="18" fill="none" stroke="hsl(200,65%,60%)" stroke-width="1" opacity=".7"/><path d="M40,12 L42,28 L52,20 L46,34 L58,34 L48,42 L54,54 L42,46 L40,62 L38,46 L26,54 L32,42 L22,34 L34,34 L28,20 L38,28 Z" fill="hsl(200,70%,60%)" opacity=".5"/><circle cx="40" cy="40" r="6" fill="hsl(200,80%,70%)" opacity=".6"/></svg>`,
+    legend:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="la${v}"><stop offset="0%" stop-color="hsl(25,90%,55%)" stop-opacity=".5"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs><rect width="80" height="80" rx="40" fill="hsl(${v},40%,10%)"/><circle cx="40" cy="40" r="36" fill="url(#la${v})"/><path d="M40,10 Q48,25 56,22 Q50,32 62,35 Q50,38 54,48 Q46,42 42,56 Q40,48 38,56 Q34,42 26,48 Q30,38 18,35 Q30,32 24,22 Q32,25 40,10 Z" fill="hsl(25,90%,55%)" opacity=".5"/><circle cx="40" cy="40" r="12" fill="hsl(25,85%,50%)" opacity=".3"/><circle cx="40" cy="40" r="5" fill="hsl(25,95%,70%)" opacity=".7"/></svg>`,
+    epic:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="ea${v}"><stop offset="0%" stop-color="hsl(320,70%,55%)" stop-opacity=".5"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs><rect width="80" height="80" rx="40" fill="hsl(${v},40%,8%)"/><circle cx="40" cy="40" r="36" fill="url(#ea${v})"/><circle cx="40" cy="40" r="28" fill="none" stroke="hsl(320,65%,55%)" stroke-width="1.5"/><circle cx="40" cy="40" r="20" fill="none" stroke="hsl(320,65%,60%)" stroke-width="1" stroke-dasharray="2 6"/><circle cx="40" cy="40" r="12" fill="none" stroke="hsl(320,65%,55%)" stroke-width="1"/><circle cx="40" cy="16" r="2.5" fill="hsl(320,80%,70%)" opacity=".7"/><circle cx="60" cy="30" r="2" fill="hsl(280,80%,70%)" opacity=".6"/><circle cx="60" cy="52" r="2.5" fill="hsl(320,80%,70%)" opacity=".5"/><circle cx="40" cy="64" r="2" fill="hsl(280,80%,70%)" opacity=".7"/><circle cx="20" cy="52" r="2.5" fill="hsl(320,80%,70%)" opacity=".6"/><circle cx="20" cy="30" r="2" fill="hsl(280,80%,70%)" opacity=".5"/><circle cx="40" cy="40" r="4" fill="hsl(320,90%,75%)" opacity=".8"/></svg>`
+  };
+  return arts[tier]||arts.comm;
+}
+function frontHTML(nm,st,sz){
+  const t=st.lv.tier;const avSz=sz==='lg'?84:56;const cls=sz==='lg'?'rc-fr-inner':'cfront';const nmCls=sz==='lg'?'rc-name':'cf-name';const stCls=sz==='lg'?'rc-stars':'cf-stars';const atCls=sz==='lg'?'rc-attr':'cf-attr';const alCls=sz==='lg'?'rc-al':'cf-al';const abCls=sz==='lg'?'rc-ab':'cf-ab';const afCls=sz==='lg'?'rc-af':'cf-af';const avCls=sz==='lg'?'rc-av':'cf-av';
+  const avaContent=sz==='lg'?cardArt(t,nm):avaSVG(nm,avSz);
+  return`<div class="${cls} t-${t}"><span class="cf-tag ${t}">${st.lv.name}</span><div class="${sz==='lg'?'rc-ava':'cf-ava'}">${avaContent}</div><div class="${nmCls}">${nm}</div><div class="${stCls}">${starsH(st.stars)}</div><div class="${sz==='lg'?'rc-attrs':'cf-attrs'}"><div class="${atCls}"><span class="${alCls}">智慧</span><div class="${abCls}"><div class="${afCls} w" data-w="${st.wis}"></div></div><span class="${avCls}">${st.wis}</span></div><div class="${atCls}"><span class="${alCls}">勇气</span><div class="${abCls}"><div class="${afCls} c" data-w="${st.cou}"></div></div><span class="${avCls}">${st.cou}</span></div><div class="${atCls}"><span class="${alCls}">创造</span><div class="${abCls}"><div class="${afCls} r" data-w="${st.cre}"></div></div><span class="${avCls}">${st.cre}</span></div></div>${sz==='lg'?`<div class="rc-xp">XP: ${st.xp} | 被点${st.picks}次</div>`:''}</div>`;
+}
+
+function fateRenderStage(){
+  const s=document.getElementById('fateStage');const c=cc();const dr=getDrawn('fate');
+  if(!c||!c.students.length){s.innerHTML=`<div style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:12px">🃏</div><div style="font-size:14px;color:var(--tx2)">${!c?'请先创建班级':'暂无学生'}</div></div>`;const gb=document.getElementById('fateGoBtn');if(gb)gb.disabled=true;return}
+  const gb=document.getElementById('fateGoBtn');if(gb)gb.disabled=false;
+  if(fateMode===1)fateRenderFan(c,dr);else fateRenderGrid(c,dr);
+}
+function fateRenderFan(c,dr){
+  const s=document.getElementById('fateStage');const nr=document.getElementById('fateNoRep').checked;
+  const avail=nr?c.students.filter(n=>!dr.includes(n)):c.students;
+  if(!avail.length){s.innerHTML=`<div style="text-align:center;padding:40px"><div style="font-size:48px">✅</div><div style="font-size:14px;color:var(--tx2)">全部点完！</div></div>`;const gb=document.getElementById('fateGoBtn');if(gb)gb.disabled=true;return}
+  const n=Math.min(avail.length,14);const list=avail.slice(0,n);const spread=Math.min(n*5,42);const start=-spread/2;
+  let h='<div class="fan">';
+  list.forEach((nm,i)=>{const a=n>1?start+(spread/(n-1))*i:0;const yOff=Math.abs(a)*1.2;const z=n>1?n-Math.abs(i-Math.floor(n/2)):1;const st=getStudentStats(nm,c);h+=`<div class="card-w" style="transform:rotate(${a}deg) translateY(${yOff}px);z-index:${z}">${backHTML(st.lv.tier)}</div>`});
+  h+='</div>';s.innerHTML=h;
+}
+function fateRenderGrid(c,dr){
+  const s=document.getElementById('fateStage');
+  let h='<div class="grid-wrap" id="gridW">';
+  c.students.forEach((nm,i)=>{const st=getStudentStats(nm,c);const isPicked=dr.includes(nm);h+=`<div class="card-w grid-card ${isPicked?'picked':''}" data-idx="${i}" data-name="${nm}" onclick="fateGridPick(this)">${backHTML(st.lv.tier)}</div>`});
+  h+='</div>';s.innerHTML=h;
+}
+function fateSetMode(m){
+  fateMode=m;fateSelCard=null;
+  document.getElementById('fateTab1').className='mtab'+(m===1?' on':'');
+  document.getElementById('fateTab2').className='mtab'+(m===2?' on':'');
+  const bb=document.getElementById('fateBbar');const nr=document.getElementById('fateNoRep').checked;
+  if(m===1){bb.innerHTML=`<div class="chk"><input type="checkbox" id="fateNoRep" ${nr?'checked':''}><label for="fateNoRep">不重复</label></div><button class="go-btn" id="fateGoBtn" onclick="fateDoAction()">✦ 抽取命运</button><button class="sbtn" onclick="fateResetDr()">重置</button>`}
+  else{bb.innerHTML=`<div class="chk"><input type="checkbox" id="fateNoRep" ${nr?'checked':''}><label for="fateNoRep">不重复</label></div><button class="shuf-btn" onclick="fateGridShuffle()">🔀 洗牌</button><button class="sbtn" onclick="fateResetDr()">重置</button>`}
+  fateRenderStage();
+}
+function fateDoAction(){if(!fateBusy&&fateMode===1)fateRandomDraw()}
+function fateRandomDraw(){
+  const c=cc();if(!c)return;const dr=getDrawn('fate');const nr=document.getElementById('fateNoRep').checked;
+  const avail=nr?c.students.filter(s=>!dr.includes(s)):[...c.students];
+  if(!avail.length){fateResetDr();return}
+  fateBusy=true;const gb=document.getElementById('fateGoBtn');if(gb)gb.disabled=true;initA();
+  const picked=avail[Math.floor(Math.random()*avail.length)];addDrawn('fate',picked);
+  if(!c.ratings)c.ratings={};if(!c.ratings[picked])c.ratings[picked]={ex:0,good:0,try:0,picks:0};c.ratings[picked].picks++;sv();
+  playWhoosh();fateRunShuffle(c,picked);
+}
+function playWhoosh(){if(!actx)return;const n=actx.sampleRate*.3,buf=actx.createBuffer(1,n,actx.sampleRate),d=buf.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(n*.25));const src=actx.createBufferSource();src.buffer=buf;const fl=actx.createBiquadFilter();fl.type='bandpass';fl.frequency.value=1600;fl.Q.value=.5;const g=actx.createGain();g.gain.value=.06;src.connect(fl);fl.connect(g);g.connect(actx.destination);src.start()}
+function fateRunShuffle(c,picked){
+  const s=document.getElementById('fateStage');const n=Math.min(c.students.length,7);
+  let h='<div class="shuf-area">';for(let i=0;i<n;i++){const ox=(i-Math.floor(n/2))*24;h+=`<div class="card-w" id="sc${i}" style="transform:translateX(${ox}px)">${backHTML('comm')}</div>`}h+='</div>';s.innerHTML=h;
+  setTimeout(()=>{for(let i=0;i<n;i++){const el=document.getElementById('sc'+i);if(el){el.style.transition='all .5s cubic-bezier(.4,0,.2,1)';el.style.transform='translateX(0) translateY(0) rotate(0deg) scale(.85)';el.style.zIndex=i}}},50);
+  setTimeout(()=>{let t=0;const dur=1700;const cards=[];for(let i=0;i<n;i++)cards.push(document.getElementById('sc'+i));
+    function vortex(){t+=16;if(t>dur)return;const p=t/dur;cards.forEach((el,i)=>{if(!el)return;const angle=p*Math.PI*5+(i/n)*Math.PI*2;const r=60+40*Math.sin(p*Math.PI);el.style.transition='none';el.style.transform=`translate(${Math.cos(angle)*r}px,${Math.sin(angle)*r*.6}px) rotate(${angle*15}deg) scale(${.7+.3*Math.abs(Math.sin(p*Math.PI))})`;el.style.zIndex=Math.floor(Math.sin(angle)*5+5)});if(t<dur)requestAnimationFrame(vortex)}
+    vortex();let tickI=setInterval(()=>tn(600+Math.random()*600,.04,'square',.025),120);setTimeout(()=>clearInterval(tickI),dur);
+  },550);
+  setTimeout(()=>{for(let i=0;i<n;i++){const el=document.getElementById('sc'+i);if(!el)continue;el.style.transition='all .35s cubic-bezier(.4,0,.2,1)';el.style.transform=`translate(${(Math.random()-.5)*350}px,${(Math.random()-.5)*200}px) rotate(${(Math.random()-.5)*40}deg) scale(.6)`;el.style.opacity=i===0?'1':'0'}tn(200,.15,'sine',.1)},2250);
+  setTimeout(()=>fateShowReveal(picked),2800);
+}
+function fateGridPick(el){
+  if(fateBusy)return;const nm=el.getAttribute('data-name');if(!nm)return;
+  const dr=getDrawn('fate');const nr=document.getElementById('fateNoRep').checked;
+  if(nr&&dr.includes(nm))return;
+  if(fateSelCard===el){fateBusy=true;const prev=fateSelCard;fateSelCard=null;addDrawn('fate',nm);const c=cc();if(!c.ratings)c.ratings={};if(!c.ratings[nm])c.ratings[nm]={ex:0,good:0,try:0,picks:0};c.ratings[nm].picks++;sv();initA();playWhoosh();prev.style.transition='all .5s';prev.style.transform='scale(1.2) translateY(-30px)';prev.style.opacity='0';prev.classList.remove('selected');setTimeout(()=>fateShowReveal(nm),600)}
+  else{if(fateSelCard)fateSelCard.classList.remove('selected');fateSelCard=el;el.classList.add('selected');tn(600,.04,'square',.025)}
+}
+function fateGridShuffle(){if(fateBusy)return;fateSelCard=null;const c=cc();if(!c)return;initA();playWhoosh();const shuffled=[...c.students];for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]]}c.students=shuffled;sv();fateRenderStage();fateRenderHist()}
+function fateShowReveal(nm){
+  fateRevealedName=nm;const c=cc();const st=getStudentStats(nm,c);const dr=getDrawn('fate');
+  document.getElementById('fateRcC').innerHTML=`<div class="rc" id="fateRCard"><div class="rc-in"><div class="rc-f rc-b">${backHTML(st.lv.tier,'lg')}</div><div class="rc-f rc-fr">${frontHTML(nm,st,'lg')}</div></div></div>`;
+  const nmEl=document.getElementById('fateRNm');const raEl=document.getElementById('fateRateArea');const rrEl=document.getElementById('fateRateRes');const cbEl=document.getElementById('fateContBtn');
+  nmEl.textContent='';nmEl.classList.remove('show');raEl.classList.remove('show');rrEl.classList.remove('show');rrEl.innerHTML='';cbEl.classList.remove('show');fateRated=false;
+  document.getElementById('fateRov').classList.add('active');
+  setTimeout(()=>{const card=document.getElementById('fateRCard');if(card)card.classList.add('flipped');tn(350,.35,'sine',.1);setTimeout(()=>[1100,1400,1700].forEach((f,i)=>setTimeout(()=>tn(f,.1,'sine',.04),i*40)),200)},400);
+  setTimeout(()=>{nmEl.textContent=nm;nmEl.classList.add('show');document.querySelectorAll('.rc-af,.cf-af').forEach(el=>{el.style.width=el.dataset.w+'%'});raEl.classList.add('show');fateUpdSt();fateRenderHist()},1300);
+}
+function fateRate(type){
+  if(fateRated)return;fateRated=true;const c=cc();if(!c)return;const nm=fateRevealedName;
+  if(!c.ratings)c.ratings={};if(!c.ratings[nm])c.ratings[nm]={ex:0,good:0,try:0,picks:0};
+  const oldXP=c.ratings[nm].ex*3+c.ratings[nm].good*1;const oldLv=getLevel(oldXP);
+  if(type==='ex')c.ratings[nm].ex++;else if(type==='good')c.ratings[nm].good++;else c.ratings[nm].try++;
+  const newXP=c.ratings[nm].ex*3+c.ratings[nm].good*1;const newLv=getLevel(newXP);sv();
+  const rr=document.getElementById('fateRateRes');let msg=`+${type==='ex'?3:type==='good'?1:0} XP`;
+  if(newLv.tier!==oldLv.tier){msg+=` · 升级为 ${newLv.name}！`;showLvlUp(nm,newLv);spawnConfetti();[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tn(f,.3,'sine',.09),i*80))}
+  rr.textContent=msg;rr.classList.add('show');if(type==='ex')[784,988,1175].forEach((f,i)=>setTimeout(()=>tn(f,.2,'sine',.07),i*70));else if(type==='good')[659,784].forEach((f,i)=>setTimeout(()=>tn(f,.2,'sine',.06),i*80));else tn(440,.3,'sine',.05);
+  document.getElementById('fateContBtn').classList.add('show');syncSessionRating('fate',nm,type);
+}
+function showLvlUp(nm,lv){const t=document.getElementById('lvlToast');document.getElementById('lvlH').textContent='⬆ 升级！';document.getElementById('lvlP').textContent=`${nm} 成为 ${lv.name}！`;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
+function fateCloseRov(){document.getElementById('fateRov').classList.remove('active');fateBusy=false;fateSelCard=null;const gb=document.getElementById('fateGoBtn');if(gb)gb.disabled=false;fateRenderStage()}
+function fateResetDr(){resetDrawn('fate');fateUpdSt();fateRenderStage();fateRenderHist()}
+function fateRenderHist(){const c=cc();const el=document.getElementById('fateHls');if(!c){el.innerHTML='<div style="padding:10px;color:var(--tx2);font-size:11px">暂无班级</div>';return}const dr=getDrawn('fate');let h='';c.students.forEach(nm=>{const pk=dr.includes(nm);const st=getStudentStats(nm,c);h+=`<div class="hi ${pk?'pk':'pd'}"><span class="hi-d"></span>${nm}${pk?' ✓':''}${st.lv.tier!=='comm'?' ['+st.lv.name+']':''}</div>`});el.innerHTML=h}
+function togFateHist(){document.getElementById('fateHpan').classList.toggle('open');fateRenderHist()}
+
+/* ================================================================
+   MODE 2: 深海寻宝
+   ================================================================ */
+let oceanCreatures=[],oceanMode='dive',oceanBusy=false,oceanRated=false,oceanRevealedName='',oceanRAF=null,swimRAF=null;
+
+/* 18 creature types (abbreviated - full SVG inline) */
+const creatureTypes=[
+  {name:'水母',svg:()=>`<svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="jb"><stop offset="0%" stop-color="rgba(150,200,255,.6)"/><stop offset="100%" stop-color="rgba(80,120,255,.15)"/></radialGradient></defs><ellipse cx="50" cy="40" rx="35" ry="28" fill="url(#jb)" stroke="rgba(150,200,255,.4)" stroke-width="1"/><path d="M30,55 Q25,85 20,120" stroke="rgba(150,200,255,.35)" stroke-width="2" fill="none"><animate attributeName="d" values="M30,55 Q25,85 20,120;M30,55 Q35,85 25,120;M30,55 Q25,85 20,120" dur="3s" repeatCount="indefinite"/></path><path d="M50,60 Q50,95 48,128" stroke="rgba(150,200,255,.35)" stroke-width="2" fill="none"/><path d="M70,55 Q75,85 80,120" stroke="rgba(150,200,255,.35)" stroke-width="2" fill="none"><animate attributeName="d" values="M70,55 Q75,85 80,120;M70,55 Q65,85 75,120;M70,55 Q75,85 80,120" dur="3.2s" repeatCount="indefinite"/></path></svg>`},
+  {name:'海龟',svg:()=>`<svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg"><ellipse cx="60" cy="50" rx="30" ry="25" fill="#3a7d44" stroke="#2d6a35" stroke-width="1.5"/><circle cx="85" cy="42" r="8" fill="#3a7d44" stroke="#2d6a35" stroke-width="1"/><circle cx="35" cy="42" r="8" fill="#3a7d44" stroke="#2d6a35" stroke-width="1"/><circle cx="97" cy="43" r="1" fill="#000" opacity=".5"/></svg>`},
+  {name:'小丑鱼',svg:()=>`<svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg"><ellipse cx="55" cy="40" rx="35" ry="22" fill="#ff8c00" stroke="#e67600" stroke-width="1"/><rect x="40" y="22" width="8" height="36" rx="2" fill="white" opacity=".8"/><rect x="62" y="24" width="8" height="32" rx="2" fill="white" opacity=".8"/><path d="M88,35 L108,28 L108,52 Z" fill="#ff8c00" stroke="#e67600" stroke-width="1"/><circle cx="28" cy="35" r="5" fill="white"/><circle cx="27" cy="34" r="3" fill="#1a1a2e"/></svg>`},
+  {name:'海星',svg:()=>`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><polygon points="50,5 61,35 95,35 68,57 79,90 50,70 21,90 32,57 5,35 39,35" fill="#ff6b8a" stroke="#e55070" stroke-width="1.5" stroke-linejoin="round"/></svg>`},
+  {name:'章鱼',svg:()=>`<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg"><ellipse cx="50" cy="35" rx="28" ry="25" fill="#9b59b6" stroke="#8e44ad" stroke-width="1"/><circle cx="40" cy="30" r="5" fill="white"/><circle cx="39" cy="29" r="3" fill="#1a1a2e"/><circle cx="60" cy="30" r="5" fill="white"/><circle cx="61" cy="29" r="3" fill="#1a1a2e"/><path d="M25,50 Q18,70 22,90" stroke="#9b59b6" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M50,58 Q48,78 50,98" stroke="#9b59b6" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M75,50 Q82,70 78,90" stroke="#9b59b6" stroke-width="6" fill="none" stroke-linecap="round"/></svg>`},
+  {name:'海豚',svg:()=>`<svg viewBox="0 0 140 80" xmlns="http://www.w3.org/2000/svg"><path d="M20,40 Q40,20 80,25 Q110,28 130,35 Q135,37 130,42 Q110,50 80,50 Q50,52 30,48 Z" fill="#4a90d9" stroke="#357abd" stroke-width="1"/><circle cx="25" cy="36" r="3" fill="white"/><circle cx="24" cy="35" r="1.5" fill="#1a1a2e"/></svg>`},
+  {name:'螃蟹',svg:()=>`<svg viewBox="0 0 110 80" xmlns="http://www.w3.org/2000/svg"><ellipse cx="55" cy="45" rx="28" ry="22" fill="#e67e22" stroke="#d35400" stroke-width="1"/><circle cx="45" cy="35" r="3" fill="white"/><circle cx="44" cy="34" r="1.5" fill="#1a1a2e"/><circle cx="65" cy="35" r="3" fill="white"/><circle cx="66" cy="34" r="1.5" fill="#1a1a2e"/><path d="M27,38 Q12,25 8,30 Q5,35 15,38" stroke="#e67e22" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M83,38 Q98,25 102,30 Q105,35 95,38" stroke="#e67e22" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>`},
+  {name:'蓝鲸',svg:()=>`<svg viewBox="0 0 160 70" xmlns="http://www.w3.org/2000/svg"><ellipse cx="75" cy="38" rx="65" ry="25" fill="#2c5f8a" stroke="#1e4a6e" stroke-width="1"/><circle cx="20" cy="30" r="2.5" fill="white"/><circle cx="19" cy="29" r="1.2" fill="#1a1a2e"/><path d="M130,33 Q145,28 155,32 Q152,36 145,38 Z" fill="#2c5f8a" stroke="#1e4a6e" stroke-width=".5"/></svg>`},
+];
+
+function initOcean(){
+  const cvs=document.getElementById('oceanC');const ctx=cvs.getContext('2d');let W,H,particles=[],rays=[];
+  function rsz(){W=cvs.width=innerWidth;H=cvs.height=innerHeight}
+  function mkB(y){return{x:Math.random()*W,y:y||H+Math.random()*50,r:Math.random()*6+2,speed:Math.random()*1.5+.5,wobble:Math.random()*Math.PI*2,wobbleSpeed:Math.random()*.02+.01,op:Math.random()*.4+.1}}
+  rsz();for(let i=0;i<50;i++)particles.push(mkB(Math.random()*H));for(let i=0;i<6;i++)rays.push({x:Math.random()*W,w:Math.random()*80+40,op:Math.random()*.04+.01,speed:Math.random()*.3+.1,angle:Math.random()*.1-.05});
+  function draw(){if(currentPage!=='ocean')return;const grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,'#041428');grad.addColorStop(0.3,'#031a35');grad.addColorStop(1,'#010a18');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+    rays.forEach(r=>{r.angle+=.0005;r.x+=r.speed*.3;if(r.x>W+100)r.x=-100;ctx.save();ctx.translate(r.x,0);ctx.rotate(r.angle);const rg=ctx.createLinearGradient(0,0,0,H*.7);rg.addColorStop(0,`rgba(0,180,255,${r.op})`);rg.addColorStop(1,'transparent');ctx.fillStyle=rg;ctx.fillRect(-r.w/2,0,r.w,H*.7);ctx.restore()});
+    particles.forEach(p=>{p.wobble+=p.wobbleSpeed;p.x+=Math.sin(p.wobble)*.5;p.y-=p.speed;if(p.y<-20){p.y=H+20;p.x=Math.random()*W}ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(150,220,255,${p.op})`;ctx.fill()});
+    oceanRAF=requestAnimationFrame(draw)}
+  addEventListener('resize',()=>{rsz()});draw();
+}
+function oceanRenderCbar(){document.getElementById('oceanCbar').innerHTML=D.classes.map(c=>`<button class="chip ${c.id===cid?'on':''}" onclick="oceanSwCls('${c.id}')">${c.name}</button>`).join('');oceanUpdSt()}
+function oceanUpdSt(){const c=cc();document.getElementById('oceanStxt').textContent=c?`${getDrawn('ocean').length}/${c.students.length}`:'0/0'}
+function oceanSwCls(id){cid=id;resetDrawn('ocean');sv();oceanRenderCbar();oceanStopSwimming();oceanSpawnCreatures();setTimeout(()=>oceanStartSwimming(),300);oceanRenderHist()}
+
+function oceanSpawnCreatures(){
+  const area=document.getElementById('creatureArea');const c=cc();const dr=getDrawn('ocean');
+  if(!c||!c.students.length){area.innerHTML=`<div style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:12px">🐟</div><div style="font-size:14px;color:var(--tx2)">请先创建班级</div></div>`;return}
+  const nr=document.getElementById('oceanNoRep').checked;const avail=nr?c.students.filter(n=>!dr.includes(n)):c.students;
+  if(!avail.length){area.innerHTML=`<div style="text-align:center;padding:40px"><div style="font-size:48px">✅</div><div style="font-size:14px;color:var(--tx2)">全部寻宝完毕！</div></div>`;return}
+  oceanCreatures=[];area.innerHTML='';const count=avail.length;const aw=area.offsetWidth||800;const ah=area.offsetHeight||400;
+  let cols,rows;if(count<=6){cols=count;rows=1}else if(count<=12){cols=Math.ceil(count/2);rows=2}else if(count<=20){cols=Math.ceil(count/3);rows=3}else{cols=Math.ceil(count/4);rows=4}while(cols*rows<count)rows++;
+  const cellW=aw/cols;const cellH=ah/rows;const baseSize=Math.max(28,Math.min(cellW,cellH)*0.65);
+  const typePool=[];for(let i=0;i<count;i++)typePool.push(i%creatureTypes.length);for(let i=typePool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[typePool[i],typePool[j]]=[typePool[j],typePool[i]]}
+  for(let i=0;i<count;i++){
+    const nm=avail[i];const typeIdx=typePool[i];const type=creatureTypes[typeIdx];
+    const el=document.createElement('div');el.style.cssText=`position:absolute;cursor:${oceanMode==='tap'?'pointer':'default'};transition:filter .3s,opacity .4s,transform .3s;z-index:${i};`;
+    el.innerHTML=type.svg(nm);el.dataset.name=nm;el.dataset.idx=i;el.dataset.typeIdx=typeIdx;
+    el.style.width=baseSize+'px';el.style.height=baseSize+'px';el.querySelector('svg').style.width='100%';el.querySelector('svg').style.height='100%';el.style.opacity='0';area.appendChild(el);
+    const col=i%cols;const row=Math.floor(i/cols);const jX=(Math.random()-.5)*cellW*.25;const jY=(Math.random()-.5)*cellH*.2;
+    const tx=Math.max(0,Math.min(aw-baseSize,col*cellW+(cellW-baseSize)/2+jX));const ty=Math.max(0,Math.min(ah-baseSize,row*cellH+(cellH-baseSize)/2+jY));
+    setTimeout(()=>{el.style.opacity='1';el.style.left=tx+'px';el.style.top=ty+'px'},i*25);
+    oceanCreatures.push({el,nm,type,typeIdx,x:tx,y:ty,vx:(Math.random()-.5)*.8,vy:(Math.random()-.5)*.5,wobble:Math.random()*Math.PI*2,wobbleSpeed:Math.random()*.016+.008,baseY:ty,baseSize,picked:false});
+  }
+  area.querySelectorAll('[data-name]').forEach(el=>{el.addEventListener('mouseenter',()=>{if(!oceanBusy)el.style.filter='brightness(1.3) drop-shadow(0 0 12px rgba(0,212,255,.5))'});el.addEventListener('mouseleave',()=>{el.style.filter=''});el.addEventListener('click',()=>{if(oceanMode==='tap'&&!oceanBusy){oceanTapCapture(parseInt(el.dataset.idx))}})});
+}
+function oceanStartSwimming(){if(swimRAF)cancelAnimationFrame(swimRAF);const area=document.getElementById('creatureArea');
+  function tick(){const aw=area.offsetWidth||800;const ah=area.offsetHeight||400;oceanCreatures.forEach(cr=>{cr.wobble+=cr.wobbleSpeed;cr.x+=cr.vx;cr.y=cr.baseY+Math.sin(cr.wobble)*20;const sz=cr.baseSize||60;if(cr.x<-sz*.3)cr.vx=Math.abs(cr.vx);if(cr.x>aw-sz*.7)cr.vx=-Math.abs(cr.vx);cr.el.style.left=cr.x+'px';cr.el.style.top=cr.y+'px'});swimRAF=requestAnimationFrame(tick)}tick()}
+function oceanStopSwimming(){if(swimRAF){cancelAnimationFrame(swimRAF);swimRAF=null}}
+function oceanStartDive(){
+  if(oceanBusy)return;const c=cc();if(!c)return;const dr=getDrawn('ocean');const nr=document.getElementById('oceanNoRep').checked;const avail=nr?c.students.filter(s=>!dr.includes(s)):[...c.students];if(!avail.length){oceanResetDr();return}
+  oceanBusy=true;initA();const picked=avail[Math.floor(Math.random()*avail.length)];
+  let target=oceanCreatures.find(cr=>cr.nm===picked);if(!target)target=oceanCreatures[Math.floor(Math.random()*oceanCreatures.length)];const capturedType=target.type;
+  const fill=document.getElementById('depthFill');fill.style.transition='height 1.5s ease';fill.style.height='100%';
+  tn(600,.1,'sine',.06);setTimeout(()=>tn(400,.1,'sine',.05),100);setTimeout(()=>tn(200,.1,'sine',.04),200);
+  setTimeout(()=>{oceanCreatures.forEach(cr=>{cr.vx=(cr.x<400?1:-1)*(3+Math.random()*3);cr.vy=(Math.random()-.5)*2})},300);
+  const scanLen=Math.min(16,Math.max(10,oceanCreatures.length));const scanPath=[];for(let i=0;i<scanLen-1;i++)scanPath.push(Math.floor(Math.random()*oceanCreatures.length));scanPath.push(oceanCreatures.indexOf(target));
+  setTimeout(()=>{oceanStopSwimming();scanPath.forEach((idx,i)=>{const delay=80+i*90+Math.pow(i,1.3)*20;setTimeout(()=>{oceanCreatures.forEach(cr=>{cr.el.style.filter='';cr.el.style.transform=''});const cr=oceanCreatures[idx];cr.el.style.filter='brightness(2) drop-shadow(0 0 20px rgba(0,212,255,.9))';cr.el.style.transform='scale(1.4)';tn(600+i*40,.06,'sine',.03)},delay)});
+    const totalScanDelay=80+(scanLen-1)*90+Math.pow(scanLen-1,1.3)*20+200;
+    setTimeout(()=>{oceanCreatures.forEach(cr=>{cr.el.style.filter='';cr.el.style.transform=''});target.el.style.filter='brightness(2.5) drop-shadow(0 0 40px rgba(0,212,255,1))';target.el.style.transform='scale(1.6)';tn(1200,.3,'sine',.08)},totalScanDelay);
+    setTimeout(()=>{const area=document.getElementById('creatureArea');const cx=(area.offsetWidth||800)/2-40;const cy=(area.offsetHeight||400)/2-40;target.el.style.transition='all 1s cubic-bezier(.4,0,.2,1)';target.el.style.left=cx+'px';target.el.style.top=cy+'px';target.el.style.filter='brightness(1.5) drop-shadow(0 0 30px rgba(0,212,255,.8))';target.el.style.transform='scale(1.5)'},totalScanDelay+500);
+    setTimeout(()=>{const flash=document.createElement('div');flash.className='capture-flash';document.body.appendChild(flash);setTimeout(()=>flash.remove(),600);
+      addDrawn('ocean',picked);if(!c.ratings)c.ratings={};if(!c.ratings[picked])c.ratings[picked]={ex:0,good:0,try:0,picks:0};c.ratings[picked].picks++;sv();
+      oceanCreatures.forEach(cr=>{cr.el.style.opacity='0';cr.el.style.transition='opacity .4s'});oceanShowCaptureReveal(picked,capturedType)},totalScanDelay+1200);
+  },800);
+}
+function oceanTapCapture(idx){
+  if(oceanBusy||idx<0||idx>=oceanCreatures.length)return;const cr=oceanCreatures[idx];if(cr.picked)return;const c=cc();if(!c)return;
+  const dr=getDrawn('ocean');const nr=document.getElementById('oceanNoRep').checked;const avail=nr?c.students.filter(s=>!dr.includes(s)):[...c.students];if(!avail.length){oceanResetDr();return}
+  oceanBusy=true;initA();const picked=avail[Math.floor(Math.random()*avail.length)];cr.nm=picked;cr.picked=true;const capturedType=cr.type;
+  cr.el.style.transition='all .3s cubic-bezier(.34,1.56,.64,1)';cr.el.style.filter='brightness(2.5) drop-shadow(0 0 40px rgba(0,212,255,1))';cr.el.style.transform='scale(1.8)';
+  tn(1000,.2,'sine',.06);
+  setTimeout(()=>{const flash=document.createElement('div');flash.className='capture-flash';document.body.appendChild(flash);setTimeout(()=>flash.remove(),600);
+    addDrawn('ocean',picked);if(!c.ratings)c.ratings={};if(!c.ratings[picked])c.ratings[picked]={ex:0,good:0,try:0,picks:0};c.ratings[picked].picks++;sv();oceanShowCaptureReveal(picked,capturedType)},500);
+}
+function oceanShowCaptureReveal(nm,capType){
+  const c=cc();const st=getStudentStats(nm,c);
+  const capC=document.getElementById('capCreature');capC.innerHTML=`<div class="glow-ring"></div>`+(capType||creatureTypes[0]).svg(nm);capC.querySelector('svg').style.filter='drop-shadow(0 0 30px rgba(0,212,255,.6))';
+  const nameEl=document.getElementById('oceanName');const frame=document.getElementById('shellFrame');const rateArea=document.getElementById('oceanRateArea');const rateRes=document.getElementById('oceanRateRes');const contBtn=document.getElementById('oceanContBtn');
+  nameEl.textContent='';nameEl.classList.remove('show');frame.classList.remove('show');rateArea.classList.remove('show');rateRes.classList.remove('show');rateRes.innerHTML='';contBtn.classList.remove('show');oceanRated=false;oceanRevealedName=nm;
+  document.getElementById('capOv').classList.add('active');
+  capC.style.opacity='0';capC.style.transform='scale(.3) translateY(60px)';capC.style.transition='all .6s cubic-bezier(.34,1.56,.64,1)';
+  setTimeout(()=>{capC.style.opacity='1';capC.style.transform='scale(1) translateY(0)'},100);
+  tn(350,.35,'sine',.1);setTimeout(()=>[1100,1400,1700].forEach((f,i)=>setTimeout(()=>tn(f,.1,'sine',.04),i*40)),200);
+  setTimeout(()=>{frame.classList.add('show');nameEl.textContent=nm;nameEl.classList.add('show')},700);
+  setTimeout(()=>{rateArea.classList.add('show');oceanUpdSt();oceanRenderHist()},1100);
+}
+function oceanCloseCap(){document.getElementById('capOv').classList.remove('active');oceanBusy=false;const fill=document.getElementById('depthFill');fill.style.transition='height .5s ease';fill.style.height='0%';oceanSpawnCreatures();setTimeout(()=>oceanStartSwimming(),300)}
+function oceanRate(type){
+  if(oceanRated)return;oceanRated=true;const c=cc();if(!c)return;const nm=oceanRevealedName;
+  if(!c.ratings)c.ratings={};if(!c.ratings[nm])c.ratings[nm]={ex:0,good:0,try:0,picks:0};
+  const oldXP=c.ratings[nm].ex*3+c.ratings[nm].good*1;const oldLv=getLevel(oldXP);
+  if(type==='ex')c.ratings[nm].ex++;else if(type==='good')c.ratings[nm].good++;else c.ratings[nm].try++;
+  const newXP=c.ratings[nm].ex*3+c.ratings[nm].good*1;const newLv=getLevel(newXP);sv();
+  const rr=document.getElementById('oceanRateRes');let msg=`+${type==='ex'?3:type==='good'?1:0} XP`;
+  if(newLv.tier!==oldLv.tier){msg+=` · 升级为 ${newLv.name}！`;showLvlUp(nm,newLv);spawnConfetti();[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tn(f,.3,'sine',.09),i*80))}
+  rr.textContent=msg;rr.classList.add('show');if(type==='ex')[784,988,1175].forEach((f,i)=>setTimeout(()=>tn(f,.2,'sine',.07),i*70));else if(type==='good')[659,784].forEach((f,i)=>setTimeout(()=>tn(f,.2,'sine',.06),i*80));else tn(440,.3,'sine',.05);
+  document.getElementById('oceanContBtn').classList.add('show');syncSessionRating('ocean',nm,type);
+}function oceanResetDr(){resetDrawn('ocean');oceanUpdSt();oceanStopSwimming();oceanSpawnCreatures();setTimeout(()=>oceanStartSwimming(),300);oceanRenderHist()}
+function oceanSetMode(m){oceanMode=m;document.querySelectorAll('#oceanBbar .mode-chip').forEach(el=>{const isOn=el.dataset.mode===m;el.classList.toggle('on',isOn);if(isOn){el.style.borderColor='#00d4ff';el.style.color='#00d4ff'}else{el.style.borderColor='';el.style.color=''}});
+  const diveBtn=document.getElementById('diveBtn');const tapHint=document.getElementById('tapHint');if(m==='dive'){diveBtn.style.display='';tapHint.style.display='none'}else{diveBtn.style.display='none';tapHint.style.display=''}
+  document.querySelectorAll('#creatureArea [data-name]').forEach(el=>{el.style.cursor=m==='tap'?'pointer':'default'})}
+function oceanRenderHist(){const c=cc();const el=document.getElementById('oceanHls');if(!c){el.innerHTML='<div style="padding:10px;color:var(--tx2);font-size:11px">暂无班级</div>';return}const dr=getDrawn('ocean');let h='';c.students.forEach(nm=>{const pk=dr.includes(nm);const st=getStudentStats(nm,c);h+=`<div class="hi ${pk?'pk':'pd'}"><span class="hi-d"></span>${nm}${pk?' ✓':''}</div>`});el.innerHTML=h}
+function togOceanHist(){document.getElementById('oceanHpan').classList.toggle('open');oceanRenderHist()}
+
+/* ================================================================
+   MODE 3: 魔法转盘
+   ================================================================ */
+let wheelAngle=0,wheelSpinning=false,wheelBusy=false,wheelRated=false,wheelRevealedName='',wheelCanvas,wheelCtx,wheelSize,wheelCurrentTheme='magic';
+const THEMES={magic:{name:'🔮 魔法阵',colors:['#a855f7','#7c3aed','#c084fc','#6d28d9','#e879f9','#8b5cf6'],ring:'#a855f7',glow:'rgba(168,85,247,.5)'},ink:{name:'🎨 水墨风',colors:['#1a1a2e','#2d2d44','#3d3d5c','#4a4a6a','#5c5c7a','#6e6e8a'],ring:'#d4c5a9',glow:'rgba(212,197,169,.4)'},gear:{name:'⚙️ 齿轮',colors:['#374151','#4b5563','#6b7280','#9ca3af','#d1d5db','#e5e7eb'],ring:'#f59e0b',glow:'rgba(245,158,11,.4)'},alpha:{name:'🔤 字母',colors:['#1e3a5f','#2c5282','#3182ce','#4299e1','#63b3ed','#90cdf4'],ring:'#ed8936',glow:'rgba(237,137,54,.4)'},atom:{name:'⚛️ 原子',colors:['#0d2137','#1a365d','#2b6cb0','#3182ce','#4299e1','#63b3ed'],ring:'#48bb78',glow:'rgba(72,187,120,.4)'}};
+
+function initWheel(){
+  const c=document.getElementById('starC'),ctx=c.getContext('2d');let w,h,stars=[];
+  function resize(){w=c.width=innerWidth;h=c.height=innerHeight;stars=[];for(let i=0;i<120;i++)stars.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,s:Math.random()*.02+.005,o:Math.random()})}resize();
+  (function draw(){if(currentPage!=='wheel')return;ctx.fillStyle='rgba(10,10,26,.15)';ctx.fillRect(0,0,w,h);stars.forEach(s=>{s.o+=s.s;if(s.o>1)s.s=-Math.abs(s.s);if(s.o<0)s.s=Math.abs(s.s);ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(168,85,247,${Math.max(0,s.o)})`;ctx.fill()});requestAnimationFrame(draw)})();
+  wheelCanvas=document.getElementById('wheelC');wheelCtx=wheelCanvas.getContext('2d');wheelResizeWheel();addEventListener('resize',wheelResizeWheel);
+}
+function wheelResizeWheel(){const wrap=document.getElementById('wheelWrap');const sz=Math.min(wrap.offsetWidth||600,wrap.offsetHeight||500,600);wheelSize=sz;const dpr=devicePixelRatio||1;wheelCanvas.width=sz*dpr;wheelCanvas.height=sz*dpr;wheelCanvas.style.width=sz+'px';wheelCanvas.style.height=sz+'px';wheelCtx.setTransform(dpr,0,0,dpr,0,0);wheelDrawWheel()}
+function wheelDrawWheel(){
+  const c=cc();if(!c)return;const ctx=wheelCtx,sz=wheelSize,cx=sz/2,cy=sz/2,r=sz/2-16;const students=c.students,n=students.length;if(!n)return;const theme=THEMES[wheelCurrentTheme];const sliceAngle=(Math.PI*2)/n;
+  ctx.clearRect(0,0,sz,sz);const glowGrad=ctx.createRadialGradient(cx,cy,r-10,cx,cy,r+30);glowGrad.addColorStop(0,theme.glow);glowGrad.addColorStop(1,'transparent');ctx.fillStyle=glowGrad;ctx.fillRect(0,0,sz,sz);
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(wheelAngle);
+  const dr=getDrawn('wheel');
+  for(let i=0;i<n;i++){const startAngle=i*sliceAngle-Math.PI/2;const endAngle=startAngle+sliceAngle;const colorIdx=i%theme.colors.length;
+    ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,r,startAngle,endAngle);ctx.closePath();const grad=ctx.createRadialGradient(0,0,r*.1,0,0,r);grad.addColorStop(0,theme.colors[(colorIdx+2)%theme.colors.length]);grad.addColorStop(1,theme.colors[colorIdx]);ctx.fillStyle=grad;ctx.fill();ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1;ctx.stroke();
+    ctx.save();ctx.rotate(startAngle+sliceAngle/2);const name=students[i];const isDrawn=dr.includes(name);const fontSize=n<=15?14:n<=25?12:n<=35?10:8;ctx.font=`${isDrawn?'400':'700'} ${fontSize}px -apple-system,"PingFang SC"`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=isDrawn?'rgba(255,255,255,.25)':'rgba(255,255,255,.95)';const display=name.length>4?name.slice(0,3)+'…':name;ctx.fillText(display,r*(n<=10?.68:n<=20?.72:.78),0);ctx.restore()}
+  ctx.beginPath();ctx.arc(0,0,28,0,Math.PI*2);const centerGrad=ctx.createRadialGradient(0,0,0,0,0,28);centerGrad.addColorStop(0,'#2d2555');centerGrad.addColorStop(1,'#1a1a3a');ctx.fillStyle=centerGrad;ctx.fill();ctx.strokeStyle=theme.ring;ctx.lineWidth=2;ctx.stroke();ctx.font='20px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('✨',0,1);
+  ctx.restore();wheelUpdateDrawnInfo()
+}
+function wheelSpin(){
+  if(wheelSpinning||wheelBusy)return;const c=cc();if(!c)return;const dr=getDrawn('wheel');const nr=document.getElementById('wheelNoRep').checked;const avail=nr?c.students.filter(s=>!dr.includes(s)):[...c.students];if(!avail.length){wheelResetDr();return}
+  wheelSpinning=true;wheelBusy=true;wheelRated=false;const btn=document.getElementById('spinBtn');if(btn)btn.disabled=true;initA();
+  const picked=avail[Math.floor(Math.random()*avail.length)];const n=c.students.length;const sliceAngle=(Math.PI*2)/n;const targetIdx=c.students.indexOf(picked);
+  const randomInSlice=(Math.random()-.5)*sliceAngle*.7;const targetWheelAngle=-targetIdx*sliceAngle+randomInSlice;
+  const fullSpins=(4+Math.floor(Math.random()*3))*Math.PI*2;let finalAngle=targetWheelAngle+fullSpins;while(finalAngle-wheelAngle<4*Math.PI*2)finalAngle+=Math.PI*2;
+  const startAngle=wheelAngle;const totalRotation=finalAngle-startAngle;const duration=4000+Math.random()*1000;const startTime=performance.now();let lastTickAngle=startAngle;
+  function easeOutQuart(t){return 1-Math.pow(1-t,4)}
+  function animate(now){const elapsed=now-startTime;const progress=Math.min(elapsed/duration,1);const easedProgress=easeOutQuart(progress);wheelAngle=startAngle+totalRotation*easedProgress;wheelDrawWheel();
+    const currentSlice=Math.floor(((wheelAngle%(Math.PI*2))+(Math.PI*2))%(Math.PI*2)/sliceAngle);const lastSlice=Math.floor(((lastTickAngle%(Math.PI*2))+(Math.PI*2))%(Math.PI*2)/sliceAngle);
+    if(currentSlice!==lastSlice){if(progress<.7)tn(1200,.04,'square',.04);else{tn(800,.08,'square',.05);const ptr=document.getElementById('pointer');ptr.classList.add('tick');setTimeout(()=>ptr.classList.remove('tick'),100)}}
+    lastTickAngle=wheelAngle;if(progress<1)requestAnimationFrame(animate);
+    else{wheelSpinning=false;tn(880,.15,'sine',.1);setTimeout(()=>tn(1100,.15,'sine',.08),100);setTimeout(()=>tn(1320,.3,'sine',.1),200);addDrawn('wheel',picked);if(!c.ratings)c.ratings={};if(!c.ratings[picked])c.ratings[picked]={ex:0,good:0,try:0,picks:0};c.ratings[picked].picks++;sv();setTimeout(()=>wheelShowReveal(picked),500)}}
+  tn(300,.1,'sawtooth',.04);requestAnimationFrame(animate)
+}
+function wheelShowReveal(name){
+  wheelRevealedName=name;const c=cc();if(!c)return;let hash=0;for(let i=0;i<name.length;i++)hash=((hash<<5)-hash)+name.charCodeAt(i);hash=Math.abs(hash);const hue=hash%360;const shapes=['circle','diamond','star','hex','triangle'];const shape=shapes[hash%shapes.length];const c1=`hsl(${hue},70%,60%)`;const c2=`hsl(${(hue+60)%360},70%,50%)`;let inner='';
+  if(shape==='circle')inner=`<circle cx="50" cy="50" r="25" fill="${c1}" opacity=".8"/><circle cx="50" cy="50" r="12" fill="${c2}"/>`;else if(shape==='diamond')inner=`<rect x="30" y="30" width="40" height="40" rx="4" fill="${c1}" opacity=".8" transform="rotate(45 50 50)"/><circle cx="50" cy="50" r="10" fill="${c2}"/>`;else if(shape==='star')inner=`<polygon points="50,20 58,40 80,42 64,56 68,78 50,66 32,78 36,56 20,42 42,40" fill="${c1}" opacity=".8"/><circle cx="50" cy="50" r="8" fill="${c2}"/>`;else if(shape==='hex')inner=`<polygon points="50,22 72,34 72,60 50,72 28,60 28,34" fill="${c1}" opacity=".8"/><circle cx="50" cy="48" r="10" fill="${c2}"/>`;else inner=`<polygon points="50,22 75,72 25,72" fill="${c1}" opacity=".8"/><circle cx="50" cy="55" r="8" fill="${c2}"/>`;
+  document.getElementById('wheelAvCircle').innerHTML=`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="48" fill="rgba(26,26,58,.8)" stroke="${c1}" stroke-width="2"/>${inner}</svg>`;
+  document.getElementById('wheelRvName').textContent=name;const info=c.ratings&&c.ratings[name];const xp=info?(info.ex*3+info.good*1):0;const lv=getLevel(xp);document.getElementById('wheelRvSub').textContent=`Lv.${lv.tier!=='comm'?lv.name:'普通'} · XP ${xp}`;
+  const ov=document.getElementById('wheelRevealOv');ov.classList.add('active');setTimeout(()=>{document.getElementById('wheelNmCard').classList.add('show');document.getElementById('wheelRateRow').classList.add('show')},200);
+  setTimeout(()=>{spawnConfetti(document.getElementById('wheelConfettiC'));[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tn(f,.2,'sine',.1),i*100))},500)
+}
+function wheelRate(type){if(wheelRated)return;wheelRated=true;const c=cc();if(!c)return;const nm=wheelRevealedName;if(!c.ratings)c.ratings={};if(!c.ratings[nm])c.ratings[nm]={ex:0,good:0,try:0,picks:0};const oldXP=c.ratings[nm].ex*3+c.ratings[nm].good*1;const oldLv=getLevel(oldXP);if(type==='ex')c.ratings[nm].ex++;else if(type==='good')c.ratings[nm].good++;else c.ratings[nm].try++;const newXP=c.ratings[nm].ex*3+c.ratings[nm].good*1;const newLv=getLevel(newXP);sv();if(newLv.tier!==oldLv.tier){spawnConfetti(document.getElementById('wheelConfettiC'));[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tn(f,.2,'sine',.1),i*100))}document.getElementById('wheelContBtn').classList.add('show');wheelRenderHist();syncSessionRating('wheel',nm,type)}
+function wheelContinue(){document.getElementById('wheelRevealOv').classList.remove('active');document.getElementById('wheelNmCard').classList.remove('show');document.getElementById('wheelRateRow').classList.remove('show');document.getElementById('wheelContBtn').classList.remove('show');wheelBusy=false;const btn=document.getElementById('spinBtn');if(btn)btn.disabled=false;wheelDrawWheel()}
+function wheelResetDr(){resetDrawn('wheel');wheelUpdateDrawnInfo();wheelDrawWheel()}
+function wheelUpdateDrawnInfo(){const c=cc();if(!c)return;const el=document.getElementById('wheelDrawnInfo');if(el)el.textContent=`${getDrawn('wheel').length}/${c.students.length}`}
+function wheelRenderUI(){wheelRenderChips();wheelDrawWheel();wheelUpdateDrawnInfo();const tb=document.getElementById('themeBar');if(!tb)return;tb.innerHTML='';Object.entries(THEMES).forEach(([k,v])=>{const ch=document.createElement('span');ch.className='theme-chip'+(k===wheelCurrentTheme?' on':'');ch.textContent=v.name;ch.dataset.theme=k;ch.onclick=()=>{wheelCurrentTheme=k;document.querySelectorAll('.theme-chip').forEach(e=>{e.classList.toggle('on',e.dataset.theme===k)});wheelDrawWheel();if(!wheelSpinning){wheelBusy=false;const b=document.getElementById('spinBtn');if(b)b.disabled=false}};tb.appendChild(ch)})}
+function wheelRenderChips(){const el=document.getElementById('wheelCbar');if(!el)return;el.innerHTML='';D.classes.forEach(c=>{const ch=document.createElement('span');ch.className='chip'+(c.id===cid?' on':'');ch.textContent=c.name;ch.onclick=()=>{cid=c.id;resetDrawn('wheel');sv();wheelRenderUI()};el.appendChild(ch)})}
+function wheelShowHist(){togWheelHist()}
+function togWheelHist(){document.getElementById('wheelHpan').classList.toggle('open');wheelRenderHist()}
+function wheelRenderHist(){const c=cc();const el=document.getElementById('wheelHls');if(!c){el.innerHTML='<div style="padding:10px;color:var(--tx2);font-size:11px">暂无班级</div>';return}const dr=getDrawn('wheel');let h='';c.students.forEach(nm=>{const pk=dr.includes(nm);const st=getStudentStats(nm,c);h+=`<div class="hi ${pk?'pk':'pd'}"><span class="hi-d"></span>${nm}${pk?' ✓':''}${st.lv.tier!=='comm'?' ['+st.lv.name+']':''}</div>`});el.innerHTML=h}
+
+/* ================================================================
+   MODE 4: 扭蛋机
+   ================================================================ */
+let gachaCapsules=[],gachaAnimFrame=null,gachaBusy=false,gachaRated=false,gachaRevealedName='';
+const CAPSULE_COLORS=[['#ff6b9d','#ff3d7f'],['#c44dff','#9b2dff'],['#00d4ff','#00a8cc'],['#ffd700','#ffaa00'],['#2ecc71','#27ae60'],['#e74c3c','#c0392b'],['#ff8c00','#e67e00'],['#9b59b6','#8e44ad'],['#1abc9c','#16a085'],['#f39c12','#d68910'],['#e91e63','#c2185b'],['#00bcd4','#0097a7'],['#ff5722','#e64a19'],['#8bc34a','#689f38'],['#673ab7','#512da7'],['#ff9800','#f57c00'],['#03a9f4','#0288d1'],['#4caf50','#388e3c'],['#ffeb3b','#fdd835'],['#795548','#5d4037']];
+
+function initGacha(){const c=document.getElementById('gachaStarsC');for(let i=0;i<80;i++){const s=document.createElement('div');s.className='gacha-star';s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.width=s.style.height=(1+Math.random()*2)+'px';s.style.setProperty('--d',(2+Math.random()*3)+'s');s.style.animationDelay=Math.random()*3+'s';c.appendChild(s)}}
+function gachaRenderCbar(){const el=document.getElementById('gachaCbar');el.innerHTML=D.classes.map(c=>`<button class="chip ${c.id===cid?'on':''}" onclick="gachaSwCls('${c.id}')">${c.name}</button>`).join('')}
+function gachaSwCls(id){cid=id;resetDrawn('gacha');sv();gachaRenderCbar();gachaPopulateCapsules();gachaUpdateCounter()}
+function gachaUpdateCounter(){/* simplified */const c=cc();if(!c)return;const dr=getDrawn('gacha')}
+function gachaPopulateCapsules(){
+  const zone=document.getElementById('capsuleZone');zone.innerHTML='';gachaCapsules=[];const c=cc();if(!c)return;const dr=getDrawn('gacha');
+  const count=c.students.length;const zw=zone.offsetWidth||250;const zh=zone.offsetHeight||180;
+  let size=Math.min(32,Math.max(16,Math.floor(Math.sqrt(zw*zh/count)*0.5)));const cols=Math.floor(zw/(size+2));const rows=Math.ceil(count/cols);const gapX=(zw-cols*size)/(cols+1);const gapY=Math.min((zh-rows*size)/(rows+1),size*0.3);
+  c.students.forEach((name,i)=>{const col=i%cols;const row=Math.floor(i/cols);const baseX=gapX+col*(size+gapX);const baseY=gapY+row*(size+gapY);
+    const el=document.createElement('div');el.className='capsule'+(dr.includes(name)?' picked':'');const colorPair=CAPSULE_COLORS[i%CAPSULE_COLORS.length];
+    el.style.width=size+'px';el.style.height=size+'px';el.style.background=`linear-gradient(135deg,${colorPair[0]},${colorPair[1]})`;el.style.boxShadow=`0 2px 6px ${colorPair[1]}66`;el.style.left=baseX+'px';el.style.top=baseY+'px';
+    zone.appendChild(el);gachaCapsules.push({el,name,baseX,baseY,size,color:colorPair,idx:i,x:baseX,y:baseY,vx:0,vy:0,phase:Math.random()*Math.PI*2,settled:true})});
+  gachaStartIdle()
+}
+function gachaStartIdle(){if(gachaAnimFrame)cancelAnimationFrame(gachaAnimFrame);function tick(){gachaCapsules.forEach(cp=>{cp.phase+=0.02;cp.el.style.transform=`translate(${Math.sin(cp.phase)*.3}px,${Math.cos(cp.phase*1.3)*.3}px)`});gachaAnimFrame=requestAnimationFrame(tick)}tick()}
+function gachaDraw(){
+  if(gachaBusy)return;const c=cc();if(!c)return;const dr=getDrawn('gacha');const nr=document.getElementById('gachaNoRep').checked;const avail=nr?c.students.filter(s=>!dr.includes(s)):[...c.students];if(!avail.length){gachaResetDr();return}
+  gachaBusy=true;initA();const btn=document.getElementById('gachaDrawBtn');if(btn)btn.disabled=true;
+  const picked=avail[Math.floor(Math.random()*avail.length)];const targetIdx=c.students.indexOf(picked);
+  // Lever — 投币音
+  tn(1200,.1,'sine',.08);setTimeout(()=>tn(1500,.08,'sine',.06),80);setTimeout(()=>tn(1800,.06,'sine',.04),150);
+  const lever=document.getElementById('leverArm');let leverShakes=0;const leverInterval=setInterval(()=>{lever.style.transform=leverShakes%2===0?'rotate(30deg)':'rotate(-5deg)';tn(400+leverShakes*60,.04,'square',.03);leverShakes++;if(leverShakes>=8){clearInterval(leverInterval);lever.style.transform=''}},150);
+  // Roll capsules — 弹珠滚动
+  setTimeout(()=>{document.getElementById('machineWrap').classList.add('shake');setTimeout(()=>document.getElementById('machineWrap').classList.remove('shake'),800);
+    for(let i=0;i<8;i++)setTimeout(()=>tn(200+i*100,.06,'triangle',.04),i*40);
+    setTimeout(()=>tn(600,.08,'triangle',.03),400);
+    gachaCapsules.forEach(cp=>{if(cp.el.classList.contains('picked'))return;cp.settled=false;cp.vx=(Math.random()-.5)*8;cp.vy=-Math.random()*5-2;cp.el.style.transition=''});
+    if(gachaAnimFrame)cancelAnimationFrame(gachaAnimFrame);function physicsTick(){let anyMoving=false;gachaCapsules.forEach(cp=>{if(cp.el.classList.contains('picked'))return;if(!cp.settled){anyMoving=true;cp.vy+=0.4;cp.x+=cp.vx;cp.y+=cp.vy;cp.vx*=0.995;const zw=cp.el.parentElement.offsetWidth||250;const zh=cp.el.parentElement.offsetHeight||180;if(cp.x<0){cp.x=0;cp.vx*=-0.6}if(cp.x+cp.size>zw){cp.x=zw-cp.size;cp.vx*=-0.6}if(cp.y+cp.size>zh){cp.y=zh-cp.size;cp.vy*=-0.5;cp.vx*=0.8;if(Math.abs(cp.vy)<0.8&&Math.abs(cp.vx)<0.3){cp.vy=0;cp.vx=0;cp.settled=true}}cp.el.style.left=cp.x+'px';cp.el.style.top=cp.y+'px'}});if(anyMoving)gachaAnimFrame=requestAnimationFrame(physicsTick);else gachaStartIdle()}physicsTick();
+    const kickInterval=setInterval(()=>{gachaCapsules.forEach(cp=>{if(cp.el.classList.contains('picked'))return;if(cp.settled){cp.settled=false;cp.vx=(Math.random()-.5)*6;cp.vy=-Math.random()*3-1}else{cp.vx+=(Math.random()-.5)*3;cp.vy+=-Math.random()*2}});tn(300+Math.random()*200,.04,'triangle',.02)},400);
+    setTimeout(()=>{clearInterval(kickInterval);setTimeout(()=>{gachaCapsules.forEach(cp=>{cp.settled=true;cp.x=cp.baseX;cp.y=cp.baseY;cp.el.style.left=cp.x+'px';cp.el.style.top=cp.y+'px'});
+      const target=gachaCapsules[targetIdx]||gachaCapsules.find(cp=>!cp.el.classList.contains('picked'));if(!target){gachaBusy=false;return}
+      // 出蛋音效：弹跳 + 闪光
+      tn(600,.1,'sine',.08);setTimeout(()=>tn(900,.12,'sine',.1),60);setTimeout(()=>tn(1200,.15,'sine',.08),120);setTimeout(()=>tn(1600,.12,'sine',.06),200);
+      target.el.classList.add('picked');
+      const cx=innerWidth/2;const cy=innerHeight/2;const sz=80;const color=target.color||CAPSULE_COLORS[0];
+      const topHalf=document.createElement('div');topHalf.className='capsule-half top';topHalf.style.cssText=`left:${cx-sz/2}px;top:${cy-sz/2}px;width:${sz}px;height:${sz/2}px;background:linear-gradient(135deg,${color[0]},${color[1]});border-radius:${sz}px ${sz}px 0 0;z-index:199;position:fixed`;
+      const botHalf=document.createElement('div');botHalf.className='capsule-half bottom';botHalf.style.cssText=`left:${cx-sz/2}px;top:${cy}px;width:${sz}px;height:${sz/2}px;background:linear-gradient(135deg,${color[0]},${color[1]});border-radius:0 0 ${sz}px ${sz}px;z-index:199;position:fixed`;
+      document.body.appendChild(topHalf);document.body.appendChild(botHalf);setTimeout(()=>{topHalf.style.transform='translateY(-60px) rotate(-25deg)';topHalf.style.opacity='0';botHalf.style.transform='translateY(60px) rotate(25deg)';botHalf.style.opacity='0'},50);setTimeout(()=>{topHalf.remove();botHalf.remove()},700);
+      setTimeout(()=>{const flash=document.createElement('div');flash.style.cssText='position:fixed;inset:0;background:radial-gradient(circle,rgba(255,107,157,.3),transparent 60%);z-index:198;pointer-events:none';document.body.appendChild(flash);setTimeout(()=>flash.remove(),500)},200);
+      setTimeout(()=>{addDrawn('gacha',picked);if(!c.ratings)c.ratings={};if(!c.ratings[picked])c.ratings[picked]={ex:0,good:0,try:0,picks:0};c.ratings[picked].picks++;sv();gachaShowReveal(picked)},500)},500)},3000)},400)
+}
+function gachaShowReveal(name){gachaRevealedName=name;gachaRated=false;const c=cc();const info=c.ratings&&c.ratings[name]?c.ratings[name]:null;
+  let hash=0;for(let i=0;i<name.length;i++)hash=((hash<<5)-hash)+name.charCodeAt(i);const hue=Math.abs(hash)%360;
+  document.getElementById('gachaAvatarW').innerHTML=`<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,hsl(${hue},70%,45%),hsl(${hue},70%,60%));display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;border:3px solid var(--ac2);box-shadow:0 0 16px rgba(124,106,255,.3)">${name.length>=2?name.slice(-2):name[0]}</div>`;
+  document.getElementById('gachaRevName').textContent=name;
+  if(info){const xp=info.ex*3+info.good*1;const lv=getLevel(xp);document.getElementById('gachaRevLv').textContent=lv.name+' Lv.'+(xp>=15?5:xp>=8?4:xp>=4?3:xp>=2?2:xp>=1?1:0);document.getElementById('gachaRevXp').textContent='XP: '+xp}else{document.getElementById('gachaRevLv').textContent='普通 Lv.0';document.getElementById('gachaRevXp').textContent='XP: 0'}
+  document.getElementById('gachaRateRes').textContent='';document.getElementById('gachaRateRow').classList.remove('show');document.getElementById('gachaContBtn').classList.remove('show');
+  document.getElementById('gachaRevealOv').classList.add('active');setTimeout(()=>{document.getElementById('gachaRevealCard').classList.add('show');document.getElementById('gachaRateRow').classList.add('show');tn(660,.15,'sine',.08);setTimeout(()=>tn(880,.15,'sine',.07),80)},200);
+  setTimeout(()=>{spawnConfetti();[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tn(f,.3,'sine',.09),i*80))},500)
+}
+function gachaRate(type){if(gachaRated)return;gachaRated=true;const c=cc();if(!c)return;const nm=gachaRevealedName;if(!c.ratings)c.ratings={};if(!c.ratings[nm])c.ratings[nm]={ex:0,good:0,try:0,picks:0};const oldXP=c.ratings[nm].ex*3+c.ratings[nm].good*1;const oldLv=getLevel(oldXP);if(type==='ex')c.ratings[nm].ex++;else if(type==='good')c.ratings[nm].good++;else c.ratings[nm].try++;const newXP=c.ratings[nm].ex*3+c.ratings[nm].good*1;const newLv=getLevel(newXP);sv();const rr=document.getElementById('gachaRateRes');let msg=`+${type==='ex'?3:type==='good'?1:0} XP`;if(newLv.tier!==oldLv.tier){msg+=` · 升级为 ${newLv.name}！`;document.getElementById('gachaLvlupName').textContent=newLv.name;document.getElementById('gachaLvlupOv').classList.add('active');spawnConfetti();[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tn(f,.3,'sine',.09),i*80))}rr.textContent=msg;if(type==='ex'){tn(880,.15,'sine',.06);setTimeout(()=>tn(1100,.15,'sine',.05),100)}else if(type==='good')tn(660,.15,'sine',.06);else tn(330,.2,'sawtooth',.04);document.getElementById('gachaContBtn').classList.add('show');gachaRenderHist();syncSessionRating('gacha',nm,type)}
+function gachaContinue(){document.getElementById('gachaRevealOv').classList.remove('active');document.getElementById('gachaRevealCard').classList.remove('show');gachaBusy=false;gachaRated=false;const btn=document.getElementById('gachaDrawBtn');if(btn)btn.disabled=false;gachaCapsules.forEach(cp=>{if(getDrawn('gacha').includes(cp.name))cp.el.classList.add('picked');cp.el.style.filter='';cp.el.style.transform='';cp.el.style.zIndex=''})}
+function gachaResetDr(){resetDrawn('gacha');gachaBusy=false;gachaRated=false;const btn=document.getElementById('gachaDrawBtn');if(btn)btn.disabled=false;gachaPopulateCapsules()}
+function togGachaHist(){document.getElementById('gachaHpan').classList.toggle('open');gachaRenderHist()}
+function gachaRenderHist(){const c=cc();const el=document.getElementById('gachaHls');if(!c){el.innerHTML='<div style="padding:10px;color:var(--tx2);font-size:11px">暂无班级</div>';return}const dr=getDrawn('gacha');let h='';c.students.forEach(nm=>{const pk=dr.includes(nm);const st=getStudentStats(nm,c);h+=`<div class="hi ${pk?'pk':'pd'}"><span class="hi-d"></span>${nm}${pk?' ✓':''}${st.lv.tier!=='comm'?' ['+st.lv.name+']':''}</div>`});el.innerHTML=h}
+
+/* ================================================================
+   MODE 5: 盲盒开箱
+   ================================================================ */
+let blindboxBusy=false,blindboxRated=false,blindboxRevealedName='',blindboxMode='random';
+const BOX_ICONS=['❓','✨','🌟','💫','⭐','🔮','💎','🎯'];
+
+function initBlindbox(){}
+function blindboxRenderCbar(){const el=document.getElementById('blindboxCbar');el.innerHTML=D.classes.map(c=>`<button class="chip ${c.id===cid?'on':''}" onclick="blindboxSwCls('${c.id}')">${c.name}</button>`).join('')}
+function blindboxSwCls(id){cid=id;resetDrawn('blindbox');sv();blindboxRenderCbar();blindboxBuildShelves();blindboxUpdateCounter()}
+function blindboxUpdateCounter(){const c=cc();if(!c)return;const dr=getDrawn('blindbox')}
+function blindboxBuildShelves(){
+  const c=cc();if(!c)return;const area=document.getElementById('shelfArea');area.innerHTML='';const students=c.students;const dr=getDrawn('blindbox');const perRow=8;
+  for(let r=0;r<students.length;r+=perRow){const rowStudents=students.slice(r,r+perRow);const rowDiv=document.createElement('div');rowDiv.className='shelf-row';const boxRow=document.createElement('div');boxRow.className='box-row';
+    rowStudents.forEach((name,ci)=>{const idx=r+ci;const box=document.createElement('div');box.className='blind-box'+(dr.includes(name)?' picked':'')+(blindboxMode==='select'&&!dr.includes(name)?' selectable':'');box.dataset.name=name;box.dataset.idx=idx;const icon=BOX_ICONS[idx%BOX_ICONS.length];
+      box.innerHTML=`<div class="box-body"><div class="box-front"><span class="q-mark">?</span><span class="logo">${icon}</span></div><div class="seal-strip"><div class="seal-left"><span class="seal-icon">✦</span></div><div class="seal-right"><span class="seal-icon">✦</span></div></div><div class="box-lid"></div></div>`;
+      if(blindboxMode==='select'&&!dr.includes(name))box.onclick=()=>blindboxSelectBox(idx);boxRow.appendChild(box)});
+    const board=document.createElement('div');board.className='shelf-board';rowDiv.appendChild(boxRow);rowDiv.appendChild(board);area.appendChild(rowDiv)}
+}
+function blindboxSetMode(m){blindboxMode=m;document.querySelectorAll('#page-blindbox .blindbox-mode-chip').forEach(el=>{const isOn=el.dataset.mode===m;el.classList.toggle('on',isOn);el.style.borderColor=isOn?'#ff6b9d':'';el.style.color=isOn?'#ff6b9d':''});
+  const btn=document.getElementById('blindboxDrawBtn');if(m==='select')btn.style.display='none';else btn.style.display='';blindboxBuildShelves()}
+function blindboxDraw(){
+  if(blindboxBusy||blindboxMode!=='random')return;const c=cc();if(!c)return;const dr=getDrawn('blindbox');const nr=document.getElementById('blindboxNoRep').checked;const avail=nr?c.students.filter(s=>!dr.includes(s)):[...c.students];if(!avail.length){blindboxResetDr();return}
+  blindboxBusy=true;initA();const btn=document.getElementById('blindboxDrawBtn');if(btn)btn.disabled=true;
+  const picked=avail[Math.floor(Math.random()*avail.length)];const targetIdx=c.students.indexOf(picked);
+  document.getElementById('shelfArea').classList.add('shelf-shake');setTimeout(()=>document.getElementById('shelfArea').classList.remove('shelf-shake'),400);
+  const allBoxes=Array.from(document.querySelectorAll('#shelfArea .blind-box:not(.picked)'));const scanLen=Math.min(14,Math.max(10,allBoxes.length));const scanPath=[];for(let i=0;i<scanLen-1;i++)scanPath.push(Math.floor(Math.random()*allBoxes.length));
+  const targetBox=document.querySelector(`#shelfArea .blind-box[data-idx="${targetIdx}"]`);const targetInAll=allBoxes.indexOf(targetBox);scanPath.push(targetInAll>=0?targetInAll:0);
+  setTimeout(()=>{scanPath.forEach((bi,i)=>{const delay=60+i*100+Math.pow(i,1.2)*15;setTimeout(()=>{allBoxes.forEach(b=>b.classList.remove('scan-highlight'));if(allBoxes[bi])allBoxes[bi].classList.add('scan-highlight');tn(500+i*30,.04,'sine',.03)},delay)});
+    const totalDelay=60+(scanLen-1)*100+Math.pow(scanLen-1,1.2)*15+200;
+    setTimeout(()=>{allBoxes.forEach(b=>b.classList.remove('scan-highlight'));if(targetBox){targetBox.classList.add('scan-highlight');targetBox.style.transform='scale(1.15)'}tn(800,.3,'sine',.08)},totalDelay);
+    setTimeout(()=>blindboxPerformOpen(targetBox,picked,targetIdx),totalDelay+600)},500)
+}
+function blindboxSelectBox(idx){if(blindboxBusy)return;const c=cc();if(!c)return;const name=c.students[idx];const dr=getDrawn('blindbox');if(dr.includes(name))return;blindboxBusy=true;initA();const box=document.querySelector(`#shelfArea .blind-box[data-idx="${idx}"]`);if(!box){blindboxBusy=false;return}box.classList.add('scan-highlight');tn(600,.15,'sine',.06);setTimeout(()=>{box.classList.remove('scan-highlight');blindboxPerformOpen(box,name,idx)},400)}
+function blindboxPerformOpen(boxEl,name,idx){
+  const c=cc();let boxRect={left:0,top:0,width:72,height:72};if(boxEl)boxRect=boxEl.getBoundingClientRect();const cx=innerWidth/2;const cy=innerHeight/2;
+  const openBox=document.createElement('div');openBox.className='open-box';openBox.innerHTML=`<div class="box-front"><span class="q-mark">?</span><span class="logo">${BOX_ICONS[idx%BOX_ICONS.length]}</span></div><div class="seal-strip"><div class="seal-left"><span class="seal-icon">✦</span></div><div class="seal-right"><span class="seal-icon">✦</span></div></div><div class="box-lid"></div>`;
+  openBox.style.cssText=`position:fixed;left:${boxRect.left+boxRect.width/2-70}px;top:${boxRect.top+boxRect.height/2-70}px;z-index:190;transition:all .5s cubic-bezier(.34,1.56,.64,1);pointer-events:none`;
+  if(boxEl)boxEl.style.opacity='0';document.body.appendChild(openBox);
+  setTimeout(()=>{openBox.style.left=(cx-70)+'px';openBox.style.top=(cy-70)+'px'},50);
+  setTimeout(()=>{openBox.classList.add('shaking');for(let i=0;i<6;i++)setTimeout(()=>tn(150+Math.random()*200,.06,'square',.05),i*80);setTimeout(()=>{openBox.classList.remove('shaking');openBox.classList.add('charging');tn(200,.6,'sine',.06);setTimeout(()=>tn(300,.5,'sine',.05),200);setTimeout(()=>tn(450,.5,'sine',.06),400);setTimeout(()=>tn(600,.6,'sine',.07),600)},600)},600);
+  setTimeout(()=>{tn(150,.3,'sawtooth',.1);setTimeout(()=>tn(300,.2,'sawtooth',.08),100);setTimeout(()=>tn(500,.15,'sawtooth',.06),200);openBox.querySelector('.seal-strip').classList.add('seal-torn')},1800);
+  setTimeout(()=>{openBox.classList.remove('charging');const lid=openBox.querySelector('.box-lid');lid.style.transform='rotateX(-160deg) translateY(-10px)';lid.style.transition='transform 1.5s cubic-bezier(.25,.46,.45,.94)';tn(200,.4,'sine',.12);setTimeout(()=>tn(400,.3,'sine',.1),150);setTimeout(()=>tn(600,.3,'sine',.08),300);setTimeout(()=>tn(900,.4,'sine',.1),450);
+    setTimeout(()=>{const lidRect=lid.getBoundingClientRect();const lidFly=document.createElement('div');lidFly.className='lid-fly';lidFly.innerHTML=lid.outerHTML;lidFly.style.left=lidRect.left+'px';lidFly.style.top=lidRect.top+'px';lidFly.style.width=lidRect.width+'px';lidFly.style.height=lidRect.height+'px';lid.style.visibility='hidden';document.body.appendChild(lidFly);setTimeout(()=>{lidFly.style.transform='translateY(-200px) rotateX(720deg) rotateZ(30deg)';lidFly.style.opacity='0'},30);setTimeout(()=>lidFly.remove(),1500)},800)},3000);
+  setTimeout(()=>{const colors=['rgba(255,107,157,.4)','rgba(196,77,255,.4)','rgba(255,215,0,.4)','rgba(0,212,255,.4)'];const col=colors[idx%colors.length];const burst=document.createElement('div');burst.className='light-burst';burst.style.left=cx+'px';burst.style.top=cy+'px';burst.style.width='0';burst.style.height='0';burst.style.background=`radial-gradient(circle,${col},transparent 60%)`;document.body.appendChild(burst);setTimeout(()=>{burst.style.transition='all .6s ease-out';burst.style.width='600px';burst.style.height='600px';burst.style.opacity='0'},20);setTimeout(()=>burst.remove(),800);
+    const flash=document.createElement('div');flash.style.cssText='position:fixed;inset:0;background:rgba(255,255,255,.2);z-index:188;pointer-events:none;transition:opacity .4s';document.body.appendChild(flash);setTimeout(()=>{flash.style.opacity='0'},50);setTimeout(()=>flash.remove(),500);
+    tn(880,.25,'sine',.1);setTimeout(()=>tn(1100,.2,'sine',.08),120);setTimeout(()=>tn(1320,.3,'sine',.1),240);setTimeout(()=>{openBox.style.opacity='0';openBox.style.transition='opacity .3s'},200);setTimeout(()=>openBox.remove(),800)},4500);
+  setTimeout(()=>{addDrawn('blindbox',name);if(!c.ratings)c.ratings={};if(!c.ratings[name])c.ratings[name]={ex:0,good:0,try:0,picks:0};c.ratings[name].picks++;sv();blindboxShowReveal(name)},5500)
+}
+function blindboxShowReveal(name){blindboxRevealedName=name;blindboxRated=false;const c=cc();const info=c.ratings&&c.ratings[name]?c.ratings[name]:null;let hash=0;for(let i=0;i<name.length;i++)hash=((hash<<5)-hash)+name.charCodeAt(i);const hue=Math.abs(hash)%360;
+  document.getElementById('blindboxAvatarW').innerHTML=`<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,hsl(${hue},70%,45%),hsl(${hue},70%,60%));display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;border:3px solid var(--ac2);box-shadow:0 0 16px rgba(124,106,255,.3)">${name.length>=2?name.slice(-2):name[0]}</div>`;
+  document.getElementById('blindboxRevName').textContent=name;
+  if(info){const xp=info.ex*3+info.good*1;const lv=getLevel(xp);document.getElementById('blindboxRevLv').textContent=lv.name+' Lv.'+(xp>=15?5:xp>=8?4:xp>=4?3:xp>=2?2:xp>=1?1:0);document.getElementById('blindboxRevXp').textContent='XP: '+xp}else{document.getElementById('blindboxRevLv').textContent='普通 Lv.0';document.getElementById('blindboxRevXp').textContent='XP: 0'}
+  document.getElementById('blindboxRateRes').textContent='';document.getElementById('blindboxRateRow').classList.remove('show');document.getElementById('blindboxContBtn').classList.remove('show');
+  document.getElementById('blindboxRevealOv').classList.add('active');setTimeout(()=>{document.getElementById('blindboxRevealCard').classList.add('show');document.getElementById('blindboxRateRow').classList.add('show');tn(660,.15,'sine',.08);setTimeout(()=>tn(880,.15,'sine',.07),80)},200);
+  setTimeout(()=>{spawnConfetti();[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tn(f,.3,'sine',.09),i*80))},500)
+}
+function blindboxRate(type){if(blindboxRated)return;blindboxRated=true;const c=cc();if(!c)return;const nm=blindboxRevealedName;if(!c.ratings)c.ratings={};if(!c.ratings[nm])c.ratings[nm]={ex:0,good:0,try:0,picks:0};const oldXP=c.ratings[nm].ex*3+c.ratings[nm].good*1;const oldLv=getLevel(oldXP);if(type==='ex')c.ratings[nm].ex++;else if(type==='good')c.ratings[nm].good++;else c.ratings[nm].try++;const newXP=c.ratings[nm].ex*3+c.ratings[nm].good*1;const newLv=getLevel(newXP);sv();const rr=document.getElementById('blindboxRateRes');let msg=`+${type==='ex'?3:type==='good'?1:0} XP`;if(newLv.tier!==oldLv.tier){msg+=` · 升级为 ${newLv.name}！`;document.getElementById('blindboxLvlupName').textContent=newLv.name;document.getElementById('blindboxLvlupOv').classList.add('active');spawnConfetti();[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tn(f,.3,'sine',.09),i*80))}rr.textContent=msg;if(type==='ex'){tn(880,.15,'sine',.06);setTimeout(()=>tn(1100,.15,'sine',.05),100)}else if(type==='good')tn(660,.15,'sine',.06);else tn(330,.2,'sawtooth',.04);document.getElementById('blindboxContBtn').classList.add('show');blindboxRenderHist();syncSessionRating('blindbox',nm,type)}
+function blindboxContinue(){document.getElementById('blindboxRevealOv').classList.remove('active');document.getElementById('blindboxRevealCard').classList.remove('show');blindboxBusy=false;blindboxRated=false;const btn=document.getElementById('blindboxDrawBtn');if(btn)btn.disabled=false;blindboxBuildShelves()}
+function blindboxResetDr(){resetDrawn('blindbox');blindboxBusy=false;blindboxRated=false;const btn=document.getElementById('blindboxDrawBtn');if(btn)btn.disabled=false;blindboxBuildShelves()}
+function togBlindboxHist(){document.getElementById('blindboxHpan').classList.toggle('open');blindboxRenderHist()}
+function blindboxRenderHist(){const c=cc();const el=document.getElementById('blindboxHls');if(!c){el.innerHTML='<div style="padding:10px;color:var(--tx2);font-size:11px">暂无班级</div>';return}const dr=getDrawn('blindbox');let h='';c.students.forEach(nm=>{const pk=dr.includes(nm);const st=getStudentStats(nm,c);h+=`<div class="hi ${pk?'pk':'pd'}"><span class="hi-d"></span>${nm}${pk?' ✓':''}${st.lv.tier!=='comm'?' ['+st.lv.name+']':''}</div>`});el.innerHTML=h}
+
+/* ===== Init ===== */
+ensureDemo();if(!cid&&D.classes.length){cid=D.classes[0].id;sv()}
+renderHomeClassBar();initHomeBG();renderSession();
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!fateBusy&&currentPage==='fate'&&fateMode===1&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){e.preventDefault();fateDoAction()}if(e.code==='Space'&&!wheelBusy&&!wheelSpinning&&currentPage==='wheel'){e.preventDefault();wheelSpin()}});
+addEventListener('resize',()=>{if(currentPage==='wheel'&&modeInited['wheel'])wheelResizeWheel();if(currentPage==='ocean'){const cvs=document.getElementById('oceanC');if(cvs){cvs.width=innerWidth;cvs.height=innerHeight}}});
+</script>
+</body>
+</html>

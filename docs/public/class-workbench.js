@@ -255,7 +255,9 @@
 
   // ============ 表格页（通用 CRUD） ============
   // 行选中状态：{ tableId -> Set(idx) }
-  var selectedRows = {};
+    var selectedRows = {};
+    // 当前正在导入的表 ID（file-import 事件回调时使用）
+    var currentImportTableId = null;
 
   function getSel(tableId) {
     if (!selectedRows[tableId]) selectedRows[tableId] = new Set();
@@ -265,6 +267,12 @@
   function renderTablePage(tableId) {
     var def = findTableDef(tableId);
     if (!def) return '<div class="card">未找到该表</div>';
+
+    // 座位表专属：直接 iframe 内嵌 seat-map 工具，无需再写 CRUD 表格
+    if (tableId === 'seating') {
+      return renderSeatMapIframe();
+    }
+
     var table = getTable(tableId);
     var fields = def.table.fields;
     var sel = getSel(tableId);
@@ -286,8 +294,8 @@
     html += '<div class="table-toolbar">';
     html += '<div class="toolbar-group">';
     html += '<button class="btn btn-primary" id="btn-new">＋ 新增</button>';
-    html += '<button class="btn btn-primary" id="btn-import">📥 导入 Excel</button>';
-    html += '<button class="btn" id="btn-template" title="下载空白模板用于填写">⬇ 模板</button>';
+    html += '<button class="btn" id="btn-import" title="选择 .xlsx/.xls/.csv 文件，多列自动映射批量添加">📥 批量添加</button>';
+    html += '<button class="btn" id="btn-template" title="下载空白模板用于填写后导入">⬇ 模板</button>';
     html += '</div>';
     if (filterField) {
       html += '<div class="toolbar-divider"></div>';
@@ -352,11 +360,20 @@
     var fields = def.table.fields;
     var sel = getSel(tableId);
 
+    // 座位表专属：整页为 iframe，不走 CRUD 绑定
+    if (tableId === 'seating') {
+      bindSeatMapIframe();
+      return;
+    }
+
     el('btn-new').addEventListener('click', function () {
       openForm(tableId, null);
     });
-    el('btn-batch').addEventListener('click', function () {
-      openBatchAddForm(tableId, fields);
+    el('btn-import').addEventListener('click', function () {
+      openExcelImport(tableId, fields);
+    });
+    el('btn-template').addEventListener('click', function () {
+      downloadTemplate(tableId);
     });
 
     // 全选 / 取消
@@ -581,102 +598,390 @@
     });
   }
 
-  // ============ 批量添加 ============
-  // 选择"主字段"批量粘贴多行，可选批量填充附加字段
-  function openBatchAddForm(tableId, fields) {
-    // 主字段选择：默认选第一个非 textarea 且非 date 的 text 字段（通常是姓名/标题）
-    var primaryField = fields.find(function (f) { return f.type === 'text' && !f.required; }) ||
-                       fields.find(function (f) { return f.type === 'text'; }) ||
-                       fields[0];
-    // 可批量填充字段：非必填、非主字段、非 textarea 的字段
-    var fillFields = fields.filter(function (f) {
-      return f.name !== primaryField.name &&
-             f.type !== 'textarea' &&
-             !f.required &&
-             f.type !== 'select'; // select 单独处理
-    });
-    // select 字段可作为批量填充（用固定值）
-    var fillSelects = fields.filter(function (f) {
-      return f.name !== primaryField.name && f.type === 'select';
-    });
+  // ============ Excel 导入 ============
+  // 通过选择 .xlsx/.xls/.csv 文件批量导入；支持多 Sheet 选择、列自动映射、数据预览
+  function openExcelImport(tableId, fields) {
+    var def = findTableDef(tableId);
+    if (!def) return;
+    // 检查 SheetJS 是否可用（CDN 或本地降级）
+    if (typeof XLSX === 'undefined' || !XLSX.read) {
+      WB.openModal('Excel 库未加载',
+        '<div style="font-size:13px;line-height:1.8;color:var(--c-text-2)">' +
+        '📥 导入 Excel 需要加载 SheetJS 库。<br>' +
+        '当前检测不到 XLSX（可能是 CDN 被墙）；请检查网络或稍后重试。<br>' +
+        '导出功能仍可用（会导出 CSV，Excel 可打开）。</div>',
+        [{ text: '知道了', cls: 'btn btn-primary', act: 'close' }]);
+      return;
+    }
+    currentImportTableId = tableId;
+    el('file-import').click();
+  }
 
-    var body = '<div style="margin-bottom:12px;padding:10px 12px;background:var(--c-primary-bg);border-radius:6px;font-size:13px;color:var(--c-text-2);line-height:1.7">' +
-      '📌 在下方文本框中粘贴 <strong>' + escapeHtml(primaryField.label) + '</strong> 列表，' +
-      '每行一条，支持用逗号、顿号、空格分隔。可选批量填充附加字段（如分组、类别等）。' +
+  function handleImportFile(file) {
+    if (!file) return;
+    var tableId = currentImportTableId;
+    var ext = (file.name.split('.').pop() || '').toLowerCase();
+    var isCsv = ext === 'csv';
+    var isXlsxLike = (ext === 'xlsx' || ext === 'xls');
+    if (!isCsv && !isXlsxLike) {
+      showToast('仅支持 .xlsx / .xls / .csv 文件');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        var workbook;
+        if (isCsv) {
+          // CSV 用 sheet_to_json 之外的方式：先转成 ws
+          var csvText = e.target.result;
+          workbook = XLSX.read(csvText, { type: 'string' });
+        } else {
+          workbook = XLSX.read(e.target.result, { type: 'array' });
+        }
+        var sheets = workbook.SheetNames.map(function (name) {
+          var ws = workbook.Sheets[name];
+          return { name: name, rows: XLSX.utils.sheet_to_json(ws, { defval: '' }) };
+        });
+        if (!sheets.some(function (s) { return s.rows.length > 0; })) {
+          WB.openModal('解析失败',
+            '<div style="font-size:13px;line-height:1.8;color:var(--c-text-2)">' +
+            '未能从文件中解析到数据。<br>请确认：<br>' +
+            '· 第一行是表头（字段名）<br>' +
+            '· 至少有一行数据<br>' +
+            '· 文件格式正确（可先下载模板填写后导入）</div>',
+            [{ text: '知道了', cls: 'btn btn-primary', act: 'close' }]);
+          return;
+        }
+        showImportMapping(file.name, sheets);
+      } catch (err) {
+        WB.openModal('解析失败',
+          '<div style="font-size:13px;color:var(--c-danger)">发生错误：' + escapeHtml(err.message || err) + '</div>',
+          [{ text: '知道了', cls: 'btn btn-primary', act: 'close' }]);
+      }
+    };
+    reader.onerror = function () {
+      WB.showToast('文件读取失败');
+    };
+    if (isCsv) reader.readAsText(file);
+    else reader.readAsArrayBuffer(file);
+  }
+
+  function showImportMapping(fileName, sheets) {
+    var tableId = route.table;
+    var def = findTableDef(tableId);
+    var fields = def.table.fields;
+
+    var activeSheetIdx = 0;
+    // 若只有一个 sheet 就直接用；多个由用户在 modal 内切换
+    if (sheets.length === 1) activeSheetIdx = 0;
+
+    var sheetSelectorHtml = '';
+    if (sheets.length > 1) {
+      sheetSelectorHtml = '<label style="margin-bottom:12px;display:block"><span class="lbl">选择工作表</span>' +
+        '<select id="sheet-sel">' +
+        sheets.map(function (s, i) {
+          return '<option value="' + i + '"' + (i === 0 ? ' selected' : '') + '>' +
+            escapeHtml(s.name) + '（' + s.rows.length + ' 行）</option>';
+        }).join('') +
+        '</select></label>';
+    }
+
+    var mapRowsHtml = fields.map(function (f) {
+      // 表头候选
+      var candidates = sheets[0] && sheets[0].rows.length > 0
+        ? Object.keys(sheets[0].rows[0])
+        : [];
+      // 自动匹配：先按 label 完全相等，再按 label 模糊包含
+      var auto = '';
+      if (candidates.length > 0) {
+        auto = candidates.find(function (c) { return c === f.label; }) || '';
+        if (!auto) {
+          var lower = f.label.toLowerCase();
+          auto = candidates.find(function (c) { return c.toLowerCase() === lower; }) || '';
+        }
+        if (!auto) {
+          auto = candidates.find(function (c) { return c.indexOf(f.label) !== -1 || f.label.indexOf(c) !== -1; }) || '';
+        }
+      }
+      return '<tr><td style="font-size:13px">' + escapeHtml(f.label) + '</td><td>' +
+        '<select class="map-sel" data-field="' + escapeHtml(f.name) + '" style="min-width:180px">' +
+        '<option value="">— 忽略 —</option>' +
+        candidates.map(function (c) {
+          return '<option value="' + escapeHtml(c) + '"' + (c === auto ? ' selected' : '') + '>' + escapeHtml(c) + '</option>';
+        }).join('') +
+        '</select></td></tr>';
+    }).join('');
+
+    var body = '<div style="padding:10px 12px;background:var(--c-primary-bg);border-radius:6px;font-size:13px;color:var(--c-text-2);line-height:1.7;margin-bottom:12px">' +
+      '📋 已解析：<strong>' + escapeHtml(fileName) + '</strong><br>' +
+      '· 请核对列映射关系（已按表头名自动匹配）<br>' +
+      '· 「— 忽略 —」表示该 Excel 列不导入到此字段<br>' +
+      '· 支持 <code>.xlsx / .xls / .csv</code>' +
       '</div>';
-    body += '<div class="form-grid">';
-    body += '<label class="full"><span class="lbl required">' + escapeHtml(primaryField.label) + ' 列表</span>' +
-      '<textarea id="batch-list" rows="8" style="min-height:160px" placeholder="每行一条，或用 、, 空格分隔"></textarea></label>';
-    fillFields.forEach(function (f) {
-      body += '<label><span class="lbl">' + escapeHtml(f.label) + '（批量填充）</span>' +
-        '<input id="batch-fill-' + f.name + '" placeholder="留空则不填"></label>';
-    });
-    fillSelects.forEach(function (f) {
-      body += '<label><span class="lbl">' + escapeHtml(f.label) + '（批量填充）</span>' +
-        '<select id="batch-fill-' + f.name + '"><option value="">留空</option>';
-      (f.options || []).forEach(function (o) {
-        body += '<option value="' + escapeHtml(o) + '">' + escapeHtml(o) + '</option>';
-      });
-      body += '</select></label>';
-    });
-    // 日期批量填充：默认当天
-    var dateFields = fields.filter(function (f) {
-      return f.type === 'date' && f.name !== primaryField.name;
-    });
-    dateFields.forEach(function (f) {
-      body += '<label><span class="lbl">' + escapeHtml(f.label) + '（批量填充）</span>' +
-        '<input type="date" id="batch-fill-' + f.name + '" value="' + today() + '"></label>';
-    });
+    body += sheetSelectorHtml;
+    body += '<div style="border:1px solid var(--c-border);border-radius:6px;padding:12px;margin-bottom:12px">';
+    body += '<div class="form-title" style="margin-bottom:8px">列映射（左：目标字段　→　右：Excel 列）</div>';
+    body += '<table style="width:100%;border-collapse:collapse"><tbody>' + mapRowsHtml + '</tbody></table>';
+    body += '</div>';
+    body += '<div class="form-title" style="margin-bottom:8px">数据预览（前 10 行）</div>';
+    body += '<div style="max-height:260px;overflow:auto;border:1px solid var(--c-border);border-radius:6px" id="preview-wrap">';
+    body += '<table class="data" id="preview-table" style="min-width:100%"><thead><tr></tr></thead><tbody></tbody></table>';
     body += '</div>';
 
-    WB.openModal('批量添加 · ' + findTableDef(tableId).table.label, body, [
+    WB.openModal('导入 Excel · ' + def.table.label, body, [
       { text: '取消', cls: 'btn', act: 'close' },
-      { text: '批量添加', cls: 'btn btn-primary', act: 'save' }
+      { text: '导入数据', cls: 'btn btn-primary', act: 'save' }
     ], function (act, formHtml) {
       if (act !== 'save') return;
-      var raw = (formHtml.querySelector('#batch-list') || {}).value || '';
-      // 分割：换行 + 逗号 + 顿号 + 空格 + 分号
-      var items = raw.split(/[\r\n,，、;\s]+/).map(function (s) { return s.trim(); }).filter(Boolean);
-      // 去重
-      var seen = {};
-      items = items.filter(function (s) {
-        if (seen[s]) return false;
-        seen[s] = 1;
-        return true;
-      });
-      if (items.length === 0) { WB.showToast('请至少输入一条 ' + primaryField.label); return false; }
 
+      // 读取用户选择的 sheet
+      var selSheet = formHtml.querySelector('#sheet-sel');
+      var curIdx = selSheet ? parseInt(selSheet.value, 10) : 0;
+      var activeRows = (sheets[curIdx] && sheets[curIdx].rows) || [];
+      if (activeRows.length === 0) { WB.showToast('所选工作表无数据'); return false; }
+
+      // 读取列映射
+      var mapped = {};
+      formHtml.querySelectorAll('.map-sel').forEach(function (s) {
+        mapped[s.dataset.field] = s.value;
+      });
+      var hasAny = Object.keys(mapped).some(function (k) { return mapped[k]; });
+      if (!hasAny) { WB.showToast('请至少映射一列'); return false; }
+
+      // 逐行解析写入
       var table = WB.getTable(tableId);
-      // 收集批量填充值
-      var fillVals = {};
-      fields.forEach(function (f) {
-        var input = formHtml.querySelector('[id="batch-fill-' + f.name + '"]');
-        if (input) fillVals[f.name] = input.value.trim();
-      });
-
       var added = 0;
-      items.forEach(function (val) {
-        var row = {};
-        row[primaryField.name] = val;
+      activeRows.forEach(function (row) {
+        var newRow = {};
         fields.forEach(function (f) {
-          if (f.name === primaryField.name) return;
-          var v = fillVals[f.name];
-          if (v) row[f.name] = v;
-          else if (f.default) row[f.name] = f.default;
+          var header = mapped[f.name];
+          var val = header && row.hasOwnProperty(header) ? row[header] : '';
+          // 处理 [RichText] 等对象
+          if (val && typeof val === 'object' && val.rich) {
+            val = val.rich.map(function (r) { return r.t; }).join('');
+          } else if (val != null && typeof val !== 'string') {
+            // 数字 / 布尔 → 字符串
+            val = String(val);
+          }
+          val = (val || '').toString().trim();
+          // 日期字段：若是数字，Excel 序列号 → 日期字符串
+          if (f.type === 'date' && /^\d+(\.\d+)?$/.test(val)) {
+            val = excelDateToStr(parseFloat(val));
+          }
+          newRow[f.name] = val;
         });
-        row.__id = WB.uid();
-        row.__createdAt = new Date().toISOString();
-        table.unshift(row);
+        newRow.__id = WB.uid();
+        newRow.__createdAt = new Date().toISOString();
+        table.unshift(newRow);
         added++;
       });
       WB.saveState();
+      selectedRows[tableId] = new Set();
       WB.render();
-      WB.showToast('已添加 ' + added + ' 条');
+      WB.showToast('已导入 ' + added + ' 条');
+    }, function (formHtml) {
+      // mount: 渲染预览 + 绑定 sheet 切换
+      var initialMapped = {};
+      formHtml.querySelectorAll('.map-sel').forEach(function (s) {
+        initialMapped[s.dataset.field] = s.value;
+      });
+      renderPreview(formHtml, activeSheetIdx, sheets, initialMapped);
+      var sel = formHtml.querySelector('#sheet-sel');
+      if (sel) sel.onchange = function () {
+        var m = {};
+        formHtml.querySelectorAll('.map-sel').forEach(function (s) { m[s.dataset.field] = s.value; });
+        renderPreview(formHtml, parseInt(sel.value, 10), sheets, m);
+      };
+      // 映射下拉变更时刷新预览
+      formHtml.querySelectorAll('.map-sel').forEach(function (s) {
+        s.onchange = function () {
+          var m = {};
+          formHtml.querySelectorAll('.map-sel').forEach(function (x) { m[x.dataset.field] = x.value; });
+          var si = sel ? parseInt(sel.value, 10) : 0;
+          renderPreview(formHtml, si, sheets, m);
+        };
+      });
     });
   }
 
+  // 根据当前 sheet + 映射关系渲染预览表
+  function renderPreview(formHtml, sheetIdx, sheets, mapped) {
+    var formHtmlRef = formHtml;
+    var active = (sheets[sheetIdx] && sheets[sheetIdx].rows) || [];
+    var fieldOrder = formHtmlRef.querySelectorAll('.map-sel');
+    var headersHtml = '<th>行</th>';
+    for (var i = 0; i < fieldOrder.length; i++) {
+      var name = fieldOrder[i].dataset.field;
+      headersHtml += '<th>' + escapeHtml(name) + '</th>';
+    }
+    var thead = formHtmlRef.querySelector('#preview-table thead tr');
+    thead.innerHTML = headersHtml;
+
+    var tbody = formHtmlRef.querySelector('#preview-table tbody');
+    if (active.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="' + (fieldOrder.length + 1) + '" class="empty" style="padding:16px">该 Sheet 无数据</td></tr>';
+      return;
+    }
+    // 最多显示 10 行预览
+    var preview = active.slice(0, 10);
+    var html = '';
+    preview.forEach(function (row, ri) {
+      html += '<tr><td style="color:var(--c-text-3);font-size:12px">' + (ri + 1) + '</td>';
+      for (var i = 0; i < fieldOrder.length; i++) {
+        var name = fieldOrder[i].dataset.field;
+        var header = mapped[name];
+        var v = header ? (row[header] || '') : '';
+        if (v && typeof v === 'object' && v.rich) v = v.rich.map(function (r) { return r.t; }).join('');
+        html += '<td style="font-size:12px">' + escapeHtml(String(v)) + '</td>';
+      }
+      html += '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  // Excel 日期序列号 → YYYY-MM-DD
+  function excelDateToStr(n) {
+    // Excel 1900 日期系统：1 = 1900-01-01（含闰年 bug，需 offset 修正）
+    var d = new Date(Date.UTC(1899, 11, 30, 0, 0, 0));
+    d.setUTCDate(d.getUTCDate() + Math.floor(n));
+    return d.toISOString().slice(0, 10);
+  }
+
+  // ============ Excel 模板下载 ============
+  // 导出空表头 xlsx（无 XLSX 时降级 CSV），供用户填写后导入
+  function downloadTemplate(tableId) {
+    var def = findTableDef(tableId);
+    if (!def) return;
+    var fields = def.table.fields;
+    var label = def.table.label;
+
+    if (typeof XLSX !== 'undefined' && XLSX.utils && XLSX.writeFile) {
+      var ws = XLSX.utils.aoa_to_sheet([fields.map(function (f) { return f.label; })]);
+      // 列宽根据 label 长度微调
+      ws['!cols'] = fields.map(function (f) {
+        return { wch: Math.max(f.label.length * 2 + 2, 14) };
+      });
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, label);
+      XLSX.writeFile(wb, label + '_空白模板.xlsx');
+      WB.showToast('模板已下载，请填好后「导入 Excel」');
+      return;
+    }
+    var csv = '\uFEFF' + fields.map(function (f) { return csvEscape(f.label); }).join(',') + '\r\n';
+    downloadBlob(csv, label + '_空白模板.csv', 'text/csv;charset=utf-8');
+    WB.showToast('模板已下载（CSV）');
+  }
+
+  // ============ 座位表可视化排座器（iframe 直嵌） ============
+  // 座位表页整体渲染为 seat-map 工具 iframe，无需再写 CRUD 表格。
+  // 通过 localStorage 传递学生花名册（同源可访问），seat-map 启动时自动同步。
+  // seat-map 生成座次后会 postMessage 回来，父页面写回 state.tables.seating。
+  var SEATMAP_ROSTER_KEY = 'wb_seatmap_roster';
+  var seatMapIframeRef = null;
+
+  function renderSeatMapIframe() {
+    // 读取全班花名册，写入 localStorage 供 iframe 内的 seat-map 读取
+    try {
+      var roster = getTable('roster').map(function (r) {
+        return {
+          name: r.name || '',
+          studentNo: r.studentNo || '',
+          gender: r.gender || '',
+          remark: r.remark || ''
+        };
+      });
+      localStorage.setItem(SEATMAP_ROSTER_KEY, JSON.stringify(roster));
+    } catch (e) { /* ignore */ }
+
+    var iframeId = 'seatmap-iframe';
+    return '<div class="card" style="padding:0;overflow:hidden">' +
+      '<div style="padding:10px 16px;border-bottom:1px solid var(--c-border);display:flex;align-items:center;justify-content:space-between">' +
+        '<div style="font-weight:600;font-size:14px">🪑 座位表 <span style="color:var(--c-text-3);font-weight:400;font-size:12px;margin-left:8px">数据源：全班花名册（自动同步）· 排座结果会写回本表</span></div>' +
+        '<div><button class="btn btn-sm" id="seatmap-resync" title="重新从花名册同步">↻ 刷新花名册</button>' +
+        '<button class="btn btn-sm" id="seatmap-newtab" title="在新标签打开">↗ 新标签打开</button></div>' +
+      '</div>' +
+      '<iframe id="' + iframeId + '" src="seat-map/seat-map.html?wb=1" style="width:100%;height:calc(100vh - 160px);border:none;display:block"></iframe>' +
+    '</div>';
+  }
+
+  function bindSeatMapIframe() {
+    seatMapIframeRef = el('seatmap-iframe');
+    if (!seatMapIframeRef) return;
+
+    // 新标签打开
+    var newTab = el('seatmap-newtab');
+    if (newTab) newTab.onclick = function () {
+      try {
+        var roster = getTable('roster').map(function (r) {
+          return { name: r.name || '', studentNo: r.studentNo || '', gender: r.gender || '', remark: r.remark || '' };
+        });
+        localStorage.setItem(SEATMAP_ROSTER_KEY, JSON.stringify(roster));
+      } catch (e) {}
+      window.open('seat-map/seat-map.html?wb=1', '_blank');
+    };
+
+    // 重新同步花名册到 iframe
+    var resync = el('seatmap-resync');
+    if (resync) resync.onclick = function () {
+      try {
+        var roster = getTable('roster').map(function (r) {
+          return { name: r.name || '', studentNo: r.studentNo || '', gender: r.gender || '', remark: r.remark || '' };
+        });
+        localStorage.setItem(SEATMAP_ROSTER_KEY, JSON.stringify(roster));
+      } catch (e) {}
+      // 触发 iframe 重载，seat-map 启动时会重新读 localStorage
+      seatMapIframeRef.src = 'seat-map/seat-map.html?wb=1&t=' + Date.now();
+      showToast('已重新同步花名册');
+    };
+
+    // 监听 seat-map 返回的座次数据
+    window.addEventListener('message', onSeatMapMessage);
+  }
+
+  // seat-map 生成座次后回传的数据结构：
+  // { type:'wb-seatmap-result', seating:[ [ {student_id,name,gender,height,vision,score}, ...], ...] }
+  function onSeatMapMessage(evt) {
+    if (!evt.data || evt.data.type !== 'wb-seatmap-result') return;
+    var seating = evt.data.seating;
+    var colGroups = evt.data.columnGroups || [];
+    if (!seating || !Array.isArray(seating)) return;
+
+    // 将二维座位矩阵展开为 seating 表行；按座位坐标推算 zone / row / seatNo
+    var rows = [];
+    var studentMap = getTable('roster').reduce(function (acc, r) {
+      acc[r.name] = r;
+      return acc;
+    }, {});
+
+    seating.forEach(function (row, ri) {
+      if (!Array.isArray(row)) return;
+      row.forEach(function (seat, ci) {
+        if (!seat || seat.isEmpty || !seat.name) return;
+        // 通过 student_id (对应学号/姓名) 查花名册补全信息
+        var key = seat.student_id || seat.name;
+        var rosterRow = studentMap[seat.name] || studentMap[seat.student_id] || {};
+        // 分组：优先用 seat-map 传的分组信息，否则默认「第一组」
+        var zone = '第' + (colGroups[ci] || (ci + 1)) + '组';
+        rows.push({
+          studentNo: rosterRow.studentNo || key || '',
+          name: seat.name || '',
+          zone: zone,
+          row: String(ri + 1),
+          seatNo: String(ci + 1),
+          note: (rosterRow.remark || '')
+        });
+      });
+    });
+
+    state.tables.seating = rows;
+    saveState();
+    showToast('座位表已保存（' + rows.length + ' 人）');
+  }
+
+
   // ============ 模态框 ============
-  function openModal(title, bodyHtml, buttons, onAction) {
+  // options: onAction(act, body), mount(body)
+  function openModal(title, bodyHtml, buttons, onAction, mount) {
     var mask = el('modal-mask');
     var btnsHtml = '';
     buttons.forEach(function (b) {
@@ -687,6 +992,11 @@
       '<div class="modal-body">' + bodyHtml + '</div>' +
       '<div class="modal-foot">' + btnsHtml + '</div></div>';
     mask.classList.add('show');
+    // 挂载回调：body 已注入 DOM 后执行
+    if (typeof mount === 'function') {
+      var bodyRef = mask.querySelector('.modal-body');
+      try { mount(bodyRef); } catch (err) { /* 忽略挂载错误 */ }
+    }
 
     function close() {
       mask.classList.remove('show');
@@ -820,6 +1130,12 @@
     el('file-restore').addEventListener('change', function (e) {
       var file = e.target.files[0];
       if (file) handleRestoreFile(file);
+      e.target.value = '';
+    });
+    // Excel 导入文件选择
+    el('file-import').addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (file) handleImportFile(file);
       e.target.value = '';
     });
     setupMobileSidebar();

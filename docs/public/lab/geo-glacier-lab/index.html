@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>冰川作用实验室 · 3D 互动课件</title>
+<style>
+  /* 试点独立课件外壳：全屏 + 内联 lab 控制台样式（源自 interactive-course-web/style.css .lab-*） */
+  html, body {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #0b1020;
+    font-family: "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+    color: #f5efe3;
+  }
+  #lab-root { width: 100%; height: 100%; }
+
+  .lab-wrap { display: flex; width: 100%; height: 100%; overflow: hidden; }
+
+  /* 左侧控制台（深色，3D 工具固有风格） */
+  .lab-panel {
+    flex: 0 0 288px;
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 16px 14px;
+    background: linear-gradient(180deg, rgba(16,22,40,0.96), rgba(9,12,24,0.96));
+    border-right: 1px solid rgba(201,162,75,0.28);
+    overflow-y: auto;
+  }
+  .lab-panel::-webkit-scrollbar { width: 6px; }
+  .lab-panel::-webkit-scrollbar-thumb { background: rgba(201,162,75,0.35); border-radius: 3px; }
+
+  .lab-head { padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.10); }
+  .lab-title { font-size: 19px; letter-spacing: 0.10em; color: #ffd98a; }
+  .lab-sub { margin-top: 4px; font-size: 11px; letter-spacing: 0.06em; color: rgba(255,255,255,0.55); }
+
+  .lab-group {
+    display: flex; flex-direction: column; gap: 8px;
+    padding: 10px 10px 12px;
+    border: 1px solid rgba(255,255,255,0.09); border-radius: 6px;
+    background: rgba(255,255,255,0.028);
+  }
+  .lab-group-title { font-size: 12.5px; letter-spacing: 0.08em; color: rgba(201,162,75,0.95); }
+
+  .lab-range {
+    width: 100%; height: 4px; -webkit-appearance: none; appearance: none;
+    background: rgba(255,255,255,0.18); border-radius: 2px; outline: none; cursor: pointer;
+  }
+  .lab-range::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+    background: #ffd98a; border: 2px solid #6b5220; cursor: pointer;
+  }
+  .lab-range::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #ffd98a; border: 2px solid #6b5220; cursor: pointer;
+  }
+
+  .lab-stage-marks { display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,0.45); }
+  .lab-stage-name { font-size: 15px; letter-spacing: 0.10em; color: #ffd98a; }
+  .lab-tip { font-size: 11.5px; line-height: 1.75; color: rgba(255,255,255,0.72); }
+
+  .lab-btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .lab-btn {
+    flex: 1 1 auto; padding: 7px 10px; font-size: 12px; letter-spacing: 0.04em;
+    font-family: inherit; color: rgba(255,255,255,0.82);
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 4px; cursor: pointer; transition: all 0.18s ease; white-space: nowrap;
+  }
+  .lab-btn:hover { background: rgba(255,255,255,0.13); border-color: rgba(255,217,138,0.5); }
+  .lab-btn.active { color: #ffe6ab; background: rgba(201,162,75,0.18); border-color: rgba(201,162,75,0.6); }
+  .lab-btn.primary { color: #0b1020; background: #ffd98a; border-color: #ffd98a; font-weight: 600; }
+  .lab-btn.back { margin-top: auto; flex: 0 0 auto; padding: 9px 10px; }
+
+  .lab-stat { font-size: 11px; line-height: 1.7; color: rgba(255,255,255,0.66); }
+  .lab-stat b { color: #ffd98a; font-weight: 600; }
+  .lab-foot { font-size: 10px; color: rgba(255,255,255,0.40); text-align: center; }
+
+  /* 右侧 3D 画布 */
+  .lab-stage-area { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+  .lab-canvas { flex: 1 1 auto; position: relative; min-height: 0; cursor: grab; }
+  .lab-canvas:active { cursor: grabbing; }
+  .lab-canvas canvas { display: block; width: 100%; height: 100%; }
+
+  @media (max-width: 1100px) { .lab-panel { flex-basis: 250px; } }
+  @media (max-width: 720px) {
+    .lab-wrap { flex-direction: column; }
+    .lab-panel { flex: 0 0 auto; max-height: 42%; }
+  }
+</style>
+</head>
+<body>
+  <div id="lab-root"></div>
+
+  <script type="module">
+    import { GlacierLab } from './glacier-lab.js';
+
+    const root = document.getElementById('lab-root');
+    const lab = new GlacierLab(root);
+
+    // 独立课件被共享站 iframe 加载时，点"返回"通知父页面；独立打开时回退
+    lab.onExit = () => {
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'lab-exit' }, '*');
+      } else {
+        history.back();
+      }
+    };
+
+    lab.start();
+  </script>
+</body>
+</html>

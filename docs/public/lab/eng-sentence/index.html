@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>句型建构实验室 · 词块组句与语法讲解 · TeachVision 创境</title>
+<style>
+
+html,body{margin:0;padding:0;height:100%;background:#0d0d12;overflow:hidden;}
+#lab-root{position:absolute;inset:0;overflow:hidden;}
+canvas{display:block;}
+button{font-family:inherit;cursor:pointer;}
+input,select{font-family:inherit;}
+
+*{ box-sizing: border-box; margin: 0; padding: 0; }
+.view.active{ display: flex; }
+@keyframes fadeIn{from{ opacity: 0; transform: translateY(8px); }to{ opacity: 1; transform: translateY(0); }}
+@keyframes dialogSlideUp{from{ opacity: 0; transform: translateY(30px); }to{ opacity: 1; transform: translateY(0); }}
+@keyframes blink{50%{ opacity: 0; }}
+@keyframes bob{0%,100%{ transform: translateY(0); }50%{ transform: translateY(-3px); }}
+.choice-panel.active{ display: flex; }
+.lab-wrap{
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.lab-head{ padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.10); }
+.lab-btn.active{
+  color: #ffe6ab;
+  background: rgba(201,162,75,0.18);
+  border-color: rgba(201,162,75,0.6);
+}
+.mol-tab.active{
+  background: rgba(95,182,224,0.18);
+  border-color: rgba(95,182,224,0.6);
+  color: #7fcfee;
+}
+.mol-tab.reaction.active{
+  background: rgba(201,162,75,0.20);
+  border-color: rgba(201,162,75,0.6);
+  color: #e8d49a;
+}
+.lab-caption .caption-btn.complete{
+  background: #7ee2a8;
+}
+.lab-caption .caption-btn.complete:hover{ background: #5fd695; }
+#menu-view.active ~ #about-btn{ display: block; }
+</style>
+</head>
+<body>
+<div id="lab-root"></div>
+<script type="module">
+import { MoleculeLab as SentenceLab } from './sentence-lab.js';
+const root = document.getElementById('lab-root');
+const lab = new SentenceLab(root);
+lab.onExit = () => {
+  if (window.parent !== window) window.parent.postMessage({ type: 'lab-exit' }, '*');
+  else history.back();
+};
+lab.start();
+</script>
+</body>
+</html>

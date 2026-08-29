@@ -1,5 +1,6 @@
 /* 班主任工作台 - 特殊视图
- * 依赖顺序：class-workbench.js 已加载 window.WB
+ * 依赖：window.WB 由 class-workbench.js 提供
+ * 加载顺序：class-workbench.js 必须先于本文件加载
  */
 window.WB_VIEWS = (function () {
   'use strict';
