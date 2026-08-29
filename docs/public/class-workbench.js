@@ -254,11 +254,20 @@
   }
 
   // ============ 表格页（通用 CRUD） ============
+  // 行选中状态：{ tableId -> Set(idx) }
+  var selectedRows = {};
+
+  function getSel(tableId) {
+    if (!selectedRows[tableId]) selectedRows[tableId] = new Set();
+    return selectedRows[tableId];
+  }
+
   function renderTablePage(tableId) {
     var def = findTableDef(tableId);
     if (!def) return '<div class="card">未找到该表</div>';
     var table = getTable(tableId);
     var fields = def.table.fields;
+    var sel = getSel(tableId);
 
     // 筛选字段：优先 date / 第一个 select
     var filterField = null;
@@ -273,10 +282,15 @@
     html += '<div class="card-title">' + (def.table.icon || '') + ' ' + escapeHtml(def.table.label) +
       '<span class="extra">共 ' + table.length + ' 条</span></div>';
 
-    // 工具栏
+    // 工具栏：主操作区（左） + 搜索筛选区（中） + 次要操作区（右）
     html += '<div class="table-toolbar">';
+    html += '<div class="toolbar-group">';
     html += '<button class="btn btn-primary" id="btn-new">＋ 新增</button>';
+    html += '<button class="btn btn-primary" id="btn-import">📥 导入 Excel</button>';
+    html += '<button class="btn" id="btn-template" title="下载空白模板用于填写">⬇ 模板</button>';
+    html += '</div>';
     if (filterField) {
+      html += '<div class="toolbar-divider"></div>';
       html += '<select class="filter" id="filter-sel">';
       html += '<option value="">全部 ' + escapeHtml(filterField.label) + '</option>';
       (filterField.options || []).forEach(function (o) {
@@ -284,30 +298,43 @@
       });
       html += '</select>';
     }
-    html += '<div class="search"><input id="search-input" placeholder="关键词检索（全字段模糊）"></div>';
+    html += '<div class="search"><input id="search-input" placeholder="🔍 关键词检索（全字段模糊）"></div>';
     html += '<div class="spacer"></div>';
     html += '<button class="btn" id="btn-export">⬇ 导出</button>';
     html += '</div>';
 
-    // 表格
+    // 批量操作条（仅在选中时显示）
+    html += '<div class="batch-bar" id="batch-bar" style="display:none">';
+    html += '<span class="info">已选 <strong id="sel-count">0</strong> 条</span>';
+    html += '<div class="spacer"></div>';
+    html += '<button class="btn btn-sm" id="btn-sel-all">全选</button>';
+    html += '<button class="btn btn-sm" id="btn-sel-none">取消</button>';
+    html += '<button class="btn btn-sm btn-danger" id="btn-batch-del">🗑 批量删除</button>';
+    html += '</div>';
+
+    // 表格（含复选列）
     html += '<div class="table-wrap"><div class="table-scroll">';
     html += '<table class="data"><thead><tr>';
+    html += '<th class="checkbox-cell"><input type="checkbox" id="check-all" title="全选/取消"></th>';
     fields.forEach(function (f) {
       html += '<th>' + escapeHtml(f.label) + '</th>';
     });
     html += '<th class="op">操作</th></tr></thead><tbody id="tbody">';
 
     if (table.length === 0) {
-      html += '<tr><td colspan="' + (fields.length + 1) + '" class="empty">暂无数据，点击右上角「新增」添加</td></tr>';
+      html += '<tr><td colspan="' + (fields.length + 2) + '" class="empty">暂无数据，点击右上角「新增」或「批量添加」</td></tr>';
     } else {
       table.forEach(function (row, idx) {
-        html += '<tr>';
+        var checked = sel.has(idx) ? ' checked' : '';
+        var cls = sel.has(idx) ? ' class="selected"' : '';
+        html += '<tr' + cls + '>';
+        html += '<td class="checkbox-cell"><input type="checkbox" data-sel="' + idx + '"' + checked + '></td>';
         fields.forEach(function (f) {
           var v = row[f.name];
-          var cls = f.type === 'textarea' ? ' class="wrap"' : '';
+          var tdCls = f.type === 'textarea' ? ' class="wrap"' : '';
           if (f.type === 'textarea' && v) v = escapeHtml(v).slice(0, 80) + (v.length > 80 ? '…' : '');
           else v = escapeHtml(v);
-          html += '<td' + cls + '>' + (v || '<span style="color:var(--c-text-3)">—</span>') + '</td>';
+          html += '<td' + tdCls + '>' + (v || '<span style="color:var(--c-text-3)">—</span>') + '</td>';
         });
         html += '<td class="op"><button class="btn btn-sm" data-act="edit" data-idx="' + idx + '">编辑</button>' +
                 '<button class="btn btn-sm btn-danger" data-act="del" data-idx="' + idx + '">删除</button></td>';
@@ -323,11 +350,38 @@
     var def = findTableDef(tableId);
     if (!def) return;
     var fields = def.table.fields;
+    var sel = getSel(tableId);
 
     el('btn-new').addEventListener('click', function () {
       openForm(tableId, null);
     });
+    el('btn-batch').addEventListener('click', function () {
+      openBatchAddForm(tableId, fields);
+    });
 
+    // 全选 / 取消
+    el('check-all').addEventListener('change', function (e) {
+      var all = e.target.checked;
+      var table = getTable(tableId);
+      table.forEach(function (_, idx) {
+        if (all) sel.add(idx); else sel.delete(idx);
+      });
+      updateBatchUI(tableId);
+      applyFilter(tableId); // 刷新行样式
+    });
+
+    // 行复选框
+    el('tbody').addEventListener('change', function (e) {
+      var cb = e.target.closest('[data-sel]');
+      if (!cb) return;
+      var idx = parseInt(cb.dataset.sel, 10);
+      if (cb.checked) sel.add(idx); else sel.delete(idx);
+      updateBatchUI(tableId);
+      // 只更新选中态，不重绘整表
+      cb.closest('tr').classList.toggle('selected', cb.checked);
+    });
+
+    // 行操作（编辑/删除）
     el('tbody').addEventListener('click', function (e) {
       var btn = e.target.closest('button[data-act]');
       if (!btn) return;
@@ -339,6 +393,8 @@
         var label = fields[0].label;
         if (confirm('确认删除该条记录？\n' + label + '：' + (row[fields[0].name] || '(空)'))) {
           getTable(tableId).splice(idx, 1);
+          // 清除所有选中（索引已失效）
+          sel.clear();
           saveState();
           render();
           showToast('已删除');
@@ -346,6 +402,7 @@
       }
     });
 
+    // 搜索/筛选
     var search = el('search-input');
     if (search) {
       search.addEventListener('input', function () { applyFilter(tableId); });
@@ -358,6 +415,47 @@
     el('btn-export').addEventListener('click', function () {
       exportTable(tableId, def);
     });
+
+    // 批量操作条按钮
+    el('btn-sel-all').addEventListener('click', function () {
+      var table = getTable(tableId);
+      table.forEach(function (_, idx) { sel.add(idx); });
+      updateBatchUI(tableId);
+      applyFilter(tableId);
+    });
+    el('btn-sel-none').addEventListener('click', function () {
+      sel.clear();
+      updateBatchUI(tableId);
+      applyFilter(tableId);
+    });
+    el('btn-batch-del').addEventListener('click', function () {
+      if (sel.size === 0) { showToast('请先选择要删除的记录'); return; }
+      if (!confirm('确认删除选中的 ' + sel.size + ' 条记录？此操作不可恢复。')) return;
+      var table = getTable(tableId);
+      // 从大到小删除，避免索引漂移
+      var idxs = Array.from(sel).sort(function (a, b) { return b - a; });
+      idxs.forEach(function (i) { table.splice(i, 1); });
+      sel.clear();
+      saveState();
+      render();
+      showToast('已删除 ' + idxs.length + ' 条');
+    });
+
+    updateBatchUI(tableId);
+  }
+
+  function updateBatchUI(tableId) {
+    var bar = el('batch-bar');
+    if (!bar) return;
+    var sel = getSel(tableId);
+    var n = sel.size;
+    bar.style.display = n > 0 ? 'flex' : 'none';
+    var cnt = el('sel-count');
+    if (cnt) cnt.textContent = n;
+    // 同步全选框状态
+    var table = getTable(tableId);
+    var all = el('check-all');
+    if (all) all.checked = table.length > 0 && n === table.length;
   }
 
   function applyFilter(tableId) {
@@ -393,22 +491,25 @@
 
   function renderFiltered(tableId, rows, fields) {
     var tbody = el('tbody');
+    var sel = getSel(tableId);
     if (rows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="' + (fields.length + 1) + '" class="empty">无匹配数据</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="' + (fields.length + 2) + '" class="empty">无匹配数据</td></tr>';
       return;
     }
     var html = '';
     rows.forEach(function (row) {
-      html += '<tr>';
+      var idx = getTable(tableId).indexOf(row);
+      var checked = sel.has(idx) ? ' checked' : '';
+      var trCls = sel.has(idx) ? ' class="selected"' : '';
+      html += '<tr' + trCls + '>';
+      html += '<td class="checkbox-cell"><input type="checkbox" data-sel="' + idx + '"' + checked + '></td>';
       fields.forEach(function (f) {
         var v = row[f.name];
-        var cls = f.type === 'textarea' ? ' class="wrap"' : '';
+        var tdCls = f.type === 'textarea' ? ' class="wrap"' : '';
         if (f.type === 'textarea' && v) v = escapeHtml(v).slice(0, 80) + (v.length > 80 ? '…' : '');
         else v = escapeHtml(v);
-        html += '<td' + cls + '>' + (v || '<span style="color:var(--c-text-3)">—</span>') + '</td>';
+        html += '<td' + tdCls + '>' + (v || '<span style="color:var(--c-text-3)">—</span>') + '</td>';
       });
-      // 找到原索引以正确定位删除/编辑
-      var idx = getTable(tableId).indexOf(row);
       html += '<td class="op"><button class="btn btn-sm" data-act="edit" data-idx="' + idx + '">编辑</button>' +
               '<button class="btn btn-sm btn-danger" data-act="del" data-idx="' + idx + '">删除</button></td>';
       html += '</tr>';
@@ -477,6 +578,100 @@
       saveState();
       render();
       showToast('已保存');
+    });
+  }
+
+  // ============ 批量添加 ============
+  // 选择"主字段"批量粘贴多行，可选批量填充附加字段
+  function openBatchAddForm(tableId, fields) {
+    // 主字段选择：默认选第一个非 textarea 且非 date 的 text 字段（通常是姓名/标题）
+    var primaryField = fields.find(function (f) { return f.type === 'text' && !f.required; }) ||
+                       fields.find(function (f) { return f.type === 'text'; }) ||
+                       fields[0];
+    // 可批量填充字段：非必填、非主字段、非 textarea 的字段
+    var fillFields = fields.filter(function (f) {
+      return f.name !== primaryField.name &&
+             f.type !== 'textarea' &&
+             !f.required &&
+             f.type !== 'select'; // select 单独处理
+    });
+    // select 字段可作为批量填充（用固定值）
+    var fillSelects = fields.filter(function (f) {
+      return f.name !== primaryField.name && f.type === 'select';
+    });
+
+    var body = '<div style="margin-bottom:12px;padding:10px 12px;background:var(--c-primary-bg);border-radius:6px;font-size:13px;color:var(--c-text-2);line-height:1.7">' +
+      '📌 在下方文本框中粘贴 <strong>' + escapeHtml(primaryField.label) + '</strong> 列表，' +
+      '每行一条，支持用逗号、顿号、空格分隔。可选批量填充附加字段（如分组、类别等）。' +
+      '</div>';
+    body += '<div class="form-grid">';
+    body += '<label class="full"><span class="lbl required">' + escapeHtml(primaryField.label) + ' 列表</span>' +
+      '<textarea id="batch-list" rows="8" style="min-height:160px" placeholder="每行一条，或用 、, 空格分隔"></textarea></label>';
+    fillFields.forEach(function (f) {
+      body += '<label><span class="lbl">' + escapeHtml(f.label) + '（批量填充）</span>' +
+        '<input id="batch-fill-' + f.name + '" placeholder="留空则不填"></label>';
+    });
+    fillSelects.forEach(function (f) {
+      body += '<label><span class="lbl">' + escapeHtml(f.label) + '（批量填充）</span>' +
+        '<select id="batch-fill-' + f.name + '"><option value="">留空</option>';
+      (f.options || []).forEach(function (o) {
+        body += '<option value="' + escapeHtml(o) + '">' + escapeHtml(o) + '</option>';
+      });
+      body += '</select></label>';
+    });
+    // 日期批量填充：默认当天
+    var dateFields = fields.filter(function (f) {
+      return f.type === 'date' && f.name !== primaryField.name;
+    });
+    dateFields.forEach(function (f) {
+      body += '<label><span class="lbl">' + escapeHtml(f.label) + '（批量填充）</span>' +
+        '<input type="date" id="batch-fill-' + f.name + '" value="' + today() + '"></label>';
+    });
+    body += '</div>';
+
+    WB.openModal('批量添加 · ' + findTableDef(tableId).table.label, body, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: '批量添加', cls: 'btn btn-primary', act: 'save' }
+    ], function (act, formHtml) {
+      if (act !== 'save') return;
+      var raw = (formHtml.querySelector('#batch-list') || {}).value || '';
+      // 分割：换行 + 逗号 + 顿号 + 空格 + 分号
+      var items = raw.split(/[\r\n,，、;\s]+/).map(function (s) { return s.trim(); }).filter(Boolean);
+      // 去重
+      var seen = {};
+      items = items.filter(function (s) {
+        if (seen[s]) return false;
+        seen[s] = 1;
+        return true;
+      });
+      if (items.length === 0) { WB.showToast('请至少输入一条 ' + primaryField.label); return false; }
+
+      var table = WB.getTable(tableId);
+      // 收集批量填充值
+      var fillVals = {};
+      fields.forEach(function (f) {
+        var input = formHtml.querySelector('[id="batch-fill-' + f.name + '"]');
+        if (input) fillVals[f.name] = input.value.trim();
+      });
+
+      var added = 0;
+      items.forEach(function (val) {
+        var row = {};
+        row[primaryField.name] = val;
+        fields.forEach(function (f) {
+          if (f.name === primaryField.name) return;
+          var v = fillVals[f.name];
+          if (v) row[f.name] = v;
+          else if (f.default) row[f.name] = f.default;
+        });
+        row.__id = WB.uid();
+        row.__createdAt = new Date().toISOString();
+        table.unshift(row);
+        added++;
+      });
+      WB.saveState();
+      WB.render();
+      WB.showToast('已添加 ' + added + ' 条');
     });
   }
 

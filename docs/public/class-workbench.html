@@ -25,9 +25,19 @@
 <div class="modal-mask" id="modal-mask"></div>
 <div class="toast" id="toast"></div>
 <input type="file" id="file-restore" accept=".json" style="display:none">
-<!-- 加载顺序：config（数据配置） → main（主逻辑，暴露 window.WB） → views（特殊视图，依赖 WB） -->
+<input type="file" id="file-import" accept=".xlsx,.xls,.csv" style="display:none">
+<!-- 加载顺序：config（数据配置） → views（特殊视图） → main（主逻辑，依赖前两者） -->
 <script src="class-workbench-config.js"></script>
-<script src="class-workbench.js"></script>
 <script src="class-workbench-views.js"></script>
+<script src="class-workbench.js"></script>
+<!-- SheetJS：Excel 导入/导出。CDN 加载失败时回退到本地 vendor/sheetjs.min.js -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script>
+  if (typeof XLSX === 'undefined') {
+    var s = document.createElement('script');
+    s.src = 'vendor/sheetjs.min.js';
+    document.head.appendChild(s);
+  }
+</script>
 </body>
 </html>

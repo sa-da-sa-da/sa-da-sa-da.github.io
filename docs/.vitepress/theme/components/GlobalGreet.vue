@@ -7,7 +7,7 @@ import { useRoute } from "vitepress";
 const route = useRoute();
 
 const hasGreet = ref(false);
-const duration = 2500;
+const duration = 1500;
 
 const greet = () => {
   console.log(1);

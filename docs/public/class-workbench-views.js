@@ -229,11 +229,9 @@ window.WB_VIEWS = (function () {
       var isDone = !!i.done;
       if (filter === 'pending' && isDone) return false;
       if (filter === 'done' && !isDone) return false;
-      // 关键字匹配：命中 title 或 note 任一即保留
-      if (kw) {
-        var hit = String(i.title || '').toLowerCase().indexOf(kw) >= 0 ||
-                  String(i.note || '').toLowerCase().indexOf(kw) >= 0;
-        if (!hit) return false;
+      if (kw && !String(i.title || '').toLowerCase().indexOf(kw) >= 0 &&
+                  !String(i.note || '').toLowerCase().indexOf(kw) >= 0) {
+        return false;
       }
       return true;
     });
@@ -373,6 +371,8 @@ window.WB_VIEWS = (function () {
 
     html += '<div class="score-tabs" id="g-tabs">';
     exams.forEach(function (ex) {
+      var active = (WB.state && false);
+      // 用 dataset 存储 exam id
       html += '<button class="score-tab ' + (state.currentExamId === ex.__id ? 'active' : '') + '" data-exam-id="' + ex.__id + '">' +
         (ex.icon || '📅') + ' ' + H(ex.name) + '</button>';
     });
@@ -530,12 +530,7 @@ window.WB_VIEWS = (function () {
   }
 
   function renderAnalysisPanel(subjects, withRank) {
-    if (!withRank || withRank.length === 0) return '';
-    // 局部工具：把当前成绩中某科目的分数抽出来（数值型，剔除 NaN）
-    function scoresOfSubject(s) {
-      return withRank.map(function (r) { return parseFloat(r[s]); })
-        .filter(function (v) { return !isNaN(v); });
-    }
+    if (withRank.length === 0) return '';
     var top = withRank.filter(function (r) { return r.__level === '尖子生'; });
     var critical = withRank.filter(function (r) { return r.__level === '临界生'; });
     var weak = withRank.filter(function (r) { return r.__level === '学困生'; });
@@ -582,13 +577,14 @@ window.WB_VIEWS = (function () {
 
     html += '</div>';
 
-    // 简易学情小结：不及格人次 & 名单（基于当前 withRank 数据）
-    var failTotal = 0;
+    // 简易学情小结
+    var不及格 = {};
     subjects.forEach(function (s) {
       var failN = scoresOfSubject(s).filter(function (v) { return v < 60; }).length;
-      failTotal += failN;
+      不及格[s] = failN;
     });
-    var failStudents = withRank.filter(function (r) {
+    var failTotal = Object.values(不及格).reduce(function (a, b) { return a + b; }, 0);
+    var failStudents = scoresOfSubjectArr().filter(function (r) {
       return subjects.some(function (s) { var v = parseFloat(r[s]); return !isNaN(v) && v < 60; });
     }).map(function (r) { return r.name; });
 
@@ -644,12 +640,11 @@ window.WB_VIEWS = (function () {
       var act = btn.dataset.act;
       if (act === 'edit-exam') openExamForm(btn.dataset.id);
       else if (act === 'del-exam') {
-        var examId = btn.dataset.id;
         if (confirm('确认删除该考试批次及其全部成绩？不可恢复。')) {
-          delete WB.state.grades.scores[examId];
-          if (WB.state.grades.scores['_meta']) delete WB.state.grades.scores['_meta'][examId];
-          WB.state.grades.exams = WB.state.grades.exams.filter(function (x) { return x.__id !== examId; });
-          if (WB.state.grades.currentExamId === examId) {
+          delete WB.state.grades.scores[btn.dataset.id];
+          delete WB.state.grades.scores['_meta'] && WB.state.grades.scores['_meta'] && delete WB.state.grades.scores['_meta'][btn.dataset.id];
+          WB.state.grades.exams = WB.state.grades.exams.filter(function (x) { return x.__id !== btn.dataset.id; });
+          if (WB.state.grades.currentExamId === btn.dataset.id) {
             WB.state.grades.currentExamId = WB.state.grades.exams[0] ? WB.state.grades.exams[0].__id : null;
           }
           WB.saveState();
@@ -755,28 +750,21 @@ window.WB_VIEWS = (function () {
     var row = idx != null ? scores[idx] : null;
     var subjects = exam.subjects || [];
 
-    function val(field, fallback) {
-      if (!row) return fallback || '';
-      var v = row[field];
-      if (v == null || v === '') return fallback || '';
-      return v;
-    }
-
     var body = '<div class="form-grid">';
     body += '<label><span class="lbl">学号</span>' +
-      '<input id="s-no" value="' + H(val('studentNo', '')) + '"></label>';
+      '<input id="s-no" value="' + H(row ? row.studentNo : '') + '"></label>';
     body += '<label><span class="lbl required">姓名</span>' +
-      '<input id="s-name" value="' + H(val('name', '')) + '" placeholder="请输入姓名"></label>';
+      '<input id="s-name" value="' + H(row ? row.name : '') + '" placeholder="请输入姓名"></label>';
     subjects.forEach(function (s) {
       body += '<label><span class="lbl">' + H(s) + '</span>' +
-        '<input type="number" step="0.1" id="s-sub-' + H(s) + '" value="' +
-        (val(s) != null && val(s) !== '' ? val(s) : '') + '"></label>';
+          '<input type="number" step="0.1" id="s-sub-' + H(s) + '" value="' +
+          (rowLikeVal(s) || '') + '"></label>';
     });
     body += '<label class="full"><span class="lbl">备注</span>' +
-      '<textarea id="s-remark">' + H(val('remark', '')) + '</textarea></label>';
+          '<textarea id="s-remark">' + (rowRemark || '') + '</textarea></label>';
     body += '</div>';
 
-    WB.openModal('录入成绩 · ' + exam.name, body, [
+    WB.openModal('录入成绩 · ' + currentExamName, body, [
       { text: '取消', cls: 'btn', act: 'close' },
       { text: '保存', cls: 'btn btn-primary', act: 'save' }
     ], function (act) {
@@ -799,6 +787,19 @@ window.WB_VIEWS = (function () {
       renderGradesRefresh();
       WB.showToast('已保存');
     });
+
+    function rowLikeVal(s) {
+      var r = WB.state.grades.scores[WB.state.grades.currentExamId] || [];
+      var idx = parseInt(btn.dataset.idx, 10);
+      var row = r[idx];
+      return row && row[s] != null ? row[s] : '';
+    }
+    var rowRemark = '';
+    var row = null;
+    if (idx != null) {
+      row = WB.state.grades.scores[WB.state.grades.currentExamId][idx];
+      rowRemark = row ? (row.remark || '') : '';
+    }
   }
 
   function exportScores() {
@@ -822,33 +823,17 @@ window.WB_VIEWS = (function () {
   }
 
   function copySummaryText() {
-    // 找出标题含"学情小结"的卡片；不使用 :has() 提升兼容性
-    var cards = document.querySelectorAll('.card');
-    var target = null;
-    for (var i = 0; i < cards.length; i++) {
-      var t = cards[i].querySelector('.card-title');
-      if (t && t.textContent.indexOf('学情小结') >= 0) { target = cards[i]; break; }
-    }
-    if (!target) { WB.showToast('未找到学情小结'); return; }
-    // 排除"复制"按钮本身的文字
-    var btn = target.querySelector('[data-act="copy-summary"]');
-    var clone = target.cloneNode(true);
-    var cloneBtn = clone.querySelector('[data-act="copy-summary"]');
-    if (cloneBtn) cloneBtn.remove();
-    var text = clone.innerText.trim();
-    var done = function (ok) { WB.showToast(ok ? '已复制到剪贴板' : '复制失败'); };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
-    } else {
-      // 降级：兼容非 HTTPS / iframe 环境
-      try {
-        var ta = document.createElement('textarea');
-        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-        document.body.appendChild(ta); ta.select();
-        var ok = document.execCommand('copy');
-        document.body.removeChild(ta);
-        done(ok);
-      } catch (e) { done(false); }
+    var text = document.querySelector('.card-title:has(> * )') &&
+      Array.from(document.querySelectorAll('.card')).find(function (c) {
+        return c.querySelector('.card-title') && c.querySelector('.card-title').textContent.indexOf('学情小结') >= 0;
+      });
+    if (text) {
+      var t = text.innerText;
+      navigator.clipboard && navigator.clipboard.writeText(t).then(function () {
+        WB.showToast('已复制到剪贴板');
+      }, function () {
+        WB.showToast('复制失败');
+      });
     }
   }
 
