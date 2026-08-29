@@ -408,7 +408,6 @@
 
   <!-- 舞台 -->
   <div class="stage" id="stage">
-    <div class="count-badge" id="draw-count">第 0 次</div>
     <div class="stage-name" id="stage-name">
       <span class="stage-placeholder">点击「开始」或按空格键开始点名</span>
     </div>
@@ -577,15 +576,11 @@
 
   // ========== 渲染 ==========
   function renderStats() {
-    var total = curRoster().length;
-    var called = curCalled().length;
+    // 移除顶部统计条后，仅保留 tab 计数供侧栏使用
     var pool = poolNames().length;
-    $('stat-total').textContent = total;
-    $('stat-called').textContent = called;
-    $('stat-pool').textContent = pool;
+    var called = curCalled().length;
     $('tab-count-pool').textContent = '(' + pool + ')';
     $('tab-count-called').textContent = '(' + called + ')';
-    $('draw-count').textContent = '第 ' + called + ' 次';
   }
 
   function renderGroups() {
@@ -731,11 +726,10 @@
     state.currentPicks = picks;
     $('stage-name').textContent = picks.join(sep);
 
-    // 写入已点记录（允许重复时仍记录，但不影响池子）
+    // 写入已点历史：无论是否允许重复都累加，便于统计"第 N 次"与浏览记录
+    // 允许重复只影响待点池（poolNames），不影响历史
     var called = curCalled();
-    picks.forEach(function (p) {
-      if (!allowRepeat() && called.indexOf(p) === -1) called.push(p);
-    });
+    picks.forEach(function (p) { called.push(p); });
     state.called[state.currentGroup] = called;
     persist();
     renderAll();
