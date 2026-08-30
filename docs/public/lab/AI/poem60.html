@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>高考古诗文背诵60篇 · 转盘闯关</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'STSong','Songti SC','Noto Serif CJK SC','KaiTi','STKaiti','SimSun',serif;background:linear-gradient(180deg,#0d1b2a 0%,#1b2838 30%,#0d1b2a 60%,#1b2838 100%);min-height:100vh;overflow-x:hidden;color:#d4c5a0;user-select:none}
+.scroll-bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 50% 0%,rgba(140,100,40,0.06),transparent 55%),radial-gradient(ellipse at 50% 100%,rgba(60,30,10,0.12),transparent 55%)}
+.container{max-width:640px;margin:0 auto;padding:12px;min-height:100vh;position:relative;z-index:1}
+
+.header{text-align:center;padding:20px 12px 8px}
+.header h1{font-size:1.35em;color:#d4a843;text-shadow:0 2px 12px rgba(180,140,40,0.5);margin-bottom:4px;letter-spacing:2px}
+.header .sub{font-size:0.75em;color:#9a8050;letter-spacing:1px}
+
+.score-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:0.78em;color:#8a7040}
+.score-bar span{color:#c9a040}
+
+.card{background:linear-gradient(135deg,rgba(20,28,40,0.96),rgba(15,20,30,0.96));border:1px solid rgba(180,140,40,0.25);border-radius:16px;padding:20px;margin:10px 0;box-shadow:0 6px 24px rgba(0,0,0,0.5)}
+.card .tag{display:inline-block;background:rgba(180,140,40,0.15);color:#c9a040;padding:3px 10px;border-radius:12px;font-size:0.73em;margin-bottom:10px;letter-spacing:1px}
+.card .title{font-size:1.1em;color:#d4a843;margin-bottom:8px;line-height:1.4}
+.card .story{font-size:0.88em;color:#b8a880;line-height:1.7;margin-bottom:12px;padding:10px;background:rgba(0,0,0,0.25);border-radius:10px;border-left:3px solid rgba(180,140,40,0.35)}
+.card .question{font-size:0.96em;color:#d4c5a0;line-height:1.6;margin-bottom:12px;padding:8px 0;border-bottom:1px dashed rgba(180,140,40,0.18)}
+
+/* 转盘 - 大号 */
+.wheel-section{text-align:center}
+.wheel-wrapper{position:relative;width:300px;height:300px;margin:16px auto}
+.wheel-canvas{width:100%;height:100%}
+.wheel-pointer{position:absolute;top:-18px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:28px solid #d4a843;filter:drop-shadow(0 2px 6px rgba(180,140,40,0.5));z-index:2}
+.wheel-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:50px;height:50px;border-radius:50%;background:radial-gradient(circle,#d4a843,#8b6914);border:3px solid rgba(0,0,0,0.5);box-shadow:0 0 15px rgba(200,160,40,0.4);z-index:3;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#1a1a0a;font-size:0.75em;font-weight:bold}
+.spin-btn{display:block;margin:14px auto;background:linear-gradient(135deg,rgba(180,140,40,0.45),rgba(140,80,20,0.45));border:1px solid rgba(200,150,50,0.5);color:#d4a843;padding:13px 36px;border-radius:25px;font-size:1em;cursor:pointer;font-family:inherit;transition:all 0.2s;letter-spacing:2px}
+.spin-btn:hover{box-shadow:0 0 20px rgba(200,160,40,0.35);transform:scale(1.03)}
+.spin-btn:disabled{opacity:0.5;pointer-events:none}
+
+.spin-result{text-align:center;padding:10px;margin-top:10px;font-size:0.9em;color:#c9a040;display:none}
+.spin-result.show{display:block;animation:fadeInUp 0.5s}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* 诗文展示 */
+.poem-display{display:none;margin-top:12px;padding:16px;background:rgba(0,0,0,0.3);border-radius:12px;border:1px solid rgba(180,140,40,0.2);text-align:center}
+.poem-display.show{display:block}
+.poem-title{font-size:1.1em;color:#d4a843;margin-bottom:10px;letter-spacing:1px}
+.poem-lines{font-size:1.05em;color:#d4c5a0;line-height:2.2;letter-spacing:2px}
+.poem-lines .missing{display:inline-block;min-width:1.5em;border-bottom:2px dashed rgba(180,140,40,0.5);margin:0 2px;color:transparent}
+
+/* 背诵挑战 */
+.challenge-area{display:none;margin-top:12px;padding:12px;background:rgba(0,0,0,0.25);border-radius:10px;border:1px dashed rgba(180,140,40,0.25)}
+.challenge-area.show{display:block}
+.challenge-label{font-size:0.8em;color:#9a8050;margin-bottom:8px}
+.challenge-input{width:100%;background:rgba(30,40,55,0.6);border:1px solid rgba(180,140,40,0.3);border-radius:8px;padding:10px 14px;color:#d4c5a0;font-size:0.92em;font-family:inherit;line-height:1.6;resize:none;outline:none}
+.challenge-input:focus{border-color:rgba(200,150,40,0.5);box-shadow:0 0 10px rgba(180,140,40,0.15)}
+.challenge-input::placeholder{color:#5a5040}
+
+/* 书写区 */
+.write-section{display:none;margin-top:12px;text-align:center}
+.write-section.show{display:block}
+.write-target{font-size:3em;color:#d4a843;margin:8px 0;letter-spacing:8px;text-shadow:0 0 20px rgba(200,160,60,0.3)}
+.write-canvas-wrap{position:relative;display:inline-block;margin:8px 0}
+.write-canvas-wrap canvas{border:2px solid rgba(180,140,40,0.35);border-radius:12px;background:rgba(0,0,0,0.35);touch-action:none;cursor:crosshair}
+.write-controls{display:flex;justify-content:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.write-btn{background:rgba(30,40,55,0.5);border:1px solid rgba(180,140,40,0.2);color:#c0b090;padding:6px 14px;border-radius:8px;font-size:0.78em;cursor:pointer;font-family:inherit;transition:all 0.2s}
+.write-btn:hover{background:rgba(60,40,20,0.5);border-color:rgba(200,150,40,0.35);color:#d4a843}
+.write-btn.submit{background:linear-gradient(135deg,rgba(180,140,40,0.35),rgba(140,80,20,0.35));border-color:rgba(200,150,40,0.45);color:#d4a843}
+.write-hint{font-size:0.72em;color:#8a7040;margin-top:4px}
+
+.action-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.action-btn{background:rgba(30,40,55,0.5);border:1px solid rgba(180,140,40,0.2);color:#c0b090;padding:8px 16px;border-radius:10px;font-size:0.82em;cursor:pointer;font-family:inherit;transition:all 0.2s}
+.action-btn:hover{background:rgba(60,40,20,0.5);border-color:rgba(200,150,40,0.35);color:#d4a843}
+.action-btn.primary{background:linear-gradient(135deg,rgba(180,140,40,0.35),rgba(140,80,20,0.35));border-color:rgba(200,150,40,0.45);color:#d4a843}
+
+.feedback{display:none;margin-top:10px;padding:10px;border-radius:10px;font-size:0.83em;line-height:1.6}
+.feedback.show{display:block}
+.feedback.correct-fb{background:rgba(30,80,30,0.2);border:1px solid rgba(80,180,80,0.25);color:#b0d8b0}
+.feedback.wrong-fb{background:rgba(120,30,30,0.2);border:1px solid rgba(200,50,50,0.25);color:#d8b0b0}
+
+.highlight{color:#d4a843;font-weight:bold}
+.note{font-size:0.72em;color:#5a4a30;text-align:center;margin-top:8px}
+
+/* 全部篇目列表 */
+.poem-list{display:none;margin-top:12px;padding:12px;background:rgba(0,0,0,0.25);border-radius:12px;border:1px solid rgba(180,140,40,0.2);max-height:320px;overflow-y:auto}
+.poem-list.show{display:block}
+.poem-list .section-label{font-size:0.82em;color:#d4a843;margin:8px 0 4px;border-bottom:1px solid rgba(180,140,40,0.2);padding-bottom:3px}
+.poem-list .item{display:inline-block;padding:4px 10px;margin:3px;background:rgba(30,40,55,0.5);border:1px solid rgba(180,140,40,0.18);border-radius:8px;font-size:0.75em;color:#c0b090;cursor:pointer;transition:all 0.2s}
+.poem-list .item:hover{background:rgba(60,40,20,0.5);border-color:rgba(200,150,40,0.4);color:#d4a843}
+.poem-list .item.played{background:rgba(30,60,30,0.4);border-color:rgba(80,180,80,0.35);color:#b0d8b0}
+</style>
+</head>
+<body>
+<div class="scroll-bg"></div>
+<div class="container">
+
+<div class="header">
+  <h1>📜 高考古诗文背诵60篇 · 转盘闯关</h1>
+  <div class="sub">高中语文 · 文言文20篇 + 诗词曲40首 · 情境背诵 + 书写巩固</div>
+</div>
+
+<div class="score-bar">
+  <span>⭐ 已背诵：<b id="scoreCount">0</b> 篇</span>
+  <span>📝 进度：<b id="playedCount">0</b> / 60</span>
+</div>
+
+<div class="card wheel-section">
+  <div class="tag">🎯 转盘抽签</div>
+  <div class="title" style="text-align:center">转动转盘，随机抽取一篇高考必背古诗文！</div>
+  <div class="story" style="text-align:center;color:#c0b090">点击转盘中心"抽"字或下方按钮，随机抽取。转盘分12个扇区，覆盖60篇。</div>
+  <div class="wheel-wrapper">
+    <div class="wheel-pointer"></div>
+    <canvas class="wheel-canvas" id="wheelCanvas" width="600" height="600"></canvas>
+    <div class="wheel-center" id="wheelCenter" onclick="spinWheel()">抽</div>
+  </div>
+  <button class="spin-btn" id="spinBtn" onclick="spinWheel()">🎲 转动转盘</button>
+  <div class="spin-result" id="spinResult"></div>
+
+  <!-- 抽中后内容 -->
+  <div class="poem-display" id="poemDisplay">
+    <div class="poem-title" id="poemTitle"></div>
+    <div class="story" id="poemStory" style="margin-top:8px;text-align:left"></div>
+    <div class="poem-lines" id="poemLines"></div>
+    <div class="note" id="poemAuthor"></div>
+  </div>
+
+  <div class="challenge-area" id="challengeArea">
+    <div class="challenge-label">📝 背诵挑战：请补全下面诗句中空缺的内容</div>
+    <div class="question" id="challengeQuestion" style="font-size:1.1em;text-align:center;border:none"></div>
+    <input class="challenge-input" id="challengeInput" placeholder="输入你背诵的内容…" maxlength="10" autocomplete="off">
+    <div class="action-row" style="margin-top:10px">
+      <button class="action-btn primary" onclick="checkAnswer()">✅ 提交答案</button>
+      <button class="action-btn" onclick="showHint()">💡 提示</button>
+    </div>
+    <div class="feedback" id="challengeFeedback"></div>
+  </div>
+
+  <div class="write-section" id="writeSection">
+    <div class="tag">✍️ 书写巩固</div>
+    <div class="title" style="text-align:center">请写出诗中的关键字</div>
+    <div class="write-target" id="writeTarget"></div>
+    <div class="write-canvas-wrap">
+      <canvas id="writeCanvas" width="300" height="300"></canvas>
+    </div>
+    <div class="write-hint" id="writeHint"></div>
+    <div class="write-controls">
+      <button class="write-btn" onclick="clearWrite()">🔄 清空</button>
+      <button class="write-btn undo" onclick="undoWrite()">↩ 撤销</button>
+      <button class="write-btn submit" onclick="submitWrite()">✅ 提交</button>
+    </div>
+    <div class="feedback" id="writeFeedback"></div>
+  </div>
+
+  <div class="action-row" style="margin-top:14px">
+    <button class="action-btn" onclick="revealFull()">📖 显示全文</button>
+    <button class="action-btn" onclick="togglePoemList()">📋 全部60篇</button>
+    <button class="action-btn primary" onclick="spinWheel()">🎯 再抽一篇</button>
+  </div>
+
+  <!-- 全部60篇列表 -->
+  <div class="poem-list" id="poemList"></div>
+</div>
+
+</div>
+
+<script>
+// ==================== 高考必背60篇数据 ====================
+const POEMS = [
+  // ========== 文言文必修（10篇）==========
+  {id:0,title:'论语十二章',author:'先秦',chapter:'文言文必修',fullText:'子曰："学而时习之，不亦说乎？有朋自远方来，不亦乐乎？人不知而不愠，不亦君子乎？"',story:'孔子教导弟子为学之道：学习后按时温习，内心喜悦；有志同道合的朋友远道而来，更是快乐；即使别人不了解自己也不恼怒，这才是君子的修养。',challenge:{line:'子曰："学而时习之，不亦___乎？有朋自远方来，不亦___乎？"',blanks:['说','乐'],hint:'第一空通"悦"；第二空："快乐"之意'},writeChar:'学',writeHint:'上"𡗗"下"子"，三横均匀，弯钩有力'},
+  {id:1,title:'劝学',author:'先秦·荀子',chapter:'文言文必修',fullText:'青，取之于蓝而青于蓝；冰，水为之而寒于水。',story:'荀子以"青出于蓝""冰寒于水"为喻，说明学习可以使人超越本性，后辈通过不断学习可以超越前人。',challenge:{line:'青，取之于蓝而___于蓝；冰，水为之而___于水。',blanks:['青','寒'],hint:'第一空：颜色；第二空：温度更低'},writeChar:'青',writeHint:'上"生"下"丹"，横画平稳，月字底收笔有力'},
+  {id:2,title:'屈原列传',author:'汉·司马迁',chapter:'文言文必修',fullText:'其称文小而其指极大，举类迩而见义远。',story:'司马迁为屈原立传，高度评价《离骚》以小见大的写作手法——文字虽写细小事物但意旨深远，举例近在眼前而含义深刻。',challenge:{line:'其称文小而其___极大，举类___而见义远。',blanks:['指','迩'],hint:'第一空通"旨"；第二空：近的意思'},writeChar:'屈',writeHint:'"尸"头宽扁，"出"部紧凑，整体左高右低'},
+  {id:3,title:'谏太宗十思疏',author:'唐·魏征',chapter:'文言文必修',fullText:'不念居安思危，戒奢以俭，斯亦伐根以求木茂，塞源而欲流长也。',story:'魏征直言进谏唐太宗：如果不在安定的时候想到危险，不戒除奢侈、崇尚节俭，那就如同砍掉树根却想树木茂盛，堵塞水源却想水流长远。',challenge:{line:'不念居安思___，戒奢以___，斯亦伐根以求木茂。',blanks:['危','俭'],hint:'第一空：与"安"相对；第二空：节俭'},writeChar:'谏',writeHint:'左"言"右"柬"，言字旁窄长，右部撇捺舒展'},
+  {id:4,title:'师说',author:'唐·韩愈',chapter:'文言文必修',fullText:'师者，所以传道受业解惑也。',story:'韩愈针对当时"耻学于师"的风气，明确指出教师的职责是传授道理、教授学业、解答疑惑，强调从师学习的必要性。',challenge:{line:'师者，所以传道___业解惑也。',blanks:['受'],hint:'通"授"，传授之意'},writeChar:'师',writeHint:'左"刂"右"帀"，左窄右宽，竖画挺拔'},
+  {id:5,title:'阿房宫赋',author:'唐·杜牧',chapter:'文言文必修',fullText:'秦人不暇自哀，而后人哀之；后人哀之而不鉴之，亦使后人而复哀后人也。',story:'杜牧路过阿房宫遗址，感叹秦朝因奢靡而亡，但后人若不吸取教训，悲剧将不断重演。',challenge:{line:'秦人不暇自___，而后人___之。',blanks:['哀','哀'],hint:'悲伤、痛惜'},writeChar:'哀',writeHint:'上"衣"下"口"，点画居中，撇捺覆盖下方'},
+  {id:6,title:'六国论',author:'宋·苏洵',chapter:'文言文必修',fullText:'六国破灭，非兵不利，战不善，弊在赂秦。',story:'苏洵一针见血地指出：六国灭亡并非武器不锋利、仗打得不好，根本原因在于割地贿赂秦国，助长了秦国的贪欲。',challenge:{line:'六国破灭，非兵不利，战不善，___在赂秦。',blanks:['弊'],hint:'弊端、毛病'},writeChar:'弊',writeHint:'上"敝"下"廾"，左"敝"右"廾"，笔画紧凑'},
+  {id:7,title:'答司马谏议书',author:'宋·王安石',chapter:'文言文必修',fullText:'度义而后动，是而不见可悔。',story:'王安石推行新法遭司马光反对，回信驳斥：凡事经过深思熟虑、符合道义才行动，认定正确就绝不后悔。',challenge:{line:'度___而后动，是而不见可___。',blanks:['义','悔'],hint:'第一空：道义；第二空：后悔'},writeChar:'义',writeHint:'先写点后写撇捺，撇捺交叉居中，重心稳'},
+  {id:8,title:'赤壁赋',author:'宋·苏轼',chapter:'文言文必修',fullText:'寄蜉蝣于天地，渺沧海之一粟。',story:'苏轼与客泛舟赤壁，感叹人生如蜉蝣般短暂、如沧海一粟般渺小，但随即以"物与我皆无尽也"转为旷达超脱。',challenge:{line:'寄___于天地，渺___之一粟。',blanks:['蜉蝣','沧海'],hint:'第一空：朝生暮死的昆虫；第二空：大海'},writeChar:'赤',writeHint:'上"土"下"灬"，横画平稳，四点底均匀分布'},
+  {id:9,title:'项脊轩志',author:'明·归有光',chapter:'文言文必修',fullText:'庭有枇杷树，吾妻死之年所手植也，今已亭亭如盖矣。',story:'归有光在项脊轩中读书，回忆往事。庭院中那棵枇杷树是妻子去世那年亲手所栽，如今已枝繁叶茂如伞盖——物是人非，思念无尽。',challenge:{line:'庭有___树，吾妻死之年所手植也，今已___如盖矣。',blanks:['枇杷','亭亭'],hint:'第一空：一种果树，果黄色；第二空：高高挺立的样子'},writeChar:'庭',writeHint:'"广"字头覆盖，内部"廷"横画均匀，捺画舒展'},
+  // ========== 文言文选必（10篇）==========
+  {id:10,title:'子路曾皙冉有公西华侍坐',author:'先秦',chapter:'文言文选必',fullText:'莫春者，春服既成，冠者五六人，童子六七人，浴乎沂，风乎舞雩，咏而归。',story:'孔子让弟子各言其志，唯曾皙描绘了一幅暮春游春图：穿上春装，与友人孩童在沂水沐浴、在舞雩吹风、唱着歌归来——这正是礼乐治国的最高理想。',challenge:{line:'浴乎___，风乎___，咏而归。',blanks:['沂','舞雩'],hint:'第一空：水名；第二空：祭坛名'},writeChar:'雩',writeHint:'上"雨"下"亏"，雨字头四点均匀，下部横折有力'},
+  {id:11,title:'报任安书',author:'汉·司马迁',chapter:'文言文选必',fullText:'人固有一死，或重于泰山，或轻于鸿毛。',story:'司马迁遭受宫刑后写信给任安，表达了为完成《史记》而忍辱负重的决心——死亡的价值有泰山之重与鸿毛之轻的巨大差别。',challenge:{line:'人固有一死，或重于___，或轻于___。',blanks:['泰山','鸿毛'],hint:'第一空：五岳之首；第二空：大雁的羽毛'},writeChar:'迁',writeHint:'左"辶"右"千"，走之底一波三折，右部简洁'},
+  {id:12,title:'过秦论',author:'汉·贾谊',chapter:'文言文选必',fullText:'仁义不施而攻守之势异也。',story:'贾谊总结秦朝兴亡：秦始皇统一天下后不施行仁义，导致攻守之势逆转，强大的秦朝迅速灭亡。',challenge:{line:'仁义不施而___之势异也。',blanks:['攻守'],hint:'进攻与防守'},writeChar:'秦',writeHint:'上"𡗗"下"禾"，三横均匀，撇捺舒展，禾字底收笔有力'},
+  {id:13,title:'礼运',author:'先秦',chapter:'文言文选必',fullText:'大道之行也，天下为公。选贤与能，讲信修睦。',story:'孔子描绘理想的"大同"社会：大道通行于天下，天下为全体人民共有，选拔贤能的人治理国家，人人讲信用、和睦相处。',challenge:{line:'大道之行也，天下为___。选贤与___，讲信修睦。',blanks:['公','能'],hint:'第一空：与"私"相对；第二空：才能'},writeChar:'公',writeHint:'上"八"下"厶"，撇捺开张，底部收紧'},
+  {id:14,title:'陈情表',author:'晋·李密',chapter:'文言文选必',fullText:'臣无祖母，无以至今日；祖母无臣，无以终余年。',story:'李密以孝道为由辞谢晋武帝的征召：没有祖母的抚养就没有今天的我，而没有我的照顾祖母也无法安度晚年——祖孙二人相依为命。',challenge:{line:'臣无祖母，无以___今日；祖母无臣，无以___余年。',blanks:['至','终'],hint:'第一空：到达；第二空：度过'},writeChar:'密',writeHint:'上"宓"下"山"，宝盖头宽，下部"山"字稳重'},
+  {id:15,title:'归去来兮辞',author:'晋·陶渊明',chapter:'文言文选必',fullText:'悟已往之不谏，知来者之可追。',story:'陶渊明辞官归隐，认识到过去的错误已无法挽回，但未来的生活还可以自己把握——体现了归隐田园的坚定决心。',challenge:{line:'悟已往之不___，知来者之可___。',blanks:['谏','追'],hint:'第一空：挽回；第二空：追赶、把握'},writeChar:'归',writeHint:'左"刂"右"帚"，左窄右宽，右部横折有力'},
+  {id:16,title:'种树郭橐驼传',author:'唐·柳宗元',chapter:'文言文选必',fullText:'能顺木之天，以致其性焉尔。',story:'郭橐驼种树无不活，秘诀是顺应树木的自然天性。柳宗元借此讽刺当时官吏繁政扰民，主张为政也应顺应百姓本性。',challenge:{line:'能顺木之___，以致其___焉尔。',blanks:['天','性'],hint:'第一空：自然；第二空：本性'},writeChar:'树',writeHint:'左"木"右"对"，木字旁窄长，右部横画均匀'},
+  {id:17,title:'五代史伶官传序',author:'宋·欧阳修',chapter:'文言文选必',fullText:'忧劳可以兴国，逸豫可以亡身。',story:'欧阳修总结后唐庄宗兴亡：忧虑勤劳可以使国家兴盛，安逸享乐则会使人败亡——盛衰之理在于人事而非天命。',challenge:{line:'忧劳可以___国，逸豫可以___身。',blanks:['兴','亡'],hint:'第一空：兴盛；第二空：灭亡'},writeChar:'忧',writeHint:'左"忄"右"尤"，竖心旁两点呼应，右部撇捺舒展'},
+  {id:18,title:'石钟山记',author:'宋·苏轼',chapter:'文言文选必',fullText:'事不目见耳闻，而臆断其有无，可乎？',story:'苏轼月夜乘舟探访石钟山，发现石钟山得名的真正原因，强调凡事要亲自考察，不可主观臆断。',challenge:{line:'事不目见___闻，而___断其有无，可乎？',blanks:['耳','臆'],hint:'第一空：耳朵；第二空：主观猜测'},writeChar:'钟',writeHint:'左"钅"右"中"，金字旁撇画有力，右部竖画居中'},
+  {id:19,title:'登泰山记',author:'清·姚鼐',chapter:'文言文选必',fullText:'苍山负雪，明烛天南。',story:'姚鼐冒雪登泰山，见苍山覆盖白雪，雪光照亮了南面的天空——以"烛"字名词作动词，写出雪光之明亮。',challenge:{line:'苍山负___，明___天南。',blanks:['雪','烛'],hint:'第一空：白雪；第二空：名词作动词，照亮'},writeChar:'雪',writeHint:'上"雨"下"彐"，雨字头四点均匀，下方横折有力'},
+  // ========== 诗词曲（40首）- 第1组 ==========
+  {id:20,title:'静女',author:'《诗经》',chapter:'诗词曲',fullText:'静女其姝，俟我于城隅。爱而不见，搔首踟蹰。',story:'男子在城角等待心上人，姑娘故意躲藏起来不见，急得他抓耳挠腮、来回踱步——生动刻画了初恋的甜蜜与焦急。',challenge:{line:'静女其___，俟我于城隅。___而不见，搔首踟蹰。',blanks:['姝','爱'],hint:'第一空：美丽；第二空通"薆"，隐藏'},writeChar:'姝',writeHint:'左"女"右"朱"，女字旁撇点呼应，右部横画平稳'},
+  {id:21,title:'无衣',author:'《诗经》',chapter:'诗词曲',fullText:'岂曰无衣？与子同袍。王于兴师，修我戈矛。',story:'秦军慷慨出征，将士们同仇敌忾：谁说没有衣服？和你同穿一件战袍！展现了团结一心、共赴战场的豪情。',challenge:{line:'岂曰无衣？与子同___。王于兴师，修我___矛。',blanks:['袍','戈'],hint:'第一空：战袍；第二空：兵器'},writeChar:'戈',writeHint:'横画短斜，斜钩长而有力，撇画呼应'},
+  {id:22,title:'离骚',author:'战国·屈原',chapter:'诗词曲',fullText:'长太息以掩涕兮，哀民生之多艰。',story:'屈原行吟泽畔，长叹掩面而泣，为百姓生活的艰难而深深哀痛。他将个人命运与国家命运紧密相连。',challenge:{line:'长太息以___涕兮，哀民生之多___。',blanks:['掩','艰'],hint:'第一空：遮蔽；第二空：艰难'},writeChar:'骚',writeHint:'左"马"右"蚤"，马字旁窄长，右部笔画紧凑'},
+  {id:23,title:'涉江采芙蓉',author:'《古诗十九首》',chapter:'诗词曲',fullText:'涉江采芙蓉，兰泽多芳草。采之欲遗谁？所思在远道。',story:'游子涉江采芙蓉，却不知送给谁——思念的人在遥远的故乡。同心之人分隔两地，只能忧伤终老。',challenge:{line:'采之欲___谁？所思在___道。',blanks:['遗','远'],hint:'第一空：赠送；第二空：遥远'},writeChar:'芙',writeHint:'上"艹"下"夫"，草字头横长覆盖，下部撇捺舒展'},
+  {id:24,title:'短歌行',author:'东汉·曹操',chapter:'诗词曲',fullText:'对酒当歌，人生几何！譬如朝露，去日苦多。',story:'曹操横槊赋诗，感叹人生短暂如朝露，但随即以"周公吐哺，天下归心"表达求贤若渴、统一天下的雄心壮志。',challenge:{line:'对酒当___，人生几何！譬如___露，去日苦多。',blanks:['歌','朝'],hint:'第一空：歌唱；第二空：早晨'},writeChar:'歌',writeHint:'左"哥"右"欠"，左部上下均匀，右部撇捺呼应'},
+  {id:25,title:'归园田居',author:'晋·陶渊明',chapter:'诗词曲',fullText:'羁鸟恋旧林，池鱼思故渊。',story:'陶渊明不为五斗米折腰，辞官归隐。他把自己比作笼中鸟、池中鱼，终于回到自由自在的田园。',challenge:{line:'___鸟恋旧林，___鱼思故渊。',blanks:['羁','池'],hint:'第一空：束缚；第二空：池塘'},writeChar:'园',writeHint:'外"口"内"元"，方框方正，内部横画均匀'},
+  {id:26,title:'拟行路难',author:'南朝·鲍照',chapter:'诗词曲',fullText:'泻水置平地，各自东西南北流。人生亦有命，安能行叹复坐愁？',story:'鲍照将水泼在平地上任其四散奔流，比喻人生各有命数。但"心非木石岂无感"，反映了门阀制度下寒士的压抑与无奈。',challenge:{line:'泻水置平地，各自___南北流。',blanks:['东西'],hint:'方向'},writeChar:'泻',writeHint:'左"氵"右"写"，三点水连贯，右部横折有力'},
+  {id:27,title:'春江花月夜',author:'唐·张若虚',chapter:'诗词曲',fullText:'江畔何人初见月？江月何年初照人？',story:'张若虚面对春江月夜发出千古之问——谁是第一个在江边见到月亮的人？江上的月亮又是哪一年第一次照到人？被闻一多誉为"诗中的诗，顶峰上的顶峰"。',challenge:{line:'江畔何人初见___？江月何年初照___？',blanks:['月','人'],hint:'第一空：月亮；第二空：人类'},writeChar:'畔',writeHint:'左"田"右"半"，田字方正，右部横画平稳'},
+  {id:28,title:'山居秋暝',author:'唐·王维',chapter:'诗词曲',fullText:'空山新雨后，天气晚来秋。明月松间照，清泉石上流。',story:'王维隐居终南山，雨后空山、秋夜明月中，松林间洒下月光，清泉在石上流淌——诗中有画，动静相宜。',challenge:{line:'明月___间照，清泉___上流。',blanks:['松','石'],hint:'第一空：松树；第二空：石头'},writeChar:'暝',writeHint:'左"日"右"冥"，日字旁窄，右部宝盖头宽，下方撇捺舒展'},
+  {id:29,title:'蜀道难',author:'唐·李白',chapter:'诗词曲',fullText:'噫吁嚱，危乎高哉！蜀道之难，难于上青天！',story:'李白以惊天笔力描绘蜀道之险，开篇即以惊叹之语直呼蜀道之难比登天还难，气势磅礴，想象奇崛。',challenge:{line:'蜀道之难，难于上___天！',blanks:['青'],hint:'颜色'},writeChar:'蜀',writeHint:'上"罒"下"虫"，罒字头方正，下部虫字收紧'},
+  // ========== 诗词曲（40首）- 第2组 ==========
+  {id:30,title:'梦游天姥吟留别',author:'唐·李白',chapter:'诗词曲',fullText:'安能摧眉折腰事权贵，使我不得开心颜！',story:'李白梦游天姥山后，发出振聋发聩的宣言：怎能低头弯腰去侍奉权贵，使我不能开心展颜！展现了不向权贵低头的傲骨。',challenge:{line:'安能摧眉折腰事___，使我不得开心___！',blanks:['权贵','颜'],hint:'第一空：有权势的人；第二空：面容'},writeChar:'姥',writeHint:'左"女"右"老"，女字旁撇点呼应，右部横画平稳'},
+  {id:31,title:'将进酒',author:'唐·李白',chapter:'诗词曲',fullText:'君不见黄河之水天上来，奔流到海不复回。',story:'李白豪饮高歌：黄河之水如从天而降、奔流入海永不回头，人生短暂如朝暮之间——以壮阔起兴引出及时行乐的豪情。',challenge:{line:'君不见黄河之水___上来，奔流到___不复回。',blanks:['天','海'],hint:'第一空：天空；第二空：大海'},writeChar:'酒',writeHint:'左"氵"右"酉"，三点水连贯，右部横画均匀'},
+  {id:32,title:'燕歌行',author:'唐·高适',chapter:'诗词曲',fullText:'战士军前半死生，美人帐下犹歌舞。',story:'高适边塞征战，以战士前线拼死作战与将军帐中歌舞享乐形成鲜明对比，深刻揭露了军中苦乐不均的现实。',challenge:{line:'战士军前半___生，美人帐下犹___舞。',blanks:['死','歌'],hint:'第一空：死亡；第二空：歌唱'},writeChar:'燕',writeHint:'上"廿"中"北"下"灬"，廿字头宽，四点底均匀'},
+  {id:33,title:'蜀相',author:'唐·杜甫',chapter:'诗词曲',fullText:'出师未捷身先死，长使英雄泪满襟。',story:'杜甫拜谒武侯祠，感叹诸葛亮出师未捷却先病逝，令后世英雄无不为之落泪——以千古名句表达对诸葛亮的深切缅怀。',challenge:{line:'出师未捷身先___，长使英雄泪满___。',blanks:['死','襟'],hint:'第一空：去世；第二空：衣襟'},writeChar:'祠',writeHint:'左"礻"右"司"，示字旁点横呼应，右部横折有力'},
+  {id:34,title:'客至',author:'唐·杜甫',chapter:'诗词曲',fullText:'花径不曾缘客扫，蓬门今始为君开。',story:'杜甫草堂迎客，花径从未为客人打扫过，蓬草编的门今天才为你打开——以朴实的语言表达待客的真诚与喜悦。',challenge:{line:'花径不曾___客扫，蓬门今始___君开。',blanks:['缘','为'],hint:'第一空：因为；第二空：为了'},writeChar:'蓬',writeHint:'上"艹"下"逢"，草字头横长，下部走之底一波三折'},
+  {id:35,title:'登高',author:'唐·杜甫',chapter:'诗词曲',fullText:'无边落木萧萧下，不尽长江滚滚来。',story:'杜甫独登高台，无边落叶萧萧飘落，不尽长江滚滚奔流——以壮阔景象写深沉情感，被推为"古今七律第一"。',challenge:{line:'无边落木___下，不尽长江___来。',blanks:['萧萧','滚滚'],hint:'第一空：落叶声；第二空：水流奔腾的样子'},writeChar:'登',writeHint:'上"癶"下"豆"，癶字头撇捺舒展，下部横画均匀'},
+  {id:36,title:'登岳阳楼',author:'唐·杜甫',chapter:'诗词曲',fullText:'吴楚东南坼，乾坤日夜浮。',story:'杜甫登岳阳楼，洞庭湖将吴楚大地从东南分裂，天地日月仿佛在湖中日夜浮动——以壮阔之景引出忧国忧民之情。',challenge:{line:'吴楚东南___，乾坤日夜___。',blanks:['坼','浮'],hint:'第一空：分裂；第二空：浮动'},writeChar:'岳',writeHint:'上"丘"下"山"，丘字横画平稳，山字底稳重'},
+  {id:37,title:'琵琶行',author:'唐·白居易',chapter:'诗词曲',fullText:'同是天涯沦落人，相逢何必曾相识。',story:'白居易浔阳江头夜送客，闻琵琶声而感慨：同样漂泊天涯的人，相逢又何必曾经认识——以琵琶女身世自况，抒发贬谪之悲。',challenge:{line:'同是天涯___落人，相逢何必曾___识。',blanks:['沦','相'],hint:'第一空：沉沦；第二空：互相'},writeChar:'琵',writeHint:'上"珡"下"比"，上部左右对称，下部比字收紧'},
+  {id:38,title:'李凭箜篌引',author:'唐·李贺',chapter:'诗词曲',fullText:'昆山玉碎凤凰叫，芙蓉泣露香兰笑。',story:'李贺以奇崛想象描绘李凭弹奏箜篌：乐声如昆山玉碎、凤凰鸣叫，又似芙蓉带露哭泣、香兰含笑——以通感写音乐之妙。',challenge:{line:'昆山玉碎___叫，芙蓉泣露___笑。',blanks:['凤凰','香兰'],hint:'第一空：神鸟；第二空：芳香的花'},writeChar:'箜',writeHint:'上"竹"下"空"，竹字头左右对称，下部空字横画均匀'},
+  {id:39,title:'菩萨蛮',author:'唐·温庭筠',chapter:'诗词曲',fullText:'小山重叠金明灭，鬓云欲度香腮雪。',story:'温庭筠以精致的笔触描绘闺中女子晨起梳妆：屏风上小山重叠、金光闪烁，鬓发如云掠过雪白的香腮——华美中暗含孤寂。',challenge:{line:'小山重叠金___灭，鬓云欲度香___雪。',blanks:['明','腮'],hint:'第一空：明亮；第二空：脸颊'},writeChar:'鬓',writeHint:'上"髟"下"宾"，髟字头笔画多需紧凑，下部宾字横画均匀'},
+  // ========== 诗词曲（40首）- 第3组 ==========
+  {id:40,title:'锦瑟',author:'唐·李商隐',chapter:'诗词曲',fullText:'此情可待成追忆，只是当时已惘然。',story:'李商隐感怀往事：这份情感如今只能成为追忆，而当时就已经感到迷惘若失——将人生感慨与爱情追忆融为一体。',challenge:{line:'此情可待成___忆，只是当时已___然。',blanks:['追','惘'],hint:'第一空：追念；第二空：迷惘'},writeChar:'瑟',writeHint:'上"珡"下"必"，上部左右对称，下部必字撇画有力'},
+  {id:41,title:'虞美人',author:'南唐·李煜',chapter:'诗词曲',fullText:'问君能有几多愁？恰似一江春水向东流。',story:'李煜被囚，以血泪写下千古绝唱：以"一江春水向东流"比喻无尽的亡国之愁，将个人悲痛升华为人类共通的哀愁体验。',challenge:{line:'问君能有几多___？恰似一江___水向东流。',blanks:['愁','春'],hint:'第一空：忧愁；第二空：春天'},writeChar:'虞',writeHint:'上"虍"下"吴"，虍字头宽，下部吴字横画均匀'},
+  {id:42,title:'望海潮',author:'宋·柳永',chapter:'诗词曲',fullText:'东南形胜，三吴都会，钱塘自古繁华。',story:'柳永以铺陈手法描绘杭州的繁华：三吴都会、钱塘自古繁华，有三秋桂子、十里荷花——极尽赞美之词。',challenge:{line:'有三秋___子，十里___花。',blanks:['桂','荷'],hint:'第一空：桂花；第二空：荷花'},writeChar:'潮',writeHint:'左"氵"右"朝"，三点水连贯，右部朝字横画均匀'},
+  {id:43,title:'桂枝香·金陵怀古',author:'宋·王安石',chapter:'诗词曲',fullText:'至今商女，时时犹唱，后庭遗曲。',story:'王安石登临金陵，感叹六朝旧事如流水，但至今歌女还在唱着亡国之音《后庭花》——以古讽今，警示当朝。',challenge:{line:'至今商女，时时犹唱，___庭遗曲。',blanks:['后'],hint:'指《玉树后庭花》，陈后主所作，被视为亡国之音'},writeChar:'陵',writeHint:'左"阝"右"夌"，左耳旁窄，右部横画均匀，捺画舒展'},
+  {id:44,title:'江城子·乙卯正月二十日夜记梦',author:'宋·苏轼',chapter:'诗词曲',fullText:'十年生死两茫茫，不思量，自难忘。',story:'苏轼梦见亡妻王弗：十年生死相隔，不去刻意思念却自然难忘。梦中重逢却无言以对，唯有泪千行——以无言之悲写最深沉的思念。',challenge:{line:'十年生死两___，不思量，自___忘。',blanks:['茫茫','难'],hint:'第一空：模糊不清；第二空：难以'},writeChar:'茫',writeHint:'上"艹"下"茫"，草字头横长，下部三点水连贯'},
+  {id:45,title:'念奴娇·赤壁怀古',author:'宋·苏轼',chapter:'诗词曲',fullText:'大江东去，浪淘尽，千古风流人物。',story:'苏轼站在赤壁，遥想周瑜"羽扇纶巾，谈笑间樯橹灰飞烟灭"——在感悟历史与人生的短暂后，以旷达姿态将个人愁绪融入天地自然。',challenge:{line:'大江东去，浪___尽，千古___人物。',blanks:['淘','风流'],hint:'第一空：冲洗；第二空：杰出'},writeChar:'娇',writeHint:'左"女"右"乔"，女字旁撇点呼应，右部乔字撇捺舒展'},
+  {id:46,title:'登快阁',author:'宋·黄庭坚',chapter:'诗词曲',fullText:'落木千山天远大，澄江一道月分明。',story:'黄庭坚登快阁远眺：千山落叶尽显天空辽阔，一道澄江映着月光格外分明——以开阔之景抒发超脱之情。',challenge:{line:'落木千山天___大，澄江一道月___明。',blanks:['远','分'],hint:'第一空：遥远；第二空：分明'},writeChar:'澄',writeHint:'左"氵"右"登"，三点水连贯，右部登字撇捺舒展'},
+  {id:47,title:'鹊桥仙',author:'宋·秦观',chapter:'诗词曲',fullText:'两情若是久长时，又岂在朝朝暮暮。',story:'秦观咏七夕，提出超越时空的爱情观：真挚的爱情不在于朝夕相守，而在于心心相印——以千古名句升华了牛郎织女传说。',challenge:{line:'两情若是___长时，又岂在___暮暮。',blanks:['久','朝朝'],hint:'第一空：长久；第二空：每天'},writeChar:'鹊',writeHint:'左"昔"右"鸟"，昔字横画均匀，右部鸟字撇画有力'},
+  {id:48,title:'苏幕遮',author:'宋·周邦彦',chapter:'诗词曲',fullText:'叶上初阳干宿雨，水面清圆，一一风荷举。',story:'周邦彦清晨看到荷叶上初阳晒干了昨夜的雨水，水面清圆、风荷挺立——由眼前荷花联想到故乡，表达了羁旅思乡之情。',challenge:{line:'叶上初阳___宿雨，水面清圆，一一风___举。',blanks:['干','荷'],hint:'第一空：晒干；第二空：荷花'},writeChar:'遮',writeHint:'左"辶"右"庶"，走之底一波三折，右部庶字横画均匀'},
+  {id:49,title:'声声慢',author:'宋·李清照',chapter:'诗词曲',fullText:'寻寻觅觅，冷冷清清，凄凄惨惨戚戚。',story:'李清照独守寒窗，开篇连用七组叠词从动作到环境到心境层层递进，将国破家亡之痛凝练为不可排遣的愁绪。',challenge:{line:'寻寻觅觅，冷冷___，凄凄惨惨___。',blanks:['清清','戚戚'],hint:'第一空：冷清；第二空：忧愁'},writeChar:'觅',writeHint:'上"爫"下"见"，爪字头撇点呼应，下部见字竖弯钩有力'},
+  // ========== 诗词曲（40首）- 第4组 ==========
+  {id:50,title:'书愤',author:'宋·陆游',chapter:'诗词曲',fullText:'楼船夜雪瓜洲渡，铁马秋风大散关。',story:'陆游回顾平生：楼船夜雪的瓜洲渡、铁马秋风的大散关——以壮阔的战争回忆反衬壮志未酬的悲愤。',challenge:{line:'楼船夜雪___渡，铁马秋风___关。',blanks:['瓜洲','大散'],hint:'第一空：地名；第二空：关隘名'},writeChar:'愤',writeHint:'左"忄"右"贲"，竖心旁两点呼应，右部贲字横画均匀'},
+  {id:51,title:'临安春雨初霁',author:'宋·陆游',chapter:'诗词曲',fullText:'小楼一夜听春雨，深巷明朝卖杏花。',story:'陆游客居临安，小楼一夜听雨，深巷清晨传来卖杏花声——以细腻的笔触写江南春景，暗含对京城污浊的厌倦。',challenge:{line:'小楼一夜听___雨，深巷明朝卖___花。',blanks:['春','杏'],hint:'第一空：春天；第二空：杏花'},writeChar:'霁',writeHint:'上"雨"下"齐"，雨字头四点均匀，下部齐字横画平稳'},
+  {id:52,title:'念奴娇·过洞庭',author:'宋·张孝祥',chapter:'诗词曲',fullText:'尽挹西江，细斟北斗，万象为宾客。',story:'张孝祥泛舟洞庭，以北斗为杯斟西江之水，以天地万象为宾客——以奇崛想象展现与天地合一、超然物外的境界。',challenge:{line:'尽挹___江，细斟___斗，万象为宾客。',blanks:['西','北'],hint:'第一空：方向；第二空：方向'},writeChar:'洞',writeHint:'左"氵"右"同"，三点水连贯，右部同字横折有力'},
+  {id:53,title:'永遇乐·京口北固亭怀古',author:'宋·辛弃疾',chapter:'诗词曲',fullText:'凭谁问，廉颇老矣，尚能饭否？',story:'辛弃疾登北固亭，以廉颇自比：有谁来问，廉颇老了，还能吃几碗饭？——表达了烈士暮年壮心不已的报国热忱。',challenge:{line:'凭谁问，___老矣，尚能___否？',blanks:['廉颇','饭'],hint:'第一空：战国名将；第二空：吃饭'},writeChar:'弃',writeHint:'上"亠"下"弁"，点横呼应，下部弁字撇捺舒展'},
+  {id:54,title:'菩萨蛮·书江西造口壁',author:'宋·辛弃疾',chapter:'诗词曲',fullText:'青山遮不住，毕竟东流去。',story:'辛弃疾在造口壁上题词：青山挡不住江水东流——以江水冲破阻挡象征抗金复国的坚定信念不可动摇。',challenge:{line:'青山遮不___，毕竟___流去。',blanks:['住','东'],hint:'第一空：挡住；第二空：方向'},writeChar:'蛮',writeHint:'上"亦"下"虫"，亦字横画平稳，下部虫字收紧'},
+  {id:55,title:'青玉案·元夕',author:'宋·辛弃疾',chapter:'诗词曲',fullText:'众里寻他千百度，蓦然回首，那人却在，灯火阑珊处。',story:'辛弃疾元夕观灯，在人群中千百度寻找，猛然回头才发现那人独自站在灯火稀疏处——象征词人自己高洁、不随波逐流的人格理想。',challenge:{line:'众里寻他千___度，蓦然回首，那人却在，灯火___珊处。',blanks:['百','阑'],hint:'第一空：数字；第二空：将尽'},writeChar:'蓦',writeHint:'上"莫"下"马"，莫字横画均匀，下部马字竖折有力'},
+  {id:56,title:'贺新郎',author:'宋·刘克庄',chapter:'诗词曲',fullText:'问长缨，何时入手，缚将戎主？',story:'刘克庄送别友人，化用终军请缨的典故：问长缨何时到手，好去绑缚敌酋——表达了请缨报国的豪情壮志。',challenge:{line:'问长___，何时入手，缚将___主？',blanks:['缨','戎'],hint:'第一空：绳子；第二空：敌'},writeChar:'缨',writeHint:'左"纟"右"婴"，绞丝旁窄，右部婴字横画均匀'},
+  {id:57,title:'扬州慢',author:'宋·姜夔',chapter:'诗词曲',fullText:'二十四桥仍在，波心荡，冷月无声。',story:'姜夔过扬州，见昔日繁华之地已成废墟：二十四桥仍在，但只有冷月无声地映在波心——以永恒的景物反衬人事的变迁。',challenge:{line:'二十四桥仍在，___心荡，___月无声。',blanks:['波','冷'],hint:'第一空：水波；第二空：冰冷'},writeChar:'夔',writeHint:'复杂字，上"首"下"夊"，注意笔画顺序，整体紧凑'},
+  {id:58,title:'长亭送别',author:'元·王实甫',chapter:'诗词曲',fullText:'碧云天，黄花地，西风紧，北雁南飞。',story:'《西厢记》中崔莺莺长亭送别张生：碧云满天、黄花满地、西风紧吹、北雁南飞——以秋景渲染离别之悲。',challenge:{line:'碧云天，黄花地，___风紧，___雁南飞。',blanks:['西','北'],hint:'第一空：方向；第二空：方向'},writeChar:'莺',writeHint:'上"艹"下"鸟"，草字头横长，下部鸟字撇画有力'},
+  {id:59,title:'朝天子·咏喇叭',author:'明·王磐',chapter:'诗词曲',fullText:'喇叭，唢呐，曲儿小腔儿大。',story:'王磐以喇叭唢呐讽刺宦官当权：曲调虽小声音却大——以诙谐之笔讽刺了小人得志、狐假虎威的社会现象。',challenge:{line:'喇叭，唢呐，曲儿___腔儿___。',blanks:['小','大'],hint:'第一空：与"大"相对；第二空：与"小"相对'},writeChar:'喇',writeHint:'左"口"右"剌"，口字旁小，右部剌字横画均匀，竖钩有力'}
+];
+
+// ==================== 状态 ====================
+let currentPoem = null;
+let score = 0;
+let played = {};
+let isSpinning = false;
+let wheelAngle = 0;
+let challengeAnswered = false;
+
+let writeCtx, isDrawing = false;
+let strokes = [], currentStroke = [];
+
+// ==================== 初始化 ====================
+function init() {
+  initWriteCanvas();
+  drawWheel();
+  buildPoemList();
+  updateScore();
+}
+
+// ==================== 转盘（12扇区对应60篇） ====================
+function drawWheel() {
+  const canvas = document.getElementById('wheelCanvas');
+  const ctx = canvas.getContext('2d');
+  const cx = 300, cy = 300, r = 280;
+  const n = 12;
+  const sliceAngle = (2 * Math.PI) / n;
+
+  const labels = ['必修·论语', '必修·劝学', '必修·屈原', '必修·谏太宗', '必修·师说', '必修·阿房宫', '必修·六国论', '必修·答司马', '必修·赤壁赋', '必修·项脊轩', '文选必·10篇', '诗词曲·40首'];
+
+  ctx.clearRect(0, 0, 600, 600);
+
+  for (let i = 0; i < n; i++) {
+    const startAngle = wheelAngle + i * sliceAngle - Math.PI / 2;
+    const endAngle = startAngle + sliceAngle;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(30,20,10,0.8)' : 'rgba(20,30,20,0.8)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(180,140,40,0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    const midAngle = startAngle + sliceAngle / 2;
+    const textR = r * 0.58;
+    const tx = cx + Math.cos(midAngle) * textR;
+    const ty = cy + Math.sin(midAngle) * textR;
+    ctx.save();
+    ctx.translate(tx, ty);
+    ctx.rotate(midAngle + Math.PI / 2);
+    ctx.fillStyle = '#d4c5a0';
+    ctx.font = 'bold 13px "KaiTi","STKaiti",serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(labels[i], 0, 0);
+    ctx.restore();
+  }
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+  ctx.strokeStyle = 'rgba(200,160,40,0.5)';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+}
+
+function spinWheel() {
+  if (isSpinning) return;
+  isSpinning = true;
+  document.getElementById('spinBtn').disabled = true;
+  document.getElementById('wheelCenter').style.pointerEvents = 'none';
+  document.getElementById('spinResult').classList.remove('show');
+  resetChallenge();
+
+  const spins = 5 + Math.random() * 5;
+  const targetAngle = Math.random() * 2 * Math.PI;
+  const totalAngle = spins * 2 * Math.PI + targetAngle;
+  const startAngle = wheelAngle;
+  const duration = 3000;
+  const startTime = performance.now();
+
+  function animate(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    wheelAngle = startAngle + totalAngle * eased;
+    drawWheel();
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      isSpinning = false;
+      document.getElementById('spinBtn').disabled = false;
+      document.getElementById('wheelCenter').style.pointerEvents = 'auto';
+
+      // 随机从60篇中抽取一篇
+      const idx = Math.floor(Math.random() * POEMS.length);
+      currentPoem = POEMS[idx];
+      const result = document.getElementById('spinResult');
+      result.innerHTML = `🎉 抽中了：<span class="highlight">《${currentPoem.title}》</span> — ${currentPoem.author} <br><small style="color:#9a8050">${currentPoem.chapter}</small>`;
+      result.classList.add('show');
+      showPoemContent();
+      drawWheel();
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+// ==================== 诗文展示 ====================
+function showPoemContent() {
+  const p = currentPoem;
+  if (!p) return;
+
+  document.getElementById('poemTitle').textContent = `📖 《${p.title}》 — ${p.author}`;
+  document.getElementById('poemStory').textContent = p.story;
+
+  const lines = p.fullText.split('\n');
+  const blankLineIdx = Math.floor(lines.length / 2);
+  const poemHtml = lines.map((line, i) => {
+    if (i === blankLineIdx) {
+      const chars = [...line];
+      if (chars.length >= 2) {
+        return `<div>${chars.slice(0, -2).join('')}<span class="missing">__</span><span class="missing">__</span></div>`;
+      }
+    }
+    return `<div>${line}</div>`;
+  }).join('');
+
+  document.getElementById('poemLines').innerHTML = poemHtml;
+  document.getElementById('poemAuthor').textContent = '';
+  document.getElementById('poemDisplay').classList.add('show');
+
+  document.getElementById('challengeQuestion').innerHTML = p.challenge.line.replace(/___/g, '<span class="missing">__</span>');
+  document.getElementById('challengeInput').value = '';
+  document.getElementById('challengeFeedback').className = 'feedback';
+  document.getElementById('challengeFeedback').textContent = '';
+  document.getElementById('challengeArea').classList.add('show');
+  challengeAnswered = false;
+
+  document.getElementById('writeTarget').textContent = p.writeChar;
+  document.getElementById('writeHint').textContent = p.writeHint;
+  document.getElementById('writeFeedback').className = 'feedback';
+  document.getElementById('writeSection').classList.add('show');
+  clearWrite();
+}
+
+function resetChallenge() {
+  document.getElementById('poemDisplay').classList.remove('show');
+  document.getElementById('challengeArea').classList.remove('show');
+  document.getElementById('writeSection').classList.remove('show');
+  document.getElementById('challengeFeedback').className = 'feedback';
+  document.getElementById('writeFeedback').className = 'feedback';
+  challengeAnswered = false;
+}
+
+// ==================== 背诵挑战 ====================
+function checkAnswer() {
+  if (!currentPoem || challengeAnswered) return;
+  const input = document.getElementById('challengeInput').value.trim();
+  const fb = document.getElementById('challengeFeedback');
+  const blanks = currentPoem.challenge.blanks;
+
+  if (!input) {
+    fb.className = 'feedback show wrong-fb';
+    fb.textContent = '请输入你背诵的内容再提交哦~';
+    return;
+  }
+
+  challengeAnswered = true;
+  const allCorrect = blanks.every(b => input.includes(b));
+  if (allCorrect) {
+    if (!played[currentPoem.id]) {
+      score++;
+      played[currentPoem.id] = true;
+    }
+    fb.className = 'feedback show correct-fb';
+    fb.textContent = `✅ 背诵正确！"${blanks.join('、')}" —— 完全正确！`;
+  } else {
+    fb.className = 'feedback show wrong-fb';
+    fb.textContent = `❌ 还不太对哦。正确答案是："${blanks.join('、')}"。多读几遍，再来试试！`;
+  }
+  updateScore();
+  buildPoemList();
+}
+
+function showHint() {
+  if (!currentPoem || challengeAnswered) return;
+  const fb = document.getElementById('challengeFeedback');
+  fb.className = 'feedback show correct-fb';
+  fb.textContent = `💡 提示：${currentPoem.challenge.hint}`;
+}
+
+function revealFull() {
+  if (!currentPoem) return;
+  document.getElementById('poemLines').innerHTML = currentPoem.fullText.split('\n').map(l => `<div>${l}</div>`).join('');
+  document.getElementById('poemAuthor').textContent = `——《${currentPoem.title}》 ${currentPoem.author}`;
+}
+
+// ==================== 书写练习 ====================
+function initWriteCanvas() {
+  const canvas = document.getElementById('writeCanvas');
+  writeCtx = canvas.getContext('2d');
+  writeCtx.strokeStyle = '#d4a843';
+  writeCtx.lineWidth = 6;
+  writeCtx.lineCap = 'round';
+  writeCtx.lineJoin = 'round';
+
+  canvas.addEventListener('pointerdown', e => {
+    isDrawing = true;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    currentStroke = [{x, y}];
+    writeCtx.beginPath();
+    writeCtx.moveTo(x, y);
+  });
+
+  canvas.addEventListener('pointermove', e => {
+    if (!isDrawing) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    currentStroke.push({x, y});
+    writeCtx.lineTo(x, y);
+    writeCtx.stroke();
+  });
+
+  canvas.addEventListener('pointerup', () => {
+    if (!isDrawing) return;
+    isDrawing = false;
+    if (currentStroke.length > 0) strokes.push([...currentStroke]);
+    currentStroke = [];
+  });
+
+  canvas.addEventListener('pointerleave', () => {
+    if (isDrawing) {
+      isDrawing = false;
+      if (currentStroke.length > 0) strokes.push([...currentStroke]);
+      currentStroke = [];
+    }
+  });
+}
+
+function clearWrite() {
+  strokes = [];
+  currentStroke = [];
+  writeCtx.clearRect(0, 0, 300, 300);
+  document.getElementById('writeFeedback').className = 'feedback';
+}
+
+function undoWrite() {
+  if (strokes.length === 0) return;
+  strokes.pop();
+  writeCtx.clearRect(0, 0, 300, 300);
+  strokes.forEach(stroke => {
+    if (stroke.length < 2) return;
+    writeCtx.beginPath();
+    writeCtx.moveTo(stroke[0].x, stroke[0].y);
+    for (let i = 1; i < stroke.length; i++) writeCtx.lineTo(stroke[i].x, stroke[i].y);
+    writeCtx.stroke();
+  });
+}
+
+function submitWrite() {
+  if (strokes.length === 0) {
+    const fb = document.getElementById('writeFeedback');
+    fb.className = 'feedback show wrong-fb';
+    fb.textContent = '请先在方框中书写后再提交哦~';
+    return;
+  }
+  const fb = document.getElementById('writeFeedback');
+  fb.className = 'feedback show correct-fb';
+  fb.textContent = `✅ 书写完成！"${currentPoem.writeChar}"字已记录。${currentPoem.writeHint}`;
+  if (!played[currentPoem.id]) {
+    score++;
+    played[currentPoem.id] = true;
+  }
+  updateScore();
+  buildPoemList();
+}
+
+// ==================== 全部60篇列表 ====================
+function buildPoemList() {
+  const chapters = ['文言文必修','文言文选必','诗词曲'];
+  const list = document.getElementById('poemList');
+  let html = '';
+  chapters.forEach(ch => {
+    html += `<div class="section-label">📚 ${ch}</div>`;
+    POEMS.filter(p => p.chapter === ch).forEach(p => {
+      const cls = played[p.id] ? ' item played' : ' item';
+      html += `<span class="${cls}" onclick="jumpToPoem(${p.id})">${p.title}</span>`;
+    });
+  });
+  list.innerHTML = html;
+}
+
+function togglePoemList() {
+  const list = document.getElementById('poemList');
+  list.classList.toggle('show');
+}
+
+function jumpToPoem(id) {
+  currentPoem = POEMS.find(p => p.id === id);
+  if (!currentPoem) return;
+  document.getElementById('poemList').classList.remove('show');
+  resetChallenge();
+  document.getElementById('spinResult').innerHTML = `📋 选择了：<span class="highlight">《${currentPoem.title}》</span> — ${currentPoem.author}`;
+  document.getElementById('spinResult').classList.add('show');
+  showPoemContent();
+}
+
+// ==================== 通用 ====================
+function updateScore() {
+  document.getElementById('scoreCount').textContent = score;
+  document.getElementById('playedCount').textContent = Object.keys(played).length;
+}
+
+init();
+</script>
+<div style="position:fixed;bottom:4px;left:0;width:100%;text-align:center;font-size:11px;color:#999;pointer-events:none;z-index:9999;font-family:system-ui,sans-serif;">AI 生成内容，仅供教学参考</div>
+</body>
+</html>

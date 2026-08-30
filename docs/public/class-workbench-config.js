@@ -22,6 +22,8 @@ window.WB_CONFIG = {
 
     { id: 'schedule', icon: '📅', label: '课程表', type: 'schedule', desc: '图形化周课表，点击格子录入科目' },
 
+    { id: 'dailySchedule', icon: '🕐', label: '作息时间表', type: 'dailySchedule', desc: '自定义每日作息安排（午别/节次/各年级时间），支持导入导出与批量修改' },
+
     { id: 'students', icon: '📚', label: '学生档案库', type: 'group', subs: [
       { id: 'roster', icon: '📋', label: '全班花名册', fields: [
         { name: 'studentNo', label: '学号', type: 'text', required: true, placeholder: '如 20240101' },

@@ -488,6 +488,7 @@ window.WB_VIEWS = (function () {
     html += '<button class="btn" id="sched-clear">🧹 清空课表</button>';
     html += '<div class="spacer"></div>';
     html += '<button class="btn" id="sched-export">⬇ 导出课表</button>';
+    html += '<label class="btn" style="cursor:pointer" title="从 Excel/CSV 导入课表数据">⬆ 导入课表<input type="file" id="sched-import-file" accept=".xlsx,.xls,.csv" style="display:none"></label>';
     html += '</div>';
 
     // 科目图例
@@ -551,6 +552,11 @@ window.WB_VIEWS = (function () {
       else if (id === 'sched-clear') clearSchedule();
       else if (id === 'sched-export') exportSchedule();
     });
+    // 导入文件
+    var importInput = el('sched-import-file');
+    if (importInput) {
+      importInput.addEventListener('change', function () { importSchedule(this.files[0]); this.value = ''; });
+    }
   }
 
   // 自定义周次：勾选要显示的星期几
@@ -715,11 +721,73 @@ window.WB_VIEWS = (function () {
         return parts.join('·');
       }));
     });
+    // 优先 XLSX
+    if (typeof XLSX !== 'undefined') {
+      var data = [header].concat(lines);
+      var ws = XLSX.utils.aoa_to_sheet(data);
+      ws['!cols'] = [{ wch: 18 }].concat(sc.days.map(function () { return { wch: 14 }; }));
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '课程表');
+      XLSX.writeFile(wb, '课程表_' + WB.today() + '.xlsx');
+      WB.showToast('课表已导出 Excel');
+      return;
+    }
+    // CSV 降级
     var csv = '\uFEFF' + [header.map(WB.csvEscape).join(',')].concat(
       lines.map(function (r) { return r.map(WB.csvEscape).join(','); })
     ).join('\r\n');
     WB.downloadBlob(csv, '课程表_' + WB.today() + '.csv', 'text/csv;charset=utf-8');
     WB.showToast('课表已导出（CSV，Excel 可直接打开）');
+  }
+
+  function importSchedule(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        var wb = XLSX.read(e.target.result, { type: 'array' });
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        if (!rows || rows.length < 2) { WB.showToast('文件内容为空'); return; }
+        var header = rows[0];
+        // 解析星期列（从第2列起）
+        var dayCols = [];
+        for (var ci = 1; ci < header.length; ci++) {
+          var dn = String(header[ci] || '').trim();
+          if (dn) dayCols.push({ i: ci, name: dn });
+        }
+        if (!dayCols.length) { WB.showToast('未找到星期列'); return; }
+        var sc = getSchedule();
+        var updated = 0;
+        for (var ri = 1; ri < rows.length; ri++) {
+          var row = rows[ri];
+          var periodLabel = String(row[0] || '').trim();
+          if (!periodLabel) continue;
+          // 匹配时段（支持 "第一节" 或 "第一节课 8:00-8:40" 格式）
+          var periodName = periodLabel.split(/\s/)[0];
+          var period = sc.periods.find(function (p) { return p.name === periodName || p.name === periodLabel; });
+          if (!period) continue;
+          dayCols.forEach(function (dc) {
+            var val = String(row[dc.i] || '').trim();
+            if (!val) return;
+            var key = dc.name + '-' + period.name;
+            // 解析格式：科目 或 科目·教师·备注
+            var parts = val.split(/·/);
+            var subject = parts[0] || '';
+            var teacher = parts[1] || '';
+            var note = parts.slice(2).join('·') || '';
+            if (!subject) return;
+            if (!sc.subjects[subject]) sc.subjects[subject] = SUBJ_COLORS[Object.keys(sc.subjects).length % SUBJ_COLORS.length];
+            sc.grid[key] = { subject: subject, teacher: teacher, note: note };
+            updated++;
+          });
+        }
+        WB.saveState();
+        renderScheduleRefresh();
+        WB.showToast('导入成功：更新 ' + updated + ' 个课表格子');
+      } catch (err) { WB.showToast('解析失败：' + err.message); }
+    };
+    reader.readAsArrayBuffer(file);
   }
 
   function renderScheduleRefresh() {
@@ -3667,6 +3735,341 @@ window.WB_VIEWS = (function () {
     bindDormCanvas();
   }
 
+  // ============ 作息时间表 ============
+  // 数据模型：state.dailySchedule = { grades: [], periods: [{id, category, label, times:{grade:time}}] }
+  var DS_DEFAULT = {
+    grades: ['高三', '高二', '高一'],
+    categories: ['上午', '中午', '下午', '晚上'],
+    periods: [
+      { id:'ds1', category:'上午', label:'起床', times:{} },
+      { id:'ds2', category:'上午', label:'早操、早餐', times:{} },
+      { id:'ds3', category:'上午', label:'预备（公寓锁门）', times:{} },
+      { id:'ds4', category:'上午', label:'早读', times:{} },
+      { id:'ds5', category:'上午', label:'第一节课', times:{} },
+      { id:'ds6', category:'上午', label:'第二节课', times:{} },
+      { id:'ds7', category:'上午', label:'大课间', times:{} },
+      { id:'ds8', category:'上午', label:'第三节课', times:{} },
+      { id:'ds9', category:'上午', label:'第四节课', times:{} },
+      { id:'ds10', category:'上午', label:'第五节课', times:{} },
+      { id:'ds11', category:'中午', label:'午餐', times:{} },
+      { id:'ds12', category:'中午', label:'午休', times:{} },
+      { id:'ds13', category:'下午', label:'预备', times:{} },
+      { id:'ds14', category:'下午', label:'第一节课', times:{} },
+      { id:'ds15', category:'下午', label:'第二节课', times:{} },
+      { id:'ds16', category:'下午', label:'大课间', times:{} },
+      { id:'ds17', category:'下午', label:'第三节课', times:{} },
+      { id:'ds18', category:'下午', label:'第四节课', times:{} },
+      { id:'ds19', category:'下午', label:'晚餐及体育活动', times:{} },
+      { id:'ds20', category:'晚上', label:'预备', times:{} },
+      { id:'ds21', category:'晚上', label:'第一节', times:{} },
+      { id:'ds22', category:'晚上', label:'第二节', times:{} },
+      { id:'ds23', category:'晚上', label:'大课间及加餐', times:{} },
+      { id:'ds24', category:'晚上', label:'第三节', times:{} },
+      { id:'ds25', category:'晚上', label:'洗漱', times:{} },
+      { id:'ds26', category:'晚上', label:'公寓锁门', times:{} },
+      { id:'ds27', category:'晚上', label:'公寓熄灯', times:{} }
+    ]
+  };
+  // 预填示例数据（与截图一致）
+  var DS_SAMPLE = {
+    '高三': {
+      'ds1':'6:30','ds2':'6:40-7:15','ds3':'7:15','ds4':'7:25-7:55',
+      'ds5':'8:00-8:40','ds6':'8:50-9:30','ds7':'9:30-9:55','ds8':'9:55-10:35',
+      'ds9':'10:45-11:25','ds10':'11:35-12:10',
+      'ds13':'14:20','ds14':'14:30-15:10','ds15':'15:20-16:00','ds16':'16:00-16:20',
+      'ds17':'16:20-17:00','ds18':'17:10-17:50','ds19':'17:50-18:50',
+      'ds20':'18:50','ds21':'19:00-19:50','ds22':'20:00-20:50','ds23':'20:50-21:10',
+      'ds24':'21:10-22:00','ds25':'22:00-22:20','ds26':'22:20','ds27':'22:20'
+    },
+    '高二': {
+      'ds1':'','ds2':'6:40-7:15','ds3':'7:15','ds4':'7:25-7:55',
+      'ds5':'8:00-8:40','ds6':'8:50-9:30','ds7':'9:30-9:55','ds8':'9:55-10:35',
+      'ds9':'10:45-11:25','ds10':'11:35-12:20',
+      'ds11':'12:10-13:00','ds12':'13:00-14:00（静校时间）',
+      'ds13':'14:20','ds14':'14:30-15:10','ds15':'15:20-16:00','ds16':'16:00-16:20',
+      'ds17':'16:20-17:00','ds18':'17:10-17:50','ds19':'17:50-18:50',
+      'ds20':'18:50'
+    },
+    '高一': {
+      'ds1':'','ds2':'','ds3':'','ds4':'',
+      'ds5':'','ds6':'','ds7':'','ds8':'',
+      'ds9':'','ds10':'11:35-12:30',
+      'ds11':'','ds12':'',
+      'ds13':'','ds14':'','ds15':'','ds16':'',
+      'ds17':'','ds18':'','ds19':'',
+      'ds20':'','ds21':'','ds22':'','ds23':'',
+      'ds24':'','ds25':'','ds26':'','ds27':''
+    }
+  };
+
+  function getDS() {
+    if (!WB.state.dailySchedule) WB.state.dailySchedule = JSON.parse(JSON.stringify(DS_DEFAULT));
+    // 迁移：旧数据无 sample 标记时自动填充示例
+    var ds = WB.state.dailySchedule;
+    if (!ds._sampled) {
+      Object.keys(DS_SAMPLE).forEach(function(g){
+        if(ds.grades.indexOf(g)>=0&&!ds.times) ds.periods.forEach(function(p){p.times[g]=DS_SAMPLE[g][p.id]||''});
+      });
+      ds._sampled=true;
+    }
+    return ds;
+  }
+
+  function renderDailySchedule() {
+    var ds=getDS(),grades=ds.grades||[],cats=ds.categories||[],periods=ds.periods||[];
+    var html='<div class="wb-page"><div class="wb-page-header">';
+    html+='<h2>🕐 作息时间表</h2><p>自定义每日作息安排，支持多年级对比、导入导出、批量修改</p></div>';
+    html+='<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">';
+    html+='<button class="wb-btn wb-btn-primary" id="ds-add-period">➕ 添加节次</button>';
+    html+='<button class="wb-btn" id="ds-add-cat">📂 添加午别</button>';
+    html+='<button class="wb-btn" id="ds-edit-grades">🏫 编辑年级</button>';
+    html+='<button class="wb-btn" id="ds-export">📤 导出</button>';
+    html+='<button class="wb-btn" id="ds-import">📥 导入</button>';
+    html+='<button class="wb-btn wb-btn-warn" id="ds-reset">🔄 重置模板</button>';
+    html+='<label class="wb-btn" style="cursor:pointer">📥 批量修改字段<input type="file" id="ds-batch-file" accept=".xlsx,.xls,.csv" style="display:none"></label>';
+    html+='</div>';
+
+    // 表格
+    html+='<div style="overflow-x:auto"><table class="wb-table ds-table" style="min-width:600px;border-collapse:collapse">';
+    html+='<thead><tr><th style="width:60px">午别</th><th style="width:140px">节次</th>';
+    grades.forEach(function(g){html+='<th style="min-width:100px">'+H(g)+'</th>'});
+    html+='</tr></thead><tbody>';
+    // 按午别分组渲染：避免同类别节次不相邻时 rowspan 计算错乱（新增节次常插到末尾）
+    var byCat={},catOrder=[];
+    periods.forEach(function(p){
+      var cat=p.category||'';
+      if(!byCat[cat]){byCat[cat]=[];catOrder.push(cat)}
+      byCat[cat].push(p)
+    });
+    catOrder.forEach(function(cat){
+      var list=byCat[cat];
+      list.forEach(function(p,idx){
+        if(idx===0)html+='<tr class="ds-cat-row"><td rowspan="'+list.length+'" class="ds-cat-cell">'+H(cat)+'</td><td>'+H(p.label)+'</td>';
+        else html+='<tr><td>'+H(p.label)+'</td>';
+        grades.forEach(function(g){html+='<td contenteditable="true" data-pid="'+p.id+'" data-g="'+H(g)+'" class="ds-time-cell">'+H((p.times||{})[g]||'')+'</td>'});
+        html+='</tr>'
+      })
+    });
+    if(!periods.length)html+='<tr><td colspan="'+(grades.length+2)+'" style="text-align:center;color:#94a3b8;padding:40px">暂无节次，点击「添加节次」开始</td></tr>';
+    html+='</tbody></table></div>';
+    // 隐藏的批量导入 file input
+    html+='<input type="file" id="ds-import-file" accept=".xlsx,.xls,.csv" style="display:none">';
+    html+='</div>';
+    return html;
+  }
+
+  function bindDailySchedule() {
+    var root=rebindRoot();
+    // 单元格编辑
+    root.addEventListener('blur',function(e){
+      var cell=e.target.closest('.ds-time-cell');
+      if(!cell)return;
+      var pid=cell.dataset.pid,g=cell.dataset.g,val=cell.textContent.trim();
+      var ds=getDS(),p=ds.periods.find(function(x){return x.id===pid});
+      if(p){if(!p.times)p.times={};p.times[g]=val;WB.saveState()}
+    },true);
+    root.addEventListener('keydown',function(e){
+      if(e.target.classList.contains('ds-time-cell')&&e.key==='Enter'){e.preventDefault();e.target.blur()}
+    },true);
+    // 工具栏按钮
+    root.addEventListener('click',function(e){
+      var id=e.target.id||e.target.closest('[id]')?.id;
+      if(id==='ds-add-period')addDSPeriod();
+      else if(id==='ds-add-cat')addDSCategory();
+      else if(id==='ds-edit-grades')editDSGrades();
+      else if(id==='ds-export')exportDailySchedule();
+      else if(id==='ds-import')el('ds-import-file').click();
+      else if(id==='ds-reset')resetDailySchedule();
+    });
+    // 导入文件
+    el('ds-import-file').addEventListener('change',handleDSImport);
+    // 批量修改
+    el('ds-batch-file').addEventListener('change',handleDSBatch);
+  }
+
+  function addDSPeriod(){
+    WB.openModal('添加节次','<div class="wb-form-group"><label>午别</label><select id="ds-new-cat">'+(getDS().categories||[]).map(function(c){return '<option value="'+c+'">'+H(c)+'</option>'}).join('')+'</select></div>'+
+      '<div class="wb-form-group"><label>节次名称</label><input id="ds-new-label" class="wb-input" placeholder="如：第五节课"></div>',
+      [{ text: '取消', cls: 'btn', act: 'close' }, { text: '添加', cls: 'btn btn-primary', act: 'save' }],
+      function (act) {
+        if (act !== 'save') return;
+        var cat = el('ds-new-cat').value, label = el('ds-new-label').value.trim();
+        if (!label) { WB.showToast('请输入节次名称'); return false; }
+        var ds = getDS(); ds.periods.push({ id: 'ds' + Date.now(), category: cat, label: label, times: {} }); WB.saveState(); refreshDS();
+      });
+  }
+  function addDSCategory(){
+    WB.openModal('添加午别',      '<div class="wb-form-group"><label>午别名称</label><input id="ds-new-cat-name" class="wb-input" placeholder="如：凌晨"></div>',
+      [{ text: '取消', cls: 'btn', act: 'close' }, { text: '添加', cls: 'btn btn-primary', act: 'save' }],
+      function (act) {
+        if (act !== 'save') return;
+        var name = el('ds-new-cat-name').value.trim();
+        if (!name) { WB.showToast('请输入名称'); return false; }
+        var ds = getDS(); if (ds.categories.indexOf(name) < 0) ds.categories.push(name); WB.saveState(); refreshDS();
+      });
+  }
+  function editDSGrades(){
+    var ds=getDS(),current=ds.grades.join(', ');
+    WB.openModal('编辑年级列','<div class="wb-form-group"><label>年级列表（逗号分隔）</label>'+
+      '<textarea id="ds-grades-input" class="wb-input" rows="3" placeholder="如：高三,高二,高一,初三">'+H(current)+'</textarea>'+
+      '<p style="font-size:11px;color:#64748b">修改年级后，原有时间数据会保留（删除的年级数据将被丢弃）</p></div>',
+      [{ text: '取消', cls: 'btn', act: 'close' }, { text: '保存', cls: 'btn btn-primary', act: 'save' }],
+      function (act) {
+        if (act !== 'save') return;
+        var val = el('ds-grades-input').value.split(/[,，]/).map(function (s) { return s.trim(); }).filter(Boolean);
+        if (!val.length) { WB.showToast('至少保留一个年级'); return false; }
+        var old=ds.grades;
+        ds.grades=val;
+        // 清理被删年级的时间数据
+        ds.periods.forEach(function(p){if(p.times)old.forEach(function(g){if(val.indexOf(g)<0)delete p.times[g]})});
+        WB.saveState();refreshDS()
+      });
+  }
+  function resetDailySchedule(){
+    if(!confirm('将重置为默认模板，当前所有自定义数据会被清空。是否继续？'))return;
+    WB.state.dailySchedule=JSON.parse(JSON.stringify(DS_DEFAULT));WB.saveState();refreshDS();WB.showToast('已重置为默认模板')
+  }
+  function refreshDS(){el('content').innerHTML=renderDailySchedule();bindDailySchedule()}
+
+  // ===== 导出 =====
+  function exportDailySchedule(){
+    var ds=getDS(),grades=ds.grades||[],periods=ds.periods||[];
+    if(typeof XLSX!=='undefined'){
+      var rows=[];
+      // 表头
+      var h=['午别','节次'];grades.forEach(function(g){h.push(g)});rows.push(h);
+      // 数据
+      periods.forEach(function(p){var r=[p.category,p.label];grades.forEach(function(g){r.push((p.times||{})[g]||'')});rows.push(r)});
+      var ws=XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols']=[{wch:8},{wch:16}].concat(grades.map(function(){return{wch:18}}));
+      var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'作息时间表');
+      XLSX.writeFile(wb,'作息时间表_'+WB.today()+'.xlsx');
+      WB.showToast('已导出 Excel');
+      return;
+    }
+    // CSV 降级
+    var csv='\uFEFF午别,节次,'+grades.join(',')+'\r\n';
+    periods.forEach(function(p){csv+=p.category+','+p.label+','+grades.map(function(g){return csvEscape((p.times||{})[g]||'')}).join(',')+'\r\n'});
+    WB.downloadBlob(csv,'作息时间表_'+WB.today()+'.csv','text/csv;charset=utf-8');
+    WB.showToast('已导出 CSV')
+  }
+
+  // ===== 导入（完整替换或合并） =====
+  function handleDSImport(e){
+    var file=e.target.files[0];if(!file)return;
+    e.target.value='';
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      try{
+        var wb=XLSX.read(ev.target.result,{type:'array'});
+        var ws=wb.Sheets[wb.SheetNames[0]];
+        var rows=XLSX.utils.sheet_to_json(ws,{header:1});
+        if(!rows||rows.length<2){WB.showToast('文件内容为空');return}
+        // 解析表头找年级列
+        var header=rows[0];
+        var gradeCols=[]; // {colIndex, gradeName}
+        for(var ci=2;ci<header.length;ci++){var gn=String(header[ci]||'').trim();if(gn)gradeCols.push({i:ci,n:gn})}
+        if(!gradeCols.length){WB.showToast('未找到年级列（表头从第3列起应为年级名）');return}
+        // 询问模式
+        WB.openModal('选择导入方式',
+          '<div style="margin-bottom:10px">检测到 <b>'+gradeCols.length+'</b> 个年级列：'+gradeCols.map(function(c){return c.n}).join('、')+'</div>'+
+          '<div style="display:flex;flex-direction:column;gap:6px">'+
+          '<label style="cursor:pointer;padding:8px;border:1px solid #e2e8f0;border-radius:8px"><input type="radio" name="ds-mode" value="replace" checked style="margin-right:6px"> <b>完全替换</b>：清空当前数据，用文件内容重建</label>'+
+          '<label style="cursor:pointer;padding:8px;border:1px solid #e2e8f0;border-radius:8px"><input type="radio" name="ds-mode" value="merge" style="margin-right:6px"> <b>智能合并</b>：按节次名匹配，只覆盖文件中非空单元格</label>'+
+          '</div>',
+          [{ text: '取消', cls: 'btn', act: 'close' }, { text: '开始导入', cls: 'btn btn-primary', act: 'save' }],
+          function (act, body) {
+            if (act !== 'save') return;
+            var picked = body.querySelector('input[name="ds-mode"]:checked');
+            var mode = picked ? picked.value : 'replace';
+            var ds=getDS();
+            if(mode==='replace'){
+              ds.grades=gradeCols.map(function(c){return c.n});ds.periods=[];
+            }
+            for(var ri=1;ri<rows.length;ri++){
+              var row=rows[ri];if(!row[0]&&!row[1])continue;
+              var cat=String(row[0]||'').trim(),label=String(row[1]||'').trim();
+              if(!label)continue;
+              var p=null;
+              if(mode==='merge'){
+                p=ds.periods.find(function(x){return x.label===label&&x.category===cat});
+                if(!p)p=ds.periods.find(function(x){return x.label===label})
+              }
+              if(!p){p={id:'ds'+Date.now()+'_'+ri,category:cat||'',label:label,times:{}};ds.periods.push(p)}
+              if(!p.times)p.times={};
+              gradeCols.forEach(function(gc){var v=String(row[gc.i]||'').trim();if(v)p.times[gc.n]=v});
+            }
+            // 补充缺失类别
+            var newCats=[];ds.periods.forEach(function(p){if(p.category&&newCats.indexOf(p.category)<0)newCats.push(p.category)});
+            ds.categories=newCats.length?newCats:(ds.categories||[]);
+            WB.saveState();refreshDS();WB.showToast('导入成功（'+(mode==='replace'?'替换':'合并')+'模式，'+ds.periods.length+' 个节次）')
+          }
+        );
+      }catch(err){WB.showToast('解析失败：'+err.message)}
+    };
+    reader.readAsArrayBuffer(file)
+  }
+
+  // ===== 批量修改（选字段导入） =====
+  function handleDSBatch(e){
+    var file=e.target.files[0];if(!file)return;
+    e.target.value='';
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      try{
+        var wb=XLSX.read(ev.target.result,{type:'array'});
+        var ws=wb.Sheets[wb.SheetNames[0]];
+        var rows=XLSX.utils.sheet_to_json(ws,{header:1});
+        if(!rows||rows.length<2){WB.showToast('文件内容为空');return}
+        var header=rows[0];
+        // 找出可映射的列：节次 + 年级时间列
+        var colMap=[]; // {colIndex, field: 'label'|gradeName}
+        for(var ci=0;ci<header.length;ci++){
+          var hn=String(header[ci]||'').trim().toLowerCase();
+          if(ci===1||hn.indexOf('节次')>=0||hn.indexOf('项目')>=0)colMap.push({i:ci,f:'label'});
+          else if(ci>=2)colMap.push({i:ci,f:hn}) // 年级列
+        }
+        if(colMap.length<2){WB.showToast('文件格式不正确：至少需要「节次」和1个年级列');return}
+        // 字段选择 UI
+        var options=colMap.map(function(c,i){
+          return '<label style="display:block;padding:4px 0;font-size:12px;cursor:pointer">'+
+            '<input type="checkbox" value="'+i+'" checked style="margin-right:6px"> '+
+            H(String(header[c.i]||''))+(c.f==='label'?' <span style="color:#64748b">(节次)</span>':' <span style="color:#64748b">(年级)</span>')+
+            '</label>'
+        }).join('');
+        WB.openModal('批量修改 — 选择要导入的字段',
+          '<p style="font-size:12px;color:#64748b;margin-bottom:8px">勾选需要更新的列，未勾选的列保持原值不变。按「节次」匹配行。</p>'+
+          '<div style="max-height:300px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;padding:8px">'+options+'</div>'+
+          '<p style="font-size:11px;color:#94a3b8;margin-top:6px">预览：共 '+rows.length+' 行数据</p>',
+          [{ text: '取消', cls: 'btn', act: 'close' }, { text: '开始更新', cls: 'btn btn-primary', act: 'save' }],
+          function (act, body) {
+            if (act !== 'save') return;
+            var checked = [];
+            body.querySelectorAll('input[type="checkbox"]:checked').forEach(function (cb) { checked.push(parseInt(cb.value, 10)); });
+            if (checked.length < 2) { WB.showToast('至少选择「节次」和1个年级列'); return false; }
+            var selected=checked.map(function(i){return colMap[i]});
+            var ds=getDS(),updated=0,added=0;
+            for(var ri=1;ri<rows.length;ri++){
+              var row=rows[ri];var labelVal='';selected.forEach(function(s){
+                if(s.f==='label')labelVal=String(row[s.i]||'').trim()
+              });
+              if(!labelVal)continue;
+              var p=ds.periods.find(function(x){return x.label===labelVal});
+              if(!p){p={id:'ds'+Date.now()+'_'+ri,category:'',label:labelVal,times:{}};ds.periods.push(p);added++}
+              if(!p.times)p.times={};
+              selected.forEach(function(s){
+                if(s.f!=='label'){var v=String(row[s.i]||'').trim();if(v){p.times[s.f]=v;updated++}}
+              });
+            }
+            WB.saveState();refreshDS();
+            WB.showToast('批量修改完成：更新 '+updated+' 个单元格'+(added?'，新增 '+added+' 个节次':''))
+          }
+        );
+      }catch(err){WB.showToast('解析失败：'+err.message)}
+    };
+    reader.readAsArrayBuffer(file)
+  }
+
   return {
     renderDashboard: renderDashboard,
     bindDashboard: bindDashboard,
@@ -3682,6 +4085,8 @@ window.WB_VIEWS = (function () {
     renderDormCanvas: renderDormCanvas,
     bindDormCanvas: bindDormCanvas,
     renderTodo: renderTodo,
-    bindTodo: bindTodo
+    bindTodo: bindTodo,
+    renderDailySchedule: renderDailySchedule,
+    bindDailySchedule: bindDailySchedule
   };
 })();

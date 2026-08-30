@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>教职工座位编排 & 随机点名</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  background: linear-gradient(135deg, #e8f0fe 0%, #f3e5f5 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+.container { margin: 0 auto; }
+
+/* 顶部标题栏 */
+.header {
+  background: linear-gradient(135deg, #4a90d9, #7c5cbf);
+  color: #fff;
+  border-radius: 16px;
+  padding: 20px 28px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.12);
+}
+.header h1 { font-size: 24px; font-weight: 700; }
+.header .sub { font-size: 14px; opacity: .9; margin-top: 4px; }
+.header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* 按钮 */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+.btn-primary { background: #fff; color: #4a90d9; }
+.btn-success { background: #27ae60; color: #fff; }
+.btn-warning { background: #f39c12; color: #fff; }
+.btn-danger { background: #e74c3c; color: #fff; }
+.btn-info { background: #3498db; color: #fff; }
+.btn-purple { background: #9b59b6; color: #fff; }
+
+/* 工具栏 */
+.toolbar {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+.toolbar label { font-size: 14px; font-weight: 600; color: #333; }
+.toolbar input[type="number"] {
+  width: 64px;
+  padding: 6px 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+.toolbar input[type="number"]:focus { border-color: #4a90d9; outline: none; }
+.divider { width: 1px; height: 28px; background: #e0e0e0; }
+.toolbar .hint { font-size: 12px; color: #999; }
+
+/* 随机点名浮窗 */
+.roll-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.7);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+.roll-overlay.active { display: flex; }
+.roll-box {
+  background: linear-gradient(135deg, #fff, #f8f9fa);
+  border-radius: 24px;
+  padding: 48px 64px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  min-width: 400px;
+}
+.roll-box h2 { font-size: 18px; color: #999; margin-bottom: 16px; }
+.roll-name {
+  font-size: 64px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #4a90d9, #7c5cbf);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .1s;
+}
+.roll-name.rolling { animation: shake .08s infinite; }
+@keyframes shake {
+  0% { transform: translateX(-2px) scale(1.02); }
+  50% { transform: translateX(2px) scale(1.02); }
+  100% { transform: translateX(-2px) scale(1.02); }
+}
+.roll-actions { margin-top: 24px; display: flex; gap: 12px; justify-content: center; }
+.roll-result {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #27ae60;
+  font-weight: 600;
+}
+
+/* 座位区域 */
+.seat-area {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 24px;
+  box-shadow: 0 2px 16px rgba(0,0,0,.06);
+  overflow-x: auto;
+  margin-bottom: 16px;
+  min-height: 400px;
+}
+.podium {
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  color: #fff;
+  text-align: center;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  margin: 0 auto 20px;
+  width: 60%;
+  min-width: 300px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+
+.seat-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+.seat-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+/* 过道分隔 */
+.aisle {
+  flex-shrink: 0;
+  transition: width .3s;
+}
+/* 大组容器 */
+.seat-group {
+  display: flex;
+  gap: 10px;
+}
+
+/* 座位格子 */
+.seat-cell {
+  width: 90px;
+  height: 64px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+  user-select: none;
+  border: 2px solid transparent;
+}
+.seat-cell:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,.15); }
+.seat-cell.boy {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border-color: #93c5fd;
+}
+.seat-cell.girl {
+  background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+  border-color: #f9a8d4;
+}
+.seat-cell.empty {
+  background: #f5f5f5;
+  border: 2px dashed #ccc;
+  color: #ccc;
+}
+.seat-cell.dragging { opacity: .4; }
+.seat-cell.drag-over { box-shadow: 0 0 0 3px #f39c12; }
+.seat-cell.highlight {
+  animation: pulse .6s ease-in-out infinite alternate;
+}
+@keyframes pulse {
+  from { box-shadow: 0 0 0 3px #f39c12; transform: scale(1); }
+  to { box-shadow: 0 0 0 6px rgba(243,156,18,.4); transform: scale(1.05); }
+}
+
+/* 性别标识 */
+.gender-badge {
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gender-badge.male { background: #3b82f6; color: #fff; }
+.gender-badge.female { background: #ec4899; color: #fff; }
+
+.seat-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-top: 8px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* 编辑弹窗 */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 5000;
+  justify-content: center;
+  align-items: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 32px;
+  min-width: 360px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+}
+.modal h3 { font-size: 18px; margin-bottom: 16px; color: #333; }
+.modal .form-group { margin-bottom: 16px; }
+.modal label { display: block; font-size: 14px; color: #666; margin-bottom: 6px; font-weight: 600; }
+.modal input[type="text"], .modal select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 15px;
+}
+.modal input[type="text"]:focus, .modal select:focus { border-color: #4a90d9; outline: none; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+/* 导入弹窗 */
+.import-area {
+  width: 100%;
+  min-height: 200px;
+  border: 2px dashed #bbb;
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 14px;
+  font-family: monospace;
+  resize: vertical;
+  line-height: 1.6;
+}
+.import-hint { font-size: 12px; color: #999; margin-top: 8px; }
+
+/* 统计栏 */
+.stats-bar {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stat-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+}
+.stat-dot.boy { background: #3b82f6; }
+.stat-dot.girl { background: #ec4899; }
+.stat-dot.empty { background: #ddd; }
+.stat-label { font-size: 14px; color: #666; }
+.stat-num { font-size: 18px; font-weight: 700; color: #333; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- 标题栏 -->
+  <div class="header">
+    <div>
+      <h1>教职工座位编排</h1>
+      <div class="sub">教职工会议座次表 | 随机点名 | 拖拽调整 | 可编辑</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-purple" onclick="startRoll()">🎲 随机点名</button>
+      <button class="btn btn-success" onclick="openImport()">📥 导入名单</button>
+      <button class="btn btn-info" onclick="randomShuffle()">🔀 随机排座</button>
+      <button class="btn btn-warning" onclick="exportData()">💾 导出名单</button>
+      <button class="btn btn-danger" onclick="clearAll()">🗑️ 清空</button>
+    </div>
+  </div>
+
+  <!-- 统计栏 -->
+  <div class="stats-bar">
+    <div class="stat-item"><span class="stat-dot boy"></span><span class="stat-label">男</span><span class="stat-num" id="boyCount">0</span></div>
+    <div class="stat-item"><span class="stat-dot girl"></span><span class="stat-label">女</span><span class="stat-num" id="girlCount">0</span></div>
+    <div class="stat-item"><span class="stat-dot empty"></span><span class="stat-label">空位</span><span class="stat-num" id="emptyCount">0</span></div>
+    <div class="stat-item"><span class="stat-label">总人数</span><span class="stat-num" id="totalCount">0</span></div>
+  </div>
+
+  <!-- 工具栏 -->
+  <div class="toolbar">
+    <label>列数：</label>
+    <input type="number" id="colsInput" value="14" min="4" max="20" onchange="rebuildGrid()">
+    <div class="divider"></div>
+    <label>行数：</label>
+    <input type="number" id="rowsInput" value="11" min="3" max="20" onchange="rebuildGrid()">
+    <div class="divider"></div>
+    <label>过道宽(px)：</label>
+    <input type="number" id="aisleInput" value="32" min="0" max="80" onchange="updateAisle()">
+    <div class="divider"></div>
+    <span class="hint">每两列一大组，组间有过道 | 点击座位可编辑 | 拖拽交换位置</span>
+  </div>
+
+  <!-- 座位区域 -->
+  <div class="seat-area">
+    <div class="seat-grid" id="seatGrid"></div>
+  </div>
+</div>
+
+<!-- 随机点名浮窗 -->
+<div class="roll-overlay" id="rollOverlay">
+  <div class="roll-box">
+    <h2>🎲 随机点名中...</h2>
+    <div class="roll-name" id="rollName">点击开始</div>
+    <div class="roll-result" id="rollResult"></div>
+    <div class="roll-actions">
+      <button class="btn btn-success" id="rollBtn" onclick="toggleRoll()">开始滚动</button>
+      <button class="btn btn-danger" onclick="closeRoll()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑弹窗 -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h3>编辑座位</h3>
+    <div class="form-group">
+      <label>姓名</label>
+      <input type="text" id="editName" placeholder="请输入姓名">
+    </div>
+    <div class="form-group">
+      <label>性别</label>
+      <select id="editGender">
+        <option value="男">男</option>
+        <option value="女">女</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="deleteSeat()">删除</button>
+      <button class="btn" style="background:#e0e0e0" onclick="closeEdit()">取消</button>
+      <button class="btn btn-primary" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导入弹窗 -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal" style="min-width:500px">
+    <h3>导入学生名单</h3>
+    <div class="form-group">
+      <label>粘贴名单（每行：姓名,性别 或 姓名 性别）</label>
+      <textarea class="import-area" id="importText" placeholder="示例格式：&#10;陈忠,男&#10;李静,女&#10;张明 男&#10;王芳,女"></textarea>
+      <div class="import-hint">支持逗号、空格分隔，性别为"男"或"女"；也支持每行一个姓名（默认不标性别）</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" style="background:#e0e0e0" onclick="closeImport()">取消</button>
+      <button class="btn btn-success" onclick="doImport()">导入并随机排座</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// 默认名单
+const defaultStudents = [
+  {name:'陈 忠',gender:'男'},{name:'熊顺宏',gender:'男'},{name:'胡绍贵',gender:'男'},{name:'李静',gender:'女'},{name:'向红霞',gender:'女'},{name:'邓婷',gender:'女'},{name:'王方军',gender:'男'},{name:'朱成波',gender:'男'},{name:'谭显斌',gender:'男'},{name:'王淑兰',gender:'女'},{name:'侯 颖',gender:'女'},{name:'郑建平',gender:'男'},{name:'曾银芬',gender:'女'},{name:'张明',gender:'男'},
+  {name:'唐 凌',gender:'男'},{name:'刘毅',gender:'男'},{name:'谭芳',gender:'女'},{name:'谭建霞',gender:'女'},{name:'赵丽丽',gender:'女'},{name:'尹开平',gender:'女'},{name:'王玉仙',gender:'女'},{name:'张传勇',gender:'男'},{name:'马小平',gender:'女'},{name:'罗军',gender:'男'},{name:'邱厚情',gender:'男'},{name:'张小平',gender:'女'},{name:'黄毅',gender:'女'},{name:'陈 俐',gender:'女'},{name:'刘 洋',gender:'男'},{name:'邱述兰',gender:'女'},
+  {name:'崔坤燕',gender:'女'},{name:'谭 静',gender:'女'},{name:'陈代碧',gender:'女'},{name:'曾 祥',gender:'男'},{name:'李小辉',gender:'女'},{name:'伍志成',gender:'男'},{name:'张先海',gender:'男'},{name:'黄远刚',gender:'男'},{name:'彭静',gender:'女'},{name:'郑毛',gender:'男'},{name:'潘勇',gender:'男'},{name:'向均',gender:'男'},{name:'裴 珍',gender:'女'},{name:'万小辉',gender:'女'},{name:'任娅',gender:'女'},{name:'王新星',gender:'女'},
+  {name:'李雪花',gender:'女'},{name:'邓平',gender:'女'},{name:'罗静',gender:'女'},{name:'何文清',gender:'女'},{name:'赵佳芬',gender:'女'},{name:'王爽',gender:'女'},{name:'黄孟华',gender:'男'},{name:'何保山',gender:'男'},{name:'田琼美',gender:'女'},{name:'李 双',gender:'女'},{name:'余 芳',gender:'女'},{name:'万毅',gender:'男'},{name:'刘栋',gender:'男'},{name:'杨明勇',gender:'男'},{name:'刘欣成',gender:'男'},{name:'谭强发',gender:'男'},
+  {name:'游欢',gender:'女'},{name:'赵福琼',gender:'女'},{name:'徐炜',gender:'女'},{name:'陈 丹',gender:'男'},{name:'肖琴',gender:'女'},{name:'张艺',gender:'女'},{name:'胡塽',gender:'女'},{name:'贾 敏',gender:'女'},{name:'邹 运',gender:'女'},{name:'牟利民',gender:'男'},{name:'叶红艳',gender:'女'},{name:'曾 华',gender:'女'},{name:'李春燕',gender:'女'},{name:'何利',gender:'女'},{name:'朱小玲',gender:'女'},{name:'邓年波',gender:'男'},
+  {name:'杨明铭',gender:'女'},{name:'余小兵',gender:'男'},{name:'罗 清',gender:'女'},{name:'何春燕',gender:'女'},{name:'余文慧',gender:'女'},{name:'吴书艳',gender:'女'},{name:'廖代梅',gender:'女'},{name:'易春花',gender:'女'},{name:'周小彦',gender:'女'},{name:'李继生',gender:'女'},{name:'李健',gender:'男'},{name:'张兴培',gender:'女'},{name:'朱石博',gender:'女'},{name:'肖庆英',gender:'女'},{name:'刘小琴',gender:'女'},{name:'肖宏丽',gender:'女'},
+  {name:'黄玉梅',gender:'女'},{name:'张微',gender:'女'},{name:'刘元茂',gender:'女'},{name:'潘仲彬',gender:'男'},{name:'余洪培',gender:'女'},{name:'杨娅玲',gender:'女'},{name:'游家美',gender:'女'},{name:'赵龙菊',gender:'女'},{name:'彭继权',gender:'女'},{name:'周艳',gender:'女'},{name:'颜红莲',gender:'女'},{name:'谢晓洪',gender:'男'},{name:'李春兰',gender:'女'},{name:'黄琳',gender:'女'},{name:'熊伟',gender:'男'},{name:'陈熠',gender:'女'},
+  {name:'陈平',gender:'男'},{name:'杨艳',gender:'女'},{name:'兰黠',gender:'女'},{name:'邓亚飞',gender:'女'},{name:'周作琼',gender:'女'},{name:'邱占东',gender:'男'},{name:'朱静',gender:'女'},{name:'彭淑芬',gender:'女'},{name:'彭冬梅',gender:'女'},{name:'付淼',gender:'女'},{name:'邓小明',gender:'女'},{name:'朱亚军',gender:'女'},{name:'张小刚',gender:'男'},{name:'朱刚',gender:'男'},{name:'刘源',gender:'男'},{name:'朱莉',gender:'女'},
+  {name:'赵 进',gender:'女'},{name:'户 华',gender:'女'},{name:'陈玉竹',gender:'女'},{name:'彭璐',gender:'女'},{name:'陈小平',gender:'男'},{name:'肖华利',gender:'男'},{name:'李学媚',gender:'女'},{name:'胡魁伍',gender:'男'},{name:'周福培',gender:'男'},{name:'吴爱铭',gender:'女'},{name:'王成相',gender:'男'},{name:'卿舟',gender:'女'},{name:'熊炳琴',gender:'女'},{name:'王小燕',gender:'女'},{name:'付 华',gender:'女'},{name:'周 林',gender:'男'},
+  {name:'田 伟',gender:'男'},{name:'贾平芳',gender:'女'},{name:'黄 兰',gender:'女'},{name:'段 勇',gender:'男'},{name:'张明芳',gender:'女'},{name:'廖 志',gender:'男'},{name:'覃发新',gender:'男'},{name:'廖 琼',gender:'女'},{name:'吕凤霞',gender:'女'},{name:'潘 燕',gender:'女'},{name:'杨小丽',gender:'女'},{name:'郑清林',gender:'男'},{name:'张来芳',gender:'女'},{name:'韦 林',gender:'男'},{name:'谢 静',gender:'女'},{name:'游玉云',gender:'女'},
+  {name:'罗文胜',gender:'男'},{name:'杨 颖',gender:'女'},{name:'杨玉祥',gender:'男'},{name:'任 妍',gender:'女'},{name:'朱占超',gender:'女'},{name:'姚江龙',gender:'男'},{name:'廖章秀',gender:'女'}
+];
+
+// 座位二维数组
+let seatGrid = [];
+let cols = 14;
+let rows = 11;
+let editingPos = null;
+
+// 初始化
+function init() {
+  cols = parseInt(document.getElementById('colsInput').value) || 14;
+  rows = parseInt(document.getElementById('rowsInput').value) || 11;
+  // 随机打乱后填入
+  let shuffled = [...defaultStudents];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  seatGrid = [];
+  let idx = 0;
+  for (let r = 0; r < rows; r++) {
+    seatGrid.push([]);
+    for (let c = 0; c < cols; c++) {
+      if (idx < shuffled.length) {
+        seatGrid[r].push({...shuffled[idx]});
+        idx++;
+      } else {
+        seatGrid[r].push(null);
+      }
+    }
+  }
+  renderGrid();
+  updateStats();
+}
+
+// 重建网格（改变行列数时保留已有数据）
+function rebuildGrid() {
+  let newCols = parseInt(document.getElementById('colsInput').value) || 14;
+  let newRows = parseInt(document.getElementById('rowsInput').value) || 11;
+  // 收集现有学生
+  let existing = [];
+  for (let r = 0; r < seatGrid.length; r++) {
+    for (let c = 0; c < seatGrid[r].length; c++) {
+      if (seatGrid[r][c]) existing.push(seatGrid[r][c]);
+    }
+  }
+  cols = newCols;
+  rows = newRows;
+  seatGrid = [];
+  let idx = 0;
+  for (let r = 0; r < rows; r++) {
+    seatGrid.push([]);
+    for (let c = 0; c < cols; c++) {
+      if (idx < existing.length) {
+        seatGrid[r].push(existing[idx]);
+        idx++;
+      } else {
+        seatGrid[r].push(null);
+      }
+    }
+  }
+  renderGrid();
+  updateStats();
+}
+
+// 更新过道宽度
+function updateAisle() {
+  let w = parseInt(document.getElementById('aisleInput').value) || 32;
+  document.querySelectorAll('.aisle').forEach(el => {
+    el.style.width = w + 'px';
+  });
+}
+
+// 渲染座位
+function renderGrid() {
+  const container = document.getElementById('seatGrid');
+  let aisleW = parseInt(document.getElementById('aisleInput').value) || 32;
+
+  // 讲台
+  let html = '<div class="podium">主&nbsp;&nbsp;席&nbsp;&nbsp;台</div>';
+
+  let groupCount = Math.ceil(cols / 2);
+
+  for (let r = 0; r < seatGrid.length; r++) {
+    html += '<div class="seat-row">';
+    for (let g = 0; g < groupCount; g++) {
+      html += '<div class="seat-group">';
+      for (let c = g * 2; c < Math.min(g * 2 + 2, cols); c++) {
+        let stu = seatGrid[r][c];
+        if (stu) {
+          let cls = stu.gender === '男' ? 'seat-cell boy' : 'seat-cell girl';
+          let badge = stu.gender === '男'
+            ? '<span class="gender-badge male">♂</span>'
+            : '<span class="gender-badge female">♀</span>';
+          html += `<div class="${cls}" onclick="openEdit(${r},${c})" draggable="true"
+            ondragstart="dragStart(event,${r},${c})" ondragover="dragOver(event)" ondrop="drop(event,${r},${c})">
+            ${badge}<span class="seat-name">${stu.name}</span></div>`;
+        } else {
+          html += `<div class="seat-cell empty" onclick="openEdit(${r},${c})" draggable="true"
+            ondragover="dragOver(event)" ondrop="drop(event,${r},${c})">
+            <span class="seat-name">+</span></div>`;
+        }
+      }
+      html += '</div>';
+      // 组间过道
+      if (g < groupCount - 1) {
+        html += `<div class="aisle" style="width:${aisleW}px"></div>`;
+      }
+    }
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+// 更新统计
+function updateStats() {
+  let boy = 0, girl = 0, empty = 0;
+  for (let r = 0; r < seatGrid.length; r++) {
+    for (let c = 0; c < seatGrid[r].length; c++) {
+      let s = seatGrid[r][c];
+      if (!s) empty++;
+      else if (s.gender === '男') boy++;
+      else girl++;
+    }
+  }
+  document.getElementById('boyCount').textContent = boy;
+  document.getElementById('girlCount').textContent = girl;
+  document.getElementById('emptyCount').textContent = empty;
+  document.getElementById('totalCount').textContent = boy + girl;
+}
+
+// 拖拽
+let dragData = null;
+function dragStart(e, r, c) {
+  dragData = {r, c};
+  e.target.classList.add('dragging');
+}
+function dragOver(e) {
+  e.preventDefault();
+}
+function drop(e, r, c) {
+  e.preventDefault();
+  if (!dragData) return;
+  // 交换
+  let tmp = seatGrid[r][c];
+  seatGrid[r][c] = seatGrid[dragData.r][dragData.c];
+  seatGrid[dragData.r][dragData.c] = tmp;
+  dragData = null;
+  renderGrid();
+  updateStats();
+}
+
+// 编辑弹窗
+function openEdit(r, c) {
+  editingPos = {r, c};
+  let stu = seatGrid[r][c];
+  if (stu) {
+    document.getElementById('editName').value = stu.name;
+    document.getElementById('editGender').value = stu.gender;
+  } else {
+    document.getElementById('editName').value = '';
+    document.getElementById('editGender').value = '男';
+  }
+  document.getElementById('editModal').classList.add('active');
+}
+function closeEdit() {
+  document.getElementById('editModal').classList.remove('active');
+  editingPos = null;
+}
+function saveEdit() {
+  if (!editingPos) return;
+  let name = document.getElementById('editName').value.trim();
+  let gender = document.getElementById('editGender').value;
+  if (!name) { showToast('请输入姓名'); return; }
+  seatGrid[editingPos.r][editingPos.c] = {name, gender};
+  renderGrid();
+  updateStats();
+  closeEdit();
+  showToast('已保存');
+}
+function deleteSeat() {
+  if (!editingPos) return;
+  seatGrid[editingPos.r][editingPos.c] = null;
+  renderGrid();
+  updateStats();
+  closeEdit();
+  showToast('已删除');
+}
+
+// 随机排座
+function randomShuffle() {
+  let all = [];
+  for (let r = 0; r < seatGrid.length; r++) {
+    for (let c = 0; c < seatGrid[r].length; c++) {
+      if (seatGrid[r][c]) all.push(seatGrid[r][c]);
+    }
+  }
+  for (let i = all.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [all[i], all[j]] = [all[j], all[i]];
+  }
+  let idx = 0;
+  for (let r = 0; r < seatGrid.length; r++) {
+    for (let c = 0; c < seatGrid[r].length; c++) {
+      seatGrid[r][c] = idx < all.length ? all[idx++] : null;
+    }
+  }
+  renderGrid();
+  updateStats();
+  showToast('已随机重新排座');
+}
+
+// 清空
+function clearAll() {
+  if (!confirm('确定要清空所有座位吗？')) return;
+  for (let r = 0; r < seatGrid.length; r++) {
+    for (let c = 0; c < seatGrid[r].length; c++) {
+      seatGrid[r][c] = null;
+    }
+  }
+  renderGrid();
+  updateStats();
+  showToast('已清空');
+}
+
+// 导入
+function openImport() {
+  document.getElementById('importText').value = '';
+  document.getElementById('importModal').classList.add('active');
+}
+function closeImport() {
+  document.getElementById('importModal').classList.remove('active');
+}
+function doImport() {
+  let text = document.getElementById('importText').value.trim();
+  if (!text) { showToast('请粘贴名单'); return; }
+  let lines = text.split('\n');
+  let students = [];
+  for (let line of lines) {
+    line = line.trim();
+    if (!line) continue;
+    // 尝试用逗号或空格分割
+    let parts = line.split(/[,，\s]+/).filter(p => p);
+    if (parts.length >= 2) {
+      let gender = parts[parts.length - 1];
+      if (gender === '男' || gender === '女') {
+        let name = parts.slice(0, -1).join('');
+        students.push({name, gender});
+      } else {
+        students.push({name: parts.join(''), gender: '男'});
+      }
+    } else if (parts.length === 1) {
+      students.push({name: parts[0], gender: '男'});
+    }
+  }
+  if (students.length === 0) { showToast('未解析到有效数据'); return; }
+
+  // 随机打乱
+  for (let i = students.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [students[i], students[j]] = [students[j], students[i]];
+  }
+
+  // 填入座位
+  let idx = 0;
+  for (let r = 0; r < seatGrid.length; r++) {
+    for (let c = 0; c < seatGrid[r].length; c++) {
+      if (idx < students.length) {
+        seatGrid[r][c] = students[idx++];
+      } else {
+        seatGrid[r][c] = null;
+      }
+    }
+  }
+  renderGrid();
+  updateStats();
+  closeImport();
+  showToast(`已导入 ${students.length} 人并随机排座`);
+}
+
+// 导出
+function exportData() {
+  let lines = [];
+  for (let r = 0; r < seatGrid.length; r++) {
+    for (let c = 0; c < seatGrid[r].length; c++) {
+      let s = seatGrid[r][c];
+      if (s) lines.push(`${s.name},${s.gender}`);
+    }
+  }
+  let blob = new Blob([lines.join('\n')], {type: 'text/plain;charset=utf-8'});
+  let a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '座位名单.csv';
+  a.click();
+  showToast('已导出名单');
+}
+
+// 随机点名
+let rolling = false;
+let rollTimer = null;
+let rollStudents = [];
+function startRoll() {
+  rollStudents = [];
+  for (let r = 0; r < seatGrid.length; r++) {
+    for (let c = 0; c < seatGrid[r].length; c++) {
+      if (seatGrid[r][c]) rollStudents.push({...seatGrid[r][c], r, c});
+    }
+  }
+  if (rollStudents.length === 0) { showToast('座位为空，无法点名'); return; }
+  document.getElementById('rollOverlay').classList.add('active');
+  document.getElementById('rollName').textContent = '点击开始';
+  document.getElementById('rollResult').textContent = '';
+  rolling = false;
+  document.getElementById('rollBtn').textContent = '开始滚动';
+}
+
+function toggleRoll() {
+  if (rolling) {
+    // 停止
+    clearInterval(rollTimer);
+    rolling = false;
+    document.getElementById('rollBtn').textContent = '再滚一次';
+    let current = document.getElementById('rollName').textContent;
+    document.getElementById('rollResult').textContent = '✅ 点中：' + current;
+    // 高亮座位
+    document.querySelectorAll('.seat-cell.highlight').forEach(el => el.classList.remove('highlight'));
+    let found = rollStudents.find(s => s.name === current);
+    if (found) {
+      let cells = document.querySelectorAll('.seat-cell');
+      // 找到对应座位并高亮
+      let seatRows = document.querySelectorAll('.seat-row');
+      // 简单方式：遍历所有seat-cell找匹配的
+      document.querySelectorAll('.seat-cell').forEach(el => {
+        let nameEl = el.querySelector('.seat-name');
+        if (nameEl && nameEl.textContent === current) {
+          el.classList.add('highlight');
+          el.scrollIntoView({behavior: 'smooth', block: 'center'});
+        }
+      });
+    }
+  } else {
+    // 开始滚动
+    rolling = true;
+    document.getElementById('rollBtn').textContent = '停止';
+    document.getElementById('rollName').classList.add('rolling');
+    document.getElementById('rollResult').textContent = '';
+    document.querySelectorAll('.seat-cell.highlight').forEach(el => el.classList.remove('highlight'));
+    rollTimer = setInterval(() => {
+      let s = rollStudents[Math.floor(Math.random() * rollStudents.length)];
+      document.getElementById('rollName').textContent = s.name;
+    }, 80);
+  }
+}
+
+function closeRoll() {
+  if (rolling) {
+    clearInterval(rollTimer);
+    rolling = false;
+  }
+  document.getElementById('rollOverlay').classList.remove('active');
+  document.getElementById('rollName').classList.remove('rolling');
+  document.querySelectorAll('.seat-cell.highlight').forEach(el => el.classList.remove('highlight'));
+}
+
+// Toast
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// 关闭弹窗点击外部
+document.getElementById('editModal').addEventListener('click', function(e) {
+  if (e.target === this) closeEdit();
+});
+document.getElementById('importModal').addEventListener('click', function(e) {
+  if (e.target === this) closeImport();
+});
+
+// 启动
+init();
+</script>
+</body>
+</html>

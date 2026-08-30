@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>班级宠物养成积分系统</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --green-deep:#004737;
+  --green-light:#A7DB9A;
+  --green-bg:#DCF5D9;
+  --gold:#FFDE5E;
+  --orange:#FF6421;
+  --blue:#2196F3;
+  --purple:#9C27B0;
+  --silver:#C0C0C0;
+  --bronze:#CD7F32;
+  --card-bg:#fff;
+  --panel-bg:#F8F9F7;
+  --radius:10px;
+  --shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;color:#333;overflow-x:hidden}
+
+/* ===== 顶部导航栏 ===== */
+.top-nav{position:fixed;top:0;left:0;width:100%;height:56px;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:200}
+.top-nav .logo{font-size:18px;font-weight:700;color:var(--green-deep);display:flex;align-items:center;gap:8px}
+.top-nav .logo span{font-size:24px}
+.nav-tabs{display:flex;gap:4px}
+.nav-tab{padding:8px 18px;border:none;border-radius:20px;cursor:pointer;font-size:14px;font-weight:600;background:transparent;color:#666;transition:all .25s}
+.nav-tab.active{background:var(--green-deep);color:#fff}
+.nav-tab:hover:not(.active){background:#e8f5e9}
+.nav-actions{display:flex;gap:8px;align-items:center}
+.nav-btn{padding:6px 14px;border:none;border-radius:16px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s}
+.nav-btn.teacher{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.nav-btn.reset{background:#fff0f0;color:#f44336;border:1px solid #ffcdd2}
+
+/* ===== 主区域 ===== */
+.main-wrap{padding-top:56px;padding-bottom:12px;height:100vh;display:flex;flex-direction:column}
+
+/* ===== 个人模式（上下布局，与原网页左右布局不同） ===== */
+.personal-mode{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px;overflow:hidden}
+
+/* 顶部工具栏 */
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:rgba(255,255,255,0.9);border-radius:var(--radius);padding:8px 12px;box-shadow:var(--shadow)}
+.toolbar .tool-btn{padding:7px 14px;border:none;border-radius:18px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;display:flex;align-items:center;gap:4px}
+.tool-btn.import{background:#E3F2FD;color:#1565C0}
+.tool-btn.feed{background:#FFF3E0;color:#E65100}
+.tool-btn.deduct{background:#FFEBEE;color:#C62828}
+.tool-btn.random{background:#F3E5F5;color:#6A1B9A}
+.tool-btn:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,0.15)}
+.tool-divider{width:1px;height:24px;background:#e0e0e0;margin:0 4px}
+.tool-label{font-size:13px;color:#666;display:flex;align-items:center;gap:4px}
+.tool-select{padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px}
+.tool-checkbox{display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer}
+
+/* 中部：学生网格（占主体） */
+.students-area{flex:1;overflow-y:auto;background:rgba(255,255,255,0.6);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow)}
+.students-grid{display:grid;gap:8px}
+.student-card{background:var(--card-bg);border-radius:var(--radius);padding:10px;text-align:center;cursor:pointer;transition:all .3s;border:2px solid transparent;position:relative;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:space-between}
+.student-card:hover{transform:translateY(-3px);box-shadow:0 6px 16px rgba(0,0,0,0.12)}
+.student-card.selected{border-color:var(--gold);background:#FFFBF0;box-shadow:0 2px 12px rgba(255,222,94,0.3)}
+.student-card.highlighted{border-color:var(--orange);background:#FFF5F0;animation:pulse 1s infinite}
+.student-card.dragging{opacity:.5}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,100,33,0.4)}50%{box-shadow:0 0 0 8px rgba(255,100,33,0)}}
+
+/* 左右加减分按钮 */
+.side-btn{position:absolute;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;border:none;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.side-btn.sub{left:-6px;background:#FFEBEE;color:#f44336}
+.side-btn.add{right:-6px;background:#E8F5E9;color:#4CAF50}
+.side-btn:hover{transform:translateY(-50%) scale(1.15)}
+
+/* 宠物形象 */
+.pet-container{width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:36px;transition:transform .3s cubic-bezier(.175,.885,.32,1.27);position:relative}
+.student-card:hover .pet-container{transform:scale(1.15) translateY(-3px)}
+.pet-container .pet-emoji{filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1))}
+.pet-container .status-bubble{position:absolute;top:-8px;right:-4px;background:#fff;border-radius:8px;padding:1px 5px;font-size:10px;color:var(--orange);display:none;box-shadow:0 1px 4px rgba(0,0,0,0.1);animation:blink 1.5s infinite}
+.student-card.hungry .status-bubble{display:block}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* 学生信息 */
+.student-name{font-size:13px;font-weight:600;color:#333;margin-top:2px}
+.student-level{font-size:11px;color:var(--green-deep);font-weight:700}
+.exp-bar{width:100%;height:5px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-top:4px}
+.exp-fill{height:100%;background:linear-gradient(90deg,#4CAF50,#8BC34A);border-radius:3px;transition:width .5s ease}
+.exp-text{font-size:10px;color:#999;margin-top:2px}
+
+/* 未领养状态 */
+.student-card.unadopted .pet-container{opacity:.4;font-size:28px}
+.student-card.unadopted .pet-container::after{content:'未领养';position:absolute;font-size:10px;color:#999;bottom:-14px}
+
+/* 底部统计栏（与原网页不同，用底部横条代替左侧面板） */
+.stats-bar{display:flex;gap:10px;background:rgba(255,255,255,0.92);border-radius:var(--radius);padding:10px 16px;box-shadow:var(--shadow);align-items:center}
+.stat-item{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:8px;background:#f5f5f5;font-size:13px}
+.stat-item .stat-icon{font-size:16px}
+.stat-item .stat-val{font-weight:700;color:var(--green-deep)}
+.stat-divider{width:1px;height:28px;background:#e0e0e0}
+
+/* 音量检测区 */
+.volume-section{display:flex;align-items:center;gap:10px;flex:1}
+.volume-btn{padding:6px 14px;border:none;border-radius:16px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s}
+.volume-btn.start{background:#4CAF50;color:#fff}
+.volume-btn.stop{background:#f44336;color:#fff;display:none}
+.volume-bar-wrap{flex:1;max-width:200px;height:18px;background:#e0e0e0;border-radius:10px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.1)}
+.volume-fill{height:100%;width:0%;border-radius:10px;background:linear-gradient(90deg,#A7DB9A 0%,#FFDE5E 50%,#FF6421 100%);transition:width .1s}
+.volume-val{font-size:13px;font-weight:700;color:#333;min-width:50px}
+.mode-switch{display:flex;gap:4px;background:#e0e0e0;border-radius:16px;padding:2px}
+.mode-btn{padding:4px 12px;border:none;border-radius:14px;cursor:pointer;font-size:12px;font-weight:600;background:transparent;color:#666;transition:all .2s}
+.mode-btn.active{background:#fff;color:var(--green-deep)}
+
+/* 番茄闹钟按钮 */
+.pomodoro-btn{padding:6px 14px;border:none;border-radius:16px;cursor:pointer;font-size:13px;font-weight:600;background:linear-gradient(135deg,#FF6B35,#F7931E);color:#fff;transition:all .2s}
+.pomodoro-btn:hover{transform:translateY(-2px)}
+
+/* ===== 班级树视图 ===== */
+.tree-mode{flex:1;display:none;flex-direction:column;background:linear-gradient(to bottom,#87CEEB 0%,#E0F7FA 55%,#B5E6A5 55%,#7CB342 100%);border-radius:var(--radius);position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.tree-mode.active{display:flex}
+.tree-scene{flex:1;display:flex;align-items:flex-end;justify-content:center;position:relative;padding-bottom:40px}
+.tree-visual{font-size:180px;line-height:1;filter:drop-shadow(0 10px 20px rgba(0,0,0,0.2));transition:all .5s cubic-bezier(.175,.885,.32,1.27);animation:treeSway 4s ease-in-out infinite}
+@keyframes treeSway{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1deg)}}
+.tree-stage-label{position:absolute;top:20px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.85);padding:8px 24px;border-radius:20px;font-size:16px;font-weight:700;color:var(--green-deep);box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.tree-info-panel{position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.9);padding:14px 20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);backdrop-filter:blur(5px);min-width:180px}
+.tree-info-panel h4{font-size:14px;color:var(--green-deep);margin-bottom:8px}
+.tree-info-row{display:flex;justify-content:space-between;font-size:13px;margin:4px 0}
+.tree-info-row .val{font-weight:700}
+
+/* 云朵装饰 */
+.cloud{position:absolute;font-size:40px;opacity:0.7;animation:cloudFloat 20s linear infinite}
+@keyframes cloudFloat{from{transform:translateX(-100px)}to{transform:translateX(calc(100vw + 100px))}}
+
+/* ===== 排行榜浮窗 ===== */
+.leaderboard-float{position:absolute;left:20px;top:20px;width:220px;max-height:calc(100% - 40px);background:rgba(255,255,255,0.95);border-radius:var(--radius);box-shadow:0 4px 20px rgba(0,0,0,0.15);backdrop-filter:blur(10px);z-index:10;display:flex;flex-direction:column;overflow:hidden}
+.leaderboard-float .lb-header{padding:8px 12px;background:var(--green-deep);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.leaderboard-float .lb-list{overflow-y:auto;max-height:260px;padding:4px}
+.lb-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;transition:background .2s}
+.lb-item:hover{background:#f5f5f5}
+.lb-rank{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.lb-rank.r1{background:var(--gold);color:#333}
+.lb-rank.r2{background:var(--silver);color:#333}
+.lb-rank.r3{background:var(--bronze);color:#fff}
+.lb-rank.other{background:#e0e0e0;color:#666}
+.lb-info{flex:1;min-width:0}
+.lb-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-level{font-size:10px;color:#999}
+.lb-item.collapsed{display:none}
+
+/* ===== 模态框 ===== */
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:1000;animation:fadeIn .3s ease}
+.modal-overlay.show{display:flex}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-box{background:#fff;border-radius:16px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.modal-title{font-size:18px;font-weight:700;color:var(--green-deep);margin-bottom:16px;text-align:center}
+.modal-close{position:absolute;top:12px;right:16px;font-size:24px;cursor:pointer;color:#999;background:none;border:none}
+.modal-actions{display:flex;gap:8px;justify-content:center;margin-top:16px}
+.modal-btn{padding:8px 24px;border:none;border-radius:20px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s}
+.modal-btn.confirm{background:var(--green-deep);color:#fff}
+.modal-btn.cancel{background:#e0e0e0;color:#666}
+
+/* 宠物选择网格 */
+.pet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:10px;padding:8px}
+.pet-option{display:flex;flex-direction:column;align-items:center;padding:10px;border-radius:10px;border:2px solid transparent;cursor:pointer;transition:all .2s;background:#f9f9f9}
+.pet-option:hover{border-color:var(--gold);transform:scale(1.05)}
+.pet-option.selected{border-color:var(--green-deep);background:#E8F5E9}
+.pet-option .pet-emoji-lg{font-size:32px}
+.pet-option .pet-name{font-size:10px;color:#666;margin-top:4px;text-align:center}
+
+/* 教师工作台 */
+.settings-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid #e0e0e0}
+.settings-tab{padding:8px 16px;border:none;background:transparent;cursor:pointer;font-size:14px;font-weight:600;color:#999;border-bottom:2px solid transparent;margin-bottom:-2px}
+.settings-tab.active{color:var(--green-deep);border-bottom-color:var(--green-deep)}
+.settings-content{display:none}
+.settings-content.active{display:block}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:#333;margin-bottom:4px}
+.form-group input,.form-group select{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:14px}
+.form-hint{font-size:11px;color:#999;margin-top:2px}
+
+/* 导入名单 */
+.import-tabs{display:flex;gap:8px;margin-bottom:16px}
+.import-tab{flex:1;padding:10px;border:2px solid #e0e0e0;border-radius:8px;cursor:pointer;text-align:center;font-size:14px;font-weight:600;transition:all .2s}
+.import-tab.active{border-color:var(--green-deep);background:#E8F5E9;color:var(--green-deep)}
+.import-content{display:none}
+.import-content.active{display:block}
+textarea.import-textarea{width:100%;min-height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;resize:vertical}
+
+/* 学生操作面板 */
+.student-ops{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:8px}
+.op-btn{padding:10px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:4px}
+.op-btn.reward{background:#E8F5E9;color:#2E7D32}
+.op-btn.punish{background:#FFEBEE;color:#C62828}
+.op-btn:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,0.1)}
+
+/* 升级动画 */
+.level-up-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(5px)}
+.level-up-overlay.show{display:flex}
+.level-up-content{text-align:center;animation:levelUpBounce .8s cubic-bezier(0.68,-0.55,0.265,1.55);background:radial-gradient(circle,rgba(255,255,255,0.1) 0%,rgba(0,0,0,0) 70%);padding:40px;border-radius:50%}
+@keyframes levelUpBounce{0%{transform:scale(0);opacity:0}70%{transform:scale(1.1);opacity:1}100%{transform:scale(1);opacity:1}}
+.level-up-content .lu-emoji{font-size:80px}
+.level-up-content .lu-title{font-size:28px;font-weight:700;color:var(--gold);text-shadow:0 0 20px rgba(255,222,94,0.6);margin:10px 0}
+.level-up-content .lu-name{font-size:18px;color:#fff;margin:4px 0}
+.level-up-content .lu-stage{font-size:14px;color:#ccc}
+
+/* 能量球 */
+.energy-bubble{position:absolute;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--orange);font-weight:700;font-size:14px;background:rgba(255,255,255,0.9);box-shadow:0 4px 10px rgba(255,100,33,0.3);pointer-events:none;animation:floatUp 2s ease-out forwards;z-index:100}
+@keyframes floatUp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-80px);opacity:0}}
+
+/* 全屏吵闹提醒 */
+.fullscreen-alert{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,0,0,0.3);pointer-events:none;z-index:2000;opacity:0;transition:opacity .3s ease;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.fullscreen-alert.show{opacity:1;animation:shakeRed .5s infinite}
+@keyframes shakeRed{0%,100%{transform:translate(0,0)}25%{transform:translate(-5px,3px)}75%{transform:translate(5px,-3px)}}
+.fullscreen-alert .alert-text{font-size:48px;font-weight:700;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,0.5)}
+
+/* 番茄闹钟全屏 */
+.pomodoro-fullscreen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:9998}
+.pomodoro-fullscreen.show{display:flex}
+.pomodoro-time{font-size:80px;font-weight:700;color:#fff;text-shadow:0 0 30px rgba(255,255,255,0.3)}
+.pomodoro-label{font-size:20px;color:rgba(255,255,255,0.6);margin-bottom:20px}
+.pomodoro-controls{display:flex;gap:12px;margin-top:30px}
+.pomodoro-ctrl-btn{padding:12px 30px;border:none;border-radius:25px;cursor:pointer;font-size:16px;font-weight:600;transition:all .2s}
+.pomodoro-ctrl-btn.start{background:#4CAF50;color:#fff}
+.pomodoro-ctrl-btn.pause{background:#FF9800;color:#fff}
+.pomodoro-ctrl-btn.stop{background:#f44336;color:#fff}
+.pomodoro-ctrl-btn.exit{background:rgba(255,255,255,0.2);color:#fff}
+.pomodoro-times{display:flex;gap:8px;margin-bottom:20px}
+.pomodoro-time-btn{padding:6px 16px;border:2px solid rgba(255,255,255,0.3);border-radius:16px;background:transparent;color:rgba(255,255,255,0.7);cursor:pointer;font-size:13px;font-weight:600;transition:all .2s}
+.pomodoro-time-btn.active{background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.6);color:#fff}
+
+/* 通知 */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);padding:10px 24px;border-radius:20px;font-size:14px;font-weight:600;z-index:3000;opacity:0;transition:all .3s ease;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{background:#4CAF50;color:#fff}
+.toast.warning{background:#FF9800;color:#fff}
+.toast.error{background:#f44336;color:#fff}
+
+/* 隐藏文件输入 */
+#file-input{display:none}
+
+/* 响应式 */
+@media(max-width:768px){
+  .top-nav{padding:0 10px}
+  .top-nav .logo{font-size:14px}
+  .nav-tab{padding:6px 12px;font-size:12px}
+  .stats-bar{flex-wrap:wrap;gap:6px}
+  .stat-item{padding:3px 8px;font-size:12px}
+  .volume-bar-wrap{max-width:120px}
+  .leaderboard-float{width:160px;left:8px;top:8px}
+  .students-grid{grid-template-columns:repeat(3,1fr)!important}
+  .student-card{min-height:140px;padding:6px}
+  .pet-container{width:40px;height:40px;font-size:28px}
+  .student-name{font-size:11px}
+  .toolbar{gap:4px}
+  .tool-btn{padding:5px 10px;font-size:11px}
+  .pomodoro-time{font-size:48px}
+  .fullscreen-alert .alert-text{font-size:28px}
+}
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<div class="top-nav">
+  <div class="logo"><span>🌿</span> 班级宠物养成</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-view="personal">个人模式</button>
+    <button class="nav-tab" data-view="tree">班级神树</button>
+  </div>
+  <div class="nav-actions">
+    <button class="nav-btn teacher" onclick="openSettings()">⚙️ 工作台</button>
+    <button class="nav-btn reset" onclick="resetAll()">重置</button>
+  </div>
+</div>
+
+<!-- 主区域 -->
+<div class="main-wrap">
+  <!-- 个人模式 -->
+  <div class="personal-mode" id="personalMode">
+    <!-- 顶部工具栏 -->
+    <div class="toolbar">
+      <button class="tool-btn import" onclick="openImport()">📋 导入名单</button>
+      <button class="tool-btn feed" onclick="feedAll()">💊 全班喂养</button>
+      <button class="tool-btn deduct" onclick="deductAll()">⬇️ 全班扣除</button>
+      <div class="tool-divider"></div>
+      <label class="tool-checkbox"><input type="checkbox" id="editMode" onchange="toggleEdit()"> 座位编辑</label>
+      <select class="tool-select" id="groupCount" onchange="updateGroups()">
+        <option value="4">4个小组</option>
+        <option value="5">5个小组</option>
+        <option value="6" selected>6个小组</option>
+        <option value="7">7个小组</option>
+        <option value="8">8个小组</option>
+      </select>
+      <button class="tool-btn random" onclick="randomGroup()">🎲 随机分组</button>
+    </div>
+
+    <!-- 学生网格 -->
+    <div class="students-area">
+      <div class="students-grid" id="studentsGrid" style="grid-template-columns:repeat(6,1fr)"></div>
+    </div>
+
+    <!-- 底部统计栏 -->
+    <div class="stats-bar">
+      <!-- 音量检测 -->
+      <div class="volume-section">
+        <button class="volume-btn start" id="startDetection" onclick="startDetection()">🎤 开始检测</button>
+        <button class="volume-btn stop" id="stopDetection" onclick="stopDetection()">⏹ 停止</button>
+        <div class="volume-bar-wrap"><div class="volume-fill" id="volumeFill"></div></div>
+        <span class="volume-val" id="volumeVal">0 dB</span>
+        <div class="mode-switch">
+          <button class="mode-btn active" data-mode="study" onclick="switchMode('study')">📖 自习</button>
+          <button class="mode-btn" data-mode="read" onclick="switchMode('read')">📢 朗读</button>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <!-- 统计 -->
+      <div class="stat-item"><span class="stat-icon">👥</span><span class="stat-val" id="statTotal">0</span>人</div>
+      <div class="stat-item"><span class="stat-icon">⭐</span><span class="stat-val" id="statLevel">0</span>总等级</div>
+      <div class="stat-item"><span class="stat-icon">🔋</span><span class="stat-val" id="statEnergy">0</span>能量</div>
+      <div class="stat-item"><span class="stat-icon">🤫</span><span class="stat-val" id="statQuiet">0</span>秒安静</div>
+      <!-- 番茄闹钟 -->
+      <button class="pomodoro-btn" onclick="openPomodoro()">🍅 番茄闹钟</button>
+    </div>
+  </div>
+
+  <!-- 班级树模式 -->
+  <div class="tree-mode" id="treeMode">
+    <div class="cloud" style="top:10%;animation-duration:25s">☁️</div>
+    <div class="cloud" style="top:25%;animation-duration:35s;animation-delay:-10s">☁️</div>
+    <div class="tree-stage-label" id="treeStageLabel">萌芽期</div>
+    <div class="tree-info-panel">
+      <h4>🌳 班级神树</h4>
+      <div class="tree-info-row"><span>总能量</span><span class="val" id="treeEnergy">0</span></div>
+      <div class="tree-info-row"><span>当前阶段</span><span class="val" id="treeStage">萌芽期</span></div>
+      <div class="tree-info-row"><span>距下一级</span><span class="val" id="treeNext">2</span></div>
+    </div>
+    <div class="tree-scene">
+      <div class="tree-visual" id="treeVisual">🌱</div>
+    </div>
+    <!-- 排行榜（仅在班级神树页面显示） -->
+    <div class="leaderboard-float">
+      <div class="lb-header" onclick="toggleLeaderboard()">
+        <span>👑 成长排行榜</span>
+        <span id="lbToggle">▼</span>
+      </div>
+      <div class="lb-list" id="leaderboardList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 升级动画 -->
+<div class="level-up-overlay" id="levelUpOverlay">
+  <div class="level-up-content">
+    <div class="lu-emoji" id="luEmoji">🎉</div>
+    <div class="lu-title">升级！</div>
+    <div class="lu-name" id="luName"></div>
+    <div class="lu-stage" id="luStage"></div>
+  </div>
+</div>
+
+<!-- 能量球容器 -->
+<div id="energyContainer" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99"></div>
+
+<!-- 全屏吵闹提醒 -->
+<div class="fullscreen-alert" id="fullscreenAlert">
+  <div class="alert-text">🤫 教室太吵了！</div>
+</div>
+
+<!-- 番茄闹钟全屏 -->
+<div class="pomodoro-fullscreen" id="pomodoroFs">
+  <div class="pomodoro-label">🍅 专注倒计时</div>
+  <div class="pomodoro-times">
+    <button class="pomodoro-time-btn" data-min="15" onclick="setPomodoroTime(15)">15分钟</button>
+    <button class="pomodoro-time-btn active" data-min="25" onclick="setPomodoroTime(25)">25分钟</button>
+    <button class="pomodoro-time-btn" data-min="45" onclick="setPomodoroTime(45)">45分钟</button>
+  </div>
+  <div class="pomodoro-time" id="pomodoroTime">25:00</div>
+  <div class="pomodoro-controls">
+    <button class="pomodoro-ctrl-btn start" id="pomoStart" onclick="startPomodoro()">开始</button>
+    <button class="pomodoro-ctrl-btn pause" id="pomoPause" onclick="pausePomodoro()" style="display:none">暂停</button>
+    <button class="pomodoro-ctrl-btn stop" onclick="stopPomodoro()">停止</button>
+    <button class="pomodoro-ctrl-btn exit" onclick="exitPomodoro()">退出</button>
+  </div>
+</div>
+
+<!-- 通知 -->
+<div class="toast" id="toast"></div>
+
+<!-- 文件输入 -->
+<input type="file" id="file-input" accept=".txt">
+
+<!-- ===== 模态框 ===== -->
+
+<!-- 宠物选择 -->
+<div class="modal-overlay" id="petModal">
+  <div class="modal-box" style="position:relative">
+    <button class="modal-close" onclick="closeModal('petModal')">×</button>
+    <div class="modal-title">🐾 领养你的专属宠物</div>
+    <p style="text-align:center;font-size:13px;color:#999;margin-bottom:12px">选择一个伙伴，它将随着你的进步而进化！</p>
+    <div class="pet-grid" id="petGrid"></div>
+    <div class="modal-actions">
+      <button class="modal-btn confirm" onclick="confirmPet()">确认领取</button>
+      <button class="modal-btn cancel" onclick="closeModal('petModal')">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 学生操作面板 -->
+<div class="modal-overlay" id="studentModal">
+  <div class="modal-box" style="position:relative;max-width:400px">
+    <button class="modal-close" onclick="closeModal('studentModal')">×</button>
+    <div class="modal-title" id="studentModalTitle">学生操作</div>
+    <div style="text-align:center;margin-bottom:12px">
+      <div style="font-size:48px" id="studentModalPet">🐱</div>
+      <div style="font-size:16px;font-weight:600;margin-top:4px" id="studentModalName"></div>
+      <div style="font-size:12px;color:#999" id="studentModalInfo"></div>
+    </div>
+    <div class="student-ops">
+      <button class="op-btn reward" onclick="addExpToSelected(5)">考试优秀 +5</button>
+      <button class="op-btn reward" onclick="addExpToSelected(3)">作业完成 +3</button>
+      <button class="op-btn reward" onclick="addExpToSelected(2)">积极发言 +2</button>
+      <button class="op-btn reward" onclick="addExpToSelected(1)">表现良好 +1</button>
+      <button class="op-btn punish" onclick="addExpToSelected(-5)">课堂吵闹 -5</button>
+      <button class="op-btn punish" onclick="addExpToSelected(-3)">未交作业 -3</button>
+      <button class="op-btn punish" onclick="addExpToSelected(-2)">上课走神 -2</button>
+      <button class="op-btn punish" onclick="addExpToSelected(-1)">坐姿不端 -1</button>
+    </div>
+    <div class="modal-actions">
+      <button class="op-btn reward" style="width:100%" onclick="levelUpManual()">⬆️ 手动升级</button>
+    </div>
+  </div>
+</div>
+
+<!-- 教师工作台 -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-box" style="position:relative;max-width:480px">
+    <button class="modal-close" onclick="closeModal('settingsModal')">×</button>
+    <div class="modal-title">⚙️ 教师工作台</div>
+    <div class="settings-tabs">
+      <button class="settings-tab active" onclick="switchSettingsTab('basic')">基础规则</button>
+      <button class="settings-tab" onclick="switchSettingsTab('reward')">奖惩机制</button>
+      <button class="settings-tab" onclick="switchSettingsTab('system')">系统管理</button>
+    </div>
+    <div class="settings-content active" id="tab-basic">
+      <div class="form-group">
+        <label>📢 报警阈值 (dB)</label>
+        <input type="number" id="setThreshold" min="10" max="100" value="30">
+        <div class="form-hint">超过此音量将被判定为吵闹（建议：自习30，讨论60）</div>
+      </div>
+      <div class="form-group">
+        <label>🤫 安静加分周期 (秒)</label>
+        <input type="number" id="setQuietDuration" min="5" max="300" value="30">
+        <div class="form-hint">持续安静多久后自动获得经验奖励</div>
+      </div>
+      <div class="form-group">
+        <label>⚠️ 吵闹容忍时长 (秒)</label>
+        <input type="number" id="setPunishDuration" min="5" max="300" value="15">
+        <div class="form-hint">持续吵闹多久后触发惩罚</div>
+      </div>
+    </div>
+    <div class="settings-content" id="tab-reward">
+      <div class="form-group">
+        <label>🎁 每次奖励经验值</label>
+        <input type="number" id="setExpReward" min="1" max="100" value="10">
+      </div>
+      <div class="form-group">
+        <label>⚡ 每次惩罚经验值</label>
+        <input type="number" id="setExpPunish" min="1" max="100" value="5">
+      </div>
+      <div class="form-group">
+        <label>🆙 升级难度系数</label>
+        <select id="setLevelDifficulty">
+          <option value="50">简单 (50xp/级)</option>
+          <option value="100" selected>标准 (100xp/级)</option>
+          <option value="200">困难 (200xp/级)</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-content" id="tab-system">
+      <div class="form-group">
+        <label>🪑 座位列数</label>
+        <select id="setColumnCount">
+          <option value="4">4列</option>
+          <option value="5">5列</option>
+          <option value="6" selected>6列</option>
+          <option value="7">7列</option>
+          <option value="8">8列</option>
+          <option value="9">9列</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>🎤 麦克风灵敏度</label>
+        <input type="number" id="setMicSensitivity" min="0.5" max="2" step="0.1" value="1">
+      </div>
+      <div class="form-group">
+        <label>📚 当前学科</label>
+        <select id="setTeacher">
+          <option value="chinese" selected>语文</option>
+          <option value="math">数学</option>
+          <option value="english">英语</option>
+          <option value="science">科学</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>⚠️ 危险操作</label>
+        <button class="modal-btn cancel" style="width:100%" onclick="resetAll()">重置当前学科所有进度</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn confirm" onclick="saveSettings()">保存设置</button>
+      <button class="modal-btn cancel" onclick="closeModal('settingsModal')">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导入名单 -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal-box" style="position:relative;max-width:450px">
+    <button class="modal-close" onclick="closeModal('importModal')">×</button>
+    <div class="modal-title">📋 导入学生名单</div>
+    <div class="import-tabs">
+      <div class="import-tab active" onclick="switchImportTab('file')">📁 上传文件</div>
+      <div class="import-tab" onclick="switchImportTab('paste')">✏️ 粘贴姓名</div>
+    </div>
+    <div class="import-content active" id="import-file">
+      <p style="text-align:center;font-size:13px;color:#999;margin-bottom:12px">支持 .txt 文件，每行一个学生姓名</p>
+      <button class="modal-btn confirm" style="width:100%" onclick="document.getElementById('file-input').click()">选择文件</button>
+    </div>
+    <div class="import-content" id="import-paste">
+      <textarea class="import-textarea" id="pasteText" placeholder="每行一个学生姓名&#10;例如：&#10;张三&#10;李四&#10;王五"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn confirm" onclick="confirmImport()">确认导入</button>
+      <button class="modal-btn cancel" onclick="closeModal('importModal')">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 宠物配置 =====
+var PET_TYPES = [
+  {id:'phoenix',name:'涅槃神凤',emoji:'🔥',stages:['🐤','🐦','🦅','🔥','🕊️','🔥']},
+  {id:'penguin',name:'永冬之主',emoji:'🐧',stages:['🥚','🐧','🐧','❄️','🧊','👑']},
+  {id:'darkking',name:'暗夜之王',emoji:'🦇',stages:['🌙','🦇','🐺','🌑','⚡','👑']},
+  {id:'wolf',name:'天狼星君',emoji:'🐺',stages:['🐶','🐺','🐕','⭐','🌟','✨']},
+  {id:'dragon',name:'太古祖龙',emoji:'🐉',stages:['🦎','🐍','🐲','🐉','🌊','🌋']},
+  {id:'deer',name:'月神灵鹿',emoji:'🦌',stages:['🦌','🌙','✨','🦌','💫','🌕']},
+  {id:'wind',name:'风神',emoji:'💨',stages:['🍃','💨','🌪️','🌤️','🌈','☀️']},
+  {id:'monkey',name:'斗战胜佛',emoji:'🐵',stages:['🐵','🐒','🪝','⚔️','🛡️','👑']},
+  {id:'fox',name:'九尾天狐',emoji:'🦊',stages:['🦊','🦊','🌟','✨','🔥','🦊']},
+  {id:'sunbird',name:'太阳神鸟',emoji:'☀️',stages:['🌤️','☀️','🌅','🌞','💫','🌅']},
+  {id:'nature',name:'自然女神',emoji:'🌿',stages:['🌱','🌿','🌸','🌷','🌹','🌺']},
+  {id:'lava',name:'焚天龙皇',emoji:'🌋',stages:'🔥🐉🌊🌋🔥🌋'.match(/./u)?['🦎','🔥','🐲','🌋','🐉','🔥']:['🔥','🌋','🐉','🔥','🌋','🔥']},
+  {id:'ocean',name:'海洋之主',emoji:'🌊',stages:['🫧','💧','🌊','🐚','🦈','🐳']},
+  {id:'thunder',name:'雷霆主宰',emoji:'⚡',stages:['⚡','🌩️','⚡','⛈️','⚡','👑']},
+  {id:'moon',name:'太阴星君',emoji:'🌙',stages:['🌑','🌒','🌓','🌕','🌙','⭐']},
+  {id:'whale',name:'创世鲲鹏',emoji:'🐋',stages:['🐟','🐠','🐡','🦈','🐋','🐉']},
+  {id:'mech',name:'战争要塞',emoji:'🤖',stages:['🔩','⚙️','🤖','🖥️','📡','🛡️']},
+  {id:'goldmech',name:'终极机神',emoji:'🦾',stages:['⚙️','🤖','🦾','💎','🌟','👑']},
+  {id:'snake',name:'万蛇之母',emoji:'🐍',stages:['🪱','🐍','🐉','🌿','🌊','👑']}
+];
+
+// 班级树阶段
+var TREE_STAGES = [
+  {min:0,max:2,emoji:'🌱',name:'萌芽期'},
+  {min:3,max:5,emoji:'🌿',name:'幼苗期'},
+  {min:6,max:10,emoji:'🌲',name:'小树期'},
+  {min:11,max:20,emoji:'🌳',name:'成长期'},
+  {min:21,max:40,emoji:'🌴',name:'强壮期'},
+  {min:41,max:60,emoji:'🌸',name:'繁花期'},
+  {min:61,max:80,emoji:'🍎',name:'硕果期'},
+  {min:81,max:9999,emoji:'🏆',name:'神树期'}
+];
+
+// ===== 默认学生名单 =====
+var DEFAULT_STUDENTS = [
+  '许晨曦','沈悦然','钱柏舟','秦若冰','韩逸尘','邓书瑶',
+  '冯慕言','曹亦泽','彭楚航','蒋睿涵','谢知予','邹锦程',
+  '严思远','苏婉清','魏子渊','薛明轩','阎晓星','余慕安',
+  '顾清和','潘子衿','钟语桐','汪靖琪','秦朗','白沐阳',
+  '夏知秋','柳清扬','姜晚星','叶舟','于归','段景行'
+];
+
+// ===== 全局状态 =====
+var students = [];
+var settings = {
+  volumeThreshold: 30,
+  timerDuration: 30,
+  punishDuration: 15,
+  expReward: 10,
+  expPunish: 5,
+  levelDifficulty: 100,
+  columnCount: 6,
+  micSensitivity: 1,
+  mode: 'study',
+  currentTeacher: 'chinese'
+};
+var columnCount = 6;
+var totalQuietTime = 0;
+var classTree = { totalEnergy: 0 };
+var selectedStudentId = null;
+var selectedPetId = null;
+var leaderboardCollapsed = false;
+
+// 音量检测
+var audioContext = null;
+var analyser = null;
+var microphone = null;
+var stream = null;
+var dataArray = null;
+var isDetecting = false;
+var lastFrameTime = 0;
+var currentVolume = 0;
+var quietStartTime = null;
+var noisyStartTime = null;
+var quietTimer = 0;
+var noisyTimer = 0;
+var virtualQuietTime = 0;
+
+// 番茄闹钟
+var pomoDuration = 25 * 60;
+var pomoRemaining = 25 * 60;
+var pomoInterval = null;
+var pomoRunning = false;
+
+// ===== 初始化 =====
+function init() {
+  loadData();
+  if (students.length === 0) {
+    students = DEFAULT_STUDENTS.map(function(name, i) {
+      return {
+        id: i + 1,
+        name: name,
+        exp: 0,
+        level: 1,
+        petId: null,
+        totalScore: 0
+      };
+    });
+    saveData();
+  }
+  renderStudents();
+  updateStats();
+  updateLeaderboard();
+  updateClassTree();
+  updateGroups();
+  bindEvents();
+}
+
+// ===== 数据持久化 =====
+function saveData() {
+  try {
+    var data = {
+      students: students,
+      settings: settings,
+      columnCount: columnCount,
+      totalQuietTime: totalQuietTime,
+      classTree: classTree,
+      timestamp: Date.now()
+    };
+    var key = 'quietTreeGameData_' + settings.currentTeacher;
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch(e) {}
+}
+
+function loadData() {
+  try {
+    var key = 'quietTreeGameData_' + settings.currentTeacher;
+    var raw = localStorage.getItem(key);
+    if (raw) {
+      var data = JSON.parse(raw);
+      students = data.students || [];
+      settings = Object.assign(settings, data.settings || {});
+      columnCount = data.columnCount || 6;
+      totalQuietTime = data.totalQuietTime || 0;
+      classTree = data.classTree || { totalEnergy: 0 };
+    }
+  } catch(e) {}
+}
+
+// ===== 渲染学生 =====
+function renderStudents() {
+  var grid = document.getElementById('studentsGrid');
+  grid.style.gridTemplateColumns = 'repeat(' + columnCount + ', 1fr)';
+  grid.innerHTML = '';
+
+  students.forEach(function(s, idx) {
+    var card = document.createElement('div');
+    card.className = 'student-card' + (s.petId ? '' : ' unadopted');
+    card.setAttribute('data-student-id', s.id);
+    card.setAttribute('draggable', document.getElementById('editMode') && document.getElementById('editMode').checked ? 'true' : 'false');
+
+    var pet = s.petId ? getPetById(s.petId) : null;
+    var stageIdx = Math.min(s.level - 1, 5);
+    var petEmoji = pet ? pet.stages[stageIdx] : '❓';
+    var expPercent = (s.exp % settings.levelDifficulty) / settings.levelDifficulty * 100;
+
+    card.innerHTML =
+      '<button class="side-btn sub" onclick="event.stopPropagation();addExp(' + s.id + ',' + (-settings.expPunish) + ')">−</button>' +
+      '<button class="side-btn add" onclick="event.stopPropagation();addExp(' + s.id + ',' + settings.expReward + ')">+</button>' +
+      '<div class="pet-container">' +
+        '<span class="pet-emoji">' + petEmoji + '</span>' +
+        '<span class="status-bubble">饿</span>' +
+      '</div>' +
+      '<div class="student-name">' + s.name + '</div>' +
+      '<div class="student-level">Lv.' + s.level + '</div>' +
+      '<div class="exp-bar"><div class="exp-fill" style="width:' + expPercent + '%"></div></div>' +
+      '<div class="exp-text">' + (s.exp % settings.levelDifficulty) + '/' + settings.levelDifficulty + '</div>';
+
+    card.onclick = function() { openStudentPanel(s.id); };
+
+    // 拖拽
+    card.addEventListener('dragstart', function(e) {
+      if (!document.getElementById('editMode').checked) return;
+      e.dataTransfer.setData('text', s.id);
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', function() {
+      card.classList.remove('dragging');
+    });
+    card.addEventListener('dragover', function(e) {
+      e.preventDefault();
+    });
+    card.addEventListener('drop', function(e) {
+      e.preventDefault();
+      var fromId = parseInt(e.dataTransfer.getData('text'));
+      var toId = s.id;
+      if (fromId !== toId) {
+        swapStudents(fromId, toId);
+      }
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+// ===== 获取宠物 =====
+function getPetById(id) {
+  for (var i = 0; i < PET_TYPES.length; i++) {
+    if (PET_TYPES[i].id === id) return PET_TYPES[i];
+  }
+  return null;
+}
+
+// ===== 加减经验 =====
+function addExp(studentId, amount) {
+  for (var i = 0; i < students.length; i++) {
+    if (students[i].id === studentId) {
+      students[i].exp += amount;
+      students[i].totalScore += amount;
+      if (students[i].exp < 0) students[i].exp = 0;
+
+      // 检查升级
+      while (students[i].exp >= students[i].level * settings.levelDifficulty) {
+        students[i].exp -= students[i].level * settings.levelDifficulty;
+        students[i].level++;
+        showLevelUp(students[i]);
+      }
+
+      // 能量球
+      if (amount > 0) {
+        showEnergyBubble(studentId, '+' + amount);
+      }
+
+      // 班级树能量
+      classTree.totalEnergy = Math.max(0, classTree.totalEnergy + Math.floor(amount / 10));
+      if (classTree.totalEnergy > 100) classTree.totalEnergy = 100;
+
+      break;
+    }
+  }
+  saveData();
+  renderStudents();
+  updateStats();
+  updateLeaderboard();
+  updateClassTree();
+}
+
+function addExpToSelected(amount) {
+  if (selectedStudentId) {
+    addExp(selectedStudentId, amount);
+    // 更新弹窗信息
+    var s = students.find(function(st) { return st.id === selectedStudentId; });
+    if (s) {
+      var pet = s.petId ? getPetById(s.petId) : null;
+      var stageIdx = Math.min(s.level - 1, 5);
+      document.getElementById('studentModalPet').textContent = pet ? pet.stages[stageIdx] : '❓';
+      document.getElementById('studentModalInfo').textContent = 'Lv.' + s.level + ' | 经验: ' + s.exp + ' | 总分: ' + s.totalScore;
+    }
+  }
+}
+
+function levelUpManual() {
+  if (selectedStudentId) {
+    var s = students.find(function(st) { return st.id === selectedStudentId; });
+    if (s) {
+      var needed = s.level * settings.levelDifficulty - s.exp;
+      addExp(selectedStudentId, needed);
+    }
+  }
+}
+
+// ===== 全班操作 =====
+function feedAll() {
+  students.forEach(function(s) { s.exp += settings.expReward; s.totalScore += settings.expReward; });
+  // 批量检查升级
+  students.forEach(function(s) {
+    while (s.exp >= s.level * settings.levelDifficulty) {
+      s.exp -= s.level * settings.levelDifficulty;
+      s.level++;
+    }
+  });
+  classTree.totalEnergy = Math.min(100, classTree.totalEnergy + students.length);
+  saveData();
+  renderStudents();
+  updateStats();
+  updateLeaderboard();
+  updateClassTree();
+  showToast('全班喂养完成！', 'success');
+}
+
+function deductAll() {
+  students.forEach(function(s) {
+    s.exp -= settings.expPunish;
+    if (s.exp < 0) s.exp = 0;
+    s.totalScore -= settings.expPunish;
+  });
+  saveData();
+  renderStudents();
+  updateStats();
+  updateLeaderboard();
+  updateClassTree();
+  showToast('全班扣除完成！', 'warning');
+}
+
+// ===== 升级动画 =====
+function showLevelUp(student) {
+  var pet = student.petId ? getPetById(student.petId) : null;
+  var stageIdx = Math.min(student.level - 1, 5);
+  var overlay = document.getElementById('levelUpOverlay');
+  document.getElementById('luEmoji').textContent = pet ? pet.stages[stageIdx] : '🎉';
+  document.getElementById('luName').textContent = student.name + ' 升到 Lv.' + student.level;
+  document.getElementById('luStage').textContent = pet ? pet.name + ' · ' + (stageIdx + 1) + '阶' : '';
+  overlay.classList.add('show');
+  setTimeout(function() { overlay.classList.remove('show'); }, 2000);
+}
+
+// ===== 能量球 =====
+function showEnergyBubble(studentId, text) {
+  var card = document.querySelector('[data-student-id="' + studentId + '"]');
+  if (!card) return;
+  var rect = card.getBoundingClientRect();
+  var bubble = document.createElement('div');
+  bubble.className = 'energy-bubble';
+  bubble.textContent = text;
+  bubble.style.left = (rect.left + rect.width / 2 - 25) + 'px';
+  bubble.style.top = (rect.top + rect.height / 2) + 'px';
+  document.getElementById('energyContainer').appendChild(bubble);
+  setTimeout(function() { bubble.remove(); }, 2000);
+}
+
+// ===== 学生操作面板 =====
+function openStudentPanel(id) {
+  selectedStudentId = id;
+  var s = students.find(function(st) { return st.id === id; });
+  if (!s) return;
+
+  var pet = s.petId ? getPetById(s.petId) : null;
+  var stageIdx = Math.min(s.level - 1, 5);
+
+  document.getElementById('studentModalTitle').textContent = s.name;
+  document.getElementById('studentModalPet').textContent = pet ? pet.stages[stageIdx] : '❓';
+  document.getElementById('studentModalName').textContent = (pet ? pet.name : '未领养') + ' Lv.' + s.level;
+  document.getElementById('studentModalInfo').textContent = '经验: ' + s.exp + ' | 总分: ' + s.totalScore;
+
+  if (!s.petId) {
+    // 未领养，显示宠物选择
+    closeModal('studentModal');
+    openPetModal(id);
+  } else {
+    document.getElementById('studentModal').classList.add('show');
+  }
+}
+
+// ===== 宠物选择 =====
+function openPetModal(studentId) {
+  selectedStudentId = studentId;
+  var grid = document.getElementById('petGrid');
+  grid.innerHTML = '';
+  PET_TYPES.forEach(function(pet) {
+    var div = document.createElement('div');
+    div.className = 'pet-option';
+    div.setAttribute('data-pet-id', pet.id);
+    div.innerHTML = '<div class="pet-emoji-lg">' + pet.emoji + '</div><div class="pet-name">' + pet.name + '</div>';
+    div.onclick = function() {
+      document.querySelectorAll('.pet-option').forEach(function(el) { el.classList.remove('selected'); });
+      div.classList.add('selected');
+      selectedPetId = pet.id;
+    };
+    grid.appendChild(div);
+  });
+  document.getElementById('petModal').classList.add('show');
+}
+
+function confirmPet() {
+  if (!selectedPetId || !selectedStudentId) return;
+  var s = students.find(function(st) { return st.id === selectedStudentId; });
+  if (s) {
+    s.petId = selectedPetId;
+    saveData();
+    renderStudents();
+    showToast('领养成功！', 'success');
+  }
+  closeModal('petModal');
+  selectedPetId = null;
+}
+
+// ===== 统计 =====
+function updateStats() {
+  document.getElementById('statTotal').textContent = students.length;
+  var totalLevel = students.reduce(function(sum, s) { return sum + s.level; }, 0);
+  document.getElementById('statLevel').textContent = totalLevel;
+  document.getElementById('statEnergy').textContent = Math.floor(classTree.totalEnergy || 0);
+  document.getElementById('statQuiet').textContent = Math.floor(totalQuietTime);
+}
+
+// ===== 排行榜 =====
+function updateLeaderboard() {
+  var sorted = students.slice().sort(function(a, b) { return b.level - a.level || b.exp - a.exp; });
+  var list = document.getElementById('leaderboardList');
+  list.innerHTML = '';
+  sorted.forEach(function(s, i) {
+    var rank = i + 1;
+    var rankClass = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'other';
+    var pet = s.petId ? getPetById(s.petId) : null;
+    var stageIdx = Math.min(s.level - 1, 5);
+    var emoji = pet ? pet.stages[stageIdx] : '❓';
+    var item = document.createElement('div');
+    item.className = 'lb-item' + (rank > 5 && leaderboardCollapsed ? ' collapsed' : '');
+    item.innerHTML =
+      '<div class="lb-rank ' + rankClass + '">' + rank + '</div>' +
+      '<div class="lb-info">' +
+        '<div class="lb-name">' + emoji + ' ' + s.name + '</div>' +
+        '<div class="lb-level">Lv.' + s.level + ' | ' + s.exp + 'xp</div>' +
+      '</div>';
+    list.appendChild(item);
+  });
+}
+
+function toggleLeaderboard() {
+  leaderboardCollapsed = !leaderboardCollapsed;
+  document.getElementById('lbToggle').textContent = leaderboardCollapsed ? '▲' : '▼';
+  updateLeaderboard();
+}
+
+// ===== 班级树 =====
+function updateClassTree() {
+  var energy = Math.floor(classTree.totalEnergy || 0);
+  var stage = TREE_STAGES[0];
+  for (var i = 0; i < TREE_STAGES.length; i++) {
+    if (energy >= TREE_STAGES[i].min && energy <= TREE_STAGES[i].max) {
+      stage = TREE_STAGES[i];
+      break;
+    }
+  }
+  document.getElementById('treeVisual').textContent = stage.emoji;
+  document.getElementById('treeStageLabel').textContent = stage.name;
+  document.getElementById('treeStage').textContent = stage.name;
+  document.getElementById('treeEnergy').textContent = energy;
+
+  // 距下一级
+  var nextStage = null;
+  for (var j = 0; j < TREE_STAGES.length; j++) {
+    if (TREE_STAGES[j].min > energy) {
+      nextStage = TREE_STAGES[j];
+      break;
+    }
+  }
+  document.getElementById('treeNext').textContent = nextStage ? (nextStage.min - energy) : '已满级';
+}
+
+// ===== 小组 =====
+function updateGroups() {
+  var gc = parseInt(document.getElementById('groupCount').value) || 6;
+  // 小组数据更新（视觉上暂不单独展示，座位编辑时可用）
+}
+
+function randomGroup() {
+  // 随机打乱学生顺序
+  for (var i = students.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = students[i];
+    students[i] = students[j];
+    students[j] = tmp;
+  }
+  // 重新分配ID保持引用
+  students.forEach(function(s, i) { s.id = i + 1; });
+  saveData();
+  renderStudents();
+  showToast('随机分组完成！', 'success');
+}
+
+// ===== 座位编辑 =====
+function toggleEdit() {
+  var checked = document.getElementById('editMode').checked;
+  document.querySelectorAll('.student-card').forEach(function(c) {
+    c.setAttribute('draggable', checked ? 'true' : 'false');
+  });
+  showToast(checked ? '座位编辑已开启，可拖拽调整' : '座位编辑已关闭', 'success');
+}
+
+function swapStudents(fromId, toId) {
+  var fromIdx = students.findIndex(function(s) { return s.id === fromId; });
+  var toIdx = students.findIndex(function(s) { return s.id === toId; });
+  if (fromIdx >= 0 && toIdx >= 0) {
+    var tmp = students[fromIdx];
+    students[fromIdx] = students[toIdx];
+    students[toIdx] = tmp;
+    saveData();
+    renderStudents();
+  }
+}
+
+// ===== 音量检测 =====
+function startDetection() {
+  try {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(s) {
+      stream = s;
+      microphone = audioContext.createMediaStreamSource(stream);
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      microphone.connect(analyser);
+      dataArray = new Uint8Array(analyser.frequencyBinCount);
+      isDetecting = true;
+      lastFrameTime = Date.now();
+      document.getElementById('startDetection').style.display = 'none';
+      document.getElementById('stopDetection').style.display = 'inline-block';
+      detectVolume();
+      showToast('开始音量检测', 'success');
+    }).catch(function(err) {
+      showToast('无法访问麦克风，请检查权限', 'warning');
+    });
+  } catch(e) {
+    showToast('浏览器不支持音量检测', 'error');
+  }
+}
+
+function stopDetection() {
+  isDetecting = false;
+  if (audioContext) { audioContext.close(); audioContext = null; }
+  if (stream) { stream.getTracks().forEach(function(t) { t.stop(); }); stream = null; }
+  document.getElementById('startDetection').style.display = 'inline-block';
+  document.getElementById('stopDetection').style.display = 'none';
+  document.getElementById('volumeFill').style.width = '0%';
+  document.getElementById('volumeVal').textContent = '0 dB';
+  quietStartTime = null;
+  noisyStartTime = null;
+  quietTimer = 0;
+  noisyTimer = 0;
+  hideAlert();
+  showToast('停止音量检测', 'success');
+}
+
+function detectVolume() {
+  if (!isDetecting) return;
+  var now = Date.now();
+  var deltaTime = (now - lastFrameTime) / 1000;
+  lastFrameTime = now;
+
+  analyser.getByteFrequencyData(dataArray);
+
+  var sum = 0;
+  for (var i = 0; i < dataArray.length; i++) {
+    sum += dataArray[i] * dataArray[i];
+  }
+  var rms = Math.sqrt(sum / dataArray.length);
+
+  var db = 0;
+  if (rms > 0) {
+    db = Math.round(20 * Math.log10(rms) + 10);
+  }
+  currentVolume = Math.max(0, Math.min(120, Math.round(db * settings.micSensitivity)));
+
+  // 更新UI
+  var percent = Math.min(100, currentVolume);
+  document.getElementById('volumeFill').style.width = percent + '%';
+  document.getElementById('volumeVal').textContent = currentVolume + ' dB';
+
+  processVolumeLogic(deltaTime);
+
+  requestAnimationFrame(detectVolume);
+}
+
+function processVolumeLogic(deltaTime) {
+  var threshold = settings.volumeThreshold;
+  if (settings.mode === 'study') {
+    processStudyMode(threshold, deltaTime);
+  } else {
+    processReadMode(threshold, deltaTime);
+  }
+}
+
+function processStudyMode(threshold, deltaTime) {
+  if (currentVolume < threshold) {
+    // 安静
+    if (quietStartTime === null) {
+      quietStartTime = Date.now();
+      noisyStartTime = null;
+      noisyTimer = 0;
+      hideAlert();
+    }
+    quietTimer = Math.floor((Date.now() - quietStartTime) / 1000);
+    if (deltaTime > 0 && deltaTime < 1) totalQuietTime += deltaTime;
+
+    var diff = Math.max(0, threshold - currentVolume);
+    var speedFactor = 1 + (diff / threshold) * 1.5;
+    virtualQuietTime += deltaTime * speedFactor;
+
+    // 安静达标奖励
+    if (virtualQuietTime >= settings.timerDuration) {
+      virtualQuietTime = 0;
+      // 全班奖励
+      students.forEach(function(s) {
+        s.exp += settings.expReward;
+        s.totalScore += settings.expReward;
+        while (s.exp >= s.level * settings.levelDifficulty) {
+          s.exp -= s.level * settings.levelDifficulty;
+          s.level++;
+        }
+      });
+      classTree.totalEnergy = Math.min(100, classTree.totalEnergy + 5);
+      renderStudents();
+      updateStats();
+      updateLeaderboard();
+      updateClassTree();
+      saveData();
+      showToast('安静奖励！全班 +' + settings.expReward + ' 经验', 'success');
+    }
+  } else {
+    // 吵闹
+    if (noisyStartTime === null) {
+      noisyStartTime = Date.now();
+      quietStartTime = null;
+      virtualQuietTime = 0;
+    }
+    noisyTimer = Math.floor((Date.now() - noisyStartTime) / 1000);
+
+    if (noisyTimer >= settings.punishDuration) {
+      showAlert();
+      // 全班惩罚
+      students.forEach(function(s) {
+        s.exp -= settings.expPunish;
+        if (s.exp < 0) s.exp = 0;
+        s.totalScore -= settings.expPunish;
+      });
+      classTree.totalEnergy = Math.max(0, classTree.totalEnergy - 2);
+      renderStudents();
+      updateStats();
+      updateLeaderboard();
+      updateClassTree();
+      saveData();
+      noisyStartTime = Date.now(); // 重置
+    }
+  }
+}
+
+function processReadMode(threshold, deltaTime) {
+  if (currentVolume >= threshold) {
+    // 响亮 = 好
+    if (quietStartTime === null) {
+      quietStartTime = Date.now();
+    }
+    var diff = Math.max(0, currentVolume - threshold);
+    var speedFactor = 1 + (diff / 100) * 1.5;
+    virtualQuietTime += deltaTime * speedFactor;
+
+    if (virtualQuietTime >= settings.timerDuration) {
+      virtualQuietTime = 0;
+      students.forEach(function(s) {
+        s.exp += settings.expReward;
+        s.totalScore += settings.expReward;
+        while (s.exp >= s.level * settings.levelDifficulty) {
+          s.exp -= s.level * settings.levelDifficulty;
+          s.level++;
+        }
+      });
+      classTree.totalEnergy = Math.min(100, classTree.totalEnergy + 5);
+      renderStudents();
+      updateStats();
+      updateLeaderboard();
+      updateClassTree();
+      saveData();
+      showToast('朗读奖励！全班 +' + settings.expReward + ' 经验', 'success');
+    }
+  } else {
+    virtualQuietTime = 0;
+  }
+}
+
+function showAlert() {
+  document.getElementById('fullscreenAlert').classList.add('show');
+}
+function hideAlert() {
+  document.getElementById('fullscreenAlert').classList.remove('show');
+}
+
+// ===== 模式切换 =====
+function switchMode(mode) {
+  settings.mode = mode;
+  document.querySelectorAll('.mode-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelector('[data-mode="' + mode + '"]').classList.add('active');
+  virtualQuietTime = 0;
+  quietStartTime = null;
+  noisyStartTime = null;
+  saveData();
+}
+
+// ===== 视图切换 =====
+function bindEvents() {
+  document.querySelectorAll('.nav-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      var view = tab.getAttribute('data-view');
+      if (view === 'personal') {
+        document.getElementById('personalMode').style.display = 'flex';
+        document.getElementById('treeMode').classList.remove('active');
+      } else {
+        document.getElementById('personalMode').style.display = 'none';
+        document.getElementById('treeMode').classList.add('active');
+      }
+    });
+  });
+
+  // 文件上传
+  document.getElementById('file-input').addEventListener('change', handleFileUpload);
+
+  // beforeunload 保存
+  window.addEventListener('beforeunload', saveData);
+}
+
+// ===== 番茄闹钟 =====
+function openPomodoro() {
+  document.getElementById('pomodoroFs').classList.add('show');
+}
+
+function setPomodoroTime(min) {
+  pomoDuration = min * 60;
+  pomoRemaining = min * 60;
+  updatePomoDisplay();
+  document.querySelectorAll('.pomodoro-time-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelector('[data-min="' + min + '"]').classList.add('active');
+}
+
+function startPomodoro() {
+  if (pomoRunning) return;
+  pomoRunning = true;
+  document.getElementById('pomoStart').style.display = 'none';
+  document.getElementById('pomoPause').style.display = 'inline-block';
+  pomoInterval = setInterval(function() {
+    pomoRemaining--;
+    updatePomoDisplay();
+    if (pomoRemaining <= 0) {
+      clearInterval(pomoInterval);
+      pomoRunning = false;
+      document.getElementById('pomoStart').style.display = 'inline-block';
+      document.getElementById('pomoPause').style.display = 'none';
+      showToast('番茄闹钟结束！专注完成 🍅', 'success');
+    }
+  }, 1000);
+}
+
+function pausePomodoro() {
+  pomoRunning = false;
+  clearInterval(pomoInterval);
+  document.getElementById('pomoStart').style.display = 'inline-block';
+  document.getElementById('pomoPause').style.display = 'none';
+}
+
+function stopPomodoro() {
+  pomoRunning = false;
+  clearInterval(pomoInterval);
+  pomoRemaining = pomoDuration;
+  updatePomoDisplay();
+  document.getElementById('pomoStart').style.display = 'inline-block';
+  document.getElementById('pomoPause').style.display = 'none';
+}
+
+function exitPomodoro() {
+  pomoRunning = false;
+  clearInterval(pomoInterval);
+  document.getElementById('pomodoroFs').classList.remove('show');
+}
+
+function updatePomoDisplay() {
+  var m = Math.floor(pomoRemaining / 60);
+  var s = pomoRemaining % 60;
+  document.getElementById('pomodoroTime').textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+// ===== 导入名单 =====
+function openImport() {
+  document.getElementById('importModal').classList.add('show');
+}
+
+function switchImportTab(tab) {
+  document.querySelectorAll('.import-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.import-content').forEach(function(c) { c.classList.remove('active'); });
+  event.target.classList.add('active');
+  document.getElementById('import-' + tab).classList.add('active');
+}
+
+function confirmImport() {
+  var pasteText = document.getElementById('pasteText').value.trim();
+  if (pasteText) {
+    var lines = pasteText.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(function(l) { return l; });
+    if (lines.length === 0) {
+      showToast('没有有效的学生姓名', 'error');
+      return;
+    }
+    createStudentsFromNames(lines);
+    closeModal('importModal');
+    document.getElementById('pasteText').value = '';
+  } else {
+    // 等待文件上传
+    showToast('请选择文件或粘贴姓名', 'warning');
+  }
+}
+
+function handleFileUpload(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var text = ev.target.result;
+    var lines = text.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(function(l) {
+      return l && !l.startsWith('#');
+    });
+    if (lines.length === 0) {
+      showToast('文件中没有有效的学生姓名', 'error');
+      return;
+    }
+    createStudentsFromNames(lines);
+    closeModal('importModal');
+  };
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
+}
+
+function createStudentsFromNames(names) {
+  students = names.map(function(name, i) {
+    return {
+      id: i + 1,
+      name: name,
+      exp: 0,
+      level: 1,
+      petId: null,
+      totalScore: 0
+    };
+  });
+  classTree.totalEnergy = 0;
+  totalQuietTime = 0;
+  saveData();
+  renderStudents();
+  updateStats();
+  updateLeaderboard();
+  updateClassTree();
+  showToast('成功导入 ' + names.length + ' 个学生姓名！', 'success');
+}
+
+// ===== 教师工作台 =====
+function openSettings() {
+  document.getElementById('setThreshold').value = settings.volumeThreshold;
+  document.getElementById('setQuietDuration').value = settings.timerDuration;
+  document.getElementById('setPunishDuration').value = settings.punishDuration;
+  document.getElementById('setExpReward').value = settings.expReward;
+  document.getElementById('setExpPunish').value = settings.expPunish;
+  document.getElementById('setLevelDifficulty').value = settings.levelDifficulty;
+  document.getElementById('setColumnCount').value = columnCount;
+  document.getElementById('setMicSensitivity').value = settings.micSensitivity;
+  document.getElementById('setTeacher').value = settings.currentTeacher;
+  document.getElementById('settingsModal').classList.add('show');
+}
+
+function switchSettingsTab(tab) {
+  document.querySelectorAll('.settings-tab').forEach(function(t) { t.classList.remove('active'); });
+  event.target.classList.add('active');
+  document.querySelectorAll('.settings-content').forEach(function(c) { c.classList.remove('active'); });
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function saveSettings() {
+  settings.volumeThreshold = parseInt(document.getElementById('setThreshold').value) || 30;
+  settings.timerDuration = parseInt(document.getElementById('setQuietDuration').value) || 30;
+  settings.punishDuration = parseInt(document.getElementById('setPunishDuration').value) || 15;
+  settings.expReward = parseInt(document.getElementById('setExpReward').value) || 10;
+  settings.expPunish = parseInt(document.getElementById('setExpPunish').value) || 5;
+  settings.levelDifficulty = parseInt(document.getElementById('setLevelDifficulty').value) || 100;
+  settings.micSensitivity = parseFloat(document.getElementById('setMicSensitivity').value) || 1;
+  var newCol = parseInt(document.getElementById('setColumnCount').value) || 6;
+  if (newCol !== columnCount) {
+    columnCount = newCol;
+    renderStudents();
+  }
+  var newTeacher = document.getElementById('setTeacher').value;
+  if (newTeacher !== settings.currentTeacher) {
+    settings.currentTeacher = newTeacher;
+    loadData();
+    renderStudents();
+    updateStats();
+    updateLeaderboard();
+    updateClassTree();
+  }
+  saveData();
+  closeModal('settingsModal');
+  showToast('设置已保存', 'success');
+}
+
+// ===== 重置 =====
+function resetAll() {
+  if (!confirm('确定要重置当前学科的所有进度吗？此操作不可撤销！')) return;
+  students = DEFAULT_STUDENTS.map(function(name, i) {
+    return { id: i + 1, name: name, exp: 0, level: 1, petId: null, totalScore: 0 };
+  });
+  classTree = { totalEnergy: 0 };
+  totalQuietTime = 0;
+  saveData();
+  renderStudents();
+  updateStats();
+  updateLeaderboard();
+  updateClassTree();
+  showToast('已重置所有进度', 'success');
+}
+
+// ===== 通用 =====
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+function showToast(msg, type) {
+  var toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = 'toast ' + (type || 'success') + ' show';
+  setTimeout(function() { toast.classList.remove('show'); }, 2500);
+}
+
+// ===== 启动 =====
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

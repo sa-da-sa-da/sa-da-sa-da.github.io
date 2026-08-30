@@ -1,0 +1,2014 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>程序是如何"想"的 — 顺序·循环·分支</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-base: #F7F8FC;
+  --card-bg: #FFFFFF;
+  --text-primary: #1E293B;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --border-light: #E2E8F0;
+
+  --blue: #3B82F6;
+  --blue-light: #DBEAFE;
+  --blue-border: #93C5FD;
+  --orange: #F97316;
+  --orange-light: #FFEDD5;
+  --orange-border: #FDBA74;
+  --green: #22C55E;
+  --green-light: #DCFCE7;
+  --green-border: #86EFAC;
+  --purple: #8B5CF6;
+  --purple-light: #EDE9FE;
+  --purple-border: #C4B5FD;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---- Nav ---- */
+.nav {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-light);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  box-shadow: var(--shadow-sm);
+}
+.nav-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.nav-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+.nav-buttons { display: flex; gap: 8px; }
+.nav-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-btn:hover {
+  border-color: var(--purple);
+  color: var(--purple);
+  box-shadow: var(--shadow-sm);
+}
+.nav-btn:active { transform: scale(0.96); }
+
+/* ---- Main Layout ---- */
+.main-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+}
+
+/* ---- Section ---- */
+.section {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+}
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+/* ---- Tab ---- */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.tab {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 2px solid var(--border-light);
+  background: var(--card-bg);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.tab:hover { box-shadow: var(--shadow-sm); }
+.tab.active-blue { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+.tab.active-orange { border-color: var(--orange); background: var(--orange-light); color: var(--orange); }
+.tab.active-green { border-color: var(--green); background: var(--green-light); color: var(--green); }
+.tab.active-purple { border-color: var(--purple); background: var(--purple-light); color: var(--purple); }
+.tab-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.tab-dot.blue { background: var(--blue); }
+.tab-dot.orange { background: var(--orange); }
+.tab-dot.green { background: var(--green); }
+.tab-dot.purple { background: var(--purple); }
+
+/* ---- Shape Cards (Section 2) ---- */
+.shape-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (max-width: 900px) {
+  .shape-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 500px) {
+  .shape-grid { grid-template-columns: 1fr; }
+}
+.shape-card {
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+  background: var(--card-bg);
+  transition: all 0.2s ease;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.shape-card.over {
+  border-color: var(--purple);
+  background: var(--purple-light);
+  transform: scale(1.03);
+}
+.shape-card.filled {
+  border-color: var(--green);
+  background: var(--green-light);
+}
+.shape-svg-wrap {
+  width: 80px; height: 50px;
+  display: flex; align-items: center; justify-content: center;
+}
+.shape-name-slot {
+  font-size: 13px;
+  color: var(--text-muted);
+  min-height: 20px;
+}
+.shape-name-slot.filled-text {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ---- Drag Items ---- */
+.drag-pool {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 16px;
+  background: #F1F5F9;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  min-height: 70px;
+  align-items: center;
+}
+.drag-item {
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: var(--card-bg);
+  border: 2px solid var(--border-light);
+  cursor: grab;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.drag-item:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.drag-item.dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+.drag-item.placed { display: none; }
+
+/* ---- Flowchart Area ---- */
+.flowchart-area {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.flowchart-svg {
+  flex: 1;
+  min-width: 320px;
+  max-width: 560px;
+}
+.flowchart-info {
+  width: 260px;
+  flex-shrink: 0;
+}
+@media (max-width: 700px) {
+  .flowchart-info { width: 100%; }
+}
+.info-card {
+  background: #F8FAFC;
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+  border-left: 4px solid var(--border-light);
+}
+.info-card.blue { border-left-color: var(--blue); }
+.info-card.orange { border-left-color: var(--orange); }
+.info-card.green { border-left-color: var(--green); }
+.info-card.purple { border-left-color: var(--purple); }
+.info-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.info-value {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* ---- SVG Flowchart Shapes ---- */
+.fc-slot { cursor: pointer; transition: all 0.2s ease; }
+.fc-slot rect, .fc-slot polygon, .fc-slot path {
+  transition: all 0.2s ease;
+}
+.fc-slot:hover rect, .fc-slot:hover polygon, .fc-slot:hover path {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+}
+.fc-slot.over rect, .fc-slot.over polygon, .fc-slot.over path {
+  stroke-width: 3 !important;
+  filter: drop-shadow(0 0 8px var(--purple));
+}
+.fc-slot.filled rect, .fc-slot.filled polygon, .fc-slot.filled path {
+  stroke-dasharray: none !important;
+}
+.fc-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--text-primary);
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+.fc-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  fill: var(--text-muted);
+  text-anchor: middle;
+  pointer-events: none;
+}
+.fc-arrow {
+  stroke: var(--text-muted);
+  stroke-width: 2;
+  fill: none;
+  marker-end: url(#arrowhead);
+}
+
+/* ---- Compare Table ---- */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.compare-table th {
+  padding: 12px 14px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border-light);
+  font-size: 13px;
+}
+.compare-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-dot {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* ---- Quiz ---- */
+.quiz-section {
+  border: 2px solid var(--purple-light);
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.quiz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.quiz-title {
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.quiz-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+.quiz-toggle:hover { background: #F1F5F9; }
+.quiz-body { transition: all 0.3s ease; }
+.quiz-body.hidden { display: none; }
+.quiz-q {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+.quiz-q:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.quiz-q-text {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 8px;
+}
+.quiz-q-num {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--purple-light);
+  color: var(--purple);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-opt {
+  padding: 10px 14px;
+  border: 2px solid var(--border-light);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.quiz-opt:hover { border-color: var(--purple); background: var(--purple-light); }
+.quiz-opt.selected { border-color: var(--purple); background: var(--purple-light); }
+.quiz-opt.correct { border-color: var(--green); background: var(--green-light); }
+.quiz-opt.wrong { border-color: #EF4444; background: #FEE2E2; }
+.quiz-opt-icon { margin-left: auto; font-size: 16px; }
+.quiz-feedback {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: none;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.correct { background: var(--green-light); color: #166534; }
+.quiz-feedback.wrong { background: #FEE2E2; color: #991B1B; }
+.quiz-score {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--purple);
+  padding: 12px;
+  background: var(--purple-light);
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+/* ---- Toast ---- */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--text-primary);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 50;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { background: var(--green); }
+.toast.error { background: #EF4444; }
+.toast.info { background: var(--purple); }
+
+/* ---- Progress ---- */
+.progress-bar {
+  height: 6px;
+  background: #E2E8F0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple) 0%, var(--blue) 100%);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/* ---- Kitten Block ---- */
+.kitten-block {
+  background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #BAE6FD;
+}
+.kitten-icon { font-size: 18px; }
+
+/* ---- Summary ---- */
+.summary-box {
+  background: linear-gradient(135deg, var(--purple-light) 0%, var(--blue-light) 100%);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  border: 1px solid var(--purple-border);
+}
+.summary-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+/* ---- Drag ghost ---- */
+.drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0.9;
+  transform: translate(-50%, -50%) scale(1.05);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ---- Login Modal ---- */
+.login-overlay {
+  position: fixed; top:0; left:0; right:0; bottom:0;
+  background: rgba(15,23,42,0.6);
+  z-index: 55;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.login-overlay.hidden { display: none; }
+.login-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px;
+  width: 380px; max-width: 90vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  text-align: center;
+}
+.login-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.login-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+.login-role-btns { display: flex; gap: 12px; margin-bottom: 20px; }
+.login-role-btn {
+  flex: 1; padding: 14px 8px;
+  border: 2px solid var(--border-light);
+  border-radius: 10px;
+  background: #fff; cursor: pointer;
+  font-size: 14px; font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.login-role-btn:hover { box-shadow: var(--shadow-sm); }
+.login-role-btn.active-teacher { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+.login-role-btn.active-student { border-color: var(--green); background: var(--green-light); color: var(--green); }
+.login-role-icon { font-size: 28px; }
+.login-input {
+  width: 100%; padding: 10px 14px;
+  border: 2px solid var(--border-light); border-radius: 8px;
+  font-size: 14px; margin-bottom: 16px; outline: none;
+  transition: border-color 0.2s;
+}
+.login-input:focus { border-color: var(--purple); }
+.login-input.hidden { display: none; }
+.login-confirm {
+  width: 100%; padding: 12px;
+  border: none; border-radius: 10px;
+  background: linear-gradient(135deg, var(--purple) 0%, #6366F1 100%);
+  color: #fff; font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s ease;
+}
+.login-confirm:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.login-cancel {
+  width: 100%; padding: 10px; margin-top: 8px;
+  border: 1px solid var(--border-light); border-radius: 8px;
+  background: #fff; color: var(--text-muted); font-size: 13px; cursor: pointer;
+}
+
+/* ---- Evaluation Banner ---- */
+.eval-banner {
+  background: linear-gradient(135deg, #F0F9FF 0%, #EDE9FE 100%);
+  border: 1px solid var(--purple-border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; font-weight: 600;
+  transition: all 0.3s ease;
+}
+.eval-banner.show { display: flex; }
+.eval-banner.hidden { display: none; }
+.eval-banner.excellent { background: var(--green-light); border-color: var(--green-border); color: #166534; }
+.eval-banner.good { background: var(--blue-light); border-color: var(--blue-border); color: #1E40AF; }
+.eval-banner.need { background: #FEF3C7; border-color: #FDE68A; color: #92400E; }
+.eval-icon { font-size: 18px; }
+
+/* ---- Data Panel ---- */
+.data-panel-overlay {
+  position: fixed; top:0; left:0; right:0; bottom:0;
+  background: rgba(15,23,42,0.5);
+  z-index: 56;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(3px);
+}
+.data-panel-overlay.hidden { display: none; }
+.data-panel {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  width: 720px; max-width: 92vw; max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.data-panel-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.data-panel-close {
+  float: right; background: none; border: none;
+  font-size: 20px; cursor: pointer; color: var(--text-muted);
+  padding: 4px 8px; border-radius: 6px;
+}
+.data-panel-close:hover { background: #F1F5F9; }
+.data-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.data-tab {
+  padding: 8px 16px; border-radius: 8px; border: 2px solid var(--border-light);
+  background: #fff; cursor: pointer; font-size: 13px; font-weight: 600;
+  transition: all 0.2s ease;
+}
+.data-tab.active { border-color: var(--purple); background: var(--purple-light); color: var(--purple); }
+.data-content { display: none; }
+.data-content.active { display: block; }
+.data-stat-grid {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px;
+}
+@media (max-width:600px) { .data-stat-grid { grid-template-columns: 1fr; } }
+.data-stat-card {
+  background: #F8FAFC; border-radius: 10px; padding: 14px;
+  text-align: center; border: 1px solid var(--border-light);
+}
+.data-stat-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.data-stat-value { font-size: 22px; font-weight: 700; color: var(--purple); }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th { padding: 10px; text-align: left; font-weight: 600; color: var(--text-secondary); border-bottom: 2px solid var(--border-light); }
+.data-table td { padding: 10px; border-bottom: 1px solid var(--border-light); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-bar { display: inline-block; height: 8px; border-radius: 4px; background: var(--purple); vertical-align: middle; }
+.data-bar-bg { display: inline-block; width: 80px; height: 8px; border-radius: 4px; background: #E2E8F0; vertical-align: middle; }
+.data-empty { text-align: center; color: var(--text-muted); padding: 40px; font-size: 14px; }
+.data-trend { display: flex; gap: 4px; align-items: flex-end; height: 40px; }
+.data-trend-bar {
+  width: 24px; border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, var(--purple) 0%, #A78BFA 100%);
+  transition: height 0.3s ease;
+}
+.data-trend-label { font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ========== Nav ========== -->
+<nav class="nav">
+  <div>
+    <div class="nav-title">程序是如何"想"的</div>
+    <div class="nav-subtitle">顺序 · 循环 · 分支 | 信息技术</div>
+  </div>
+  <div class="nav-buttons">
+    <button class="nav-btn" id="btnReset" title="重置到初始状态">重置</button>
+    <button class="nav-btn" id="btnRandom" title="随机打乱题目顺序">随机实验</button>
+    <button class="nav-btn" id="btnAbout" title="关于本课件">关于</button>
+    <span id="navUserBadge" style="display:none; font-size:13px; color:var(--purple); font-weight:600; padding:6px 12px; background:var(--purple-light); border-radius:8px; border:1px solid var(--purple-border);"></span>
+    <button class="nav-btn" id="btnLogin" style="display:none; border-color:var(--purple); color:var(--purple);">登录</button>
+    <button class="nav-btn" id="btnLogout" style="display:none;">退出</button>
+    <button class="nav-btn" id="btnDataPanel" style="display:none;">数据面板</button>
+  </div>
+</nav>
+
+<!-- ========== Main ========== -->
+<div class="main-container">
+
+  <!-- ===== Eval Banner ===== -->
+  <div class="eval-banner hidden" id="evalBanner">
+    <span class="eval-icon" id="evalIcon">📊</span>
+    <span id="evalText">等待评价…</span>
+  </div>
+
+  <!-- ===== Section 0: Intro ===== -->
+  <div class="section">
+    <div class="section-title">💡 什么是程序？为什么要画流程图？</div>
+    <div class="section-desc">程序 = 让计算机按步骤完成任务的指令集合</div>
+
+    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
+      <div class="info-card purple" style="flex:1; min-width:200px;">
+        <div class="info-label">什么是程序</div>
+        <div class="info-value">程序就像一份"操作说明书"，告诉计算机每一步该做什么、怎么做的先后顺序。计算机本身不会思考，它只是严格按照程序里的指令一步步执行。</div>
+      </div>
+      <div class="info-card blue" style="flex:1; min-width:200px;">
+        <div class="info-label">为什么要画流程图</div>
+        <div class="info-value">写程序前先用流程图把思路画出来，能帮我们理清逻辑、发现错误、方便交流。就像盖房子先画设计图一样，先想清楚再动手，才能写出好程序。</div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
+      <div class="info-card orange" style="flex:1; min-width:200px;">
+        <div class="info-label">生活中的"程序"</div>
+        <div class="info-value">起床 → 刷牙 → 吃早饭 → 上学 —— 每天按固定步骤做事，就是生活中的"程序"</div>
+      </div>
+      <div class="info-card green" style="flex:1; min-width:200px;">
+        <div class="info-label">计算机的"程序"</div>
+        <div class="info-value">电脑做事也讲究：按顺序执行、会重复操作、能判断条件 —— 这三种能力对应三种基本结构</div>
+      </div>
+    </div>
+
+    <div class="summary-box" style="margin-top:8px;">
+      <div class="summary-text">💡 先画流程图，再写程序 —— 这是好程序员的习惯。流程图让思路看得见、改得快、讲得清。</div>
+    </div>
+  </div>
+
+  <!-- ===== Section 1: 认识框格（拖拽配对）===== -->
+  <div class="section" id="secShapes">
+    <div class="section-title">
+      <span class="compare-dot" style="background:var(--purple);"></span>
+      认识流程图的框格
+    </div>
+    <div class="section-desc">把下方的「名称卡片」拖到对应的形状框格中配对</div>
+
+    <div class="drag-pool" id="shapePool">
+      <div class="drag-item" draggable="true" data-name="开始/结束" data-match="0">🔵 开始 / 结束</div>
+      <div class="drag-item" draggable="true" data-name="处理" data-match="1">🟦 处理</div>
+      <div class="drag-item" draggable="true" data-name="判断" data-match="2">🔷 判断</div>
+      <div class="drag-item" draggable="true" data-name="输入/输出" data-match="3">🟪 输入 / 输出</div>
+    </div>
+
+    <div class="shape-grid" id="shapeGrid">
+      <!-- 圆角矩形 -->
+      <div class="shape-card" data-idx="0">
+        <div class="shape-svg-wrap">
+          <svg width="80" height="46" viewBox="0 0 80 46">
+            <rect x="6" y="6" width="68" height="34" rx="17" ry="17"
+              fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-dasharray="6,4"/>
+          </svg>
+        </div>
+        <div class="shape-name-slot" data-slot="0">拖入名称…</div>
+        <div style="font-size:12px; color:var(--text-muted);">程序的起点或终点</div>
+      </div>
+      <!-- 矩形 -->
+      <div class="shape-card" data-idx="1">
+        <div class="shape-svg-wrap">
+          <svg width="80" height="46" viewBox="0 0 80 46">
+            <rect x="6" y="6" width="68" height="34" rx="4" ry="4"
+              fill="none" stroke="var(--orange)" stroke-width="2.5" stroke-dasharray="6,4"/>
+          </svg>
+        </div>
+        <div class="shape-name-slot" data-slot="1">拖入名称…</div>
+        <div style="font-size:12px; color:var(--text-muted);">做一件具体的事</div>
+      </div>
+      <!-- 菱形 -->
+      <div class="shape-card" data-idx="2">
+        <div class="shape-svg-wrap">
+          <svg width="80" height="46" viewBox="0 0 80 46">
+            <polygon points="40,4 76,23 40,42 4,23"
+              fill="none" stroke="var(--green)" stroke-width="2.5" stroke-dasharray="6,4"/>
+          </svg>
+        </div>
+        <div class="shape-name-slot" data-slot="2">拖入名称…</div>
+        <div style="font-size:12px; color:var(--text-muted);">判断"是 / 否"</div>
+      </div>
+      <!-- 平行四边形 -->
+      <div class="shape-card" data-idx="3">
+        <div class="shape-svg-wrap">
+          <svg width="80" height="46" viewBox="0 0 80 46">
+            <polygon points="14,6 74,6 66,40 6,40"
+              fill="none" stroke="var(--purple)" stroke-width="2.5" stroke-dasharray="6,4"/>
+          </svg>
+        </div>
+        <div class="shape-name-slot" data-slot="3">拖入名称…</div>
+        <div style="font-size:12px; color:var(--text-muted);">输入或输出数据</div>
+      </div>
+    </div>
+
+    <div id="shapeProgress" style="text-align:center; font-size:14px; color:var(--text-muted); margin-top:8px;">
+      配对进度: 0 / 4
+    </div>
+  </div>
+
+  <!-- ===== Section 2: 三大结构案例 ===== -->
+  <div class="section">
+    <div class="section-title">
+      <span class="compare-dot" style="background:var(--purple);"></span>
+      三大结构与案例（由浅入深）
+    </div>
+    <div class="section-desc">选择一个案例，把内容拖入流程图框格中</div>
+
+    <div class="tabs">
+      <div class="tab active-blue" data-case="0">
+        <span class="tab-dot blue"></span> 案例1 · 顺序结构
+      </div>
+      <div class="tab" data-case="1">
+        <span class="tab-dot orange"></span> 案例2 · 循环结构
+      </div>
+      <div class="tab" data-case="2">
+        <span class="tab-dot green"></span> 案例3 · 分支结构
+      </div>
+    </div>
+
+    <div class="progress-bar"><div class="progress-fill" id="caseProgress" style="width:0%"></div></div>
+
+    <!-- 案例描述 -->
+    <div id="caseDesc" style="margin-bottom:16px;"></div>
+
+    <!-- 拖拽池 -->
+    <div class="drag-pool" id="casePool"></div>
+
+    <!-- 流程图 + 信息面板 -->
+    <div class="flowchart-area">
+      <div class="flowchart-info" id="caseInfo"></div>
+      <div class="flowchart-svg" id="caseCanvas"></div>
+    </div>
+  </div>
+
+  <!-- ===== Section 3: 对比表 ===== -->
+  <div class="section">
+    <div class="section-title">
+      <span class="compare-dot" style="background:var(--purple);"></span>
+      三大结构对比表
+    </div>
+    <div class="section-desc">一图看懂三种结构的区别</div>
+    <div style="overflow-x:auto;">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>结构</th>
+          <th>核心问题</th>
+          <th>框格特点</th>
+          <th>生活例子</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="compare-dot" style="background:var(--blue);"></span><strong>顺序</strong></td>
+          <td>先做什么，再做什么</td>
+          <td>矩形依次相连</td>
+          <td>起床→刷牙→吃早饭</td>
+        </tr>
+        <tr>
+          <td><span class="compare-dot" style="background:var(--orange);"></span><strong>循环</strong></td>
+          <td>哪件事要反复做</td>
+          <td>"重复执行"包裹动作</td>
+          <td>小猫一直走（重复移动）</td>
+        </tr>
+        <tr>
+          <td><span class="compare-dot" style="background:var(--green);"></span><strong>分支</strong></td>
+          <td>哪种情况做哪种事</td>
+          <td>菱形判断分"是/否"</td>
+          <td>碰到人打招呼，否则继续走</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="summary-box" style="margin-top:16px;">
+      <div class="summary-text">✅ 结构比代码更重要<br><span style="font-size:13px; font-weight:400; color:var(--text-secondary);">写程序前，先想清楚：这件事用顺序 / 循环 / 分支哪一种（或哪几种组合）</span></div>
+    </div>
+  </div>
+
+  <!-- ===== Section 4: 小测验 ===== -->
+  <div class="quiz-section" id="quizSection" data-panel="quiz">
+    <div class="quiz-header">
+      <div class="quiz-title">
+        <span style="font-size:20px;">📝</span> 小测验
+      </div>
+      <button class="quiz-toggle" id="quizToggle">✕</button>
+    </div>
+    <div class="quiz-body" id="quizBody">
+      <div class="quiz-q" data-q="0">
+        <div class="quiz-q-text"><span class="quiz-q-num">1</span> "起床→刷牙→吃早饭"属于哪种结构？</div>
+        <div class="quiz-options">
+          <div class="quiz-opt" data-answer="顺序" data-correct="true">顺序结构</div>
+          <div class="quiz-opt" data-answer="循环" data-correct="false">循环结构</div>
+          <div class="quiz-opt" data-answer="分支" data-correct="false">分支结构</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+      <div class="quiz-q" data-q="1">
+        <div class="quiz-q-text"><span class="quiz-q-num">2</span> "小猫在屏幕上一直走"需要用什么结构？</div>
+        <div class="quiz-options">
+          <div class="quiz-opt" data-answer="顺序" data-correct="false">顺序结构</div>
+          <div class="quiz-opt" data-answer="循环" data-correct="true">循环结构</div>
+          <div class="quiz-opt" data-answer="分支" data-correct="false">分支结构</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+      <div class="quiz-q" data-q="2">
+        <div class="quiz-q-text"><span class="quiz-q-num">3</span> "碰到人→说你好，否则继续走"需要用什么？</div>
+        <div class="quiz-options">
+          <div class="quiz-opt" data-answer="顺序" data-correct="false">顺序结构</div>
+          <div class="quiz-opt" data-answer="循环" data-correct="false">循环结构</div>
+          <div class="quiz-opt" data-answer="分支" data-correct="true">分支结构</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+      <div class="quiz-q" data-q="3">
+        <div class="quiz-q-text"><span class="quiz-q-num">4</span> 流程图中表示"判断"的框格是什么形状？</div>
+        <div class="quiz-options">
+          <div class="quiz-opt" data-answer="圆角矩形" data-correct="false">圆角矩形</div>
+          <div class="quiz-opt" data-answer="矩形" data-correct="false">矩形</div>
+          <div class="quiz-opt" data-answer="菱形" data-correct="true">菱形</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+      <div class="quiz-q" data-q="4">
+        <div class="quiz-q-text"><span class="quiz-q-num">5</span> 流程图中表示"输入/输出"的框格是什么形状？</div>
+        <div class="quiz-options">
+          <div class="quiz-opt" data-answer="平行四边形" data-correct="true">平行四边形</div>
+          <div class="quiz-opt" data-answer="矩形" data-correct="false">矩形</div>
+          <div class="quiz-opt" data-answer="菱形" data-correct="false">菱形</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+      <div class="quiz-score" id="quizScore">得分: 0 / 5</div>
+    </div>
+  </div>
+
+  <!-- 隐藏的悬浮测验按钮 -->
+  <button id="quizFloat" style="display:none; position:fixed; bottom:20px; right:20px; width:48px; height:48px; border-radius:50%; background:var(--purple); color:white; border:none; cursor:pointer; font-size:20px; box-shadow:var(--shadow-lg); z-index:35; transition:all 0.2s ease;">📝</button>
+
+</div>
+
+<!-- ========== Toast ========== -->
+<div class="toast" id="toast"></div>
+
+<!-- ========== Scripts ========== -->
+<script>
+// ==================== Global State ====================
+var state = {
+  currentCase: 0,
+  shapeMatches: [null, null, null, null], // which name card placed in each slot
+  caseMatches: {},      // {caseIdx: {slotIdx: content}}
+  quizAnswered: {},     // {qIdx: {answer, correct}}
+  quizVisible: true,
+  shapesCompleted: false,
+};
+
+// ==================== Error Boundary ====================
+window.__errs = [];
+window.addEventListener('error', function(e) {
+  window.__errs.push(e.message);
+  console.error('[global]', e.message);
+});
+window.addEventListener('unhandledrejection', function(e) {
+  window.__errs.push(e.reason);
+  console.error('[unhandled]', e.reason);
+});
+
+// ==================== Toast ====================
+var toastEl = document.getElementById('toast');
+var toastTimer = null;
+function showToast(msg, type) {
+  toastEl.textContent = msg;
+  toastEl.className = 'toast show' + (type ? ' ' + type : '');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() {
+    toastEl.className = 'toast' + (type ? ' ' + type : '');
+  }, 2200);
+}
+
+// ==================== Drag System (HTML5 DnD + Touch fallback) ====================
+var dragData = null; // {item: el, name: string, match: string}
+
+function setupDragItem(el) {
+  // Desktop: HTML5 drag
+  el.addEventListener('dragstart', function(e) {
+    dragData = {
+      item: el,
+      name: el.dataset.name,
+      match: el.dataset.match
+    };
+    el.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', el.dataset.name);
+  });
+  el.addEventListener('dragend', function(e) {
+    el.classList.remove('dragging');
+    dragData = null;
+  });
+  // Touch fallback
+  el.addEventListener('touchstart', function(e) {
+    if (e.touches.length !== 1) return;
+    e.preventDefault();
+    var touch = e.touches[0];
+    dragData = {
+      item: el,
+      name: el.dataset.name,
+      match: el.dataset.match,
+      touch: true
+    };
+    el.classList.add('dragging');
+    var ghost = el.cloneNode(true);
+    ghost.classList.add('drag-ghost');
+    ghost.classList.remove('dragging');
+    ghost.style.width = el.offsetWidth + 'px';
+    ghost.style.left = touch.clientX + 'px';
+    ghost.style.top = touch.clientY + 'px';
+    document.body.appendChild(ghost);
+    dragData.ghost = ghost;
+  }, { passive: false });
+  el.addEventListener('touchmove', function(e) {
+    if (!dragData || !dragData.touch) return;
+    e.preventDefault();
+    var touch = e.touches[0];
+    if (dragData.ghost) {
+      dragData.ghost.style.left = touch.clientX + 'px';
+      dragData.ghost.style.top = touch.clientY + 'px';
+    }
+    // highlight drop target
+    var target = document.elementFromPoint(touch.clientX, touch.clientY);
+    highlightDropTarget(target);
+  }, { passive: false });
+  el.addEventListener('touchend', function(e) {
+    if (!dragData || !dragData.touch) return;
+    e.preventDefault();
+    var touch = e.changedTouches[0];
+    var target = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (dragData.ghost) dragData.ghost.remove();
+    el.classList.remove('dragging');
+    handleDrop(target);
+    clearHighlights();
+    dragData = null;
+  }, { passive: false });
+}
+
+function highlightDropTarget(el) {
+  clearHighlights();
+  if (!el) return;
+  var slot = el.closest('[data-idx]') || el.closest('.fc-slot');
+  if (slot && !slot.classList.contains('filled')) {
+    slot.classList.add('over');
+  }
+}
+function clearHighlights() {
+  document.querySelectorAll('.over').forEach(function(el) {
+    el.classList.remove('over');
+  });
+}
+
+function handleDrop(target) {
+  if (!dragData || !target) return;
+  var slot = target.closest('[data-idx]') || target.closest('.fc-slot');
+  if (!slot) return;
+  if (slot.classList.contains('filled')) {
+    showToast('这个框格已填好', 'info');
+    return;
+  }
+  var slotIdx = parseInt(slot.dataset.idx !== undefined ? slot.dataset.idx : slot.dataset.slotIdx);
+  var expected = slot.dataset.match;
+  if (expected !== undefined && dragData.match !== undefined) {
+    if (dragData.match === expected) {
+      placeInSlot(slot, slotIdx, dragData);
+      showToast('配对正确！', 'success');
+    } else {
+      showToast('配对不正确，再试试', 'error');
+    }
+  } else {
+    // Case flowchart: any item can go in any empty slot (order matters by slot)
+    placeInCaseSlot(slot, slotIdx, dragData);
+  }
+}
+
+// ==================== Shape Matching (Section 1) ====================
+function initShapeMatching() {
+  var items = document.querySelectorAll('#shapePool .drag-item');
+  items.forEach(setupDragItem);
+
+  var cards = document.querySelectorAll('#shapeGrid .shape-card');
+  cards.forEach(function(card) {
+    var idx = parseInt(card.dataset.idx);
+
+    card.addEventListener('dragover', function(e) {
+      if (state.shapeMatches[idx] !== null) return;
+      e.preventDefault();
+      card.classList.add('over');
+    });
+    card.addEventListener('dragleave', function(e) {
+      card.classList.remove('over');
+    });
+    card.addEventListener('drop', function(e) {
+      e.preventDefault();
+      card.classList.remove('over');
+      if (state.shapeMatches[idx] !== null) return;
+      if (!dragData) return;
+      if (dragData.match === String(idx)) {
+        // Correct match
+        state.shapeMatches[idx] = dragData.name;
+        var slotEl = card.querySelector('.shape-name-slot');
+        slotEl.textContent = dragData.name;
+        slotEl.classList.add('filled-text');
+        card.classList.add('filled');
+        dragData.item.classList.add('placed');
+        showToast('配对正确！', 'success');
+        updateShapeProgress();
+      } else {
+        showToast('形状和名称不匹配，再试试', 'error');
+      }
+    });
+  });
+}
+
+function updateShapeProgress() {
+  var count = state.shapeMatches.filter(function(v) { return v !== null; }).length;
+  document.getElementById('shapeProgress').textContent = '配对进度: ' + count + ' / 4';
+  if (count === 4) {
+    state.shapesCompleted = true;
+    showToast('全部配对完成！开始案例挑战吧', 'success');
+  }
+}
+
+// ==================== Case Data ====================
+var caseData = [
+  {
+    title: '顺序结构（入门）',
+    color: 'blue',
+    dotClass: 'blue',
+    desc: '一步一步，不跳步。生活案例：起床 → 刷新 → 吃早饭',
+    kitten: '绿旗点击 → 小猫说"早上好" → 移动 100 步',
+    summary: '顺序 = 按从上到下的顺序，一个框格接一个框格执行',
+    items: [
+      { label: '开始', type: 'start' },
+      { label: '刷牙', type: 'process' },
+      { label: '吃早饭', type: 'process' },
+      { label: '结束', type: 'end' }
+    ],
+    slots: [
+      { idx: 0, type: 'start', shape: 'round', expected: '开始' },
+      { idx: 1, type: 'process', shape: 'rect', expected: '刷牙' },
+      { idx: 2, type: 'process', shape: 'rect', expected: '吃早饭' },
+      { idx: 3, type: 'end', shape: 'round', expected: '结束' }
+    ]
+  },
+  {
+    title: '循环结构（进阶）',
+    color: 'orange',
+    dotClass: 'orange',
+    desc: '重复做同一件事。实例：小猫在屏幕上一直走 —— 重复执行次数"移动 10 步"',
+    kitten: '重复执行次数 包裹 移动(10) 步 —— 小猫就会在舞台上不停地走',
+    summary: '循环 = "重复执行次数"框格包裹要反复做的动作，省去一遍遍重复写',
+    items: [
+      { label: '开始', type: 'start' },
+      { label: '重复执行次数', type: 'loop' },
+      { label: '移动 10 步', type: 'process' },
+      { label: '结束', type: 'end' }
+    ],
+    slots: [
+      { idx: 0, type: 'start', shape: 'round', expected: '开始' },
+      { idx: 1, type: 'loop', shape: 'rect', expected: '重复执行次数' },
+      { idx: 2, type: 'process', shape: 'rect', expected: '移动 10 步' },
+      { idx: 3, type: 'end', shape: 'round', expected: '结束' }
+    ]
+  },
+  {
+    title: '分支结构（综合）',
+    color: 'green',
+    dotClass: 'green',
+    desc: '看情况做不同的事。实例：碰到人 → 说"你好"；没碰到 → 直接结束',
+    kitten: '如果 碰到 [人] 那么 说"你好" 否则 结束',
+    summary: '分支 = 判断框格根据"是/否"走两条不同的路线',
+    items: [
+      { label: '开始', type: 'start' },
+      { label: '碰到人？', type: 'decision' },
+      { label: '说"你好"', type: 'output' },
+      { label: '结束', type: 'end' }
+    ],
+    slots: [
+      { idx: 0, type: 'start', shape: 'round', expected: '开始' },
+      { idx: 1, type: 'decision', shape: 'diamond', expected: '碰到人？' },
+      { idx: 2, type: 'output', shape: 'parallelogram', expected: '说"你好"' },
+      { idx: 3, type: 'end', shape: 'round', expected: '结束' }
+    ]
+  }
+];
+
+// ==================== Case Rendering ====================
+function renderCase(caseIdx) {
+  if (!caseData[caseIdx]) return;
+  var data = caseData[caseIdx];
+  state.currentCase = caseIdx;
+
+  // Update tabs
+  document.querySelectorAll('.tab').forEach(function(t) {
+    t.className = 'tab';
+  });
+  var activeTab = document.querySelector('.tab[data-case="' + caseIdx + '"]');
+  if (activeTab) {
+    activeTab.className = 'tab active-' + data.color;
+  }
+
+  // Description
+  var descEl = document.getElementById('caseDesc');
+  descEl.innerHTML =
+    '<div class="info-card ' + data.color + '">' +
+    '<div class="info-label">案例说明</div>' +
+    '<div class="info-value">' + data.desc + '</div>' +
+    '<div class="kitten-block"><span class="kitten-icon">🐱</span> Kitten 对应：' + data.kitten + '</div>' +
+    '</div>';
+
+  // Info panel
+  var infoEl = document.getElementById('caseInfo');
+  infoEl.innerHTML =
+    '<div class="info-card ' + data.color + '">' +
+    '<div class="info-label">一句话</div>' +
+    '<div class="info-value">' + data.summary + '</div>' +
+    '</div>' +
+    '<div class="info-card ' + data.color + '">' +
+    '<div class="info-label">提示</div>' +
+    '<div class="info-value">把左侧内容拖入对应的流程图框格<br>注意判断框格走"是/否"两条分支</div>' +
+    '</div>';
+
+  // Drag pool
+  var poolEl = document.getElementById('casePool');
+  poolEl.innerHTML = '';
+  // Shuffle items for display
+  var items = data.items.slice();
+  // restore placed state
+  if (!state.caseMatches[caseIdx]) state.caseMatches[caseIdx] = {};
+  var placed = state.caseMatches[caseIdx];
+
+  items.forEach(function(item) {
+    var el = document.createElement('div');
+    el.className = 'drag-item';
+    el.draggable = true;
+    el.dataset.name = item.label;
+    el.dataset.match = item.type;
+    // Check if already placed
+    var isPlaced = false;
+    for (var k in placed) {
+      if (placed[k] === item.label) { isPlaced = true; break; }
+    }
+    if (isPlaced) {
+      el.classList.add('placed');
+    } else {
+      setupDragItem(el);
+    }
+    el.textContent = item.label;
+    poolEl.appendChild(el);
+  });
+
+  // Render SVG flowchart
+  renderFlowchart(caseIdx);
+  updateCaseProgress();
+}
+
+function renderFlowchart(caseIdx) {
+  var data = caseData[caseIdx];
+  var canvasEl = document.getElementById('caseCanvas');
+  var placed = state.caseMatches[caseIdx] || {};
+
+  var W = 520, H = caseIdx === 2 ? 420 : 400;
+  var cx = W / 2;
+  var slotW = 160, slotH = 50;
+  var gap = caseIdx === 2 ? 45 : 30;
+
+  var shapes = data.slots;
+  var yPositions = [];
+  var startY = 30;
+
+  // Calculate Y positions
+  for (var i = 0; i < shapes.length; i++) {
+    yPositions.push(startY + i * (slotH + gap));
+  }
+
+  // Adjust for branch case (two parallel slots)
+  var svgParts = [];
+  svgParts.push('<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" style="max-height:480px;">');
+  // Arrow marker
+  svgParts.push('<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#94A3B8"/></marker></defs>');
+
+  // Draw arrows first (behind shapes)
+  if (caseIdx === 2) {
+    // Branch: 0->1->(2 left "是", 3 bottom "否")->merge->3
+    // 0 -> 1 (开始 -> 判断菱形)
+    svgParts.push('<line class="fc-arrow" x1="' + cx + '" y1="' + (yPositions[0] + slotH) + '" x2="' + cx + '" y2="' + yPositions[1] + '"/>');
+    // 判断菱形：左出"是"分支，下出"否"分支
+    var leftX = cx - 100;
+    var diamondMidY = yPositions[1] + 30; // 菱形中线 Y（菱形高 dh=60，中线在 +30）
+    var diamondLeftX = cx - 90;  // 菱形左顶点
+    var diamondBottomY = yPositions[1] + 60; // 菱形底部 Y
+    // 1 -> 2 (左分支 "是"): 从菱形左顶点 → 左 → 到 slot 2 顶部
+    svgParts.push('<path class="fc-arrow" d="M' + diamondLeftX + ' ' + diamondMidY + ' L' + leftX + ' ' + diamondMidY + ' L' + leftX + ' ' + (yPositions[2] - 5) + '"/>');
+    // 1 -> 3 (下分支 "否"): 从菱形底部 → 直下 → 到 slot 3（结束框）顶部
+    svgParts.push('<line class="fc-arrow" x1="' + cx + '" y1="' + diamondBottomY + '" x2="' + cx + '" y2="' + (yPositions[3] - 5) + '"/>');
+    // 分支标签 "是" / "否"
+    svgParts.push('<text x="' + (diamondLeftX - 12) + '" y="' + (diamondMidY - 6) + '" class="fc-label" text-anchor="end">是</text>');
+    svgParts.push('<text x="' + (cx + 12) + '" y="' + (diamondBottomY + 14) + '" class="fc-label" text-anchor="start">否</text>');
+    // 2 -> 汇合点 (左): "说你好" 框底部 → 下 → 到中央汇合点
+    var mergeY = yPositions[2] + slotH + 25;
+    svgParts.push('<path class="fc-arrow" d="M' + leftX + ' ' + (yPositions[2] + slotH) + ' L' + leftX + ' ' + mergeY + ' L' + cx + ' ' + mergeY + '"/>');
+    // 汇合点 -> 结束框（"否"线已经从菱形底部直接连到结束框，这条线是"是"分支汇入）
+    svgParts.push('<line class="fc-arrow" x1="' + cx + '" y1="' + mergeY + '" x2="' + cx + '" y2="' + (yPositions[3] - 5) + '"/>');
+  } else if (caseIdx === 1) {
+    // Loop: 0->1->2->(back to 1)->3
+    // 箭头: 0->1, 1->2, 2->3
+    svgParts.push('<line class="fc-arrow" x1="' + cx + '" y1="' + (yPositions[0] + slotH) + '" x2="' + cx + '" y2="' + yPositions[1] + '"/>');
+    svgParts.push('<line class="fc-arrow" x1="' + cx + '" y1="' + (yPositions[1] + slotH) + '" x2="' + cx + '" y2="' + yPositions[2] + '"/>');
+    svgParts.push('<line class="fc-arrow" x1="' + cx + '" y1="' + (yPositions[2] + slotH) + '" x2="' + cx + '" y2="' + yPositions[3] + '"/>');
+    // 循环回退箭头: 从 slot 2 底部右侧 → 右侧 → 上方 → 回到 slot 1 顶部右侧
+    var loopX = cx + slotW / 2 + 24;
+    svgParts.push('<path class="fc-arrow" d="M' + (cx + slotW / 2) + ' ' + (yPositions[2] + slotH / 2) + ' L' + loopX + ' ' + (yPositions[2] + slotH / 2) + ' L' + loopX + ' ' + (yPositions[1] + slotH / 2) + ' L' + (cx + slotW / 2) + ' ' + (yPositions[1] + slotH / 2) + '"/>');
+    svgParts.push('<text x="' + (loopX + 4) + '" y="' + ((yPositions[1] + yPositions[2]) / 2 + slotH / 2) + '" class="fc-label" text-anchor="start">循环体</text>');
+  } else {
+    // Sequential
+    for (var i = 0; i < shapes.length - 1; i++) {
+      svgParts.push('<line class="fc-arrow" x1="' + cx + '" y1="' + (yPositions[i] + slotH) + '" x2="' + cx + '" y2="' + yPositions[i + 1] + '"/>');
+    }
+  }
+
+  // Draw shapes
+  shapes.forEach(function(slot, i) {
+    var y = yPositions[i];
+    var x = cx;
+    var isFilled = placed[i] !== undefined;
+    var fillColor = isFilled ? getFillColor(slot.type, data.color) : 'rgba(248,250,252,0.9)';
+    var strokeColor = getStrokeColor(slot.type, data.color);
+    var strokeDash = isFilled ? 'none' : '6,4';
+    var label = isFilled ? placed[i] : '?';
+
+    if (caseIdx === 2 && i === 2) {
+      // "说你好" 框在左侧偏移
+      x = cx - 100;
+    }
+
+    var shapeSvg = '';
+    if (slot.shape === 'round') {
+      shapeSvg = '<rect x="' + (x - slotW/2) + '" y="' + y + '" width="' + slotW + '" height="' + slotH + '" rx="25" ry="25" fill="' + fillColor + '" stroke="' + strokeColor + '" stroke-width="2.5" stroke-dasharray="' + strokeDash + '"/>';
+      shapeSvg += '<text x="' + x + '" y="' + (y + slotH/2) + '" class="fc-text">' + escapeHtml(label) + '</text>';
+    } else if (slot.shape === 'diamond') {
+      var dw = slotW + 20, dh = slotH + 10;
+      shapeSvg = '<polygon points="' + x + ',' + y + ' ' + (x + dw/2) + ',' + (y + dh/2) + ' ' + x + ',' + (y + dh) + ' ' + (x - dw/2) + ',' + (y + dh/2) + '" fill="' + fillColor + '" stroke="' + strokeColor + '" stroke-width="2.5" stroke-dasharray="' + strokeDash + '"/>';
+      shapeSvg += '<text x="' + x + '" y="' + (y + dh/2) + '" class="fc-text">' + escapeHtml(label) + '</text>';
+    } else if (slot.shape === 'parallelogram') {
+      var pw = slotW, ph = slotH;
+      var skew = 12;
+      shapeSvg = '<polygon points="' + (x - pw/2 + skew) + ',' + y + ' ' + (x + pw/2) + ',' + y + ' ' + (x + pw/2 - skew) + ',' + (y + ph) + ' ' + (x - pw/2) + ',' + (y + ph) + '" fill="' + fillColor + '" stroke="' + strokeColor + '" stroke-width="2.5" stroke-dasharray="' + strokeDash + '"/>';
+      shapeSvg += '<text x="' + x + '" y="' + (y + slotH/2) + '" class="fc-text">' + escapeHtml(label) + '</text>';
+    } else {
+      shapeSvg = '<rect x="' + (x - slotW/2) + '" y="' + y + '" width="' + slotW + '" height="' + slotH + '" rx="6" ry="6" fill="' + fillColor + '" stroke="' + strokeColor + '" stroke-width="2.5" stroke-dasharray="' + strokeDash + '"/>';
+      shapeSvg += '<text x="' + x + '" y="' + (y + slotH/2) + '" class="fc-text">' + escapeHtml(label) + '</text>';
+    }
+
+    var slotClass = 'fc-slot' + (isFilled ? ' filled' : '');
+    svgParts.push('<g class="' + slotClass + '" data-slot-idx="' + i + '" data-match="' + slot.expected + '">' + shapeSvg + '</g>');
+  });
+
+  svgParts.push('</svg>');
+  canvasEl.innerHTML = svgParts.join('');
+
+  // Attach drop handlers to slots
+  var fcSlots = canvasEl.querySelectorAll('.fc-slot');
+  fcSlots.forEach(function(slot) {
+    var slotIdx = parseInt(slot.dataset.slotIdx);
+
+    slot.addEventListener('dragover', function(e) {
+      if (placed[slotIdx] !== undefined) return;
+      e.preventDefault();
+      slot.classList.add('over');
+    });
+    slot.addEventListener('dragleave', function(e) {
+      slot.classList.remove('over');
+    });
+    slot.addEventListener('drop', function(e) {
+      e.preventDefault();
+      slot.classList.remove('over');
+      if (placed[slotIdx] !== undefined) return;
+      if (!dragData) return;
+      var expected = slot.dataset.match;
+      if (dragData.name === expected) {
+        // Correct!
+        placed[slotIdx] = dragData.name;
+        state.caseMatches[caseIdx] = placed;
+        dragData.item.classList.add('placed');
+        renderFlowchart(caseIdx);
+        renderCase(caseIdx);
+        showToast('正确！', 'success');
+        updateCaseProgress();
+      } else {
+        showToast('内容不匹配，再试试', 'error');
+      }
+    });
+  });
+}
+
+function getFillColor(type, colorScheme) {
+  var colors = {
+    blue: { start: '#DBEAFE', process: '#EFF6FF', end: '#DBEAFE', loop: '#FFEDD5', decision: '#DCFCE7', output: '#EDE9FE' },
+    orange: { start: '#DBEAFE', process: '#FFF7ED', end: '#DBEAFE', loop: '#FFEDD5', decision: '#DCFCE7', output: '#EDE9FE' },
+    green: { start: '#DBEAFE', process: '#F0FDF4', end: '#DBEAFE', loop: '#FFEDD5', decision: '#DCFCE7', output: '#EDE9FE' }
+  };
+  var c = colors[colorScheme] || colors.blue;
+  return c[type] || c.process;
+}
+
+function getStrokeColor(type, colorScheme) {
+  if (type === 'start' || type === 'end') return '#3B82F6';
+  if (type === 'process') {
+    return colorScheme === 'orange' ? '#F97316' : colorScheme === 'green' ? '#22C55E' : '#3B82F6';
+  }
+  if (type === 'loop') return '#F97316';
+  if (type === 'decision') return '#22C55E';
+  if (type === 'output') return '#8B5CF6';
+  return '#94A3B8';
+}
+
+function escapeHtml(text) {
+  var div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function updateCaseProgress() {
+  var data = caseData[state.currentCase];
+  var placed = state.caseMatches[state.currentCase] || {};
+  var count = Object.keys(placed).length;
+  var total = data.slots.length;
+  var pct = (count / total) * 100;
+  document.getElementById('caseProgress').style.width = pct + '%';
+  if (count === total) {
+    setTimeout(function() {
+      showToast('案例' + (state.currentCase + 1) + '完成！试试下一个', 'success');
+    }, 500);
+  }
+}
+
+// ==================== Tab Switching ====================
+document.querySelectorAll('.tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    var caseIdx = parseInt(tab.dataset.case);
+    renderCase(caseIdx);
+  });
+});
+
+// ==================== Quiz ====================
+function initQuiz() {
+  document.querySelectorAll('.quiz-opt').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+      var qEl = opt.closest('.quiz-q');
+      var qIdx = parseInt(qEl.dataset.q);
+      if (state.quizAnswered[qIdx]) return;
+
+      var isCorrect = opt.dataset.correct === 'true';
+      var answer = opt.dataset.answer;
+
+      // Mark selected
+      qEl.querySelectorAll('.quiz-opt').forEach(function(o) {
+        o.classList.remove('selected', 'correct', 'wrong');
+      });
+      opt.classList.add('selected');
+
+      // Show feedback
+      var feedback = qEl.querySelector('.quiz-feedback');
+      if (isCorrect) {
+        opt.classList.add('correct');
+        opt.querySelector('.quiz-opt-icon') || (opt.innerHTML += '<span class="quiz-opt-icon">✓</span>');
+        feedback.textContent = '回答正确！';
+        feedback.className = 'quiz-feedback show correct';
+      } else {
+        opt.classList.add('wrong');
+        opt.innerHTML += '<span class="quiz-opt-icon">✗</span>';
+        // Find correct answer
+        qEl.querySelectorAll('.quiz-opt').forEach(function(o) {
+          if (o.dataset.correct === 'true') {
+            o.classList.add('correct');
+            o.innerHTML += '<span class="quiz-opt-icon">✓</span>';
+          }
+        });
+        feedback.textContent = '回答错误，正确答案已标出';
+        feedback.className = 'quiz-feedback show wrong';
+      }
+
+      state.quizAnswered[qIdx] = { answer: answer, correct: isCorrect };
+      updateQuizScore();
+    });
+  });
+
+  // Quiz toggle
+  document.getElementById('quizToggle').addEventListener('click', function() {
+    state.quizVisible = false;
+    document.getElementById('quizBody').classList.add('hidden');
+    document.getElementById('quizFloat').style.display = 'flex';
+    document.getElementById('quizFloat').style.alignItems = 'center';
+    document.getElementById('quizFloat').style.justifyContent = 'center';
+  });
+
+  document.getElementById('quizFloat').addEventListener('click', function() {
+    state.quizVisible = true;
+    document.getElementById('quizBody').classList.remove('hidden');
+    document.getElementById('quizFloat').style.display = 'none';
+  });
+}
+
+function updateQuizScore() {
+  var answered = Object.keys(state.quizAnswered);
+  var correct = answered.filter(function(k) { return state.quizAnswered[k].correct; }).length;
+  document.getElementById('quizScore').textContent = '得分: ' + correct + ' / 5';
+  if (correct === 5 && answered.length === 5) {
+    showToast('测验满分！你已经掌握了三大结构', 'success');
+  }
+}
+
+// ==================== Reset ====================
+function resetAll() {
+  // Reset shapes
+  state.shapeMatches = [null, null, null, null];
+  document.querySelectorAll('#shapeGrid .shape-card').forEach(function(card) {
+    card.classList.remove('filled', 'over');
+    var slot = card.querySelector('.shape-name-slot');
+    slot.textContent = '拖入名称…';
+    slot.classList.remove('filled-text');
+  });
+  document.querySelectorAll('#shapePool .drag-item').forEach(function(item) {
+    item.classList.remove('placed');
+  });
+  updateShapeProgress();
+
+  // Reset cases
+  state.caseMatches = {};
+  renderCase(state.currentCase);
+
+  // Reset quiz
+  state.quizAnswered = {};
+  document.querySelectorAll('.quiz-opt').forEach(function(o) {
+    o.classList.remove('selected', 'correct', 'wrong');
+    var icon = o.querySelector('.quiz-opt-icon');
+    if (icon) icon.remove();
+  });
+  document.querySelectorAll('.quiz-feedback').forEach(function(f) {
+    f.className = 'quiz-feedback';
+  });
+  updateQuizScore();
+
+  showToast('已重置到初始状态', 'info');
+}
+
+// ==================== Random ====================
+function randomExperiment() {
+  // Shuffle drag items in current case
+  var pool = document.getElementById('casePool');
+  var items = Array.from(pool.querySelectorAll('.drag-item:not(.placed)'));
+  items.sort(function() { return Math.random() - 0.5; });
+  items.forEach(function(item) { pool.appendChild(item); });
+
+  // Also shuffle shape pool
+  var shapePool = document.getElementById('shapePool');
+  var shapeItems = Array.from(shapePool.querySelectorAll('.drag-item:not(.placed)'));
+  shapeItems.sort(function() { return Math.random() - 0.5; });
+  shapeItems.forEach(function(item) { shapePool.appendChild(item); });
+
+  // Random pick a quiz question to highlight
+  var qs = document.querySelectorAll('.quiz-q');
+  var randomQ = qs[Math.floor(Math.random() * qs.length)];
+  if (randomQ && !state.quizAnswered[parseInt(randomQ.dataset.q)]) {
+    randomQ.style.transition = 'box-shadow 0.3s ease';
+    randomQ.style.boxShadow = '0 0 0 3px var(--purple)';
+    setTimeout(function() { randomQ.style.boxShadow = 'none'; }, 1500);
+  }
+
+  showToast('已随机打乱题目顺序', 'info');
+}
+
+// ==================== About ====================
+function showAbout() {
+  showToast('程序是如何"想"的 — 顺序·循环·分支 | 初中信息技术第1课', 'info');
+}
+
+// ==================== Init ====================
+document.getElementById('btnReset').addEventListener('click', resetAll);
+document.getElementById('btnRandom').addEventListener('click', randomExperiment);
+document.getElementById('btnAbout').addEventListener('click', showAbout);
+
+initShapeMatching();
+renderCase(0);
+initQuiz();
+
+// ==================== Self-Check Probes ====================
+var __tick = 0;
+function selfCheckLoop() {
+  __tick++;
+  try {
+    // Nothing to animate continuously, but keep probe alive
+  } catch(e) { console.error('[selfcheck]', e); }
+  requestAnimationFrame(selfCheckLoop);
+}
+requestAnimationFrame(selfCheckLoop);
+
+setTimeout(function() {
+  var t0 = __tick;
+  setTimeout(function() {
+    console.assert(__tick > t0, '[FATAL] 循环已死');
+    // Check SVG channel has elements
+    var svgLines = document.querySelectorAll('.fc-arrow');
+    var svgShapes = document.querySelectorAll('.fc-slot');
+    console.assert(svgShapes.length >= 4, '[FATAL] SVG 通道空白');
+    console.assert(!(window.__errs || []).length, '[FATAL] 未处理异常', window.__errs);
+    // Check panels don't overlap
+    var panels = document.querySelectorAll('[data-panel]');
+    var rects = Array.from(panels).map(function(p) { return p.getBoundingClientRect(); });
+    for (var i = 0; i < rects.length; i++) {
+      for (var j = i + 1; j < rects.length; j++) {
+        var a = rects[i], b = rects[j];
+        var overlap = !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
+        if (overlap) console.warn('面板重叠', panels[i], panels[j]);
+      }
+      if (rects[i].height < 20) console.warn('面板塌陷', panels[i]);
+    }
+  }, 500);
+}, 1000);
+
+// ==================== Login System ====================
+var loginRole = null; // 'teacher' or 'student'
+var currentUser = null;
+
+var loginOverlay = document.createElement('div');
+loginOverlay.className = 'login-overlay hidden';
+loginOverlay.innerHTML =
+  '<div class="login-box">' +
+    '<div class="login-title">选择登录身份</div>' +
+    '<div class="login-sub">教师端可查看全班数据，学生端记录个人学习进度</div>' +
+    '<div class="login-role-btns">' +
+      '<div class="login-role-btn" data-role="teacher" id="roleTeacher">' +
+        '<span class="login-role-icon">👩‍🏫</span><span>教师端</span>' +
+      '</div>' +
+      '<div class="login-role-btn" data-role="student" id="roleStudent">' +
+        '<span class="login-role-icon">👨‍🎓</span><span>学生端</span>' +
+      '</div>' +
+    '</div>' +
+    '<input class="login-input hidden" id="loginName" placeholder="请输入姓名" maxlength="20" />' +
+    '<button class="login-confirm" id="loginConfirm">确认进入</button>' +
+    '<button class="login-cancel" id="loginCancel">跳过，直接体验</button>' +
+  '</div>';
+document.body.appendChild(loginOverlay);
+
+document.getElementById('roleTeacher').addEventListener('click', function() {
+  loginRole = 'teacher';
+  document.getElementById('roleTeacher').classList.add('active-teacher');
+  document.getElementById('roleStudent').classList.remove('active-student');
+  document.getElementById('loginName').classList.add('hidden');
+});
+document.getElementById('roleStudent').addEventListener('click', function() {
+  loginRole = 'student';
+  document.getElementById('roleStudent').classList.add('active-student');
+  document.getElementById('roleTeacher').classList.remove('active-teacher');
+  document.getElementById('loginName').classList.remove('hidden');
+  document.getElementById('loginName').focus();
+});
+document.getElementById('loginConfirm').addEventListener('click', function() {
+  if (!loginRole) { showToast('请先选择身份', 'error'); return; }
+  if (loginRole === 'student') {
+    var name = document.getElementById('loginName').value.trim();
+    if (!name) { showToast('请输入姓名', 'error'); return; }
+    currentUser = name;
+  } else {
+    currentUser = '教师';
+  }
+  loginOverlay.classList.add('hidden');
+  applyLoginState();
+  showToast('登录成功：' + (loginRole === 'teacher' ? '教师端' : '学生 ' + currentUser), 'success');
+});
+document.getElementById('loginCancel').addEventListener('click', function() {
+  loginOverlay.classList.add('hidden');
+});
+document.getElementById('btnLogin').addEventListener('click', function() {
+  loginOverlay.classList.remove('hidden');
+});
+document.getElementById('btnLogout').addEventListener('click', function() {
+  loginRole = null; currentUser = null;
+  applyLoginState();
+  showToast('已退出登录', 'info');
+});
+
+function applyLoginState() {
+  var badge = document.getElementById('navUserBadge');
+  var btnLogin = document.getElementById('btnLogin');
+  var btnLogout = document.getElementById('btnLogout');
+  var btnData = document.getElementById('btnDataPanel');
+  var evalBanner = document.getElementById('evalBanner');
+  if (currentUser) {
+    badge.style.display = 'inline-block';
+    badge.textContent = (loginRole === 'teacher' ? '👩‍🏫 ' : '👨‍🎓 ') + currentUser;
+    btnLogin.style.display = 'none';
+    btnLogout.style.display = 'inline-flex';
+    btnData.style.display = 'inline-flex';
+    if (loginRole === 'student') evalBanner.classList.remove('hidden');
+  } else {
+    badge.style.display = 'none';
+    btnLogin.style.display = 'inline-flex';
+    btnLogout.style.display = 'none';
+    btnData.style.display = 'none';
+    evalBanner.classList.add('hidden');
+  }
+}
+
+// ==================== Student Data Store (localStorage) ====================
+function getStoreKey() { return 'prog_h5_data'; }
+function loadStore() {
+  try { return JSON.parse(localStorage.getItem(getStoreKey())) || {}; }
+  catch(e) { return {}; }
+}
+function saveStore(s) {
+  try { localStorage.setItem(getStoreKey(), JSON.stringify(s)); } catch(e) {}
+}
+function getStudentData(name) {
+  var s = loadStore();
+  if (!s.students) s.students = {};
+  if (!s.students[name]) {
+    s.students[name] = {
+      shapes: 0,        // shape matching completed count
+      cases: [0,0,0],   // each case completion count
+      quizCorrect: 0,
+      quizTotal: 0,
+      quizHistory: [],  // [{date, score, total}]
+      evaluations: []  // [{time, module, level, text}]
+    };
+  }
+  return s.students[name];
+}
+function saveStudentData(name, data) {
+  var s = loadStore();
+  if (!s.students) s.students = {};
+  s.students[name] = data;
+  saveStore(s);
+}
+
+// ==================== Evaluation System ====================
+function evaluateStudent(name) {
+  var d = getStudentData(name);
+  var evals = [];
+
+  // Shape matching evaluation
+  if (d.shapes > 0) {
+    var lvl = d.shapes >= 4 ? 'excellent' : d.shapes >= 2 ? 'good' : 'need';
+    var txt = d.shapes >= 4 ? '框格认知：优秀！全部配对正确' : d.shapes >= 2 ? '框格认知：良好，继续完成剩余配对' : '框格认知：需加强，请多练习框格配对';
+    evals.push({module: '框格认知', level: lvl, text: txt});
+  }
+  // Case evaluations
+  var caseNames = ['顺序结构', '循环结构', '分支结构'];
+  for (var i = 0; i < 3; i++) {
+    if (d.cases[i] > 0) {
+      var total = caseData[i].slots.length;
+      var cl = d.cases[i] >= total ? 'excellent' : d.cases[i] >= total/2 ? 'good' : 'need';
+      var ct = d.cases[i] >= total ? caseNames[i] + '：优秀！流程图完成' : d.cases[i] >= total/2 ? caseNames[i] + '：良好，继续完成' : caseNames[i] + '：需加强';
+      evals.push({module: caseNames[i], level: cl, text: ct});
+    }
+  }
+  // Quiz evaluation
+  if (d.quizTotal > 0) {
+    var pct = d.quizCorrect / d.quizTotal;
+    var ql = pct >= 0.8 ? 'excellent' : pct >= 0.6 ? 'good' : 'need';
+    var qt = pct >= 0.8 ? '测验：优秀！' + d.quizCorrect + '/' + d.quizTotal : pct >= 0.6 ? '测验：良好 ' + d.quizCorrect + '/' + d.quizTotal : '测验：需加强 ' + d.quizCorrect + '/' + d.quizTotal;
+    evals.push({module: '小测验', level: ql, text: qt});
+  }
+  return evals;
+}
+
+function showEvalBanner(level, text) {
+  var banner = document.getElementById('evalBanner');
+  var icon = document.getElementById('evalIcon');
+  var txt = document.getElementById('evalText');
+  banner.className = 'eval-banner show ' + level;
+  icon.textContent = level === 'excellent' ? '🌟' : level === 'good' ? '👍' : '💪';
+  txt.textContent = text;
+  setTimeout(function() { banner.className = 'eval-banner hidden'; }, 4000);
+}
+
+// Record & evaluate after each activity
+function recordAndEvaluate(name) {
+  var d = getStudentData(name);
+  saveStudentData(name, d);
+  var evals = evaluateStudent(name);
+  if (evals.length > 0) {
+    var latest = evals[evals.length - 1];
+    showEvalBanner(latest.level, latest.text);
+    d.evaluations.push({time: new Date().toLocaleTimeString(), module: latest.module, level: latest.level, text: latest.text});
+    saveStudentData(name, d);
+  }
+}
+
+// Hook into existing functions
+var _origUpdateShapeProgress = updateShapeProgress;
+updateShapeProgress = function() {
+  _origUpdateShapeProgress();
+  if (loginRole === 'student' && currentUser) {
+    var d = getStudentData(currentUser);
+    d.shapes = state.shapeMatches.filter(function(v) { return v !== null; }).length;
+    saveStudentData(currentUser, d);
+    recordAndEvaluate(currentUser);
+  }
+};
+
+var _origUpdateCaseProgress = updateCaseProgress;
+updateCaseProgress = function() {
+  _origUpdateCaseProgress();
+  if (loginRole === 'student' && currentUser) {
+    var d = getStudentData(currentUser);
+    var ci = state.currentCase;
+    d.cases[ci] = Object.keys(state.caseMatches[ci] || {}).length;
+    saveStudentData(currentUser, d);
+    recordAndEvaluate(currentUser);
+  }
+};
+
+var _origUpdateQuizScore = updateQuizScore;
+updateQuizScore = function() {
+  _origUpdateQuizScore();
+  if (loginRole === 'student' && currentUser) {
+    var d = getStudentData(currentUser);
+    var answered = Object.keys(state.quizAnswered);
+    var correct = answered.filter(function(k) { return state.quizAnswered[k].correct; }).length;
+    d.quizCorrect = correct;
+    d.quizTotal = answered.length;
+    if (answered.length > 0 && !d.quizHistory.some(function(h) { return h.total === 5 && h.score === correct && Math.abs(Date.now() - new Date(h.date).getTime()) < 5000; })) {
+      d.quizHistory.push({date: new Date().toLocaleString(), score: correct, total: 5});
+    }
+    saveStudentData(currentUser, d);
+    recordAndEvaluate(currentUser);
+  }
+};
+
+// ==================== Data Panel ====================
+var dataPanelOverlay = document.createElement('div');
+dataPanelOverlay.className = 'data-panel-overlay hidden';
+dataPanelOverlay.innerHTML =
+  '<div class="data-panel">' +
+    '<button class="data-panel-close" id="dpClose">✕</button>' +
+    '<div class="data-panel-title">📊 学情数据面板</div>' +
+    '<div class="data-tabs">' +
+      '<div class="data-tab active" data-dtab="overview">总览</div>' +
+      '<div class="data-tab" data-dtab="detail">学生明细</div>' +
+      '<div class="data-tab" data-dtab="trend">学期趋势</div>' +
+    '</div>' +
+    '<div class="data-content active" id="dpOverview"></div>' +
+    '<div class="data-content" id="dpDetail"></div>' +
+    '<div class="data-content" id="dpTrend"></div>' +
+  '</div>';
+document.body.appendChild(dataPanelOverlay);
+
+document.getElementById('dpClose').addEventListener('click', function() {
+  dataPanelOverlay.classList.add('hidden');
+});
+document.getElementById('btnDataPanel').addEventListener('click', function() {
+  renderDataPanel();
+  dataPanelOverlay.classList.remove('hidden');
+});
+document.querySelectorAll('.data-tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.data-tab').forEach(function(t) { t.classList.remove('active'); });
+    tab.classList.add('active');
+    document.querySelectorAll('.data-content').forEach(function(c) { c.classList.remove('active'); });
+    document.getElementById('dp' + tab.dataset.dtab.charAt(0).toUpperCase() + tab.dataset.dtab.slice(1)).classList.add('active');
+  });
+});
+
+function renderDataPanel() {
+  var s = loadStore();
+  var students = s.students || {};
+  var names = Object.keys(students);
+  var ovEl = document.getElementById('dpOverview');
+  var dtEl = document.getElementById('dpDetail');
+  var trEl = document.getElementById('dpTrend');
+
+  if (loginRole === 'student' && currentUser) {
+    // Student view: personal data
+    var d = students[currentUser] || getStudentData(currentUser);
+    ovEl.innerHTML = renderPersonalStats(d, currentUser);
+    dtEl.innerHTML = renderStudentDetail(d, currentUser);
+    trEl.innerHTML = renderPersonalTrend(d);
+  } else if (loginRole === 'teacher') {
+    // Teacher view: all students
+    if (names.length === 0) {
+      ovEl.innerHTML = '<div class="data-empty">暂无学生数据，学生登录后完成练习将自动记录</div>';
+      dtEl.innerHTML = '<div class="data-empty">暂无数据</div>';
+      trEl.innerHTML = '<div class="data-empty">暂无数据</div>';
+    } else {
+      ovEl.innerHTML = renderClassOverview(students, names);
+      dtEl.innerHTML = renderClassDetail(students, names);
+      trEl.innerHTML = renderClassTrend(students, names);
+    }
+  } else {
+    ovEl.innerHTML = '<div class="data-empty">请先登录查看数据</div>';
+    dtEl.innerHTML = '<div class="data-empty">请先登录</div>';
+    trEl.innerHTML = '<div class="data-empty">请先登录</div>';
+  }
+}
+
+function renderPersonalStats(d, name) {
+  var caseNames = ['顺序', '循环', '分支'];
+  var caseBars = '';
+  for (var i = 0; i < 3; i++) {
+    var total = caseData[i].slots.length;
+    var pct = total > 0 ? Math.round(d.cases[i] / total * 100) : 0;
+    caseBars += '<div style="margin-bottom:8px;"><span style="font-size:13px;">' + caseNames[i] + '</span> <span class="data-bar-bg"><span class="data-bar" style="width:' + pct + '%"></span></span> <span style="font-size:12px;color:var(--text-muted)">' + d.cases[i] + '/' + total + '</span></div>';
+  }
+  var quizPct = d.quizTotal > 0 ? Math.round(d.quizCorrect / d.quizTotal * 100) : 0;
+  return '<div class="data-stat-grid">' +
+    '<div class="data-stat-card"><div class="data-stat-label">框格配对</div><div class="data-stat-value">' + d.shapes + '/4</div></div>' +
+    '<div class="data-stat-card"><div class="data-stat-label">测验得分</div><div class="data-stat-value">' + d.quizCorrect + '/' + d.quizTotal + '</div></div>' +
+    '<div class="data-stat-card"><div class="data-stat-label">综合掌握</div><div class="data-stat-value">' + quizPct + '%</div></div>' +
+  '</div>' +
+  '<div style="margin-bottom:16px;"><div style="font-size:14px;font-weight:600;margin-bottom:8px;">各结构掌握进度</div>' + caseBars + '</div>';
+}
+
+function renderStudentDetail(d, name) {
+  var evals = d.evaluations || [];
+  var html = '<div style="font-size:14px;font-weight:600;margin-bottom:10px;">' + name + ' 的评价记录</div>';
+  if (evals.length === 0) {
+    html += '<div class="data-empty">暂无评价记录</div>';
+  } else {
+    html += '<table class="data-table"><thead><tr><th>时间</th><th>模块</th><th>评价</th></tr></thead><tbody>';
+    for (var i = evals.length - 1; i >= 0 && i >= evals.length - 20; i--) {
+      var e = evals[i];
+      var icon = e.level === 'excellent' ? '🌟' : e.level === 'good' ? '👍' : '💪';
+      html += '<tr><td>' + e.time + '</td><td>' + e.module + '</td><td>' + icon + ' ' + e.text + '</td></tr>';
+    }
+    html += '</tbody></table>';
+  }
+  return html;
+}
+
+function renderPersonalTrend(d) {
+  var history = d.quizHistory || [];
+  var html = '<div style="font-size:14px;font-weight:600;margin-bottom:12px;">测验得分趋势</div>';
+  if (history.length === 0) { return html + '<div class="data-empty">暂无测验记录</div>'; }
+  html += '<div class="data-trend">';
+  for (var i = 0; i < history.length; i++) {
+    var h = history[i];
+    var pct = h.total > 0 ? h.score / h.total * 100 : 0;
+    html += '<div><div class="data-trend-bar" style="height:' + pct + '%;min-height:4px;"></div><div class="data-trend-label">' + h.score + '/' + h.total + '</div></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderClassOverview(students, names) {
+  var totalStudents = names.length;
+  var avgShapes = 0, avgQuiz = 0, completedCases = [0,0,0];
+  for (var i = 0; i < names.length; i++) {
+    var d = students[names[i]];
+    avgShapes += d.shapes;
+    avgQuiz += d.quizTotal > 0 ? d.quizCorrect / d.quizTotal : 0;
+    for (var j = 0; j < 3; j++) {
+      if (d.cases[j] >= caseData[j].slots.length) completedCases[j]++;
+    }
+  }
+  avgShapes = totalStudents > 0 ? Math.round(avgShapes / totalStudents * 10) / 10 : 0;
+  avgQuiz = totalStudents > 0 ? Math.round(avgQuiz / totalStudents * 100) : 0;
+  var caseNames = ['顺序', '循环', '分支'];
+  var weakIdx = 0, weakVal = completedCases[0];
+  for (var j = 1; j < 3; j++) { if (completedCases[j] < weakVal) { weakVal = completedCases[j]; weakIdx = j; } }
+  return '<div class="data-stat-grid">' +
+    '<div class="data-stat-card"><div class="data-stat-label">学生人数</div><div class="data-stat-value">' + totalStudents + '</div></div>' +
+    '<div class="data-stat-card"><div class="data-stat-label">平均框格配对</div><div class="data-stat-value">' + avgShapes + '/4</div></div>' +
+    '<div class="data-stat-card"><div class="data-stat-label">平均测验得分率</div><div class="data-stat-value">' + avgQuiz + '%</div></div>' +
+  '</div>' +
+  '<div style="margin-bottom:12px;"><div style="font-size:14px;font-weight:600;margin-bottom:8px;">各结构完成人数</div>' +
+    '<div style="font-size:13px;">顺序：' + completedCases[0] + '/' + totalStudents + ' 人完成</div>' +
+    '<div style="font-size:13px;">循环：' + completedCases[1] + '/' + totalStudents + ' 人完成</div>' +
+    '<div style="font-size:13px;">分支：' + completedCases[2] + '/' + totalStudents + ' 人完成</div>' +
+  '</div>' +
+  '<div class="info-card orange"><div class="info-label">薄弱环节</div><div class="info-value">' + (totalStudents > 0 ? caseNames[weakIdx] + '结构完成率最低（' + weakVal + '/' + totalStudents + '）' : '暂无数据') + '</div></div>';
+}
+
+function renderClassDetail(students, names) {
+  if (names.length === 0) return '<div class="data-empty">暂无学生</div>';
+  var html = '<table class="data-table"><thead><tr><th>姓名</th><th>框格</th><th>顺序</th><th>循环</th><th>分支</th><th>测验</th><th>评价</th></tr></thead><tbody>';
+  for (var i = 0; i < names.length; i++) {
+    var d = students[names[i]];
+    var evals = d.evaluations || [];
+    var latestEval = evals.length > 0 ? evals[evals.length - 1] : null;
+    var evalIcon = latestEval ? (latestEval.level === 'excellent' ? '🌟' : latestEval.level === 'good' ? '👍' : '💪') : '—';
+    html += '<tr><td>' + names[i] + '</td><td>' + d.shapes + '/4</td><td>' + d.cases[0] + '/' + caseData[0].slots.length + '</td><td>' + d.cases[1] + '/' + caseData[1].slots.length + '</td><td>' + d.cases[2] + '/' + caseData[2].slots.length + '</td><td>' + d.quizCorrect + '/' + d.quizTotal + '</td><td>' + evalIcon + '</td></tr>';
+  }
+  html += '</tbody></table>';
+  return html;
+}
+
+function renderClassTrend(students, names) {
+  // Find max quiz history length
+  var maxLen = 0;
+  for (var i = 0; i < names.length; i++) {
+    var h = students[names[i]].quizHistory || [];
+    if (h.length > maxLen) maxLen = h.length;
+  }
+  if (maxLen === 0) return '<div class="data-empty">暂无测验记录</div>';
+  var html = '<div style="font-size:14px;font-weight:600;margin-bottom:12px;">全班测验平均分趋势</div><div class="data-trend">';
+  for (var j = 0; j < maxLen; j++) {
+    var sum = 0, cnt = 0;
+    for (var i = 0; i < names.length; i++) {
+      var h = students[names[i]].quizHistory || [];
+      if (h[j]) { sum += h[j].score / h[j].total; cnt++; }
+    }
+    var avg = cnt > 0 ? sum / cnt * 100 : 0;
+    html += '<div><div class="data-trend-bar" style="height:' + avg + '%;min-height:4px;"></div><div class="data-trend-label">第' + (j+1) + '次</div></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+// Show login prompt on first load
+setTimeout(function() {
+  if (!currentUser) {
+    loginOverlay.classList.remove('hidden');
+  }
+}, 1000);
+
+</script>
+
+</body>
+</html>

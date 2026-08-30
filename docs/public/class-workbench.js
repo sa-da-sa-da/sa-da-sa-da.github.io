@@ -568,6 +568,7 @@
     var active = false;
     if (target === 'dashboard' && route.view === 'dashboard') active = true;
     if (target === 'schedule' && route.view === 'schedule') active = true;
+    if (target === 'dailySchedule' && route.view === 'dailySchedule') active = true;
     if (target === 'grades' && route.view === 'grades') active = true;
     if (target === 'todo' && route.view === 'todo') active = true;
     if (target === 'exams' && route.view === 'exams') active = true;
@@ -582,6 +583,7 @@
   function itemClickHandler(target) {
     if (target === 'dashboard') { navigate('dashboard'); return; }
     if (target === 'schedule') { navigate('schedule'); return; }
+    if (target === 'dailySchedule') { navigate('dailySchedule'); return; }
     if (target === 'grades') { navigate('grades'); return; }
     if (target === 'todo') { navigate('todo'); return; }
     if (target === 'exams') { navigate('exams'); return; }
@@ -609,6 +611,7 @@
     parts.push('🏫 ' + getCurClassName());
     if (route.view === 'dashboard') parts.push('首页仪表盘');
     else if (route.view === 'schedule') parts.push('课程表');
+    else if (route.view === 'dailySchedule') parts.push('作息时间表');
     else if (route.view === 'grades') {
       parts.push('智能成绩分析');
       if (route.param && route.param.indexOf('exam:') === 0) {
@@ -641,6 +644,9 @@
       var sc = state.schedule;
       if (sc && sc.mode === 'teacher') window.WB_VIEWS.bindTeacherTable();
       else window.WB_VIEWS.bindSchedule();
+    } else if (route.view === 'dailySchedule') {
+      c.innerHTML = window.WB_VIEWS.renderDailySchedule();
+      window.WB_VIEWS.bindDailySchedule();
     } else if (route.view === 'grades') {
       c.innerHTML = window.WB_VIEWS.renderGrades();
       window.WB_VIEWS.bindGrades();
