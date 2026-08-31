@@ -232,6 +232,18 @@ a { color: var(--c-primary); text-decoration: none; }
   font-size: 13px; font-weight: 600; margin-bottom: 10px;
   display: flex; align-items: center; gap: 6px;
 }
+/* 标题点击跳转对应模块 */
+.dash-title-nav { cursor: pointer; transition: color .15s; }
+.dash-title-nav:hover { color: var(--c-primary); text-decoration: underline; }
+/* 卡片右上角操作按钮组（＋ / 📦） */
+.dash-actions { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.dash-add {
+  cursor: pointer; font-size: 14px; font-weight: 700;
+  line-height: 1; padding: 2px 8px; border-radius: 6px;
+  color: var(--c-primary); background: var(--c-primary-bg);
+  transition: all .15s; user-select: none;
+}
+.dash-add:hover { background: var(--c-primary); color: #fff; }
 .dash-list { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow-y: auto; }
 .dash-list .row {
   display: flex; align-items: center; gap: 8px; padding: 6px 8px;

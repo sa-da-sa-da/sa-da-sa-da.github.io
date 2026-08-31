@@ -6,6 +6,7 @@ window.WB_VIEWS = (function () {
   'use strict';
   var WB = window.WB;
   var H = WB.escapeHtml;
+  var uid = WB.uid;            // 生成唯一ID（供新增待办/周计划/归档写入使用）
   function el(id) { return document.getElementById(id); }
 
   // 重新获取 content 根节点：用 cloneNode 替换以清除旧的根级事件监听，防止重复累积
@@ -25,7 +26,7 @@ window.WB_VIEWS = (function () {
     // 顶部统计
     html += '<div class="stats-row">';
     html += statCard('👥', '班级总人数', stats.totalStudents, '来自花名册', '');
-    html += statCard('✅', '今日待办', stats.todoToday, '含今日到期事项', stats.todoToday > 0 ? 'warn' : '');
+    html += statCard('✅', '本周待办', stats.todoToday, '含本周到期事项', stats.todoToday > 0 ? 'warn' : '');
     html += statCard('📞', '待沟通家长', stats.pendingParents, '家长沟通待跟进');
     html += statCard('⭐', '重点关注学生', stats.keyStudents, '心理/特殊档案', 'danger');
     html += '</div>';
@@ -40,18 +41,24 @@ window.WB_VIEWS = (function () {
 
     // 左：今日待办 + 本周日程
     html += '<div>';
-    html += dashCard('✅ 今日待办', renderTodoList(stats.todoTodayList), 'todo');
+    html += dashCard('✅ 本周待办', renderTodoList(stats.todoTodayList), 'todo',
+      '<span class="dash-add" id="dash-view-archive" title="查看归档">📦</span>' +
+      '<span class="dash-add" id="dash-add-todo" title="新增待办">＋</span>', 'todo');
     html += '<div style="height:12px"></div>';
-    html += dashCard('📅 本周日程', renderWeeklyPlan(stats.weeklyPlans), 'weeklyPlan');
+    html += dashCard('📅 本周日程', renderWeeklyPlan(stats.weeklyPlans), 'weeklyPlan',
+      '<span class="dash-add" id="dash-add-weeklyPlan" title="新增周计划">＋</span>');
     html += '</div>';
 
     // 右：待沟通 + 重点学生 + 材料倒计时
     html += '<div>';
-    html += dashCard('📞 待沟通家长', renderParents(stats.pendingParentsList), 'talk');
+    html += dashCard('📞 待沟通家长', renderParents(stats.pendingParentsList), 'contacts',
+      '<span class="dash-add" data-tbl-add="contacts" title="新增家长通讯录">＋</span>', 'tbl:contacts');
     html += '<div style="height:12px"></div>';
-    html += dashCard('⭐ 重点学生提醒', renderKeyStudents(stats.keyStudentsList), 'special');
+    html += dashCard('⭐ 重点学生提醒', renderKeyStudents(stats.keyStudentsList), 'mental',
+      '<span class="dash-add" data-tbl-add="mental" title="新增心理台账">＋</span>', 'tbl:mental');
     html += '<div style="height:12px"></div>';
-    html += dashCard('📤 材料上交倒计时', renderDeadlines(stats.deadlines), 'notice');
+    html += dashCard('📤 材料上交倒计时', renderDeadlines(stats.deadlines), 'notice',
+      '<span class="dash-add" data-tbl-add="notice" title="新增班级通知">＋</span>', 'tbl:notice');
     html += '</div>';
     html += '</div>';
 
@@ -67,23 +74,95 @@ window.WB_VIEWS = (function () {
       '</div></div>';
   }
 
-  function dashCard(title, bodyHtml, tableId) {
-    return '<div class="dash-card">' +
-      '<h3>' + H(title) + '</h3>' +
-      '<div class="dash-list">' + bodyHtml + '</div>' +
-      '</div>';
+  function dashCard(title, bodyHtml, tableId, actionBtn, navTarget) {
+    var h = '<div class="dash-card">';
+    h += '<h3>';
+    // 标题可点击跳转到对应功能模块
+    if (navTarget) h += '<span class="dash-title-nav" data-nav="' + H(navTarget) + '" title="点击打开「' + H(title.replace(/^\S+\s*/, '')) + '」模块">' + H(title) + '</span>';
+    else h += H(title);
+    if (actionBtn) h += '<span class="dash-actions">' + actionBtn + '</span>';
+    h += '</h3>';
+    h += '<div class="dash-list">' + bodyHtml + '</div>';
+    h += '</div>';
+    return h;
   }
 
   function renderTodoList(items) {
-    if (items.length === 0) return '<div class="empty">今日无待办</div>';
-    return items.slice(0, 8).map(function (it) {
+    var allItems = (WB.state.todo && WB.state.todo.items) || [];
+    // 本周范围（周一 ~ 周日）
+    var wStart = new Date();
+    var dow = wStart.getDay() || 7;
+    wStart.setDate(wStart.getDate() - dow + 1);
+    wStart.setHours(0, 0, 0, 0);
+    var wEnd = new Date(wStart);
+    wEnd.setDate(wEnd.getDate() + 6);
+    wEnd.setHours(23, 59, 59, 999);
+    function inWeek(due) {
+      if (!due) return true; // 无期限的也算本周
+      var d = new Date(due);
+      return d >= wStart && d <= wEnd;
+    }
+    // 本周未完成
+    var undone = allItems.filter(function (i) {
+      if (i.done) return false;
+      return inWeek(i.due);
+    });
+    // 本周已完成（最多 5 条）
+    var done = allItems.filter(function (i) { return i.done && inWeek(i.due); }).slice(0, 5);
+    var html = '';
+    if (undone.length === 0 && done.length === 0) return '<div class="empty">本周无待办</div>';
+    undone.slice(0, 8).forEach(function (it) {
       var tag = it.priority === '高' ? 'danger' : (it.priority === '中' ? 'warn' : '');
-      return '<div class="row">' +
+      var dt = dueLabel(it.due);
+      html += '<div class="row">' +
         '<span class="tag ' + tag + '">' + (it.priority || '普通') + '</span>' +
         '<span class="text">' + H(it.title) + '</span>' +
-        '<button class="btn btn-sm btn-ghost" data-act="done" data-id="' + it.__id + '">完成</button>' +
+        '<span class="time" style="' + (dt.cls === 'over' ? 'color:var(--c-danger);font-weight:600' : (dt.cls === 'soon' ? 'color:var(--c-warning);font-weight:600' : '')) + '">' + dt.text + '</span>' +
+        '<button class="btn btn-sm btn-ghost" data-act="done" data-id="' + it.__id + '" title="标记完成">✅</button>' +
+        '<button class="btn btn-sm btn-ghost" data-act="todo-archive" data-id="' + it.__id + '" title="归档">📦</button>' +
+        '<button class="btn btn-sm btn-ghost" data-act="todo-del" data-id="' + it.__id + '" title="删除">✕</button>' +
         '</div>';
-    }).join('');
+    });
+    done.forEach(function (it) {
+      var dt2 = dueLabel(it.due);
+      html += '<div class="row" style="opacity:0.55">' +
+        '<span class="tag">✓</span>' +
+        '<span class="text" style="text-decoration:line-through;color:var(--c-text-2)">' + H(it.title) + '</span>' +
+        '<span class="time">' + dt2.text + '</span>' +
+        '<button class="btn btn-sm btn-ghost" data-act="todo-undo" data-id="' + it.__id + '" title="撤销完成">↩</button>' +
+        '<button class="btn btn-sm btn-ghost" data-act="todo-archive" data-id="' + it.__id + '" title="归档">📦</button>' +
+        '<button class="btn btn-sm btn-ghost" data-act="todo-del" data-id="' + it.__id + '" title="删除">✕</button>' +
+        '</div>';
+    });
+    return html;
+  }
+
+  // 截止日期显示：日期 + 距离天数
+  function dueLabel(due) {
+    if (!due) return { text: '无期限', cls: '' };
+    var days = daysUntil(due);
+    var md = String(due).slice(5); // MM-DD
+    if (days < 0) return { text: md + ' 逾期' + Math.abs(days) + '天', cls: 'over' };
+    if (days === 0) return { text: md + ' 今天', cls: 'soon' };
+    if (days === 1) return { text: md + ' 明天', cls: 'soon' };
+    if (days <= 3) return { text: md + ' ' + days + '天后', cls: 'soon' };
+    return { text: md + ' ' + days + '天后', cls: '' };
+  }
+
+  // 跳转到某个数据表所属模块
+  function navToTable(tableId) {
+    var mods = (window.WB_CONFIG && window.WB_CONFIG.modules) || [];
+    for (var i = 0; i < mods.length; i++) {
+      var m = mods[i];
+      if (!m.subs) continue;
+      for (var j = 0; j < m.subs.length; j++) {
+        if (m.subs[j].id === tableId) {
+          WB.navigate('table', { module: m.id, table: tableId });
+          return;
+        }
+      }
+    }
+    WB.showToast('未找到对应模块：' + tableId);
   }
 
   function renderParents(items) {
@@ -93,6 +172,7 @@ window.WB_VIEWS = (function () {
         '<span class="tag">' + H(p.relation || '家长') + '</span>' +
         '<span class="text">' + H(p.name) + ' · ' + H(p.parentName || '') + '</span>' +
         '<a class="btn btn-sm btn-ghost" href="tel:' + H(p.phone) + '">拨打</a>' +
+        '<button class="btn btn-sm btn-ghost" data-act="tbl-del" data-tbl="contacts" data-id="' + H(p.__id || '') + '" title="删除">✕</button>' +
         '</div>';
     }).join('');
   }
@@ -101,10 +181,17 @@ window.WB_VIEWS = (function () {
     if (items.length === 0) return '<div class="empty">暂无重点关注学生</div>';
     return items.slice(0, 6).map(function (s) {
       var cls = s.level === '重点' ? 'danger' : (s.level === '关注' ? 'warn' : '');
+      // 有 level 字段 → 来自心理台账 mental；否则 → 特殊学生档案 special
+      var srcTbl = s.level ? 'mental' : 'special';
+      // 关键日期：优先下次跟进，其次最近更新
+      var keyDate = s.nextFollow || s.lastUpdate || s.lastTalk || '';
+      var dl = keyDate ? dueLabel(keyDate) : { text: '—', cls: '' };
+      var prefix = s.nextFollow ? '跟进 ' : '';
       return '<div class="row">' +
-        '<span class="tag ' + cls + '">' + H(s.category || '特殊') + '</span>' +
+        '<span class="tag ' + cls + '">' + H(s.category || s.level || '特殊') + '</span>' +
         '<span class="text">' + H(s.name) + '</span>' +
-        '<span class="time">' + H(s.lastUpdate || '') + '</span>' +
+        '<span class="time" style="' + (dl.cls === 'over' ? 'color:var(--c-danger);font-weight:600' : (dl.cls === 'soon' ? 'color:var(--c-warning);font-weight:600' : '')) + '">' + prefix + dl.text + '</span>' +
+        '<button class="btn btn-sm btn-ghost" data-act="tbl-del" data-tbl="' + srcTbl + '" data-id="' + H(s.__id || '') + '" title="删除">✕</button>' +
         '</div>';
     }).join('');
   }
@@ -126,6 +213,7 @@ window.WB_VIEWS = (function () {
       return '<div class="row">' +
         '<span class="tag">第' + H(p.week) + '</span>' +
         '<span class="text">' + H(p.focus || p.tasks || '—') + '</span>' +
+        '<button class="btn btn-sm btn-ghost" data-act="wp-del" data-id="' + (p.__id || '') + '" title="删除">✕</button>' +
         '</div>';
     }).join('');
   }
@@ -133,12 +221,15 @@ window.WB_VIEWS = (function () {
   function renderDeadlines(items) {
     if (items.length === 0) return '<div class="empty">暂无截止任务</div>';
     return items.slice(0, 6).map(function (n) {
+      var dl = dueLabel(n.deadline);
       var days = daysUntil(n.deadline);
       var tagCls = days < 0 ? 'danger' : (days <= 3 ? 'warn' : '');
       var label = days < 0 ? '已过期' : (days === 0 ? '今日' : days + '天后');
       return '<div class="row">' +
         '<span class="tag ' + tagCls + '">' + label + '</span>' +
         '<span class="text">' + H(n.title) + '</span>' +
+        '<span class="time" style="' + (days < 0 ? 'color:var(--c-danger);font-weight:600' : (days <= 3 ? 'color:var(--c-warning);font-weight:600' : '')) + '">' + dl.text + '</span>' +
+        '<button class="btn btn-sm btn-ghost" data-act="tbl-del" data-tbl="notice" data-id="' + H(n.__id || '') + '" title="删除">✕</button>' +
         '</div>';
     }).join('');
   }
@@ -158,14 +249,18 @@ window.WB_VIEWS = (function () {
     var roster = tables.roster || [];
     var totalStudents = roster.length;
 
-    // 今日待办
-    var t = WB.today();
+    // 本周待办（周一 ~ 周日）
     var todoItems = (state.todo && state.todo.items) || [];
-    var todoToday = todoItems.filter(function (i) {
-      if (i.done) return false;
-      return i.due === t || (!i.due && true);
-    });
-    var todoTodayList = todoItems.filter(function (i) { return !i.done && (i.due === t || !i.due); }).slice(0, 20);
+    var wS = new Date(); var wd = wS.getDay() || 7;
+    wS.setDate(wS.getDate() - wd + 1); wS.setHours(0, 0, 0, 0);
+    var wE = new Date(wS); wE.setDate(wE.getDate() + 6); wE.setHours(23, 59, 59, 999);
+    function dueInWeek(due) {
+      if (!due) return true;
+      var d = new Date(due);
+      return d >= wS && d <= wE;
+    }
+    var todoToday = todoItems.filter(function (i) { return !i.done && dueInWeek(i.due); });
+    var todoTodayList = todoItems.filter(function (i) { return !i.done && dueInWeek(i.due); }).slice(0, 20);
 
     // 待沟通家长：谈话台账中"待跟进"的，或家长通讯录中未通话的
     var pendingParents = (tables.contacts || []).filter(function (c) {
@@ -217,19 +312,95 @@ window.WB_VIEWS = (function () {
   }
 
   function bindDashboard() {
-    // 今日待办完成（content 级委托，rebindRoot 防止重复绑定）
     var root = rebindRoot();
+    // 统一事件委托：待办操作 + 日程删除 + 添加按钮
     root.addEventListener('click', function (e) {
+      // 标记完成
       var btn = e.target.closest('[data-act="done"]');
-      if (!btn) return;
-      var id = btn.dataset.id;
-      var items = WB.state.todo.items || [];
-      var item = items.find(function (i) { return i.__id === id; });
-      if (item) {
-        item.done = true;
-        item.doneAt = new Date().toISOString();
-        WB.saveState();
-        renderDashboardRefresh();
+      if (btn) {
+        var id = btn.dataset.id;
+        var items = WB.state.todo.items || [];
+        var item = items.find(function (i) { return i.__id === id; });
+        if (item) { item.done = true; item.doneAt = new Date().toISOString(); WB.saveState(); renderDashboardRefresh(); }
+        return;
+      }
+      // 撤销完成
+      var undo = e.target.closest('[data-act="todo-undo"]');
+      if (undo) {
+        var undoId = undo.dataset.id;
+        var uitems = WB.state.todo.items || [];
+        var uitem = uitems.find(function (i) { return i.__id === undoId; });
+        if (uitem) { uitem.done = false; delete uitem.doneAt; WB.saveState(); renderDashboardRefresh(); }
+        return;
+      }
+      // 删除待办
+      var tdel = e.target.closest('[data-act="todo-del"]');
+      if (tdel) {
+        var tid = tdel.dataset.id;
+        if (!confirm('确定删除这条待办吗？')) return;
+        WB.state.todo.items = (WB.state.todo.items || []).filter(function (i) { return i.__id !== tid; });
+        WB.saveState(); renderDashboardRefresh();
+        return;
+      }
+      // 归档待办
+      var tarc = e.target.closest('[data-act="todo-archive"]');
+      if (tarc) {
+        dashArchiveTodo(tarc.dataset.id);
+        return;
+      }
+      // 查看归档
+      if (e.target.closest('#dash-view-archive')) {
+        dashViewArchive();
+        return;
+      }
+      // 删除日程
+      var wdel = e.target.closest('[data-act="wp-del"]');
+      if (wdel) {
+        var wid = wdel.dataset.id;
+        if (!confirm('确定删除这条周计划吗？')) return;
+        var plans = WB.getTable('weeklyPlan');
+        var kept = plans.filter(function (p) { return p.__id !== wid; });
+        WB.state.tables.weeklyPlan = kept;
+        WB.saveState(); renderDashboardRefresh();
+        return;
+      }
+      // 添加待办
+      if (e.target.closest('#dash-add-todo')) {
+        dashAddTodo();
+        return;
+      }
+      // 添加日程
+      if (e.target.closest('#dash-add-weeklyPlan')) {
+        dashAddWeeklyPlan();
+        return;
+      }
+      // 表格行删除（家长 / 重点学生 / 通知）
+      var trowdel = e.target.closest('[data-act="tbl-del"]');
+      if (trowdel) {
+        var tbl = trowdel.dataset.tbl, rid = trowdel.dataset.id;
+        if (!rid) { WB.showToast('该记录缺少标识，请到对应模块中删除'); return; }
+        if (!confirm('确定删除这条记录吗？')) return;
+        var arr = WB.getTable(tbl);
+        var ri = arr.findIndex(function (r) { return r.__id === rid; });
+        if (ri >= 0) {
+          arr.splice(ri, 1);
+          WB.saveState(); renderDashboardRefresh();
+        } else WB.showToast('未找到该记录，请到对应模块中删除');
+        return;
+      }
+      // 表格新增：打开对应表的录入表单
+      var tadd = e.target.closest('[data-tbl-add]');
+      if (tadd) {
+        WB.openForm(tadd.dataset.tblAdd, null);
+        return;
+      }
+      // 标题跳转：打开对应功能模块
+      var nav = e.target.closest('[data-nav]');
+      if (nav) {
+        var tgt = nav.dataset.nav;
+        if (tgt.indexOf('tbl:') === 0) navToTable(tgt.slice(4));
+        else WB.navigate(tgt);
+        return;
       }
     });
     // 百度搜索
@@ -267,6 +438,218 @@ window.WB_VIEWS = (function () {
       }
       var item = e.target.closest('[data-qw]');
       if (item) baiduGo(item.dataset.qw);
+    });
+  }
+
+  // 仪表盘快捷添加待办
+  function dashAddTodo() {
+    var body = '<label class="full"><span class="lbl">待办内容</span>' +
+      '<input id="da-title" placeholder="如：批改作业、家长电话" style="width:100%"></label>' +
+      '<div style="display:flex;gap:10px">' +
+      '<label style="flex:1"><span class="lbl">优先级</span><select id="da-pri"><option>普通</option><option>中</option><option value="高">高</option></select></label>' +
+      '<label style="flex:1"><span class="lbl">截止日期</span><input id="da-due" type="date"></label>' +
+      '</div>';
+    WB.openModal('➕ 新增待办', body, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: '保存', cls: 'btn btn-primary', act: 'save' }
+    ], function (act) {
+      if (act !== 'save') return;
+      var title = el('da-title').value.trim();
+      if (!title) { WB.showToast('请输入待办内容'); return false; }
+      var items = WB.state.todo.items || [];
+      items.push({ __id: WB.uid(), title: title, priority: el('da-pri').value, due: el('da-due').value || '', done: false });
+      WB.state.todo.items = items; WB.saveState(); renderDashboardRefresh();
+    });
+  }
+
+  // 仪表盘快捷添加周计划
+  function dashAddWeeklyPlan() {
+    var body = '<label class="full"><span class="lbl">本周重点 / 任务</span>' +
+      '<textarea id="wa-focus" placeholder="输入本周工作重点..." rows="3" style="width:100%"></textarea></label>' +
+      '<label><span class="lbl">第几周</span><input id="wa-week" type="number" min="1" max="30" value="" placeholder="如 3"></label>';
+    WB.openModal('➕ 新增周计划', body, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: '保存', cls: 'btn btn-primary', act: 'save' }
+    ], function (act) {
+      if (act !== 'save') return;
+      var focus = el('wa-focus').value.trim();
+      if (!focus) { WB.showToast('请输入计划内容'); return false; }
+      var plans = WB.getTable('weeklyPlan');
+      plans.push({ __id: WB.uid(), focus: focus, week: el('wa-week').value || '', startDate: new Date().toISOString() });
+      WB.saveState(); renderDashboardRefresh();
+    });
+  }
+
+  // ============ 待办归档：写入真实模块 ============
+  // 收集所有可归档的目标表（真实存在的模块子表，跳过无 fields 的特殊视图）
+  function collectArchiveTargets() {
+    var out = [];
+    var mods = (window.WB_CONFIG && window.WB_CONFIG.modules) || [];
+    mods.forEach(function (m) {
+      if (!m.subs) return;
+      m.subs.forEach(function (s) {
+        if (!s.fields || !s.fields.length) return;
+        out.push({ id: s.id, label: s.label, icon: s.icon || '', module: m.label, fields: s.fields });
+      });
+    });
+    return out;
+  }
+
+  // 待办 → 目标表字段 自动匹配预填
+  function guessFieldValue(field, todo) {
+    var n = (field.name || '').toLowerCase();
+    var lbl = field.label || '';
+    var t = field.type;
+    // 日期字段：用待办截止日，无则今天
+    if (t === 'date') return todo.due || WB.today();
+    // 学生姓名：待办里没有学生，留空由用户补
+    if (n === 'name' || /学生姓名|姓名/.test(lbl)) return '';
+    // 标题 / 主题 / 名称类 text
+    if (n === 'title' || n === 'theme' || n === 'topic' || /标题|主题|名称/.test(lbl)) return todo.title || '';
+    // 长文本：详情/备注/内容/说明等
+    if (t === 'textarea' || /内容|详情|备注|说明|情况|措施|总结|反馈|要点|描述|结果|目标|计划|反馈|议程|纪要/.test(lbl)) {
+      return todo.note || todo.title || '';
+    }
+    // 下拉：优先匹配待办优先级，否则取默认值
+    if (t === 'select') {
+      var opts = field.options || [];
+      if (todo.priority && opts.indexOf(todo.priority) >= 0) return todo.priority;
+      return field.default || opts[0] || '';
+    }
+    return '';
+  }
+
+  // 渲染目标表的字段表单（预填匹配值，可修改）
+  function renderArchiveFields(container, target, todo) {
+    if (!container) return;
+    if (!target) { container.innerHTML = ''; return; }
+    var h = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--c-border)">' +
+      '<div style="font-size:12px;font-weight:600;margin-bottom:8px">' + H(target.icon + ' ' + target.label) + ' 字段</div>';
+    h += '<div class="form-grid">';
+    target.fields.forEach(function (f) {
+      var v = guessFieldValue(f, todo);
+      var fid = 'data-f="' + H(f.name) + '"';
+      h += '<label class="' + (f.full ? 'full' : '') + '"><span class="lbl' +
+        (f.required ? ' required' : '') + '">' + H(f.label) + '</span>';
+      if (f.type === 'select') {
+        h += '<select ' + fid + '>';
+        (f.options || []).forEach(function (o) {
+          h += '<option value="' + H(o) + '"' + (o === v ? ' selected' : '') + '>' + H(o) + '</option>';
+        });
+        h += '</select>';
+      } else if (f.type === 'textarea') {
+        h += '<textarea ' + fid + ' rows="2" placeholder="' + H(f.placeholder || '') + '">' + H(v) + '</textarea>';
+      } else if (f.type === 'date') {
+        h += '<input type="date" ' + fid + ' value="' + H(v) + '">';
+      } else if (f.type === 'tags') {
+        h += '<input ' + fid + ' value="" placeholder="该字段需到模块中填写">';
+      } else {
+        h += '<input ' + fid + ' value="' + H(v) + '" placeholder="' + H(f.placeholder || '') + '">';
+      }
+      h += '</label>';
+    });
+    h += '</div></div>'; // 关闭 form-grid + 外层容器
+    container.innerHTML = h;
+  }
+
+  // 归档单条待办 → 写入目标模块
+  function dashArchiveTodo(id) {
+    var item = (WB.state.todo.items || []).find(function (i) { return i.__id === id; });
+    if (!item) return;
+    var targets = collectArchiveTargets();
+    if (!targets.length) { WB.showToast('未找到可归档的模块'); return; }
+
+    var body = '<div style="font-size:13px;margin-bottom:10px;color:var(--c-text-2)">归档：<b>' + H(item.title) + '</b></div>';
+    body += '<label class="full"><span class="lbl">归档到模块</span><select id="ar-target">';
+    body += '<option value="">— 请选择目标模块 —</option>';
+    targets.forEach(function (t) {
+      body += '<option value="' + H(t.id) + '">' + H(t.icon + ' ' + t.module + ' › ' + t.label) + '</option>';
+    });
+    body += '</select></label>';
+    body += '<div id="ar-fields"></div>';
+    body += '<div style="font-size:12px;color:var(--c-text-3);margin-top:8px">💡 选择模块后，字段会按待办内容自动预填，确认无误再归档</div>';
+
+    WB.openModal('📦 归档到模块', body, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: '归档', cls: 'btn btn-primary', act: 'save' }
+    ], function (act, bodyRef) {
+      if (act !== 'save') return;
+      var sel = bodyRef.querySelector('#ar-target');
+      var tid = sel ? sel.value : '';
+      if (!tid) { WB.showToast('请选择目标模块'); return false; }
+      var target = targets.filter(function (t) { return t.id === tid; })[0];
+      if (!target) return false;
+      // 必填校验
+      var row = { __id: WB.uid(), __createdAt: new Date().toISOString() };
+      var missing = [];
+      target.fields.forEach(function (f) {
+        var inp = bodyRef.querySelector('[data-f="' + f.name + '"]');
+        var v = inp ? String(inp.value).trim() : '';
+        if (f.required && !v) missing.push(f.label);
+        row[f.name] = v;
+      });
+      if (missing.length) { WB.showToast('请填写必填项：' + missing.join('、')); return false; }
+      // 写入目标模块
+      WB.getTable(tid).push(row);
+      // 记录归档去向
+      if (!WB.state.todo.archiveLog) WB.state.todo.archiveLog = [];
+      WB.state.todo.archiveLog.unshift({
+        title: item.title, tableId: tid, tableLabel: target.label,
+        moduleLabel: target.module, at: new Date().toISOString()
+      });
+      // 从待办移除
+      WB.state.todo.items = (WB.state.todo.items || []).filter(function (i) { return i.__id !== id; });
+      WB.saveState(); renderDashboardRefresh();
+      WB.showToast('已归档到「' + target.module + ' › ' + target.label + '」');
+    }, function (bodyRef) {
+      // mount：选择模块后动态渲染字段表单
+      var sel = bodyRef.querySelector('#ar-target');
+      if (!sel) return;
+      sel.addEventListener('change', function () {
+        var val = this.value;
+        var t = targets.filter(function (x) { return x.id === val; })[0];
+        renderArchiveFields(bodyRef.querySelector('#ar-fields'), t, item);
+      });
+    });
+  }
+
+  // 查看归档去向：记录归档到了哪个模块，可点击跳转
+  function dashViewArchive() {
+    var log = (WB.state.todo && WB.state.todo.archiveLog) || [];
+    var body = '';
+    if (!log.length) {
+      body = '<div class="empty">暂无归档记录<br><span style="font-size:11px">待办完成后点 📦 可归档到已有模块</span></div>';
+    } else {
+      body = '<div style="font-size:12px;color:var(--c-text-2);margin-bottom:8px">共 ' + log.length + ' 条归档，点击可跳转到对应模块查看</div>';
+      log.slice(0, 30).forEach(function (a, i) {
+        body += '<div class="row" style="cursor:pointer" data-ar-nav="' + H(a.tableId) + '">' +
+          '<span class="tag">' + H(a.tableLabel || '') + '</span>' +
+          '<span class="text">' + H(a.title) + '</span>' +
+          '<span class="time">' + H((a.at || '').slice(0, 10)) + '</span>' +
+          '<button class="btn btn-sm btn-ghost" data-ar-del="' + i + '" title="删除记录">✕</button>' +
+          '</div>';
+      });
+    }
+    WB.openModal('📦 归档去向', body, [
+      { text: '关闭', cls: 'btn', act: 'close' }
+    ], null, function (bodyRef) {
+      bodyRef.addEventListener('click', function (ev) {
+        var d = ev.target.closest('[data-ar-del]');
+        if (d) {
+          ev.stopPropagation();
+          if (!confirm('删除这条归档记录？（不会删除模块中的数据）')) return;
+          WB.state.todo.archiveLog.splice(parseInt(d.dataset.arDel, 10), 1);
+          WB.saveState();
+          WB.closeModal();
+          dashViewArchive();
+          return;
+        }
+        var n = ev.target.closest('[data-ar-nav]');
+        if (n) {
+          WB.closeModal();
+          navToTable(n.dataset.arNav);
+        }
+      });
     });
   }
 
@@ -519,9 +902,11 @@ window.WB_VIEWS = (function () {
         var subj = cell && cell.subject ? cell.subject : '';
         if (subj) {
           var c = sc.subjects[subj] || '#64748b';
+          // 渲染时清洗：从 teacher 中剥离单双周标记
+          var dispTeacher = String(cell.teacher || '').replace(/[\s·]*(单周|双周|单双周|隔周|单周上|双周上)\s*$/, '').trim();
           html += '<td class="sched-cell has" data-key="' + H(key) + '" style="background:' + hexToRgba(c, 0.14) + ';border-left:4px solid ' + c + '">';
           html += '<div class="s-subj" style="color:' + darkenHex(c) + '">' + H(subj) + '</div>';
-          if (cell.teacher) html += '<div class="s-teacher">' + H(cell.teacher) + '</div>';
+          if (dispTeacher) html += '<div class="s-teacher">' + H(dispTeacher) + '</div>';
           if (cell.note) html += '<div class="s-note">' + H(cell.note) + '</div>';
           html += '</td>';
         } else {
@@ -592,12 +977,11 @@ window.WB_VIEWS = (function () {
     // 教师候选名单：已录入教师 + 课表中出现的教师名
     var teacherNames = collectTeacherNames();
     var html = '<div style="font-size:13px;margin-bottom:10px;color:var(--c-text-2)">' + H(key) + '</div>';
-    html += '<label><span class="lbl">科目</span><select id="sc-subj">';
-    html += '<option value="">— 清除本格 —</option>';
-    subjects.forEach(function (s) {
-      html += '<option value="' + H(s) + '"' + (cur.subject === s ? ' selected' : '') + '>' + H(s) + '</option>';
-    });
-    html += '</select></label>';
+    html += '<label><span class="lbl">科目</span>';
+    html += '<input id="sc-subj" list="sc-subj-list" value="' + H(cur.subject || '') + '" placeholder="可手输新科目，或从列表选择">';
+    html += '<datalist id="sc-subj-list">';
+    subjects.forEach(function (s) { html += '<option value="' + H(s) + '">'; });
+    html += '</datalist></label>';
     html += '<label class="full"><span class="lbl">任课教师</span>';
     html += '<input id="sc-teacher" list="sc-teacher-list" value="' + H(cur.teacher || '') + '" placeholder="可手输，或从列表选择">';
     html += '<datalist id="sc-teacher-list">';
@@ -605,15 +989,28 @@ window.WB_VIEWS = (function () {
     html += '</datalist></label>';
     html += '<label class="full"><span class="lbl">备注（如 双周 / 单周 / 实验课）</span>';
     html += '<input id="sc-note" value="' + H(cur.note || '') + '" placeholder="如 双周、单周、实验课、自习"></label>';
+    html += '<div style="font-size:12px;color:var(--c-text-2);margin-top:6px">💡 清空「科目」并保存 = 清除本格</div>';
     WB.openModal('编辑课程 · ' + key, html, [
       { text: '取消', cls: 'btn', act: 'close' },
+      { text: '删除本格', cls: 'btn btn-danger', act: 'del' },
       { text: '保存', cls: 'btn btn-primary', act: 'save' }
     ], function (act) {
+      if (act === 'del') {
+        delete sc.grid[key];
+        WB.saveState();
+        renderScheduleRefresh();
+        WB.showToast('已清除 ' + key);
+        return;
+      }
       if (act !== 'save') return;
-      var subj = el('sc-subj').value;
+      var subj = el('sc-subj').value.trim();
       var teacher = el('sc-teacher').value.trim();
       var note = el('sc-note').value.trim();
       if (subj) {
+        // 新科目自动登记并分配颜色
+        if (!sc.subjects[subj]) {
+          sc.subjects[subj] = SUBJ_COLORS[Object.keys(sc.subjects).length % SUBJ_COLORS.length];
+        }
         sc.grid[key] = { subject: subj, note: note };
         if (teacher) sc.grid[key].teacher = teacher;
       } else delete sc.grid[key];
@@ -771,12 +1168,39 @@ window.WB_VIEWS = (function () {
             var val = String(row[dc.i] || '').trim();
             if (!val) return;
             var key = dc.name + '-' + period.name;
-            // 解析格式：科目 或 科目·教师·备注
-            var parts = val.split(/·/);
-            var subject = parts[0] || '';
-            var teacher = parts[1] || '';
-            var note = parts.slice(2).join('·') || '';
+            // 统一拆分：优先 · ，其次换行，最后空格
+            var parts;
+            if (val.indexOf('·') >= 0) parts = val.split(/·/);
+            else if (/[\n\r]/.test(val)) parts = val.split(/[\n\r]+/);
+            else parts = val.split(/\s+/);
+            parts = parts.map(function (s) { return String(s).trim(); }).filter(function (s) { return s; });
+
+            // 提取单周/双周标记（可能出现在任意位置）
+            var weekFlag = '';
+            var rest = [];
+            parts.forEach(function (s) {
+              if (/^(单周|双周|单双周|隔周|单周上|双周上)$/.test(s)) {
+                if (!weekFlag) weekFlag = s;
+              } else rest.push(s);
+            });
+
+            var subject = rest[0] || '';
+            var teacher = rest[1] || '';
+            var note = rest.slice(2).join(' ') || '';
+            // 单双周标记并入备注（保持与导出格式 科目·教师·备注 一致）
+            if (weekFlag) note = note ? (weekFlag + ' ' + note) : weekFlag;
             if (!subject) return;
+            // 智能识别：如果只有一段且看起来像人名（常见姓氏开头，2~4字），则视为晚自习值班
+            if (!teacher && /^[\u4e00-\u9fa5]{2,4}$/.test(subject)) {
+              var SURNAMES = '赵钱孙李周吴郑王冯陈褚卫蒋沈韩杨朱秦尤许何吕施张孔曹严华金魏陶姜戚谢邹喻柏水窦章云苏潘葛奚范彭郎鲁韦昌马苗凤花方俞任袁柳酆鲍史唐费廉岑薛雷贺倪汤滕殷罗毕郝邬安常乐于时傅皮卞齐康伍余元卜顾孟平黄和穆萧尹姚邵湛汪祁毛禹狄米贝明臧计伏成戴谈宋茅庞熊纪舒屈项祝董梁杜阮蓝闵席季麻强贾路娄危江童颜郭梅盛林刁钟徐邱骆高夏蔡田樊胡凌霍虞万支柯昝管卢莫经房裘缪干解应宗丁宣邓郁单杭洪包诸左石崔吉钮龚程嵇邢滑裴陆荣翁荀羊於惠甄曲家封芮羿储靳汲邴糜松井段富巫乌焦巴弓牧隗山谷车侯宓蓬全郗班仰秋仲伊宫宁仇栾暴甘钜厉戎祖武符刘景詹束龙叶幸司韶黎乔漆苍牟关岳帅寇边竺权逯盖桓公毋佘慕连茹习宦艾鱼容向古易慎戈廖庹终暨居衡步都耿满弘匡国文寇广禄阙东欧殳沃利蔚越夔隆师巩厍聂晁勾敖融冷訇辛阚那简饶空曾母沙乜养鞠须丰巢关蒯相查后荆红游竺权逯盖桓';
+              if (SURNAMES.indexOf(subject.charAt(0)) >= 0) {
+                teacher = subject;
+                // 根据时段名称判断学科：含"晚"→晚自习，含"自"→自习，否则→自习
+                if (period.name.indexOf('晚') >= 0 || periodLabel.indexOf('晚') >= 0) subject = '晚自习';
+                else if (period.name.indexOf('自') >= 0 || periodLabel.indexOf('自') >= 0) subject = '自习';
+                else subject = '自习';
+              }
+            }
             if (!sc.subjects[subject]) sc.subjects[subject] = SUBJ_COLORS[Object.keys(sc.subjects).length % SUBJ_COLORS.length];
             sc.grid[key] = { subject: subject, teacher: teacher, note: note };
             updated++;
@@ -814,13 +1238,26 @@ window.WB_VIEWS = (function () {
   function buildTeacherAssignments() {
     var sc = getSchedule();
     var map = {};
+    // 防御性清洗：从 teacher/note 中剥离单双周标记
+    function cleanTeacher(raw) {
+      if (!raw) return { name: '（未指定）', extra: '' };
+      var s = String(raw).trim();
+      // 匹配末尾或嵌入的 单周/双周 等标记
+      var m = s.match(/^(.+?)[\s·]*(单周|双周|单双周|隔周|单周上|双周上)$/);
+      if (m) return { name: m[1].trim() || '（未指定）', extra: m[2] };
+      return { name: s, extra: '' };
+    }
     Object.keys(sc.grid).forEach(function (k) {
       var cell = sc.grid[k];
       if (!cell.subject) return;
-      var t = cell.teacher || '（未指定）';
+      var ct = cleanTeacher(cell.teacher);
+      var t = ct.name;
       if (!map[t]) map[t] = { subjects: {}, cells: [] };
+      // note 里也带上单双周信息
+      var fullNote = cell.note || '';
+      if (ct.extra && fullNote.indexOf(ct.extra) < 0) fullNote = fullNote ? (fullNote + ' ' + ct.extra) : ct.extra;
       map[t].subjects[cell.subject] = (map[t].subjects[cell.subject] || 0) + 1;
-      map[t].cells.push({ key: k, subject: cell.subject, note: cell.note || '' });
+      map[t].cells.push({ key: k, subject: cell.subject, note: fullNote });
     });
     // 已录入通讯录但未排课的教师也展示
     Object.keys(sc.teachers).forEach(function (t) {
