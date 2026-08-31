@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>作业提交统计系统</title>
+<style>
+/* ========== CSS 变量 ========== */
+:root {
+  --bg: #f0f4f8;
+  --card-bg: #ffffff;
+  --text: #2c3e50;
+  --text-secondary: #64748b;
+  --border: #e2e8f0;
+  --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-hover: 0 6px 20px rgba(0,0,0,0.1);
+  --primary: #6366f1;
+  --primary-light: #eef2ff;
+  --radius: 12px;
+  --header-bg: #ffffff;
+  --input-bg: #f8fafc;
+  --stats-bg: #eef2ff;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --card-bg: #1e293b;
+  --text: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --border: #334155;
+  --shadow: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-hover: 0 6px 20px rgba(0,0,0,0.5);
+  --primary: #818cf8;
+  --primary-light: #1e1b4b;
+  --header-bg: #1e293b;
+  --input-bg: #334155;
+  --stats-bg: #1e1b4b;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+/* ========== 顶部栏 ========== */
+.header {
+  flex-shrink: 0;
+  background: var(--header-bg);
+  padding: 12px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow);
+  z-index: 10;
+  border-bottom: 1px solid var(--border);
+}
+.header h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  white-space: nowrap;
+  margin-right: 8px;
+}
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.header input[type="date"],
+.header select,
+.header input[type="text"] {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: var(--input-bg);
+  color: var(--text);
+  outline: none;
+  transition: border var(--transition);
+}
+.header input:focus, .header select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+.header .search-box {
+  position: relative;
+}
+.header .search-box input {
+  padding-left: 32px;
+  width: 160px;
+}
+.header .search-box .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+/* 统计条 */
+.stats-bar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.stat-item {
+  background: var(--stats-bg);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.stat-item span {
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+/* 工具栏 */
+.toolbar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  flex-shrink: 0;
+}
+.btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+.btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.btn-danger { border-color: #fecaca; color: #dc2626; }
+.btn-danger:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
+.btn-theme { width: 36px; height: 36px; padding: 0; font-size: 1.1rem; border-radius: 50%; }
+
+/* 图例 */
+.legend {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 20px;
+  flex-shrink: 0;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--transition);
+  border: 1px solid transparent;
+}
+.legend-item:hover { transform: scale(1.05); }
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+/* 主网格 */
+.main-grid {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+  padding: 10px 20px 20px;
+  overflow-y: auto;
+  align-content: start;
+}
+.group-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.group-label {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+  padding: 4px 0;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background var(--transition);
+}
+.group-label:hover { background: var(--primary-light); }
+
+/* 学生卡片 */
+.student-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 2px solid transparent;
+  position: relative;
+  min-height: 60px;
+  gap: 2px;
+}
+.student-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+.student-card.selected {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+}
+.student-card.hidden {
+  display: none;
+}
+.student-card .card-number {
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
+.student-card .card-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.student-card .card-status {
+  font-size: 1.3rem;
+  margin-top: 2px;
+}
+.student-card .card-badge {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  font-size: 0.9rem;
+  animation: bounce 1.5s infinite;
+}
+.student-card .card-leader {
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  font-size: 0.75rem;
+}
+@keyframes bounce {
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-4px)}
+}
+@keyframes pop {
+  0%{transform:scale(1)}
+  50%{transform:scale(1.08)}
+  100%{transform:scale(1)}
+}
+.pop-anim { animation: pop 0.25s ease; }
+
+/* 模态框 */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 100;
+  backdrop-filter: blur(2px);
+}
+.modal {
+  display: none;
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  z-index: 101;
+  padding: 24px;
+  width: 90%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.modal h3 { margin-bottom: 12px; font-size: 1.2rem; }
+.modal textarea {
+  width: 100%;
+  height: 200px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: var(--input-bg);
+  color: var(--text);
+  resize: vertical;
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* 底部操作栏 */
+.fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  gap: 8px;
+  z-index: 50;
+}
+.fab .btn {
+  padding: 10px 18px;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+}
+
+/* 图表区域 */
+.chart-panel {
+  display: none;
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  width: 360px;
+  max-height: 300px;
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  z-index: 49;
+  padding: 16px;
+  overflow: auto;
+}
+.chart-panel.show { display: block; }
+.chart-panel h4 { margin-bottom: 10px; font-size: 0.95rem; }
+.chart-panel canvas { width: 100%; }
+
+/* ========== 作业内容输入与下拉 ========== */
+.project-wrap { position: relative; }
+.project-drop {
+  display: none; position: absolute; top: 100%; left: 0; margin-top: 4px;
+  min-width: 170px; max-height: 260px; overflow-y: auto;
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: var(--shadow-hover); z-index: 80; padding: 4px;
+}
+.project-drop.show { display: block; }
+.project-drop .pd-item { padding: 7px 12px; font-size: 0.85rem; cursor: pointer; border-radius: 6px; }
+.project-drop .pd-item:hover { background: var(--primary-light); color: var(--primary); }
+.project-drop .pd-item.cur { color: var(--primary); font-weight: 700; }
+.project-drop .pd-empty { padding: 8px 12px; font-size: 0.78rem; color: var(--text-secondary); }
+
+/* ========== 作业内容书写区 ========== */
+.hw-panel { display: none; padding: 0 20px 8px; flex-shrink: 0; }
+.hw-panel.show { display: block; }
+.hw-panel-head { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 700; }
+.hw-panel-head span { color: var(--primary); }
+.hw-panel textarea {
+  width: 100%; min-height: 72px; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: 10px;
+  font-family: inherit; font-size: 0.9rem; line-height: 1.6;
+  background: var(--input-bg); color: var(--text); resize: vertical; outline: none;
+  transition: border var(--transition);
+}
+.hw-panel textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.hw-panel-tip { font-size: 0.72rem; color: var(--text-secondary); margin-top: 4px; }
+
+/* ========== 座次表信息条 ========== */
+.seat-bar {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  padding: 4px 20px 8px; flex-shrink: 0; font-size: 0.8rem; color: var(--text-secondary);
+}
+.seat-bar .sb-info {
+  background: var(--stats-bg); padding: 5px 12px; border-radius: 20px;
+  font-weight: 600; color: var(--text);
+}
+.seat-bar .sb-info b { color: var(--primary); }
+.seat-bar .sb-warn { background: #fef3c7; color: #92400e; padding: 5px 12px; border-radius: 20px; font-weight: 600; }
+
+/* ========== 座次画布（严格还原教室排布） ========== */
+.seat-canvas {
+  --seat-w: 78px; --seat-h: 62px; --seat-gap: 6px; --aisle-w: 16px; --rowlb-w: 26px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 4px 4px 24px; min-width: min-content;
+}
+.seat-canvas .podium-bar {
+  background: linear-gradient(135deg, #78716c, #57534e); color: #fff;
+  padding: 8px 18px; border-radius: 8px; letter-spacing: 3px; font-size: 12px;
+  display: flex; align-items: center; justify-content: center; min-width: 120px;
+}
+.seat-canvas .vip-row { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.seat-canvas .head-row { display: flex; gap: var(--seat-gap); justify-content: center; align-items: stretch; }
+.seat-canvas .group-head {
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-size: 11px; font-weight: 700; color: var(--primary);
+  padding: 2px 4px; border-radius: 6px; background: var(--primary-light);
+  cursor: pointer; transition: background var(--transition);
+  white-space: nowrap; overflow: hidden;
+}
+.seat-canvas .group-head:hover { background: var(--primary); color: #fff; }
+.seat-canvas .group-head .sg {
+  margin-left: 6px; padding: 0 5px; border-radius: 4px; font-size: 10px;
+  background: rgba(99,102,241,0.14); cursor: pointer;
+}
+.seat-canvas .group-head .sg:hover { background: var(--primary); color: #fff; }
+.seat-canvas .spacer { flex: none; }
+.seat-canvas .seat-grid { display: grid; gap: var(--seat-gap); justify-content: center; }
+.seat-canvas .row-label {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--text-secondary); background: var(--input-bg);
+  border-radius: 5px; cursor: pointer; user-select: none;
+  writing-mode: vertical-rl; letter-spacing: 1px; transition: background var(--transition);
+}
+.seat-canvas .row-label:hover { background: var(--primary); color: #fff; }
+.seat-canvas .aisle-cell {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary); opacity: 0.25; font-size: 11px;
+}
+.seat-card {
+  width: var(--seat-w); height: var(--seat-h); min-height: 0;
+  padding: 3px 2px; gap: 0;
+}
+.seat-card.g-m { border-left: 3px solid #3b82f6; }
+.seat-card.g-f { border-left: 3px solid #ec4899; }
+.seat-card.vip { border: 2px solid #d97706; }
+.seat-card.empty {
+  background: transparent; border: 1px dashed var(--border);
+  box-shadow: none; opacity: 0.4; cursor: default;
+}
+.seat-card.empty:hover { transform: none; box-shadow: none; }
+.seat-card.hidden { display: flex !important; visibility: hidden; }
+.seat-card .card-number { display: none; }
+.seat-card .card-name { font-size: 0.85rem; line-height: 1.1; text-align: center; word-break: break-all; }
+.seat-card .card-status { font-size: 1.05rem; }
+.seat-canvas .extra-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 6px; }
+.seat-canvas .extra-title { font-size: 11px; color: var(--text-secondary); }
+.seat-canvas .extra-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 860px; }
+.seat-canvas .extra-grid .student-card { width: 78px; min-height: 60px; }
+.seat-empty-tip { padding: 40px 12px; text-align: center; color: var(--text-secondary); line-height: 2; font-size: 0.9rem; }
+
+/* ========== 座次导入弹窗 ========== */
+.seat-tip {
+  font-size: 0.78rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 10px;
+  background: var(--input-bg); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+}
+.seat-src { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; max-height: 220px; overflow-y: auto; }
+.seat-src-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+  background: var(--input-bg); transition: all var(--transition); font-size: 0.85rem;
+}
+.seat-src-item:hover { border-color: var(--primary); background: var(--primary-light); }
+.seat-src-item .nm { flex: 1; font-weight: 600; }
+.seat-src-item .mt { font-size: 0.75rem; color: var(--text-secondary); }
+.seat-divider { text-align: center; font-size: 0.75rem; color: var(--text-secondary); margin: 10px 0; position: relative; }
+.seat-divider::before, .seat-divider::after { content: ''; position: absolute; top: 50%; width: 36%; height: 1px; background: var(--border); }
+.seat-divider::before { left: 0; } .seat-divider::after { right: 0; }
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .header {
+    padding: 8px 12px;
+    gap: 6px;
+  }
+  .header h1 { font-size: 1.1rem; }
+  .header .search-box input { width: 120px; }
+  .main-grid { padding: 6px; gap: 4px; }
+  .student-card { min-height: 48px; padding: 6px 2px; font-size: 0.8rem; }
+  .student-card .card-name { font-size: 0.8rem; }
+  .stats-bar { gap: 6px; font-size: 0.8rem; }
+  .stat-item { padding: 4px 10px; }
+  .fab { bottom: 10px; right: 10px; gap: 4px; }
+  .fab .btn { padding: 8px 12px; font-size: 0.8rem; }
+  .chart-panel { width: 280px; right: 10px; bottom: 60px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 顶部栏 -->
+<div class="header">
+  <h1>作业提交统计</h1>
+  <div class="header-controls">
+    <input type="date" id="datePicker">
+    <div class="project-wrap">
+      <input type="text" id="projectSelect" value="语文作业"
+        placeholder="输入作业内容，如：数学P12" style="min-width:180px;" autocomplete="off">
+      <div class="project-drop" id="projectDrop"></div>
+    </div>
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="搜索学生..." oninput="applyFilter()">
+    </div>
+    <div class="stats-bar">
+      <div class="stat-item" style="background:#dcfce7;color:#166534">
+        已提交 <span id="passed-count">0</span>/<span id="total-count">0</span>
+      </div>
+      <div class="stat-item" style="background:#dbeafe;color:#1e40af">
+        优秀 <span id="excellent-count">0</span>
+      </div>
+      <div class="stat-item" style="background:#fef3c7;color:#92400e">
+        待改 <span id="pending-count">0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 图例 -->
+<div class="legend" id="legend-box"></div>
+
+<!-- 工具栏 -->
+<div class="toolbar" style="padding:0 20px; flex-shrink:0;">
+  <button class="btn" onclick="selectAll()">全选</button>
+  <button class="btn" onclick="deselectAll()">取消选择</button>
+  <button class="btn" onclick="batchSetStatus(0)">批量·未交</button>
+  <button class="btn" onclick="batchSetStatus(1)">批量·已交</button>
+  <button class="btn" onclick="batchSetStatus(2)">批量·待改</button>
+  <button class="btn" onclick="batchSetStatus(3)">批量·优秀</button>
+  <button class="btn" onclick="toggleChart()" id="chartBtn">📊 趋势图</button>
+  <button class="btn" onclick="toggleHomeworkPanel()" id="hwContentBtn">✏️ 作业内容</button>
+  <button class="btn btn-theme" onclick="toggleTheme()" title="切换暗色模式">🌓</button>
+</div>
+
+<!-- 作业内容书写区 -->
+<div class="hw-panel" id="hwPanel">
+  <div class="hw-panel-head">✏️ 作业内容 · <span id="hwPanelDate"></span> · <span id="hwPanelProject"></span></div>
+  <textarea id="hwContentInput" oninput="saveHomeworkContent()" placeholder="写下当天布置的作业内容，随日期与作业项目自动保存。&#10;例如：&#10;1. 数学练习册 P32-33&#10;2. 背诵英语 Unit3 单词"></textarea>
+  <div class="hw-panel-tip">输入即自动保存 · 按日期 + 作业项目分别记录 · 导出 CSV 时一并带上</div>
+</div>
+
+<!-- 座次表信息条 -->
+<div class="seat-bar" id="seatBar"></div>
+
+<!-- 主网格 -->
+<div class="main-grid" id="main-grid"></div>
+
+<!-- 图表面板 -->
+<div class="chart-panel" id="chartPanel">
+  <h4>近7天趋势</h4>
+  <canvas id="trendChart"></canvas>
+</div>
+
+<!-- 模态框 -->
+<div class="modal-overlay" id="overlay"></div>
+<div class="modal" id="importModal">
+  <h3>导入学生名单</h3>
+  <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px;">每行一个名字，或直接粘贴名单</p>
+  <textarea id="namesInput" placeholder="张三&#10;李四&#10;王五..."></textarea>
+  <div class="modal-actions">
+    <button class="btn" style="background:var(--primary);color:#fff;flex:1;" onclick="importNames()">确认导入</button>
+    <button class="btn" style="flex:1;" onclick="closeModal()">取消</button>
+  </div>
+</div>
+
+<!-- 座次表导入 -->
+<div class="modal" id="seatModal" style="max-width:600px;">
+  <h3>🪑 导入座次表（seat-map.html）</h3>
+  <p class="seat-tip">
+    座次表系统把名单与排座保存在<b>浏览器本地存储</b>中。若两页在同一浏览器中打开，下方会直接列出可导入的班级；
+    否则请使用座次表的「📦 备份」导出 JSON，或直接选择 seat-map.html 读取其布局配置。
+  </p>
+  <div class="seat-src" id="seatSrcList"></div>
+  <div class="seat-divider">其他方式</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+    <button class="btn" onclick="document.getElementById('seatJsonFile').click()">📂 选择备份 JSON</button>
+    <button class="btn" onclick="document.getElementById('seatHtmlFile').click()">📄 选择 seat-map.html</button>
+    <input type="file" id="seatJsonFile" accept=".json,application/json" style="display:none" onchange="importSeatFile(this)">
+    <input type="file" id="seatHtmlFile" accept=".html,.htm" style="display:none" onchange="importSeatHtmlFile(this)">
+  </div>
+  <textarea id="seatJsonInput" placeholder="也可以直接粘贴「备份 JSON」的内容…" style="height:110px;"></textarea>
+  <div class="modal-actions">
+    <button class="btn" style="background:var(--primary);color:#fff;flex:1;" onclick="importSeatFromText()">解析粘贴内容</button>
+    <button class="btn" style="flex:1;" onclick="closeSeatModal()">关闭</button>
+  </div>
+</div>
+
+<!-- 底部操作 -->
+<div class="fab">
+  <button class="btn" onclick="openSeatModal()">🪑 座次表</button>
+  <button class="btn" onclick="openImportModal()">📋 导入名单</button>
+  <button class="btn" onclick="exportData()">📥 导出明细</button>
+  <button class="btn" onclick="exportStats()">📊 导出统计</button>
+  <button class="btn btn-danger" onclick="resetAll()">🔄 重置</button>
+</div>
+
+<script>
+// ==========================================
+// 状态配置
+// ==========================================
+const STATUS_CONFIG = [
+  { id: 0, name: "未交", emoji: "📝", bg: "#ffffff", bgDark: "#334155", text: "#94a3b8", border: "#e2e8f0" },
+  { id: 1, name: "已交", emoji: "✅", bg: "#dcfce7", bgDark: "#14532d", text: "#166534", textDark: "#86efac", border: "#86efac" },
+  { id: 2, name: "待改", emoji: "⏳", bg: "#fef9c3", bgDark: "#713f12", text: "#854d0e", textDark: "#fde047", border: "#fde047" },
+  { id: 3, name: "优秀", emoji: "⭐", bg: "#dbeafe", bgDark: "#1e3a5f", text: "#1e40af", textDark: "#93c5fd", border: "#93c5fd" }
+];
+const PASS_THRESHOLD_ID = 1;
+
+// ==========================================
+// 全局状态
+// ==========================================
+let studentList = Array.from({length: 44}, (_, i) => `${(i + 1).toString().padStart(2, '0')}号`);
+let selectedCards = new Set();
+let groupSize = 4;
+let isDark = false;
+
+// ========== 座次表驱动相关状态 ==========
+// 布局持久化结构：一次导入、长期复用；不含作业记录，只描述「教室长什么样 + 谁坐哪」
+const HW_SEAT_KEY = 'hw_seat_layout_v1';
+const HW_LAYOUT_MODE_KEY = 'hw_layout_mode_v1';
+const HW_SEAT_SCALE_KEY = 'hw_seat_scale_v1';
+// seat-map.html 的存储结构（v3 多班级 + v2 旧单班兜底）
+const SEAT_IDX_KEY = 'seat_v3_classes';
+const SEAT_PREFIX = 'seat_v3_c_';
+const SEAT_LEGACY_KEY = 'seat_v2_data';
+
+let seatLayout = null;   // {mode,groups,cpg,rows,singleCols,singleRows,smallSplit,flipV,flipH,vipCount,seats[],vip[],unseated[],names[]}
+let layoutMode = 'group';// 'seat' | 'group'
+let seatScale = 78;      // 座位卡片宽度（px），决定画布视觉比例
+let pendingSeatSources = []; // 备份文件中待选择的班级
+
+// ==========================================
+// 初始化
+// ==========================================
+function init() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('datePicker').value = today;
+  document.getElementById('datePicker').onchange = refresh;
+
+  // 作业内容输入框：可自由填写，点击或聚焦弹出全部建议，输入时过滤
+  const pIn = document.getElementById('projectSelect');
+  const lastProject = localStorage.getItem('hw_last_project');
+  if (lastProject) pIn.value = lastProject;
+  renderProjectList();
+  pIn.addEventListener('input', () => {
+    localStorage.setItem('hw_last_project', pIn.value);
+    renderProjectList(true);
+    showProjectDrop();
+    refresh();
+  });
+  pIn.addEventListener('focus', () => { renderProjectList(false); showProjectDrop(); });
+  pIn.addEventListener('blur', () => setTimeout(hideProjectDrop, 180));
+  pIn.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); rememberProject(); hideProjectDrop(); pIn.blur(); refresh(); }
+    if (e.key === 'Escape') { hideProjectDrop(); pIn.blur(); }
+  });
+
+  const savedNames = localStorage.getItem('student_names_v2');
+  if (savedNames) {
+    studentList = JSON.parse(savedNames);
+  }
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') { isDark = true; document.documentElement.setAttribute('data-theme', 'dark'); }
+  const savedGroupSize = localStorage.getItem('group_size');
+  if (savedGroupSize) { groupSize = parseInt(savedGroupSize); }
+
+  // 恢复已导入的座次布局
+  try {
+    const savedLayout = localStorage.getItem(HW_SEAT_KEY);
+    if (savedLayout) seatLayout = JSON.parse(savedLayout);
+  } catch (e) { seatLayout = null; }
+  const savedScale = parseInt(localStorage.getItem(HW_SEAT_SCALE_KEY));
+  if (savedScale >= 52 && savedScale <= 140) seatScale = savedScale;
+  layoutMode = (localStorage.getItem(HW_LAYOUT_MODE_KEY) === 'seat' && seatLayout) ? 'seat' : 'group';
+
+  renderLegend();
+  renderGrid();
+  updateSeatBar();
+  updateStats();
+}
+
+// ==========================================
+// 存储键
+// ==========================================
+function getStorageKey() {
+  const date = document.getElementById('datePicker').value;
+  const project = document.getElementById('projectSelect').value.trim() || '未命名作业';
+  return `v2_data_${date}_${project}`;
+}
+
+// 作业内容建议下拉：预设科目 + 历史输入（聚焦显示全部，输入时过滤，点击填充）
+const PRESET_PROJECTS = ['语文作业', '数学作业', '英语作业', '生物作业', '政治作业', '历史作业', '化学作业', '物理作业', '地理作业', '信息作业', '美术作业', '其他'];
+function allProjectOptions() {
+  let used = [];
+  try { used = JSON.parse(localStorage.getItem('hw_projects_used') || '[]'); } catch (e) { used = []; }
+  const cur = document.getElementById('projectSelect').value.trim();
+  return [...new Set([cur, ...PRESET_PROJECTS, ...used].filter(Boolean))].slice(0, 24);
+}
+// useFilter=true 时按输入内容过滤；聚焦弹出时传 false 显示全部建议
+function renderProjectList(useFilter) {
+  const drop = document.getElementById('projectDrop');
+  if (!drop) return;
+  const raw = document.getElementById('projectSelect').value.trim();
+  const cur = raw.toLowerCase();
+  const all = allProjectOptions();
+  const list = (useFilter && cur) ? all.filter(v => v.toLowerCase().includes(cur)) : all;
+  if (!list.length) { drop.innerHTML = '<div class="pd-empty">回车即可使用「' + escapeHtml(raw) + '」</div>'; return; }
+  drop.innerHTML = list.map(v =>
+    '<div class="pd-item' + (v === raw ? ' cur' : '') + '">' + escapeHtml(v) + '</div>'
+  ).join('');
+  [...drop.querySelectorAll('.pd-item')].forEach(el => {
+    el.addEventListener('mousedown', e => e.preventDefault()); // 防止点击时输入框先失焦
+    el.addEventListener('click', () => {
+      document.getElementById('projectSelect').value = el.textContent;
+      rememberProject();
+      hideProjectDrop();
+      refresh();
+    });
+  });
+}
+function showProjectDrop() { const d = document.getElementById('projectDrop'); if (d) d.classList.add('show'); }
+function hideProjectDrop() { const d = document.getElementById('projectDrop'); if (d) d.classList.remove('show'); }
+function rememberProject() {
+  const cur = document.getElementById('projectSelect').value.trim();
+  if (!cur) return;
+  localStorage.setItem('hw_last_project', cur);
+  let used = [];
+  try { used = JSON.parse(localStorage.getItem('hw_projects_used') || '[]'); } catch (e) { used = []; }
+  if (!used.includes(cur)) {
+    used.unshift(cur);
+    used = used.slice(0, 20);
+    localStorage.setItem('hw_projects_used', JSON.stringify(used));
+  }
+  renderProjectList();
+}
+
+function refresh() {
+  rememberProject();
+  selectedCards.clear();
+  renderGrid();
+  updateStats();
+  if (document.getElementById('hwPanel').classList.contains('show')) loadHomeworkContent();
+}
+
+// ==========================================
+// 作业内容书写区（随日期 + 作业项目保存）
+// ==========================================
+function hwContentKey() {
+  // v2_data_日期_项目 → hw_content_日期_项目
+  return getStorageKey().replace('v2_data_', 'hw_content_');
+}
+function toggleHomeworkPanel() {
+  const panel = document.getElementById('hwPanel');
+  const btn = document.getElementById('hwContentBtn');
+  const show = !panel.classList.contains('show');
+  panel.classList.toggle('show', show);
+  btn.classList.toggle('active', show);
+  if (show) {
+    loadHomeworkContent();
+    document.getElementById('hwContentInput').focus();
+  }
+}
+function loadHomeworkContent() {
+  document.getElementById('hwPanelDate').textContent = document.getElementById('datePicker').value || '（请选日期）';
+  document.getElementById('hwPanelProject').textContent = document.getElementById('projectSelect').value.trim() || '未命名作业';
+  document.getElementById('hwContentInput').value = localStorage.getItem(hwContentKey()) || '';
+}
+let hwSaveTimer = null;
+function saveHomeworkContent() {
+  clearTimeout(hwSaveTimer);
+  hwSaveTimer = setTimeout(() => {
+    localStorage.setItem(hwContentKey(), document.getElementById('hwContentInput').value);
+  }, 300);
+}
+
+// ==========================================
+// 图例
+// ==========================================
+function renderLegend() {
+  const box = document.getElementById('legend-box');
+  box.innerHTML = '';
+  STATUS_CONFIG.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    const bg = isDark ? (s.bgDark || s.bg) : s.bg;
+    const txt = isDark ? (s.textDark || s.text) : s.text;
+    item.style.background = bg;
+    item.style.color = txt;
+    item.style.border = `1px solid ${s.border}`;
+    item.innerHTML = `<span style="font-size:1.1rem">${s.emoji}</span> ${s.name}`;
+    item.onclick = () => batchSetStatus(s.id);
+    box.appendChild(item);
+  });
+}
+
+// ==========================================
+// 渲染网格
+// ==========================================
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+
+// 统一的学生卡片工厂：座次画布与分组视图共用
+function makeStudentCard(idx, data, opt) {
+  opt = opt || {};
+  const name = studentList[idx];
+  const studentKey = `s_${idx}`;
+  const statusId = data[studentKey] != null ? data[studentKey] : 0;
+
+  const card = document.createElement('div');
+  card.className = 'student-card' + (opt.extra ? ' ' + opt.extra : '');
+  if (opt.gender === 'f') card.classList.add('g-f');
+  else if (opt.gender === 'm') card.classList.add('g-m');
+  card.dataset.index = idx;
+  card.dataset.status = statusId;
+  card.id = `card-${idx}`;
+  applyCardStyle(card, statusId);
+
+  let html = `<span class="card-number">${idx + 1}</span>`;
+  if (opt.leader) html += `<span class="card-leader">⭐</span>`;
+  html += `<span class="card-name">${escapeHtml(name)}</span>`;
+  html += `<span class="card-status">${STATUS_CONFIG[statusId].emoji}</span>`;
+
+  const badge = getPerformanceBadge(idx);
+  if (badge) html += `<span class="card-badge">${badge}</span>`;
+
+  card.innerHTML = html;
+  card.title = `#${idx + 1} ${name}`;
+
+  card.onclick = (e) => {
+    if (e.ctrlKey || e.metaKey) toggleSelect(idx, card);
+    else cycleStatus(card, idx);
+  };
+
+  if (selectedCards.has(idx)) card.classList.add('selected');
+  return card;
+}
+
+function renderGrid() {
+  const grid = document.getElementById('main-grid');
+  grid.innerHTML = '';
+  const currentData = JSON.parse(localStorage.getItem(getStorageKey())) || {};
+
+  if (layoutMode === 'seat' && seatLayout) renderSeatCanvas(grid, currentData);
+  else renderGroupColumns(grid, currentData);
+
+  document.getElementById('total-count').innerText = studentList.length;
+  updateSeatBar();
+  applyFilter();
+}
+
+// ==========================================
+// 视图 A：座次画布（严格还原教室物理排布）
+// ==========================================
+function seatCols(L) { return L.mode === 'single' ? L.singleCols : L.groups * L.cpg; }
+function seatRows(L) { return L.mode === 'single' ? L.singleRows : L.rows; }
+function logRow(L, pr) { return L.flipV ? seatRows(L) - 1 - pr : pr; }
+function logCol(L, pc) { return L.flipH ? seatCols(L) - 1 - pc : pc; }
+// 列 → 组编号：单人单桌每列独立成组；分组模式按每组列数划分
+function groupOfCol(L, lc) { return L.mode === 'single' ? lc : Math.floor(lc / L.cpg); }
+// 过道位置：与 seat-map 一致（单人单桌模式每列之间都有过道）
+function seatAisles(L) {
+  const cl = seatCols(L), a = [];
+  if (L.mode === 'single') { for (let i = 1; i < cl; i++) a.push(i); return a; }
+  for (let i = 1; i < L.groups; i++) a.push(i * L.cpg);
+  return a;
+}
+// 画布列规格：排号列 + [过道] + 座位列，宽度与真实座次表占比一致
+function seatColumnSpec(L) {
+  const cl = seatCols(L), ai = seatAisles(L), spec = [{ type: 'label', w: 26 }];
+  for (let pc = 0; pc < cl; pc++) {
+    if (ai.indexOf(pc) >= 0) spec.push({ type: 'aisle', w: 16 });
+    const lc = logCol(L, pc);
+    spec.push({ type: 'seat', w: seatScale, pc: pc, lc: lc, gi: groupOfCol(L, lc) });
+  }
+  return spec;
+}
+
+function makeSeatCard(cell, data) {
+  if (!cell || !cell.name) {
+    const e = document.createElement('div');
+    e.className = 'student-card seat-card empty';
+    e.innerHTML = '<span class="card-name" style="opacity:.45">空</span>';
+    return e;
+  }
+  return makeStudentCard(cell.index, data, {
+    gender: cell.gender,
+    leader: cell.leader,
+    extra: 'seat-card' + (cell.vip ? ' vip' : '')
+  });
+}
+
+function renderSeatCanvas(grid, data) {
+  const L = seatLayout;
+  grid.style.overflow = 'auto';
+
+  // 座次 → 名单索引：主网格行优先 → VIP → 未排座（与 parseSeatData 的 names 顺序一致）
+  let k = 0;
+  L.seats.forEach(c => { c.index = c.name ? k++ : -1; });
+  L.vip.forEach(v => { v.index = v.name ? k++ : -1; });
+  L.unseated.forEach(u => { u.index = u.name ? k++ : -1; });
+
+  const cl = seatCols(L), tr = seatRows(L), spec = seatColumnSpec(L);
+  const GAP = 6;
+  const cellMap = {};
+  L.seats.forEach(c => { cellMap[c.pr + '_' + c.lc] = c; });
+
+  // —— 讲台区：VIP 座位对称分布于讲台两侧 ——
+  const vipRow = document.createElement('div');
+  vipRow.className = 'vip-row';
+  const vn = L.vip.length, left = Math.ceil(vn / 2);
+  for (let i = 0; i < left; i++) vipRow.appendChild(makeSeatCard(L.vip[i], data));
+  const podium = document.createElement('div');
+  podium.className = 'podium-bar';
+  podium.textContent = '📍 讲 台 📍';
+  vipRow.appendChild(podium);
+  for (let i = left; i < vn; i++) vipRow.appendChild(makeSeatCard(L.vip[i], data));
+
+  // —— 大组标题行：与真实列宽逐列对齐（含过道占位） ——
+  const headRow = document.createElement('div');
+  headRow.className = 'head-row';
+  let run = null;
+  const flushRun = () => {
+    if (!run) return;
+    const h = document.createElement('div');
+    h.className = 'group-head';
+    h.style.width = (run.w + (run.n - 1) * GAP) + 'px';
+    // 注意：run 是外层可变变量，回调里必须用局部快照 gi，否则点击时 run 已被置空
+    const gi = run.gi;
+    if (L.mode === 'single') {
+      // 单人单桌：每个列头对应一列，点击选中/取消该列
+      h.textContent = '第' + (gi + 1) + '列';
+      h.title = '点击选中/取消第' + (gi + 1) + '列';
+      h.onclick = () => toggleColGroup(gi, -1);
+    } else {
+      if (L.mode === 'small') {
+        h.appendChild(document.createTextNode('第' + (gi + 1) + '大组'));
+        [0, 1].forEach(sg => {
+          const b = document.createElement('span');
+          b.className = 'sg';
+          b.textContent = sg === 0 ? 'A' : 'B';
+          b.title = '选中/取消第' + (gi + 1) + '大组的 ' + (sg === 0 ? 'A' : 'B') + ' 小组';
+          b.onclick = (e) => { e.stopPropagation(); toggleColGroup(gi, sg); };
+          h.appendChild(b);
+        });
+      } else {
+        h.textContent = '第' + (gi + 1) + '大组';
+      }
+      h.title = '点击选中/取消第' + (gi + 1) + '大组';
+      h.onclick = () => toggleColGroup(gi, -1);
+    }
+    headRow.appendChild(h);
+    run = null;
+  };
+  spec.forEach(s => {
+    if (s.type === 'label') { const d = document.createElement('div'); d.className = 'spacer'; d.style.width = s.w + 'px'; headRow.appendChild(d); return; }
+    if (s.type === 'aisle') { flushRun(); const d = document.createElement('div'); d.className = 'spacer'; d.style.width = s.w + 'px'; headRow.appendChild(d); return; }
+    if (run && run.gi === s.gi) { run.w += GAP + s.w; run.n++; }
+    else { flushRun(); run = { gi: s.gi, w: s.w, n: 1 }; }
+  });
+  flushRun();
+
+  // —— 座位网格 ——
+  const seatGrid = document.createElement('div');
+  seatGrid.className = 'seat-grid';
+  seatGrid.style.gridTemplateColumns = spec.map(s => s.w + 'px').join(' ');
+  const rowH = Math.round(seatScale * 0.8);
+  for (let pr = 0; pr < tr; pr++) {
+    const lr = logRow(L, pr);
+    const lb = document.createElement('div');
+    lb.className = 'row-label';
+    lb.style.height = rowH + 'px';
+    lb.textContent = '第' + (lr + 1) + '排';
+    lb.title = '点击选中/取消第' + (lr + 1) + '排';
+    lb.onclick = () => toggleRow(pr);
+    seatGrid.appendChild(lb);
+
+    spec.forEach(s => {
+      if (s.type === 'label') return;
+      if (s.type === 'aisle') {
+        const d = document.createElement('div');
+        d.className = 'aisle-cell';
+        d.textContent = '🚶';
+        seatGrid.appendChild(d);
+        return;
+      }
+      seatGrid.appendChild(makeSeatCard(cellMap[pr + '_' + s.lc], data));
+    });
+  }
+
+  const canvas = document.createElement('div');
+  canvas.className = 'seat-canvas';
+  canvas.style.setProperty('--seat-w', seatScale + 'px');
+  canvas.style.setProperty('--seat-h', rowH + 'px');
+  canvas.style.setProperty('--seat-gap', GAP + 'px');
+
+  const main = document.createElement('div');
+  main.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;min-width:min-content';
+  main.appendChild(headRow);
+  main.appendChild(seatGrid);
+  // flipV：讲台在下；否则讲台在上
+  if (L.flipV) main.appendChild(vipRow); else main.insertBefore(vipRow, headRow);
+  canvas.appendChild(main);
+
+  // —— 未排座学生（不占座位，附在画布下方） ——
+  if (L.unseated.length) {
+    const wrap = document.createElement('div');
+    wrap.className = 'extra-wrap';
+    const t = document.createElement('div');
+    t.className = 'extra-title';
+    t.textContent = '未排座（' + L.unseated.length + ' 人）';
+    const eg = document.createElement('div');
+    eg.className = 'extra-grid';
+    L.unseated.forEach(u => eg.appendChild(makeStudentCard(u.index, data, { gender: u.gender })));
+    wrap.appendChild(t);
+    wrap.appendChild(eg);
+    canvas.appendChild(wrap);
+  }
+
+  if (!studentList.length) {
+    const tip = document.createElement('div');
+    tip.className = 'seat-empty-tip';
+    tip.innerHTML = '座次表中没有学生名单。<br>请点击右下角「🪑 座次表」重新导入，或用「📋 导入名单」录入。';
+    canvas.appendChild(tip);
+  }
+
+  grid.style.gridTemplateColumns = '1fr';
+  grid.appendChild(canvas);
+}
+
+// ==========================================
+// 视图 B：顺序分组（未导入座次表时的回退布局）
+// ==========================================
+function renderGroupColumns(grid, data) {
+  grid.style.overflow = '';
+  const totalGroups = Math.ceil(studentList.length / groupSize);
+  grid.style.gridTemplateColumns = `repeat(${Math.min(totalGroups, 15)}, 1fr)`;
+
+  for (let g = 0; g < totalGroups; g++) {
+    const col = document.createElement('div');
+    col.className = 'group-col';
+    const label = document.createElement('div');
+    label.className = 'group-label';
+    label.innerText = `第${g + 1}组`;
+    label.onclick = () => selectGroup(g);
+    col.appendChild(label);
+
+    for (let s = 0; s < groupSize; s++) {
+      const idx = g * groupSize + s;
+      if (idx >= studentList.length) break;
+      col.appendChild(makeStudentCard(idx, data, { leader: s === 0 }));
+    }
+    grid.appendChild(col);
+  }
+}
+
+// ==========================================
+// 状态切换
+// ==========================================
+function cycleStatus(card, index) {
+  card.classList.remove('pop-anim');
+  void card.offsetWidth;
+  card.classList.add('pop-anim');
+
+  let currentId = parseInt(card.dataset.status);
+  let nextId = (currentId + 1) % STATUS_CONFIG.length;
+  card.dataset.status = nextId;
+
+  const key = getStorageKey();
+  const data = JSON.parse(localStorage.getItem(key)) || {};
+  data[`s_${index}`] = nextId;
+  localStorage.setItem(key, JSON.stringify(data));
+
+  applyCardStyle(card, nextId);
+  updateStats();
+}
+
+function applyCardStyle(card, statusId) {
+  const config = STATUS_CONFIG[statusId];
+  const bg = isDark ? (config.bgDark || config.bg) : config.bg;
+  const txt = isDark ? (config.textDark || config.text) : config.text;
+  card.style.backgroundColor = bg;
+  card.style.color = txt;
+  card.style.borderColor = config.border;
+  const badge = card.querySelector('.card-status');
+  if (badge) badge.innerText = config.emoji;
+}
+
+// ==========================================
+// 选择逻辑
+// ==========================================
+function toggleSelect(idx, card) {
+  if (selectedCards.has(idx)) {
+    selectedCards.delete(idx);
+    card.classList.remove('selected');
+  } else {
+    selectedCards.add(idx);
+    card.classList.add('selected');
+  }
+}
+
+function selectAll() {
+  document.querySelectorAll('.student-card:not(.hidden)').forEach(c => {
+    const idx = parseInt(c.dataset.index);
+    if (isNaN(idx)) return; // 座次画布中的空座位占位卡不可选
+    selectedCards.add(idx);
+    c.classList.add('selected');
+  });
+}
+
+function deselectAll() {
+  selectedCards.clear();
+  document.querySelectorAll('.student-card').forEach(c => c.classList.remove('selected'));
+}
+
+function selectGroup(g) {
+  const start = g * groupSize;
+  const end = Math.min(start + groupSize, studentList.length);
+  for (let i = start; i < end; i++) {
+    const card = document.getElementById(`card-${i}`);
+    if (card && !card.classList.contains('hidden')) {
+      selectedCards.add(i);
+      card.classList.add('selected');
+    }
+  }
+}
+
+function batchSetStatus(statusId) {
+  if (selectedCards.size === 0) {
+    alert('请先选择学生（点击卡片时按住 Ctrl，或点击组名全选该组）');
+    return;
+  }
+  const key = getStorageKey();
+  const data = JSON.parse(localStorage.getItem(key)) || {};
+  selectedCards.forEach(idx => {
+    data[`s_${idx}`] = statusId;
+    const card = document.getElementById(`card-${idx}`);
+    if (card) {
+      card.dataset.status = statusId;
+      applyCardStyle(card, statusId);
+    }
+  });
+  localStorage.setItem(key, JSON.stringify(data));
+  selectedCards.clear();
+  document.querySelectorAll('.student-card').forEach(c => c.classList.remove('selected'));
+  updateStats();
+}
+
+// ==========================================
+// 搜索过滤
+// ==========================================
+function applyFilter() {
+  const query = document.getElementById('searchInput').value.trim().toLowerCase();
+  document.querySelectorAll('.student-card').forEach(card => {
+    const nameEl = card.querySelector('.card-name');
+    if (!nameEl) return;
+    const name = nameEl.innerText.toLowerCase();
+    if (query && !name.includes(query)) {
+      card.classList.add('hidden');
+    } else {
+      card.classList.remove('hidden');
+    }
+  });
+}
+
+// ==========================================
+// 统计
+// ==========================================
+function updateStats() {
+  let passed = 0, excellent = 0, pending = 0;
+  const data = JSON.parse(localStorage.getItem(getStorageKey())) || {};
+  Object.values(data).forEach(sid => {
+    if (sid >= PASS_THRESHOLD_ID) passed++;
+    if (sid === 3) excellent++;
+    if (sid === 2) pending++;
+  });
+  document.getElementById('passed-count').innerText = passed;
+  document.getElementById('excellent-count').innerText = excellent;
+  document.getElementById('pending-count').innerText = pending;
+}
+
+// ==========================================
+// 徽章
+// ==========================================
+function getPerformanceBadge(studentIndex) {
+  const project = document.getElementById('projectSelect').value;
+  const today = new Date();
+  let consecutiveExcellent = 0, consecutiveMissing = 0;
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const key = `v2_data_${dateStr}_${project}`;
+    const data = JSON.parse(localStorage.getItem(key)) || {};
+    const status = data[`s_${studentIndex}`];
+    if (status === undefined) continue;
+    if (status === 3) { consecutiveExcellent++; consecutiveMissing = 0; }
+    else if (status === 0) { consecutiveMissing++; consecutiveExcellent = 0; }
+    else { consecutiveExcellent = 0; consecutiveMissing = 0; }
+  }
+  if (consecutiveExcellent >= 3) return '🏆';
+  if (consecutiveMissing >= 3) return '⚠️';
+  return null;
+}
+
+// ==========================================
+// 导入/导出
+// ==========================================
+function openImportModal() {
+  closeSeatModal();
+  document.getElementById('importModal').style.display = 'block';
+  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('namesInput').value = studentList.join('\n');
+}
+
+function closeModal() {
+  document.getElementById('importModal').style.display = 'none';
+  document.getElementById('overlay').style.display = 'none';
+}
+
+function importNames() {
+  const input = document.getElementById('namesInput').value;
+  const names = input.split(/[\n,， ]+/).filter(n => n.trim() !== '');
+  if (names.length > 0) {
+    const oldList = studentList.slice();
+    studentList = names;
+    localStorage.setItem('student_names_v2', JSON.stringify(studentList));
+    // 已导入座次表时：手工改动名单会与座次排布脱节，先按姓名迁移记录并提示
+    if (seatLayout) {
+      const moved = isPlaceholderList(oldList) ? 0 : migrateRecordsByName(oldList, studentList);
+      const seatNames = new Set(seatLayout.names || []);
+      const missing = studentList.filter(n => !seatNames.has(n)).length;
+      if (missing > 0 && !confirm('当前已导入座次表，新名单中有 ' + missing + ' 人不在座次排布里。\n建议重新导入座次表以保持位置一一对应。是否仍使用新名单？')) {
+        studentList = oldList;
+        localStorage.setItem('student_names_v2', JSON.stringify(studentList));
+        return;
+      }
+      if (moved) alert('已按姓名迁移 ' + moved + ' 条历史作业记录');
+    }
+    closeModal();
+    refresh();
+  }
+}
+
+function downloadCsv(csv, filename) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+}
+const csvCell = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+
+// 明细导出：每条提交记录一行，附带当天的作业内容
+function exportData() {
+  let csv = '\uFEFF日期,作业项目,作业内容,序号,姓名,状态\n';
+  let count = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith('v2_data_')) continue;
+    const parts = key.replace('v2_data_', '').split('_');
+    const date = parts[0];
+    const project = parts.slice(1).join('_');
+    let data = null;
+    try { data = JSON.parse(localStorage.getItem(key)) || {}; } catch (e) { continue; }
+    const content = localStorage.getItem('hw_content_' + date + '_' + project) || '';
+    Object.keys(data).forEach(sk => {
+      const idx = parseInt(sk.replace('s_', ''));
+      if (isNaN(idx)) return;
+      const name = studentList[idx] || `${idx + 1}号`;
+      const status = STATUS_CONFIG[data[sk]];
+      if (!status) return;
+      csv += `${date},${csvCell(project)},${csvCell(content)},${idx + 1},${csvCell(name)},${status.name}\n`;
+      count++;
+    });
+  }
+  if (!count) { alert('暂无任何作业记录可导出。'); return; }
+  downloadCsv(csv, `作业明细_${new Date().toISOString().split('T')[0]}.csv`);
+  alert('已导出 ' + count + ' 条明细记录。');
+}
+
+// 统计导出：按学生汇总全部历史记录（提交率 / 优秀 / 待改 / 未交）
+function exportStats() {
+  const byName = {};
+  let total = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k || !k.startsWith('v2_data_')) continue;
+    let data = null;
+    try { data = JSON.parse(localStorage.getItem(k)) || {}; } catch (e) { continue; }
+    Object.keys(data).forEach(sk => {
+      const idx = parseInt(String(sk).replace('s_', ''));
+      if (isNaN(idx)) return;
+      const name = studentList[idx] || `第${idx + 1}号`;
+      const s = byName[name] || (byName[name] = { total: 0, ok: 0, miss: 0, pending: 0, excellent: 0, keys: {} });
+      const v = data[sk];
+      if (v == null) return;
+      s.total++; total++;
+      if (v >= PASS_THRESHOLD_ID) s.ok++;
+      if (v === 0) s.miss++;
+      if (v === 2) s.pending++;
+      if (v === 3) s.excellent++;
+      s.keys[k] = 1;
+    });
+  }
+  if (!total) { alert('暂无任何作业记录，无法生成统计。'); return; }
+  let csv = '\uFEFF姓名,记录条数,涉及日期+项目数,已交,未交,待改,优秀,提交率\n';
+  const row = (name, s) => {
+    const rate = s.total ? Math.round(s.ok / s.total * 100) + '%' : '—';
+    csv += `${csvCell(name)},${s.total},${Object.keys(s.keys).length},${s.ok},${s.miss},${s.pending},${s.excellent},${rate}\n`;
+  };
+  studentList.forEach(n => { if (byName[n]) { row(n, byName[n]); delete byName[n]; } });
+  Object.keys(byName).sort().forEach(n => row(n + '（不在当前名单）', byName[n]));
+  downloadCsv(csv, `作业统计汇总_${new Date().toISOString().split('T')[0]}.csv`);
+  alert('已导出 ' + studentList.length + ' 名学生的汇总统计（共 ' + total + ' 条记录）。');
+}
+
+function resetAll() {
+  if (confirm('确定要清空当前日期和项目的所有记录吗？（历史数据不会被删除）')) {
+    localStorage.removeItem(getStorageKey());
+    refresh();
+  }
+}
+
+// ==========================================
+// 座次表（seat-map.html）导入与解析
+// ==========================================
+function isPlaceholderList(list) {
+  return Array.isArray(list) && list.length > 0 && list.every(n => /^\d+号$/.test(String(n)));
+}
+
+// 扫描同源 localStorage 中的 seat-map 数据（v3 多班级 + v2 旧单班兜底）
+function scanSeatStorage() {
+  const out = [];
+  try {
+    const idx = JSON.parse(localStorage.getItem(SEAT_IDX_KEY) || 'null');
+    if (idx && Array.isArray(idx.list)) {
+      idx.list.forEach(c => {
+        if (!c || !c.id) return;
+        const raw = localStorage.getItem(SEAT_PREFIX + c.id);
+        if (!raw) return;
+        let d = null;
+        try { d = JSON.parse(raw); } catch (e) { return; }
+        if (!d || !Array.isArray(d.students)) return;
+        out.push({
+          id: c.id,
+          label: ((c.grade || '') + (c.name || '')) || (d.cn || '未命名班级'),
+          cur: idx.cur === c.id,
+          count: d.students.length,
+          seated: Object.keys(d.seats || {}).filter(x => d.seats[x]).length,
+          data: d
+        });
+      });
+    }
+    const lg = localStorage.getItem(SEAT_LEGACY_KEY);
+    if (lg) {
+      let d = null;
+      try { d = JSON.parse(lg); } catch (e) { d = null; }
+      if (d && Array.isArray(d.students) && d.students.length) {
+        out.push({
+          id: '__legacy__', label: (d.cn || '默认班级') + '（旧版）', legacy: true,
+          count: d.students.length,
+          seated: Object.keys(d.seats || {}).filter(x => d.seats[x]).length,
+          data: d
+        });
+      }
+    }
+  } catch (e) { }
+  return out;
+}
+
+// 把 seat-map 保存的班级数据解析成本地布局结构
+function parseSeatData(raw, label) {
+  const d = (typeof raw === 'string') ? JSON.parse(raw) : raw;
+  if (!d || typeof d !== 'object') throw new Error('数据格式错误');
+  const mode = (d.mode === 'single' || d.mode === 'small') ? d.mode : 'group';
+  const L = {
+    source: 'seat-map',
+    className: label || d.cn || '导入班级',
+    importedAt: new Date().toISOString(),
+    mode: mode,
+    groups: Math.max(1, parseInt(d.groups) || 4),
+    cpg: Math.max(1, parseInt(d.cpg) || 2),
+    rows: Math.max(1, parseInt(d.rows) || 6),
+    singleCols: Math.max(1, parseInt(d.singleCols) || 7),
+    singleRows: Math.max(1, parseInt(d.singleRows) || 7),
+    smallSplit: Math.max(1, parseInt(d.smallSplit) || 6),
+    flipV: !!d.flipV,
+    flipH: !!d.flipH,
+    vipCount: Math.max(0, Math.min(8, parseInt(d.vipCount) || 0)),
+    seats: [], vip: [], unseated: [], names: []
+  };
+
+  const cl = seatCols(L), tr = seatRows(L);
+  const byId = {};
+  (d.students || []).forEach(s => { if (s && s.id) byId[s.id] = s; });
+  const smap = d.seats || {};
+  const used = new Set();
+  const splitRows = Math.ceil(L.smallSplit / L.cpg);
+
+  // 主网格：物理位置 (pr,pc) ←→ 逻辑位置 (lr,lc)，与 seat-map 的 flip 规则一致
+  for (let pr = 0; pr < tr; pr++) {
+    const lr = logRow(L, pr);
+    for (let pc = 0; pc < cl; pc++) {
+      const lc = logCol(L, pc);
+      const sid = smap[lr + '-' + lc];
+      const st = sid ? byId[sid] : null;
+      const tags = st ? (st.tags || []) : [];
+      L.seats.push({
+        pr: pr, pc: pc, lr: lr, lc: lc,
+        name: st ? String(st.n || '').trim() : '',
+        gender: st ? (st.gender === 'female' ? 'f' : 'm') : '',
+        sid: sid || '',
+        group: groupOfCol(L, lc),
+        sub: L.mode === 'small' ? (lr < splitRows ? 0 : 1) : -1,
+        leader: tags.indexOf('leader') >= 0 || tags.indexOf('gleader') >= 0
+      });
+      if (st) used.add(sid);
+    }
+  }
+  // 讲台两侧的 VIP 座位
+  for (let i = 0; i < L.vipCount; i++) {
+    const sid = smap['vip-' + i];
+    const st = sid ? byId[sid] : null;
+    L.vip.push({
+      key: 'vip-' + i, vip: true,
+      name: st ? String(st.n || '').trim() : '',
+      gender: st ? (st.gender === 'female' ? 'f' : 'm') : '',
+      sid: sid || '',
+      leader: st ? (st.tags || []).indexOf('leader') >= 0 : false
+    });
+    if (st) used.add(sid);
+  }
+  // 名单中尚未安排座位的学生
+  (d.students || []).forEach(s => {
+    if (!s || used.has(s.id)) return;
+    L.unseated.push({ name: String(s.n || '').trim(), gender: s.gender === 'female' ? 'f' : 'm', sid: s.id });
+  });
+  // 名单顺序 = 网格行优先 → VIP → 未排座
+  L.seats.forEach(c => { if (c.name) L.names.push(c.name); });
+  L.vip.forEach(v => { if (v.name) L.names.push(v.name); });
+  L.unseated.forEach(u => { if (u.name) L.names.push(u.name); });
+  // 无职务标记时回退为「每组首位 = 组长」
+  if (!L.seats.some(c => c.leader)) {
+    const seen = {};
+    L.seats.forEach(c => {
+      const key = c.group + '|' + c.sub;
+      if (!c.name || seen[key]) return;
+      seen[key] = 1; c.leader = true;
+    });
+  }
+  return L;
+}
+
+// 历史作业记录按「姓名」迁移到新的名单索引，避免名单顺序变化导致数据错位
+function migrateRecordsByName(oldList, newList) {
+  const newIdx = {};
+  newList.forEach((n, i) => { if (newIdx[n] == null) newIdx[n] = i; });
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.indexOf('v2_data_') === 0) keys.push(k);
+  }
+  let count = 0;
+  keys.forEach(k => {
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem(k)); } catch (e) { return; }
+    if (!d || typeof d !== 'object') return;
+    const nd = {};
+    let changed = false;
+    Object.keys(d).forEach(sk => {
+      const oi = parseInt(String(sk).replace('s_', ''));
+      if (isNaN(oi)) return;
+      const ni = newIdx[oldList[oi]];
+      if (ni == null) return; // 新名单中已无此人，索引失效，丢弃
+      nd['s_' + ni] = d[sk];
+      if (ni !== oi) changed = true;
+      count++;
+    });
+    if (changed) localStorage.setItem(k, JSON.stringify(nd));
+  });
+  return count;
+}
+
+function applySeatLayout(L) {
+  if (!L.names.length) { alert('座次表中没有学生名单，未做更改。'); return false; }
+  const oldList = studentList.slice();
+  const dup = L.names.length - new Set(L.names).size;
+  if (dup > 0 && !confirm('检测到 ' + dup + ' 个重名学生，按姓名迁移历史记录时可能合并。是否继续导入？')) return false;
+
+  studentList = L.names.slice();
+  localStorage.setItem('student_names_v2', JSON.stringify(studentList));
+  seatLayout = L;
+  try { localStorage.setItem(HW_SEAT_KEY, JSON.stringify(L)); } catch (e) { }
+  layoutMode = 'seat';
+  localStorage.setItem(HW_LAYOUT_MODE_KEY, 'seat');
+
+  const moved = isPlaceholderList(oldList) ? 0 : migrateRecordsByName(oldList, studentList);
+  selectedCards.clear();
+  refresh();
+
+  const layoutTxt = L.mode === 'single'
+    ? seatCols(L) + '列 × ' + seatRows(L) + '排'
+    : L.groups + '大组 × 每组' + L.cpg + '列 × ' + seatRows(L) + '排';
+  alert('座次表导入成功\n\n'
+    + '班级：' + L.className + '\n'
+    + '布局：' + layoutTxt + (L.vipCount ? '（含 ' + L.vipCount + ' 个讲台边座）' : '') + '\n'
+    + '学生：' + studentList.length + ' 人' + (L.unseated.length ? '（' + L.unseated.length + ' 人未排座）' : '')
+    + (moved ? '\n\n已按姓名迁移 ' + moved + ' 条历史作业记录' : ''));
+  return true;
+}
+
+// ---- 导入弹窗 ----
+function openSeatModal() {
+  closeModal();
+  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('seatModal').style.display = 'block';
+  document.getElementById('seatJsonInput').value = '';
+  pendingSeatSources = scanSeatStorage();
+  renderSeatSourceList();
+}
+function closeSeatModal() {
+  document.getElementById('seatModal').style.display = 'none';
+  document.getElementById('overlay').style.display = 'none';
+}
+function renderSeatSourceList() {
+  const box = document.getElementById('seatSrcList');
+  if (!box) return;
+  box.innerHTML = '';
+  if (!pendingSeatSources.length) {
+    const d = document.createElement('div');
+    d.className = 'seat-tip';
+    d.innerHTML = '未在本浏览器本地存储中检测到座次表数据。<br>请确认已在 seat-map.html 中建立班级，或改用下方的「备份 JSON / seat-map.html」方式。';
+    box.appendChild(d);
+    return;
+  }
+  pendingSeatSources.forEach(src => {
+    const it = document.createElement('div');
+    it.className = 'seat-src-item';
+    it.innerHTML = '<span class="nm">' + escapeHtml(src.label)
+      + (src.cur ? ' <span style="color:var(--primary)">· 当前</span>' : '') + '</span>'
+      + '<span class="mt">' + src.count + ' 人 / 已排 ' + src.seated + ' 座</span>';
+    it.onclick = () => doImportSeatSource(src);
+    box.appendChild(it);
+  });
+}
+function doImportSeatSource(src) {
+  try {
+    if (applySeatLayout(parseSeatData(src.data, src.label))) closeSeatModal();
+  } catch (e) { alert('解析失败：' + e.message); }
+}
+
+// 解析备份 JSON / 单班级数据 / 工作台备份包装
+function handleSeatParsed(data) {
+  const sm = (data && data.source === 'seat-map' && data.index) ? data
+    : (data && data.seatMap && data.seatMap.index ? data.seatMap : null);
+  if (sm) {
+    let idx = null;
+    try { idx = JSON.parse(sm.index); } catch (e) { idx = null; }
+    const avail = [];
+    ((idx && idx.list) || []).forEach(c => {
+      if (!c || !c.id) return;
+      const raw = sm.classes ? sm.classes[c.id] : null;
+      if (!raw) return;
+      let d = null;
+      try { d = JSON.parse(raw); } catch (e) { return; }
+      if (!d || !Array.isArray(d.students)) return;
+      avail.push({
+        id: c.id,
+        label: ((c.grade || '') + (c.name || '')) || (d.cn || '未命名班级'),
+        cur: idx.cur === c.id,
+        count: d.students.length,
+        seated: Object.keys(d.seats || {}).filter(x => d.seats[x]).length,
+        data: d
+      });
+    });
+    if (!avail.length) throw new Error('备份文件中没有可用的班级数据');
+    if (avail.length === 1) {
+      if (applySeatLayout(parseSeatData(avail[0].data, avail[0].label))) closeSeatModal();
+      return;
+    }
+    pendingSeatSources = avail;
+    renderSeatSourceList();
+    alert('备份中包含 ' + avail.length + ' 个班级，请在上方列表中选择要导入的班级。');
+    return;
+  }
+  if (data && Array.isArray(data.students)) {
+    if (applySeatLayout(parseSeatData(data, data.cn || '导入班级'))) closeSeatModal();
+    return;
+  }
+  throw new Error('无法识别的数据格式（缺少 students 名单）');
+}
+
+function importSeatFile(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = e => {
+    try { handleSeatParsed(JSON.parse(e.target.result)); }
+    catch (err) { alert('解析失败：' + err.message); }
+    input.value = '';
+  };
+  rd.readAsText(f, 'utf-8');
+}
+
+// 直接解析 seat-map.html 源文件：提取座次配置骨架（defaultS 模板）
+function safeEvalLiteral(src) {
+  if (!/^[\[\]\{\}\s"':,.0-9a-zA-Z_\u4e00-\u9fa5-]*$/.test(src)) return null;
+  try { return Function('return (' + src + ')')(); } catch (e) { return null; }
+}
+function parseSeatMapHtml(text) {
+  const i = text.indexOf('function defaultS');
+  const block = (i >= 0) ? text.slice(i, i + 900) : text;
+  const pick = (re, def) => { const m = block.match(re); const v = m ? parseInt(m[1]) : def; return isNaN(v) ? def : v; };
+  const cfg = {
+    cn: (block.match(/cn\s*:\s*'([^']*)'/) || [])[1] || 'seat-map 班级',
+    mode: (block.match(/mode\s*:\s*'(\w+)'/) || [])[1] || 'group',
+    groups: pick(/\bgroups\s*:\s*(\d+)/, 4),
+    cpg: pick(/\bcpg\s*:\s*(\d+)/, 2),
+    rows: pick(/\brows\s*:\s*(\d+)/, 6),
+    singleCols: pick(/\bsingleCols\s*:\s*(\d+)/, 7),
+    singleRows: pick(/\bsingleRows\s*:\s*(\d+)/, 7),
+    smallSplit: pick(/\bsmallSplit\s*:\s*(\d+)/, 6),
+    vipCount: pick(/\bvipCount\s*:\s*(\d+)/, 0),
+    flipV: false, flipH: false,
+    students: [], seats: {}
+  };
+  // 若文件内嵌了学生名单则直接采用
+  const m = text.match(/students\s*:\s*(\[[\s\S]*?\])\s*,\s*seats\s*:/);
+  if (m) {
+    const arr = safeEvalLiteral(m[1]);
+    if (Array.isArray(arr)) {
+      arr.forEach((s, i2) => {
+        if (!s || !s.n) return;
+        cfg.students.push({ id: 'html_' + i2, n: String(s.n), gender: s.gender === 'female' ? 'female' : 'male', tags: s.tags || [] });
+      });
+    }
+  }
+  // 文件仅含配置、名单在浏览器本地存储中 → 用当前名单按座次顺序填充
+  if (!cfg.students.length) {
+    if (isPlaceholderList(studentList)) {
+      throw new Error('seat-map.html 中未包含学生名单（其名单保存在浏览器本地存储中）。\n'
+        + '请先用「📋 导入名单」录入真实姓名，或改用「同源读取 / 备份 JSON」。');
+    }
+    const cl = cfg.mode === 'single' ? cfg.singleCols : cfg.groups * cfg.cpg;
+    const tr = cfg.mode === 'single' ? cfg.singleRows : cfg.rows;
+    let k = 0;
+    for (let r = 0; r < tr; r++) {
+      for (let c = 0; c < cl; c++) {
+        if (k >= studentList.length) break;
+        cfg.seats[r + '-' + c] = 'html_' + k;
+        k++;
+      }
+    }
+    studentList.forEach((n, i2) => cfg.students.push({ id: 'html_' + i2, n: n, gender: 'male', tags: [] }));
+  }
+  return cfg;
+}
+function importSeatHtmlFile(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = e => {
+    try {
+      const cfg = parseSeatMapHtml(String(e.target.result));
+      if (applySeatLayout(parseSeatData(cfg, cfg.cn))) closeSeatModal();
+    } catch (err) { alert('解析失败：' + err.message); }
+    input.value = '';
+  };
+  rd.readAsText(f, 'utf-8');
+}
+function importSeatFromText() {
+  const t = document.getElementById('seatJsonInput').value.trim();
+  if (!t) { alert('请先粘贴「备份 JSON」的内容。'); return; }
+  try {
+    if (/^\s*<!DOCTYPE|<html/i.test(t)) {
+      const cfg = parseSeatMapHtml(t);
+      if (applySeatLayout(parseSeatData(cfg, cfg.cn))) closeSeatModal();
+      return;
+    }
+    handleSeatParsed(JSON.parse(t));
+  } catch (e) { alert('解析失败：' + e.message); }
+}
+
+// ---- 座次视图的批量选择：整排 / 整大组 / A-B 小组（再点一次取消） ----
+// 切换一组学生：范围内已全部选中 → 全部取消；否则全部选中
+function toggleSeatSet(cells) {
+  const idxs = [];
+  cells.forEach(c => {
+    if (!c.name || c.index == null || c.index < 0) return;
+    const card = document.getElementById('card-' + c.index);
+    if (card && !card.classList.contains('hidden')) idxs.push(c.index);
+  });
+  if (!idxs.length) return;
+  const allSelected = idxs.every(i => selectedCards.has(i));
+  idxs.forEach(i => {
+    const card = document.getElementById('card-' + i);
+    if (!card) return;
+    if (allSelected) { selectedCards.delete(i); card.classList.remove('selected'); }
+    else { selectedCards.add(i); card.classList.add('selected'); }
+  });
+}
+function toggleRow(pr) {
+  if (!seatLayout) return;
+  toggleSeatSet(seatLayout.seats.filter(c => c.pr === pr));
+}
+function toggleColGroup(gi, sub) {
+  if (!seatLayout) return;
+  toggleSeatSet(seatLayout.seats.filter(c => groupOfCol(seatLayout, c.lc) === gi && (sub == null || sub < 0 || c.sub === sub)));
+}
+
+// ---- 视图切换 / 缩放 / 清除 ----
+function toggleLayout(m) {
+  if (m === 'seat' && !seatLayout) { alert('尚未导入座次表，请先点击右下角「🪑 座次表」。'); return; }
+  layoutMode = m;
+  localStorage.setItem(HW_LAYOUT_MODE_KEY, m);
+  refresh();
+}
+function clearSeatLayout() {
+  if (!confirm('确定清除已导入的座次布局？\n学生名单与作业记录会保留，仅回到顺序分组视图。')) return;
+  seatLayout = null;
+  layoutMode = 'group';
+  try { localStorage.removeItem(HW_SEAT_KEY); } catch (e) { }
+  localStorage.setItem(HW_LAYOUT_MODE_KEY, 'group');
+  refresh();
+}
+function zoomSeat(delta) {
+  seatScale = Math.max(52, Math.min(140, seatScale + delta));
+  try { localStorage.setItem(HW_SEAT_SCALE_KEY, seatScale); } catch (e) { }
+  if (layoutMode === 'seat') refresh();
+}
+function updateSeatBar() {
+  const bar = document.getElementById('seatBar');
+  if (!bar) return;
+  bar.innerHTML = '';
+  const add = (html, cls) => {
+    const e = document.createElement('div');
+    e.className = cls || 'sb-info';
+    e.innerHTML = html;
+    bar.appendChild(e);
+  };
+  const btn = (txt, fn, cls) => {
+    const b = document.createElement('button');
+    b.className = 'btn' + (cls ? ' ' + cls : '');
+    b.textContent = txt;
+    b.onclick = fn;
+    bar.appendChild(b);
+  };
+  if (seatLayout) {
+    const L = seatLayout;
+    const layoutTxt = L.mode === 'single'
+      ? '单人单桌 ' + seatCols(L) + '列 × ' + seatRows(L) + '排'
+      : L.groups + '大组 × 每组' + L.cpg + '列 × ' + seatRows(L) + '排';
+    add('🪑 <b>' + escapeHtml(L.className || '导入班级') + '</b> · ' + layoutTxt
+      + ' · 座位 ' + (seatCols(L) * seatRows(L)) + ' 个');
+    if (L.unseated.length) add('未排座 ' + L.unseated.length + ' 人', 'sb-warn');
+    if (layoutMode === 'seat') {
+      add(L.mode === 'single'
+        ? '点「第N列」选整列 / 点「第N排」选整排，再点一次取消'
+        : '点组名选整组 / 点「A·B」选小组 / 点「第N排」选整排，再点一次取消');
+      btn('A−', () => zoomSeat(-8));
+      btn('A+', () => zoomSeat(8));
+      btn('分组视图', () => toggleLayout('group'));
+    } else {
+      btn('座次视图', () => toggleLayout('seat'));
+    }
+    btn('清除座次', clearSeatLayout, 'btn-danger');
+  } else {
+    add('🪑 未导入座次表 · 当前为顺序分组视图（每组 ' + groupSize + ' 人）');
+    btn('导入座次表', openSeatModal);
+  }
+}
+
+// ==========================================
+// 趋势图
+// ==========================================
+function toggleChart() {
+  const panel = document.getElementById('chartPanel');
+  const btn = document.getElementById('chartBtn');
+  if (panel.classList.contains('show')) {
+    panel.classList.remove('show');
+    btn.classList.remove('active');
+  } else {
+    panel.classList.add('show');
+    btn.classList.add('active');
+    drawChart();
+  }
+}
+
+function drawChart() {
+  const canvas = document.getElementById('trendChart');
+  const ctx = canvas.getContext('2d');
+  const project = document.getElementById('projectSelect').value;
+  const today = new Date();
+
+  const labels = [];
+  const passedData = [];
+  const excellentData = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    labels.push(dateStr.slice(5));
+    const key = `v2_data_${dateStr}_${project}`;
+    const data = JSON.parse(localStorage.getItem(key)) || {};
+    let p = 0, e = 0;
+    Object.values(data).forEach(sid => {
+      if (sid >= PASS_THRESHOLD_ID) p++;
+      if (sid === 3) e++;
+    });
+    passedData.push(p);
+    excellentData.push(e);
+  }
+
+  // 简易 Canvas 折线图
+  const W = canvas.parentElement.clientWidth - 32;
+  const H = 200;
+  canvas.width = W;
+  canvas.height = H;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  ctx.clearRect(0, 0, W, H);
+
+  // 背景
+  ctx.fillStyle = isDark ? '#1e293b' : '#f8fafc';
+  ctx.fillRect(0, 0, W, H);
+
+  const padding = { top: 20, right: 20, bottom: 30, left: 30 };
+  const pw = W - padding.left - padding.right;
+  const ph = H - padding.top - padding.bottom;
+  const maxVal = Math.max(...passedData, 1);
+
+  // 网格
+  ctx.strokeStyle = isDark ? '#334155' : '#e2e8f0';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = padding.top + (ph / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(W - padding.right, y);
+    ctx.stroke();
+    ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+    ctx.font = '10px sans-serif';
+    ctx.fillText(Math.round(maxVal * (4 - i) / 4), 2, y + 3);
+  }
+
+  // X 轴标签
+  ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+  ctx.textAlign = 'center';
+  labels.forEach((l, i) => {
+    const x = padding.left + (pw / (labels.length - 1)) * i;
+    ctx.fillText(l, x, H - 5);
+  });
+
+  // 折线 - 已提交
+  function drawLine(data, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    data.forEach((v, i) => {
+      const x = padding.left + (pw / (data.length - 1)) * i;
+      const y = padding.top + ph - (v / maxVal) * ph;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    // 数据点
+    ctx.fillStyle = color;
+    data.forEach((v, i) => {
+      const x = padding.left + (pw / (data.length - 1)) * i;
+      const y = padding.top + ph - (v / maxVal) * ph;
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+  drawLine(passedData, '#6366f1');
+  drawLine(excellentData, '#f59e0b');
+
+  // 图例
+  ctx.fillStyle = '#6366f1';
+  ctx.fillRect(W - 120, 8, 10, 10);
+  ctx.fillStyle = isDark ? '#e2e8f0' : '#2c3e50';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('已提交', W - 105, 18);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(W - 120, 28, 10, 10);
+  ctx.fillStyle = isDark ? '#e2e8f0' : '#2c3e50';
+  ctx.fillText('优秀', W - 105, 38);
+}
+
+// ==========================================
+// 暗色模式
+// ==========================================
+function toggleTheme() {
+  isDark = !isDark;
+  if (isDark) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  renderLegend();
+  renderGrid();
+  updateStats();
+}
+
+// ==========================================
+// 键盘快捷键
+// ==========================================
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'Escape') { deselectAll(); closeModal(); closeSeatModal(); }
+  if (e.ctrlKey && e.key === 'a') { e.preventDefault(); selectAll(); }
+});
+
+// 点击遮罩关闭模态框
+document.getElementById('overlay').onclick = () => { closeModal(); closeSeatModal(); };
+document.getElementById('importModal').onclick = (e) => e.stopPropagation();
+document.getElementById('seatModal').onclick = (e) => e.stopPropagation();
+
+// 启动
+init();
+</script>
+</body>
+</html>
