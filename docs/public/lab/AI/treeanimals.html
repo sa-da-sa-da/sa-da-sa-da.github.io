@@ -1,0 +1,3364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>班级宠物养成积分系统</title>
+<style>
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #A7DB9A 0%, #DCF5D9 100%);
+            min-height: 100vh;
+            color: #102620;
+            overflow-x: hidden;
+        }
+
+        /* 宠物系统样式整合 */
+        .student-pet-container {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.27);
+        }
+        
+        .student-card:hover .student-pet-container {
+            transform: scale(1.15) translateY(-5px);
+        }
+
+        .student-pet-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+
+        .pet-stage-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -5px;
+            background: linear-gradient(135deg, #FF6421 0%, #FF9F43 100%);
+            color: white;
+            font-size: 9px;
+            padding: 1px 5px;
+            border-radius: 8px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+
+        .pet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            padding: 10px;
+        }
+
+        .pet-option {
+            background: white;
+            padding: 10px;
+            border: 2px solid #DCF5D9;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .pet-option:hover {
+            border-color: #A7DB9A;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(167, 219, 154, 0.4);
+        }
+
+        .pet-option img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            margin-bottom: 8px;
+        }
+
+        .pet-name {
+            font-size: 13px;
+            font-weight: bold;
+            color: #004737;
+        }
+
+        /* 升级动画覆盖层 */
+        .level-up-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .level-up-content {
+            text-align: center;
+            animation: levelUpBounce 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0) 70%);
+            padding: 40px;
+            border-radius: 50%;
+        }
+
+        @keyframes levelUpBounce {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .pet-action-btn {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #f0f0f0;
+            color: #666;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+        
+        .pet-action-btn:hover {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        /* 状态气泡 */
+        .status-bubble {
+            position: absolute;
+            top: -10px;
+            right: -5px;
+            background: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            animation: float 2s infinite ease-in-out;
+            z-index: 3;
+            display: none;
+        }
+        
+        .student-card.hungry .status-bubble {
+            display: block;
+            color: #FF6421;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .container {
+            max-width: 100vw;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        .header {
+            background: #FF6421;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(255, 100, 33, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            text-align: left;
+        }
+
+        .view-switcher {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px;
+            border-radius: 8px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .view-btn {
+            padding: 6px 16px;
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.8);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .view-btn.active {
+            background: white;
+            color: #FF6421;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* 班级树视图 */
+        .class-tree-view {
+            display: none;
+            height: calc(100vh - 130px);
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 60%, #90EE90 60%, #228B22 100%);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .class-tree-view.active {
+            display: block;
+        }
+
+        .tree-container {
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .big-tree-img {
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.27);
+        }
+
+        .class-info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .class-level-badge {
+            background: #FFDE5E;
+            color: #004737;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .class-exp-bar {
+            width: 100%;
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .class-exp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #A7DB9A, #228B22);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* 能量球动画 */
+        .energy-bubble {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FF6421;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 4px 10px rgba(255, 100, 33, 0.3);
+            pointer-events: none;
+            animation: floatUp 2s ease-out forwards;
+            z-index: 100;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) scale(0.5);
+                opacity: 0;
+            }
+            20% {
+                transform: translateY(-20px) scale(1.1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-150px) scale(1);
+                opacity: 0;
+            }
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 12px;
+            margin-bottom: 10px;
+            height: calc(100vh - 130px);
+        }
+
+        .mode-switch {
+            display: flex;
+            background: #e0e0e0;
+            border-radius: 20px;
+            padding: 4px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .mode-option {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            cursor: pointer;
+            z-index: 1;
+            font-weight: bold;
+            color: #666;
+            transition: color 0.3s;
+        }
+
+        .mode-option.active {
+            color: #fff;
+        }
+
+        .mode-indicator {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            background: #4CAF50;
+            border-radius: 16px;
+            transition: transform 0.3s ease, background-color 0.3s;
+        }
+
+        /* 朗读模式下的指示器颜色 */
+        .mode-switch[data-mode="read"] .mode-indicator {
+            transform: translateX(100%);
+            background: #FF9800;
+        }
+
+        .left-panel {
+            background: #F8F9F7;
+            border-radius: 8px;
+            padding: 18px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .right-panel {
+            background: #F8F9F7;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+
+        .control-section {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .control-section h3 {
+            font-size: 16px;
+            color: #004737;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .detection-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #A7DB9A;
+            color: #004737;
+        }
+
+        .btn-primary:hover {
+            background: #AACA9F;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(167, 219, 154, 0.4);
+        }
+
+        .btn-danger {
+            background: #FF6421;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #FF9364;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(255, 100, 33, 0.4);
+        }
+
+        .btn-warning {
+            background: #FFDE5E;
+            color: #102620;
+        }
+
+        .btn-warning:hover {
+            background: #FFE98F;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(255, 222, 94, 0.4);
+        }
+
+        .btn-info {
+            background: #C4DAFB;
+            color: #102620;
+        }
+
+        .btn-info:hover {
+            background: #D4E4FB;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(196, 218, 251, 0.4);
+        }
+
+        .volume-meter {
+            text-align: center;
+        }
+
+        .volume-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #004737;
+            margin-bottom: 10px;
+        }
+
+        .volume-bar {
+            width: 100%;
+            height: 18px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .volume-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #A7DB9A 0%, #FFDE5E 50%, #FF6421 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .status-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #A7DB9A;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .status-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #004737;
+            margin-bottom: 4px;
+        }
+
+        .status-label {
+            font-size: 12px;
+            color: #636D6A;
+            font-weight: 500;
+        }
+
+        .progress-section {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .progress-section h4 {
+            font-size: 16px;
+            color: #004737;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .progress-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: #DCF5D9;
+            border-radius: 6px;
+        }
+
+        .progress-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .progress-label {
+            font-weight: 600;
+            color: #004737;
+            font-size: 14px;
+        }
+
+        .progress-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #FF6421;
+        }
+
+        .system-selector {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .system-selector h4 {
+            font-size: 16px;
+            color: #004737;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .system-selector select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #DCF5D9;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            color: #102620;
+            cursor: pointer;
+        }
+
+        .system-selector select:focus {
+            outline: none;
+            border-color: #A7DB9A;
+            box-shadow: 0 0 0 3px rgba(167, 219, 154, 0.1);
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .seat-layout-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            font-size: 14px;
+            cursor: pointer;
+            color: #102620;
+        }
+
+        .students-grid {
+            display: grid;
+            gap: 4px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            height: calc(100vh - 220px);
+            overflow-y: auto;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .student-card {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 8px 24px; /* 增加左右内边距，为按钮留出空间 */
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .student-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background: #fff;
+        }
+
+        /* 左右侧加减分按钮 */
+        .side-btn {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 24px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            opacity: 0;
+            transition: all 0.2s ease;
+            z-index: 5;
+        }
+
+        .student-card:hover .side-btn {
+            opacity: 0.6;
+        }
+
+        .side-btn:hover {
+            opacity: 1 !important;
+            width: 28px;
+        }
+
+        .btn-left-sub {
+            left: 0;
+            background: linear-gradient(90deg, rgba(255, 100, 33, 0.8), rgba(255, 100, 33, 0));
+            border-top-left-radius: 6px;
+            border-bottom-left-radius: 6px;
+        }
+
+        .btn-right-add {
+            right: 0;
+            background: linear-gradient(-90deg, rgba(167, 219, 154, 0.9), rgba(167, 219, 154, 0));
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+            color: #004737;
+        }
+
+        .tree-image {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            margin-bottom: 4px;
+            transition: transform 0.3s ease;
+        }
+        
+        .student-card:hover .tree-image {
+            transform: scale(1.1);
+        }
+
+        .level-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: #FFDE5E;
+            color: #004737;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            display: none; /* 隐藏旧徽章 */
+        }
+        
+        .student-stats-box {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            z-index: 5;
+            align-items: flex-start;
+        }
+        
+        .mini-level-badge {
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 1px 6px;
+            border-radius: 8px;
+            backdrop-filter: blur(2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .mini-exp-track {
+            width: 36px;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .mini-exp-fill {
+            height: 100%;
+            background: #FFDE5E;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        .exp-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .exp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #A7DB9A, #004737);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+
+        .student-card.selected {
+            border-color: #FFDE5E;
+            background: #FFFBF0;
+            box-shadow: 0 2px 8px rgba(255, 222, 94, 0.3);
+        }
+
+        .student-card.highlighted {
+            border-color: #FF6421;
+            background: #FFF5F0;
+            animation: pulse 1s infinite;
+            box-shadow: 0 4px 12px rgba(255, 100, 33, 0.4);
+        }
+
+        .student-card.dragging {
+            opacity: 0.6;
+            transform: rotate(3deg) scale(0.95);
+            z-index: 1000;
+        }
+
+        .student-card.drag-over {
+            border-color: #A7DB9A;
+            background: #F0FFF0;
+            transform: scale(1.02);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .student-name {
+            font-weight: 600;
+            margin-bottom: 1px;
+            font-size: 12px;
+            line-height: 1.2;
+            color: #102620;
+        }
+
+        .student-exp-text {
+            font-size: 10px;
+            color: #636D6A;
+            margin-bottom: 2px;
+        }
+
+        .student-resources {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 3px;
+        }
+
+        .resource-item {
+            display: flex;
+            align-items: center;
+            font-size: 10px;
+            gap: 2px;
+            color: #636D6A;
+            font-weight: 500;
+        }
+
+        .resource-icon {
+            font-size: 12px;
+        }
+
+        .student-controls {
+            display: none; /* 隐藏旧的控制按钮 */
+        }
+
+        .control-btn {
+            width: 18px;
+            height: 18px;
+            border: none;
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .btn-add {
+            background: #A7DB9A;
+            color: #004737;
+        }
+
+        .btn-subtract {
+            background: #FF6421;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #DCF5D9;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #004737;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #636D6A;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: #f0f0f0;
+            color: #102620;
+        }
+
+        .rules-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .rules-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #DCF5D9;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #102620;
+        }
+
+        .rules-list li:last-child {
+            border-bottom: none;
+        }
+
+        .setting-item {
+            margin-bottom: 16px;
+        }
+
+        .setting-item label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #004737;
+            font-size: 14px;
+        }
+
+        .setting-item input, .setting-item select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #DCF5D9;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .setting-item input:focus, .setting-item select:focus {
+            outline: none;
+            border-color: #A7DB9A;
+            box-shadow: 0 0 0 3px rgba(167, 219, 154, 0.1);
+        }
+
+        .sensitivity-guide {
+            background: #DCF5D9;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 8px;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #004737;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1001;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            font-size: 14px;
+            max-width: 350px;
+            word-wrap: break-word;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #A7DB9A;
+            color: #004737;
+        }
+
+        .notification.warning {
+            background: #FF6421;
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        /* 排行榜样式 */
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #f0f0f0;
+            gap: 10px;
+        }
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+        .rank {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #eee;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .rank-1 { background: #FFD700; color: #fff; box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3); }
+        .rank-2 { background: #C0C0C0; color: #fff; }
+        .rank-3 { background: #CD7F32; color: #fff; }
+        .rank-info { flex: 1; overflow: hidden; }
+        .rank-name { font-size: 13px; font-weight: 600; color: #004737; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rank-level { font-size: 11px; color: #666; }
+        .rank-img { width: 28px; height: 28px; object-fit: contain; }
+
+        .fullscreen-alert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .fullscreen-alert.red {
+            background: rgba(255, 68, 68, 0.6);
+            opacity: 1;
+        }
+
+        .fullscreen-alert.green {
+            background: rgba(76, 175, 80, 0.6);
+            opacity: 1;
+        }
+
+        .edit-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+            padding: 0 4px;
+        }
+        .edit-btn:hover { opacity: 1; }
+
+        .btn-save {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 15px;
+        }
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+        }
+        .btn-save:active {
+            transform: translateY(0);
+        }
+        
+        .btn-export {
+            width: 46px;
+            background: #f0f2f5;
+            border: 2px solid #e4e6eb;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-export:hover {
+            background: #fff;
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        /* 减分动画 */
+        @keyframes shakeRed {
+            0%, 100% { transform: translateX(0); border-color: #eee; }
+            20%, 60% { transform: translateX(-5px); border-color: #ff4444; background-color: #fff0f0; }
+            40%, 80% { transform: translateX(5px); border-color: #ff4444; background-color: #fff0f0; }
+        }
+        
+        .shake-red {
+            animation: shakeRed 0.5s ease-in-out;
+        }
+
+        .exp-float-minus {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff4444;
+            font-weight: bold;
+            font-size: 24px;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+            pointer-events: none;
+            animation: floatUpFade 1s ease-out forwards;
+            z-index: 10;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 280px 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .left-panel {
+                order: 2;
+                height: auto;
+            }
+            
+            .right-panel {
+                order: 1;
+            }
+            
+            .students-grid {
+                height: 60vh;
+            }
+        }
+
+        /* 学生操作模态框样式 */
+        .quick-actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .action-btn {
+            padding: 10px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: transform 0.2s;
+        }
+        
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 教师切换样式 */
+        .teacher-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        .teacher-btn {
+            padding: 10px;
+            border: 2px solid #DCF5D9;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #636D6A;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .teacher-btn:hover {
+            border-color: #A7DB9A;
+            color: #004737;
+        }
+        .teacher-btn.active {
+            background: #A7DB9A;
+            color: #004737;
+            border-color: #A7DB9A;
+            box-shadow: 0 2px 6px rgba(167, 219, 154, 0.4);
+        }
+        .teacher-btn[data-subject="other"] {
+            grid-column: span 2;
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #A7DB9A;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #AACA9F;
+        }
+
+        /* 设置面板样式 */
+        .settings-tabs {
+            display: flex;
+            border-bottom: 2px solid #DCF5D9;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #636D6A;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            color: #004737;
+            border-bottom-color: #A7DB9A;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #004737;
+        }
+        .form-group input[type="number"],
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* 新增：顶部倒计时组件样式 */
+        .countdown-widget {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 8px 20px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: white;
+            margin-right: auto;
+            margin-left: 20px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+        }
+
+        /* 全屏最大化样式 - 修改为只覆盖右侧区域 */
+        .countdown-widget.maximized {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 322px; /* 300px(左侧面板) + 12px(间距) + 10px(容器内边距) */
+            width: auto;
+            height: 100vh;
+            background: rgba(0, 71, 55, 0.25); /* 透明度调至 0.25，极度通透 */
+            backdrop-filter: blur(8px); /* 降低模糊度，让底层文字可见 */
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 900; /* 确保不遮挡模态框(1000) */
+            flex-direction: column;
+            justify-content: center;
+            margin: 0;
+            border-radius: 20px 0 0 20px;
+            border: none;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+            pointer-events: none; /* 让点击穿透，不影响底层操作 */
+        }
+        
+        /* 让最大化时的按钮恢复点击响应 */
+        .countdown-widget.maximized .countdown-controls {
+            pointer-events: auto;
+        }
+
+        .countdown-display {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 120px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .countdown-widget.maximized .countdown-display {
+            font-size: 12vw; /* 稍微减小字号以适应右侧区域 */
+            text-shadow: 0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,71,55,0.8); /* 强力光晕阴影，确保在任何背景下都清晰 */
+            margin-bottom: 40px;
+            color: #ffffff; /* 文字改为纯白，提升对比度 */
+            pointer-events: auto; /* 允许双击退出 */
+        }
+        
+        .countdown-display.urgent {
+            color: #FFDE5E;
+            animation: pulse 1s infinite;
+        }
+        
+        .countdown-widget.maximized .countdown-display.urgent {
+            color: #FF6421;
+        }
+
+        .countdown-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .countdown-widget.maximized .countdown-controls {
+            gap: 20px;
+            transform: scale(1.5);
+        }
+
+        /* 响应式适配最大化区域 */
+        @media (max-width: 1200px) {
+            .countdown-widget.maximized {
+                left: 302px; /* 280px + 12px + 10px */
+            }
+        }
+
+        @media (max-width: 768px) {
+            .countdown-widget.maximized {
+                left: 0;
+                top: 0;
+                border-radius: 0;
+            }
+            .countdown-widget.maximized .countdown-display {
+                font-size: 20vw;
+            }
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.1);
+            background: white;
+        }
+
+        /* 新增：班级树视图的音量悬浮面板 */
+        .tree-volume-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(8px);
+            width: 220px;
+            z-index: 10;
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: opacity 0.3s;
+        }
+        
+        .tree-volume-panel:hover {
+            opacity: 1;
+        }
+
+        .tv-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #004737;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .tv-meter-container {
+            height: 24px;
+            background: #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .tv-meter-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #A7DB9A, #FFDE5E, #FF6421);
+            width: 0%;
+            transition: width 0.1s linear;
+            border-radius: 12px;
+        }
+        
+        .tv-threshold-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #FF4444;
+            z-index: 2;
+            box-shadow: 0 0 4px rgba(0,0,0,0.3);
+        }
+
+        .tv-controls {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+        
+        .tv-slider {
+            width: 100%;
+            cursor: pointer;
+            accent-color: #FF6421;
+        }
+</style>
+</head>
+<body>
+
+<div class="container">
+<div class="header">
+<div class="header-title">
+<h1>🐾 班级宠物养成积分系统</h1>
+<div class="subtitle">教室安静守护者 - 让课堂更安静，让学习更专注</div>
+</div>
+<div class="countdown-widget" id="countdownWidget">
+<div class="countdown-display" id="countdownDisplay">00:00</div>
+<div class="countdown-controls">
+<button id="btnSetTimer" class="icon-btn" title="设置时间">⏱️</button>
+<button id="btnStartTimer" class="icon-btn" title="开始/暂停">▶️</button>
+<button id="btnResetTimer" class="icon-btn" title="重置">🔄</button>
+<button id="btnMaximizeTimer" class="icon-btn" title="全屏/还原">⛶</button>
+</div>
+</div>
+<div class="view-switcher">
+<button class="view-btn active" data-view="students">个人模式</button>
+<button class="view-btn" data-view="class">班级神树</button>
+<button class="view-btn" id="openSettings">⚙️ 工作台</button>
+</div>
+</div>
+<div id="classTreeView" class="class-tree-view">
+<div class="tree-volume-panel">
+<div class="tv-header">
+<span>🔊 实时音量</span>
+<span id="treeVolumeValue">0 dB</span>
+</div>
+<div class="tv-meter-container">
+<div id="treeVolumeFill" class="tv-meter-fill"></div>
+<div id="treeThresholdLine" class="tv-threshold-line" style="left: 50%"></div>
+</div>
+<div class="tv-controls">
+<div style="display:flex; justify-content:space-between; font-size:12px; color:#666; margin-bottom:4px;">
+<span>报警阈值</span>
+<span id="treeThresholdValue">50</span>
+</div>
+<input type="range" id="treeVolumeThresholdSlider" class="tv-slider" min="0" max="100" value="50">
+</div>
+</div>
+<div class="class-info-panel">
+<div class="class-level-badge">
+Lv.<span id="classTreeLevel">1</span>
+<button id="editClassLevel" class="edit-btn">✏️</button>
+</div>
+<div style="font-size: 14px; color: #666;">总能量: <span id="classTotalExp">0</span></div>
+<div class="class-exp-bar">
+<div id="classExpFill" class="class-exp-fill"></div>
+</div>
+<div style="font-size: 12px; color: #999; margin-top: 4px;">距离下一级还需 <span id="classNextExp">500</span> 能量</div>
+</div>
+<div class="tree-container">
+<img id="classTreeImg" src="https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/ar5Km74zfxeQRCvnJ3eF8T.jpg" class="big-tree-img" alt="Class Tree">
+</div>
+</div>
+<div id="studentsView" class="main-content">
+<div class="left-panel">
+<div class="mode-switch" id="modeSwitch" data-mode="study">
+<div class="mode-indicator"></div>
+<div class="mode-option active" data-value="study">🤫 自习模式</div>
+<div class="mode-option" data-value="read">🗣️ 朗读模式</div>
+</div>
+<div class="control-section">
+<h3>🎯 音量检测</h3>
+<div class="detection-controls">
+<button id="startDetection" class="btn btn-primary">开始检测</button>
+<button id="stopDetection" class="btn btn-danger" style="display: none;">停止检测</button>
+<div class="threshold-control" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee;">
+<label style="display:flex; justify-content:space-between; font-size:14px; font-weight:600; color:#004737; margin-bottom:8px;">
+<span>🔊 报警阈值</span>
+<span id="thresholdValue">50 dB</span>
+</label>
+<input type="range" id="volumeThresholdSlider" min="0" max="100" value="50" style="width:100%; cursor:pointer; accent-color: #FF6421;">
+</div>
+<div style="margin-top: 15px; display: flex; gap: 10px;">
+<button id="saveDataBtn" class="btn-save">
+<span>💾</span> 保存进度
+</button>
+<button id="exportDataBtn" class="btn-export" title="导出备份文件">
+📥
+</button>
+</div>
+</div>
+</div>
+<div class="control-section">
+<h3>📊 音量监测</h3>
+<div class="volume-meter">
+<div id="volumeValue" class="volume-display">0 dB</div>
+<div class="volume-bar">
+<div id="volumeFill" class="volume-fill"></div>
+</div>
+</div>
+</div>
+<div class="control-section">
+<h3>👑 成长排行榜</h3>
+<div id="leaderboard" class="leaderboard-list">
+</div>
+</div>
+<div class="system-selector" style="display: none;">
+<h4>🎁 奖励系统</h4>
+<select id="rewardSystem">
+<option value="level">等级成长系统</option>
+</select>
+</div>
+</div>
+<div class="right-panel">
+<div class="toolbar">
+<button id="importStudents" class="btn btn-primary">📋 导入名单</button>
+<button id="feedAll" class="btn btn-warning">💊 喂养料</button>
+<button id="deductAll" class="btn btn-danger">⬇️ 全班扣除</button>
+<div class="seat-layout-controls">
+<div class="checkbox-container">
+<input type="checkbox" id="editMode">
+<label for="editMode">座位编辑</label>
+</div>
+<select id="columnCount">
+<option value="6">6列</option>
+<option value="7" selected>7列</option>
+<option value="8">8列</option>
+<option value="9">9列</option>
+<option value="10">10列</option>
+</select>
+</div>
+<button id="resetProgress" class="btn btn-info">🔄 重置</button>
+</div>
+<div id="studentsContainer" class="students-grid">
+</div>
+</div>
+</div>
+</div>
+<div id="settingsModal" class="modal">
+<div class="modal-content" style="max-width: 600px;">
+<div class="modal-header">
+<h3 class="modal-title">⚙️ 教师工作台</h3>
+<button class="close-btn">&times;</button>
+</div>
+<div class="settings-tabs">
+<button class="tab-btn active" data-tab="basic">基础规则</button>
+<button class="tab-btn" data-tab="reward">奖惩机制</button>
+<button class="tab-btn" data-tab="system">系统管理</button>
+</div>
+<div id="tab-basic" class="tab-content active">
+<div class="form-group">
+<label>🔊 报警阈值 (dB)</label>
+<input type="number" id="setThreshold" min="10" max="100">
+<div class="form-hint">超过此音量将被判定为吵闹（建议：自习50，讨论70）</div>
+</div>
+<div class="form-group">
+<label>⏱️ 安静达标时长 (秒)</label>
+<input type="number" id="setQuietDuration" min="5" max="300">
+<div class="form-hint">持续安静多久后获得奖励</div>
+</div>
+<div class="form-group">
+<label>⚠️ 吵闹容忍时长 (秒)</label>
+<input type="number" id="setPunishDuration" min="5" max="300">
+<div class="form-hint">持续吵闹多久后触发惩罚</div>
+</div>
+</div>
+<div id="tab-reward" class="tab-content">
+<div class="form-group">
+<label>🎁 每次奖励经验值</label>
+<input type="number" id="setExpReward" min="1" max="100">
+</div>
+<div class="form-group">
+<label>⚡ 每次惩罚经验值</label>
+<input type="number" id="setExpPunish" min="1" max="100">
+</div>
+<div class="form-group">
+<label>🆙 升级难度系数</label>
+<select id="setLevelDifficulty">
+<option value="50">简单 (50xp/级)</option>
+<option value="100">标准 (100xp/级)</option>
+<option value="200">困难 (200xp/级)</option>
+</select>
+</div>
+</div>
+<div id="tab-system" class="tab-content">
+<div class="form-group">
+<label>🪑 座位列数</label>
+<select id="setColumnCount">
+<option value="6">6列</option>
+<option value="7">7列</option>
+<option value="8">8列</option>
+<option value="9">9列</option>
+<option value="10">10列</option>
+</select>
+</div>
+<div class="form-group">
+<label>🗑️ 危险操作</label>
+<button id="btnResetCurrent" class="btn btn-danger" style="width: 100%;">重置当前学科所有进度</button>
+</div>
+</div>
+<div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; text-align: right;">
+<button class="btn" id="cancelSettings" style="margin-right: 10px; background: #f0f0f0;">取消</button>
+<button class="btn btn-primary" id="saveSettings">保存设置</button>
+</div>
+</div>
+</div>
+<div id="alertOverlay" class="fullscreen-alert"></div>
+<div id="petSelectionModal" class="modal">
+<div class="modal-content" style="max-width: 600px;">
+<div class="modal-header">
+<h3 class="modal-title">🐾 领养你的专属宠物</h3>
+<button class="close-btn">&times;</button>
+</div>
+<div style="text-align: center; margin-bottom: 15px; color: #666; font-size: 14px;">
+选择一个伙伴，它将随着你的进步而进化！每升20级解锁新形态。
+</div>
+<div id="petGridContainer" class="pet-grid"></div>
+</div>
+</div>
+<div id="levelUpOverlay" class="level-up-overlay">
+<div class="level-up-content" id="levelUpContent"></div>
+</div>
+<div id="importModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h3 class="modal-title">📋 导入学生名单</h3>
+<button class="close-btn">&times;</button>
+</div>
+<div>
+<div class="setting-item">
+<label>方式一：上传文件 (支持 Excel .xlsx / .xls 或 .txt)</label>
+<input type="file" id="importFile" accept=".xlsx, .xls, .csv, .txt" style="padding: 8px; border: 2px dashed #DCF5D9; background: #f9f9f9;">
+</div>
+<div class="setting-item">
+<label>方式二：直接粘贴姓名 (每行一个)</label>
+<textarea id="studentNames" rows="8" style="width: 100%; padding: 12px; border: 2px solid #DCF5D9; border-radius: 6px; font-size: 14px; resize: vertical;" placeholder="张三&#10;李四&#10;王五&#10;..."></textarea>
+</div>
+<div style="display: flex; gap: 10px;">
+<button id="cancelImport" class="btn" style="background: #636D6A; color: white; flex: 1;">取消</button>
+<button id="confirmImport" class="btn btn-primary" style="flex: 1;">确认导入</button>
+</div>
+</div>
+</div>
+</div>
+<div id="studentActionModal" class="modal">
+<div class="modal-content" style="max-width: 450px;">
+<div class="modal-header">
+<h3 class="modal-title">🎓 <span id="actionStudentName">学生姓名</span></h3>
+<button class="close-btn">&times;</button>
+</div>
+<div class="action-body">
+<div class="setting-item">
+<label>⚡ 快捷操作</label>
+<div class="quick-actions-grid">
+<button class="btn btn-primary action-btn" data-score="5" data-reason="考试优秀">💯 考试优秀 +5</button>
+<button class="btn btn-primary action-btn" data-score="3" data-reason="作业完成">📝 作业完成 +3</button>
+<button class="btn btn-primary action-btn" data-score="2" data-reason="积极发言">🙋 积极发言 +2</button>
+<button class="btn btn-primary action-btn" data-score="1" data-reason="表现良好">👍 表现良好 +1</button>
+<button class="btn btn-danger action-btn" data-score="-5" data-reason="课堂吵闹">📢 课堂吵闹 -5</button>
+<button class="btn btn-danger action-btn" data-score="-3" data-reason="未交作业">❌ 未交作业 -3</button>
+<button class="btn btn-danger action-btn" data-score="-2" data-reason="上课走神">😴 上课走神 -2</button>
+<button class="btn btn-danger action-btn" data-score="-1" data-reason="坐姿不端">🪑 坐姿不端 -1</button>
+<button class="btn btn-warning level-action-btn" data-action="level-up">⬆️ 升一级</button>
+<button class="btn btn-warning level-action-btn" data-action="level-down">⬇️ 降一级</button>
+</div>
+</div>
+<div class="setting-item" style="margin-top: 20px; border-top: 1px solid #DCF5D9; padding-top: 15px;">
+<label>🔧 自定义调整</label>
+<div style="display: flex; gap: 10px; align-items: center;">
+<input type="number" id="customScoreInput" placeholder="输入分值" style="width: 100px;" min="1">
+<button id="btnCustomAdd" class="btn btn-primary" style="flex: 1;">+ 加分</button>
+<button id="btnCustomSub" class="btn btn-danger" style="flex: 1;">- 减分</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="notification" class="notification"></div>
+
+<script>
+class QuietTreeGame {
+            constructor() {
+                this.isDetecting = false;
+                this.audioContext = null;
+                this.analyser = null;
+                this.microphone = null;
+                this.dataArray = null;
+                this.stream = null;
+                this.lastFrameTime = 0;
+                
+                this.currentVolume = 0;
+                this.quietTimer = 0;
+                this.noisyTimer = 0;
+                this.totalQuietTime = 0;
+                this.quietStartTime = null;
+                this.noisyStartTime = null;
+                
+                this.settings = {
+                    rewardSystem: 'level',
+                    volumeThreshold: 50,
+                    timerDuration: 30, // 安静达标时长
+                    micSensitivity: 1.5,
+                    punishDuration: 30, // 吵闹容忍时长
+                    expPerReward: 10, // 每次奖励经验值
+                    expPerPunish: 20,  // 每次惩罚经验值
+                    levelDifficulty: 100, // 升级所需经验系数
+                    mode: 'study', // 'study' | 'read'
+                    currentTeacher: 'chinese' // 默认语文老师
+                };
+                
+                // 倒计时状态
+                this.countdownTimer = null;
+                this.countdownTime = 0;
+                this.initialCountdownTime = 0;
+                this.isCountdownRunning = false;
+                
+                // 树木成长阶段图片配置
+                this.treeStages = [
+                    { min: 1, max: 2, url: 'https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/ar5Km74zfxeQRCvnJ3eF8T.jpg', name: '萌芽期' },
+                    { min: 3, max: 5, url: 'https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/tBb9Hin5cYmwKF59Q29d9R.jpg', name: '幼苗期' },
+                    { min: 6, max: 10, url: 'https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/sJpEXKKE7LvUpJpTSJp7uB.jpg', name: '小树期' },
+                    { min: 11, max: 20, url: 'https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/PQJw97X4cpSTs3x8r5Vtyi.jpg', name: '成长期' },
+                    { min: 21, max: 40, url: 'https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/FHcFjYsYrPmv6NpDuRh329.jpg', name: '强壮期' },
+                    { min: 41, max: 60, url: 'https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/GZKfhyKw9KoptyoVzdHRzP.jpg', name: '繁花期' },
+                    { min: 61, max: 80, url: 'https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/Wnawiec5ufj3WGYhJMZCoj.jpg', name: '硕果期' },
+                    { min: 81, max: 100, url: 'https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/QMBUyLuLUi3SR6H87PSgfQ.jpg', name: '神树期' }
+                ];
+
+                // 宠物配置数据
+                this.PET_TYPES = [
+                    {id: 'phoenix', name: '彩虹鸟', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/iALmz67rzmGKEkozJvARMB.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/FhmCKT94muZvtquiejUQsm.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/4wwdiHJ8AyEgPCA55tXDHU.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/acrGK4Y2L2SZgQU7eY2xDD.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/YAJPAC6a7Whjayv2HrB48U.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/99pMGmxLaEw3PfmpDDLZ92.jpg']},
+                    {id: 'penguin', name: '酷炫精灵', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/JzyxMyhbq6pxBSL9U9eyQC.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/cUkY4UmrRtDJB5ThpxXwph.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/aQ4qWMUyKzVCxmBLCNosC9.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/UyGjARwe5aSEeyzXHn8gBa.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/bwXAKtRDU9yd3QdS4FtJeB.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/bT25e9nPHuZrqyZ4NHWgE7.jpg']},
+                    {id: 'peachcat', name: '成熟猫族', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/egPRctmiwLeR8qfCpuL6aG.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/h7RKUYqyxciJ4aiRN2gjcA.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/H35zDUuaMPVmP5vdSSgCve.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/dBMjQAJBY94AUP3kS2ty63.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/v5qz68wUMkFSfVRpXB7oZn.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/PBhW7CRKSyPHSJ8CZhP2NL.jpg']},
+                    {id: 'fenrir', name: '宝宝精灵', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/zz3XUzh2f4zJQvA8C9QAzb.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/BV4A4sSqQPR9GtBfJzp5KZ.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/JiZD5dAF4DZo94e7XzxK8N.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/8m3Hf8QomrejokoL23PSBJ.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/BCdrFEVchvR5PtVbanPYiF.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/j5SDAULAYKxxjya6KT8y5S.jpg']},
+                    {id: 'yellow', name: '青龙', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/Ax4jNEYHvFzmcHa7UkKRRZ.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/bo3iFt3uJQJwJvDvZDGAF6.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/UR4g4phizHp63vxZHys595.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/edMcYdPnjaKbD82mWbMFqB.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/URyqrrvkDrg3fyqVddwfgN.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/6gPHCF97byxKBt66zrPXFc.jpg']},
+                    {id: 'whitedeer', name: '皓月白鹿', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/AhuHW25xFszLgC5WVwJx8T.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/R6xhUx69aXcXeSBpkYh5DJ.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/iLf5d4UfvyzgzCK4RhSgFT.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/gkdHnvovPJZXxH4ZPResS2.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/9PoH2AsvJGoFbE3XNy59sj.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/ZxeGcyYMfSyajNWo4HME37.jpg']},
+                    {id: 'potion', name: '风暴飞鱼', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/LYWCwSPtdiVbcJHcKrjZ6f.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/4QBxsyDLT3nTjjRyfBxUQ2.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/2TCAkafH3gqEiTzG86n4VK.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/2Q6KJzPTBeDDgQmCTUWDrR.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/TphhzypudFpR8TbVrWbMTo.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/RRjwPSqN8kb7ndopTPbGL5.jpg']},
+                    {id: 'monkey', name: '暗影大圣', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/L3rmFaoQt2RJsjVKT3H5Mh.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/DZzhiGdBBDH3N8WqrungoH.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/4CbMgGKAdqEVn4Xdwa2thV.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/JSo9M3hdJwcHUtmfmvKAF3.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/XBfHykSyLqbUh2uF8QtWcC.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/S7CTekRKEAK4z5rcRx3nAb.jpg']},
+                    {id: 'fox', name: '咕噜犬宝', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/e7q3tFPdjsVo9w4NDKGHz8.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/SW2J7Fi95DhPAcS8cyzp83.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/2Mhv6Lbx7KHtRBWG2LrRrd.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/tMFvJjysbtFTnKvKRNj4LM.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/DdUA5zjo4ENoWbs5eUrEue.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/ftKLGs3pgHTFKuTSUoMiq6.jpg']},
+                    {id: 'redphoenix', name: '赤金之翼', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/TMUiU2adQNsHzqMDfQDZBe.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/rVhaeQXWy9UDDsNetGAcni.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/bBtBQfi5insD7r7fBR3G94.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/LbaMKcScDPm4ezT5w7BRfT.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/UzRCMzAAN5CTMsuLsHPE36.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/YHDp2Hd6nnzAyCt28uwWbC.jpg']},
+                    {id: 'greenspirit', name: '绿叶精灵', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/hRab4MnWBKHPveybtJn9P7.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/AkowJVnKko2pZ8HSk4HvMo.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/ZtCqMca8Yzx5TBahKjGPNe.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/zuztMZYqLJxxzgVSabs7Ag.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/zDwE9NpoRwksegHxpt7wFT.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/viJEd8ECQbjANbu3juRgqT.jpg']},
+                    {id: 'lavadragon', name: '熔岩小火龙', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/aJfWiTAoeN3VdPneHdhuyk.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/8i6ucAxon5ENswnR9xGy6B.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/dSk24uLutjvDDL8HaaByz8.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/43onYB4tpwD8FYAM98Mw7d.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/cyjTmYeuQPiWnXMRipbC8n.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/2Ak6riaGo3vhDuBa9FvpDC.jpg']},
+                    {id: 'jellyfish', name: '梦幻水母', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/QAv8ANTdcE3jMHeENxrJHc.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/ZhTiyA5tTP7uYLCFYgHU9a.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/ct8B3sYp5QYxrnbVWAZV3i.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/TKSUzsiZZvDQgqZSmWJy4S.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/YGvZyoT2ayDbvCk6YpGSGD.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/awiDcAQGb7SH53ZpWhtRBT.jpg']},
+                    {id: 'leopard', name: '闪电豹', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/gFRsgLcomHPfgEGTJfnX6S.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/ZojXcpELMAWayKWwmfafMf.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/YGJ7oPscg2pxCqwzuzEXGk.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/mEHPw9GSArCA2fSmmK4HUc.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/tsY2s7UCJgT83hn6Rs3BVk.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/vUesEcpztm3KYdLg3wm6FP.jpg']},
+                    {id: 'moonrabbit', name: '月光兔', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/9Sz78ZwGDvtUUoYo2RdbCa.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/EQGa6SWsfNv5jBEnBEuqFo.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/yL7Vi4wwy6YznubcEmerXo.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/NDAnWon93winJaXEu2B8zX.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/kHPy3rqcUqjWMLtxycfEEo.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/zmgPeBTBjb4n5rMRxV5bpM.jpg']},
+                    {id: 'whale', name: '星海巨鲸', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/RcTAiRuHxDWSDXoxB2ykQT.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/PPGzCpvcb6xLdx24grQKYG.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/mFgWQszQcACcsh7PThfzXh.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/HTTy5QaNTHVuvUDTnvDbAa.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/jREQLAJHH4APemKdWhTDmm.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/kjyx38s4uSunrMCL2zt73T.jpg']},
+                    {id: 'whitemech', name: '袋翼机甲', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/NYSyZBREjWdZxVvcNg2CyY.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/RAthYPBnyXukQQQp4nM7yf.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/YojJeFdJhrwvKJs7YE8kab.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/wNcXDuMo7JbgdUxzw9XsVF.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/MB7TXVqFpFLVsmkNAfmFXi.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/WhXiUGmJNzhQZwshccXarL.jpg']},
+                    {id: 'goldmech', name: '星阳机甲', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/6TGQmXSD3jYJ2GCMHnLbCc.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/ixp5QZQ6HJaN99yfe3cag4.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/ujbnbwMS7RVTGdsspjqt8C.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/EKsXtM3nWkjpYDN7dMZr4L.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/i8yFBxS7X2zeWpoLWc4o5V.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/QgxAF6QAs8zdskySSVU8CG.jpg']},
+                    {id: 'redsnake', name: '丹琦蛇宝', stages: ['https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/6NMErdUytTxV37SP8Gs2mj.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/LahEBaDKc4CsjGiUHu5qEW.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/nctHbfNVfrz4XHWNiTCyCc.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/zU67VT8o9hE8M8ZHVukxcS.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/faxiQ9EtgVgJRyaczbMixa.jpg','https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/mi5aH4NQA6z47Mg6qniKj5.jpg']}
+                ];
+                
+                this.students = [];
+                this.selectedStudent = null;
+                this.editMode = false;
+                this.columnCount = 7;
+                this.draggedElement = null;
+                this.currentActionStudentId = null;
+                
+                this.classTree = {
+                    level: 1,
+                    exp: 0,
+                    totalExp: 0
+                };
+                
+                this.init();
+            }
+            
+            init() {
+                this.loadData();
+                this.bindEvents();
+                this.updateDisplay();
+                // this.updateRules(); // 规则已移除
+                this.renderStudents();
+                this.updateProgressLabels();
+                this.updateClassTree(); // 初始化班级树
+                this.initCountdown(); // 初始化倒计时
+            }
+            
+            saveData() {
+                try {
+                    const data = {
+                        students: this.students,
+                        settings: this.settings,
+                        columnCount: this.columnCount,
+                        totalQuietTime: this.totalQuietTime,
+                        classTree: this.classTree,
+                        timestamp: Date.now()
+                    };
+                    // 按学科存储数据
+                    const key = `quietTreeGameData_${this.settings.currentTeacher || 'chinese'}`;
+                    localStorage.setItem(key, JSON.stringify(data));
+                    
+                    // 保存全局状态
+                    localStorage.setItem('quietTreeGlobal', JSON.stringify({
+                        lastTeacher: this.settings.currentTeacher || 'chinese'
+                    }));
+                } catch (error) {
+                    console.error('保存数据失败:', error);
+                }
+            }
+            
+            loadData(targetTeacher = null) {
+                try {
+                    // 1. 确定要加载的老师
+                    let currentTeacher = targetTeacher;
+                    if (!currentTeacher) {
+                        // 如果没指定，尝试从全局配置获取
+                        const globalData = JSON.parse(localStorage.getItem('quietTreeGlobal') || '{}');
+                        currentTeacher = globalData.lastTeacher || this.settings.currentTeacher || 'chinese';
+                    }
+                    
+                    // 更新当前设置
+                    this.settings.currentTeacher = currentTeacher;
+                    // this.updateTeacherUI(currentTeacher); // UI已移除
+
+                    // 2. 读取该老师的数据
+                    const key = `quietTreeGameData_${currentTeacher}`;
+                    const savedData = localStorage.getItem(key);
+
+                    if (savedData) {
+                        const data = JSON.parse(savedData);
+                        
+                        if (data.students && data.students.length > 0) {
+                            this.students = data.students;
+                        } else {
+                            this.loadDefaultStudents();
+                        }
+                        
+                        if (data.settings) {
+                            this.settings = { ...this.settings, ...data.settings };
+                            // 确保 currentTeacher 正确
+                            this.settings.currentTeacher = currentTeacher;
+                        }
+                        
+                        if (data.columnCount) this.columnCount = data.columnCount;
+                        if (data.totalQuietTime) this.totalQuietTime = data.totalQuietTime;
+                        if (data.classTree) this.classTree = data.classTree;
+                        
+                        this.syncUIControls();
+                    } else {
+                        // 初始化新老师的数据状态
+                        this.classTree = { level: 1, exp: 0, totalExp: 0 };
+                        this.totalQuietTime = 0;
+                        this.loadDefaultStudents();
+                    }
+                } catch (error) {
+                    console.error('加载数据失败:', error);
+                    this.loadDefaultStudents();
+                }
+            }
+            
+            syncUIControls() {
+                document.getElementById('rewardSystem').value = this.settings.rewardSystem;
+                document.getElementById('columnCount').value = this.columnCount;
+                // 同步阈值滑块
+                if (this.settings.volumeThreshold) {
+                    document.getElementById('volumeThresholdSlider').value = this.settings.volumeThreshold;
+                    document.getElementById('thresholdValue').textContent = `${this.settings.volumeThreshold} dB`;
+                }
+            }
+            
+            loadDefaultStudents() {
+                const surnames = ['李', '张', '王', '刘', '陈', '杨', '赵', '黄', '周', '吴', '徐', '孙', '胡', '朱', '高', '林', '何', '郭', '马', '罗'];
+                const givenNames = ['明', '华', '强', '军', '敏', '静', '丽', '娟', '芳', '伟', '勇', '磊', '超', '洋', '艳', '秀', '英', '杰', '涛', '红', '霞', '玲', '燕', '雯', '婷', '慧', '琳', '颖', '萍', '蕾'];
+                
+                this.students = [];
+                for (let i = 0; i < 49; i++) {
+                    const surname = surnames[Math.floor(Math.random() * surnames.length)];
+                    const givenName = givenNames[Math.floor(Math.random() * givenNames.length)];
+                    this.students.push({
+                        id: i + 1,
+                        name: surname + givenName + (Math.random() > 0.7 ? (Math.floor(Math.random() * 9) + 1) : ''),
+                        level: 1,
+                        exp: 0,
+                        position: i,
+                        petId: null, // 新增：宠物ID
+                        petName: null, // 新增：宠物昵称
+                        petStage: 0, // 新增：宠物阶段
+                        isHungry: false // 新增：饥饿状态
+                    });
+                }
+                this.saveData();
+            }
+            
+            bindEvents() {
+                document.getElementById('startDetection').addEventListener('click', () => this.startDetection());
+                document.getElementById('stopDetection').addEventListener('click', () => this.stopDetection());
+                
+                // 音量阈值滑块
+                document.getElementById('volumeThresholdSlider').addEventListener('input', (e) => {
+                    this.settings.volumeThreshold = parseInt(e.target.value);
+                    document.getElementById('thresholdValue').textContent = `${this.settings.volumeThreshold} dB`;
+                    this.saveData();
+                });
+
+                document.getElementById('editClassLevel').addEventListener('click', () => {
+                    const newLevel = prompt('请输入新的班级树等级 (1-100):', this.classTree.level);
+                    if (newLevel !== null) {
+                        const level = parseInt(newLevel);
+                        if (level >= 1 && level <= 100) {
+                            this.classTree.level = level;
+                            this.classTree.exp = 0;
+                            this.updateClassTree();
+                            this.saveData();
+                            this.showNotification(`班级等级已调整为 Lv.${level}`, 'success');
+                        } else {
+                            this.showNotification('请输入有效的等级 (1-100)', 'warning');
+                        }
+                    }
+                });
+
+                // 模式切换
+                const modeSwitch = document.getElementById('modeSwitch');
+                const modeOptions = document.querySelectorAll('.mode-option');
+                
+                modeOptions.forEach(opt => {
+                    opt.addEventListener('click', () => {
+                        const mode = opt.dataset.value;
+                        this.settings.mode = mode;
+                        this.saveData();
+                        
+                        // UI更新
+                        modeSwitch.dataset.mode = mode;
+                        modeOptions.forEach(o => o.classList.remove('active'));
+                        opt.classList.add('active');
+                        
+                        // 重置状态
+                        this.virtualQuietTime = 0;
+                        this.quietStartTime = null;
+                        this.noisyStartTime = null;
+                        this.showNotification(`已切换为：${opt.textContent}`, 'success');
+                    });
+                });
+
+                // 保存数据按钮 (手动保存到本地)
+                document.getElementById('saveDataBtn').addEventListener('click', () => {
+                    this.saveData();
+                    this.showNotification('✅ 数据已成功保存到本机', 'success');
+                });
+
+                // 导出备份按钮 (下载文件)
+                document.getElementById('exportDataBtn').addEventListener('click', () => {
+                    const data = {
+                        students: this.students,
+                        classTree: this.classTree,
+                        settings: this.settings,
+                        timestamp: Date.now()
+                    };
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `班级智慧树备份_${new Date().toLocaleDateString()}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    this.showNotification('数据备份已下载', 'success');
+                });
+
+                document.getElementById('importStudents').addEventListener('click', () => this.showModal('importModal'));
+                
+                document.querySelectorAll('.close-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.closeModal(e.target.closest('.modal').id);
+                    });
+                });
+                
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            this.closeModal(modal.id);
+                        }
+                    });
+                });
+                
+                // 宠物选择模态框关闭
+                document.querySelector('#petSelectionModal .close-btn').addEventListener('click', () => {
+                    this.closeModal('petSelectionModal');
+                });
+
+                document.getElementById('feedAll').addEventListener('click', () => this.feedAll());
+                document.getElementById('deductAll').addEventListener('click', () => this.deductAllStudents());
+                document.getElementById('resetProgress').addEventListener('click', () => this.resetProgress());
+                
+                document.getElementById('editMode').addEventListener('change', (e) => {
+                    this.editMode = e.target.checked;
+                    this.renderStudents();
+                    if (this.editMode) {
+                        this.showNotification('已启用座位编辑模式，可拖拽调整学生位置', 'success');
+                    }
+                });
+                
+                document.getElementById('columnCount').addEventListener('change', (e) => {
+                    this.columnCount = parseInt(e.target.value);
+                    this.renderStudents();
+                    this.saveData();
+                });
+                
+                document.getElementById('confirmImport').addEventListener('click', () => this.importStudents());
+                document.getElementById('cancelImport').addEventListener('click', () => this.closeModal('importModal'));
+                
+                // 文件上传监听
+                document.getElementById('importFile').addEventListener('change', (e) => this.handleFileUpload(e));
+
+                // 学生操作模态框事件绑定
+                document.querySelectorAll('.action-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const score = parseInt(e.currentTarget.dataset.score);
+                        const reason = e.currentTarget.dataset.reason;
+                        this.applyScoreChange(this.currentActionStudentId, score, reason);
+                        this.closeModal('studentActionModal');
+                    });
+                });
+
+                // 升降级按钮事件
+                document.querySelectorAll('.level-action-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const action = e.currentTarget.dataset.action;
+                        this.handleLevelChange(this.currentActionStudentId, action);
+                        this.closeModal('studentActionModal');
+                    });
+                });
+
+                document.getElementById('btnCustomAdd').addEventListener('click', () => {
+                    const input = document.getElementById('customScoreInput');
+                    const score = parseInt(input.value);
+                    if (score && score > 0) {
+                        this.applyScoreChange(this.currentActionStudentId, score, '自定义加分');
+                        input.value = '';
+                        this.closeModal('studentActionModal');
+                    } else {
+                        this.showNotification('请输入有效的分值', 'warning');
+                    }
+                });
+
+                document.getElementById('btnCustomSub').addEventListener('click', () => {
+                    const input = document.getElementById('customScoreInput');
+                    const score = parseInt(input.value);
+                    if (score && score > 0) {
+                        this.applyScoreChange(this.currentActionStudentId, -score, '自定义减分');
+                        input.value = '';
+                        this.closeModal('studentActionModal');
+                    } else {
+                        this.showNotification('请输入有效的分值', 'warning');
+                    }
+                });
+                
+                // 视图切换
+                document.querySelectorAll('.view-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const view = e.target.dataset.view;
+                        this.switchView(view);
+                    });
+                });
+
+
+
+                // 工作台相关事件
+                document.getElementById('openSettings').addEventListener('click', () => this.openSettings());
+                document.getElementById('saveSettings').addEventListener('click', () => this.saveSettings());
+                document.getElementById('cancelSettings').addEventListener('click', () => this.closeModal('settingsModal'));
+                
+                // Tab切换
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                        
+                        e.target.classList.add('active');
+                        document.getElementById(`tab-${e.target.dataset.tab}`).classList.add('active');
+                    });
+                });
+
+                document.getElementById('btnResetCurrent').addEventListener('click', () => {
+                    if(confirm(`确定要重置所有数据吗？此操作不可恢复！`)) {
+                        this.resetProgress();
+                        this.closeModal('settingsModal');
+                    }
+                });
+
+                window.addEventListener('beforeunload', () => {
+                    this.saveData();
+                });
+                
+                setInterval(() => {
+                    this.saveData();
+                }, 30000);
+            }
+            
+
+
+            async handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const fileName = file.name.toLowerCase();
+                const textarea = document.getElementById('studentNames');
+
+                if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                    // 处理 Excel 文件
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = new Uint8Array(e.target.result);
+                            const workbook = XLSX.read(data, { type: 'array' });
+                            const firstSheetName = workbook.SheetNames[0];
+                            const worksheet = workbook.Sheets[firstSheetName];
+                            
+                            // 获取第一列数据
+                            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                            const names = jsonData
+                                .map(row => row[0]) // 取第一列
+                                .filter(name => name && typeof name === 'string' && name.trim().length > 0);
+                            
+                            textarea.value = names.join('\n');
+                            this.showNotification(`已读取 ${names.length} 个名字`, 'success');
+                        } catch (error) {
+                            console.error(error);
+                            this.showNotification('Excel 解析失败，请检查文件格式', 'error');
+                        }
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    // 处理文本文件
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        textarea.value = e.target.result;
+                        this.showNotification('文件读取成功', 'success');
+                    };
+                    reader.readAsText(file);
+                }
+            }
+
+            async startDetection() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
+                    this.microphone = this.audioContext.createMediaStreamSource(this.stream);
+                    this.analyser = this.audioContext.createAnalyser();
+                    this.analyser.fftSize = 256;
+                    
+                    this.microphone.connect(this.analyser);
+                    this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                    
+                    this.isDetecting = true;
+                    this.lastFrameTime = Date.now();
+                    document.getElementById('startDetection').style.display = 'none';
+                    document.getElementById('stopDetection').style.display = 'inline-block';
+                    
+                    this.detectVolume();
+                    this.showNotification('开始音量检测', 'success');
+                } catch (error) {
+                    this.showNotification('无法访问麦克风，请检查权限设置', 'warning');
+                }
+            }
+            
+            stopDetection() {
+                this.isDetecting = false;
+                
+                if (this.audioContext) {
+                    this.audioContext.close();
+                    this.audioContext = null;
+                }
+                
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                    this.stream = null;
+                }
+                
+                document.getElementById('startDetection').style.display = 'inline-block';
+                document.getElementById('stopDetection').style.display = 'none';
+                
+                this.quietTimer = 0;
+                this.noisyTimer = 0;
+                this.quietStartTime = null;
+                this.noisyStartTime = null;
+                
+                this.updateDisplay();
+                this.showNotification('停止音量检测', 'success');
+            }
+            
+            detectVolume() {
+                if (!this.isDetecting) return;
+                
+                const now = Date.now();
+                const deltaTime = (now - this.lastFrameTime) / 1000;
+                this.lastFrameTime = now;
+
+                this.analyser.getByteFrequencyData(this.dataArray);
+                
+                // 计算 RMS (均方根) 以获得更真实的能量值
+                let sum = 0;
+                for (let i = 0; i < this.dataArray.length; i++) {
+                    sum += this.dataArray[i] * this.dataArray[i];
+                }
+                const rms = Math.sqrt(sum / this.dataArray.length);
+                
+                // 转换为近似分贝值 (dB)
+                // 假设基准为 0dB (静音), 最大约为 100dB
+                // 这里的计算是近似值，用于模拟真实听感
+                let db = 0;
+                if (rms > 0) {
+                    db = Math.round(20 * Math.log10(rms) + 10); // +10 为校准偏移
+                }
+                
+                // 限制范围并应用灵敏度微调
+                this.currentVolume = Math.max(0, Math.min(120, Math.round(db * this.settings.micSensitivity)));
+                
+                this.processVolumeLogic(deltaTime);
+                this.updateDisplay();
+                
+                requestAnimationFrame(() => this.detectVolume());
+            }
+            
+            // 新增：倒计时与音量同步逻辑
+            initCountdown() {
+                const widget = document.getElementById('countdownWidget');
+                const btnStart = document.getElementById('btnStartTimer');
+                const btnSet = document.getElementById('btnSetTimer');
+                const btnReset = document.getElementById('btnResetTimer');
+                const btnMaximize = document.getElementById('btnMaximizeTimer');
+
+                // 设置时间
+                btnSet.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const input = prompt('请输入倒计时分钟数:', '40');
+                    if (input) {
+                        const minutes = parseFloat(input);
+                        if (!isNaN(minutes) && minutes > 0) {
+                            this.initialCountdownTime = Math.floor(minutes * 60);
+                            this.countdownTime = this.initialCountdownTime;
+                            this.updateCountdownDisplay();
+                            this.pauseCountdown();
+                            this.showNotification(`倒计时已设置为 ${minutes} 分钟`, 'success');
+                        }
+                    }
+                });
+
+                // 开始/暂停
+                btnStart.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (this.isCountdownRunning) {
+                        this.pauseCountdown();
+                    } else {
+                        if (this.countdownTime <= 0) {
+                            this.initialCountdownTime = 2400; // 默认40分钟
+                            this.countdownTime = 2400;
+                        }
+                        this.startCountdown();
+                    }
+                });
+
+                // 重置
+                btnReset.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.pauseCountdown();
+                    this.countdownTime = this.initialCountdownTime;
+                    this.updateCountdownDisplay();
+                });
+
+                // 最大化/还原
+                btnMaximize.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    widget.classList.toggle('maximized');
+                    const isMax = widget.classList.contains('maximized');
+                    btnMaximize.textContent = isMax ? '↙️' : '⛶';
+                });
+
+                // 双击数字区域也可以切换全屏
+                document.getElementById('countdownDisplay').addEventListener('dblclick', () => {
+                    widget.classList.toggle('maximized');
+                    const isMax = widget.classList.contains('maximized');
+                    btnMaximize.textContent = isMax ? '↙️' : '⛶';
+                });
+                
+                // 绑定班级树界面的阈值滑块同步
+                const treeSlider = document.getElementById('treeVolumeThresholdSlider');
+                const mainSlider = document.getElementById('volumeThresholdSlider');
+                
+                if (treeSlider && mainSlider) {
+                    // 初始化位置
+                    treeSlider.value = this.settings.volumeThreshold;
+                    this.updateThresholdLine();
+
+                    // 班级树滑块 -> 主滑块
+                    treeSlider.addEventListener('input', (e) => {
+                        const val = e.target.value;
+                        this.settings.volumeThreshold = parseInt(val);
+                        mainSlider.value = val; // 同步主滑块
+                        document.getElementById('thresholdValue').textContent = `${val} dB`;
+                        document.getElementById('treeThresholdValue').textContent = val;
+                        this.updateThresholdLine();
+                        this.saveData();
+                    });
+
+                    // 主滑块 -> 班级树滑块 (补充监听)
+                    mainSlider.addEventListener('input', (e) => {
+                        const val = e.target.value;
+                        treeSlider.value = val;
+                        document.getElementById('treeThresholdValue').textContent = val;
+                        this.updateThresholdLine();
+                    });
+                }
+            }
+
+            updateThresholdLine() {
+                const line = document.getElementById('treeThresholdLine');
+                if (line) {
+                    line.style.left = `${this.settings.volumeThreshold}%`;
+                }
+            }
+
+            startCountdown() {
+                if (this.isCountdownRunning) return;
+                this.isCountdownRunning = true;
+                document.getElementById('btnStartTimer').textContent = 'II';
+                
+                this.countdownTimer = setInterval(() => {
+                    if (this.countdownTime > 0) {
+                        this.countdownTime--;
+                        this.updateCountdownDisplay();
+                        if (this.countdownTime <= 10) {
+                            document.getElementById('countdownDisplay').classList.add('urgent');
+                        }
+                    } else {
+                        this.finishCountdown();
+                    }
+                }, 1000);
+            }
+
+            pauseCountdown() {
+                this.isCountdownRunning = false;
+                document.getElementById('btnStartTimer').textContent = '▶️';
+                clearInterval(this.countdownTimer);
+                document.getElementById('countdownDisplay').classList.remove('urgent');
+            }
+
+            finishCountdown() {
+                this.pauseCountdown();
+                this.showAlert('green', '⏰ 时间到！');
+                setTimeout(() => this.hideAlert(), 3000);
+            }
+
+            updateCountdownDisplay() {
+                const minutes = Math.floor(this.countdownTime / 60);
+                const seconds = this.countdownTime % 60;
+                const text = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                document.getElementById('countdownDisplay').textContent = text;
+            }
+            
+            processVolumeLogic(deltaTime) {
+                const threshold = this.settings.volumeThreshold;
+                const mode = this.settings.mode || 'study';
+                
+                // 动态计算进度增长速度
+                // 自习模式：越安静(音量越小)越快
+                // 朗读模式：越响亮(音量越大)越快
+                
+                if (mode === 'study') {
+                    this.processStudyMode(threshold, deltaTime);
+                } else {
+                    this.processReadMode(threshold, deltaTime);
+                }
+            }
+
+            processStudyMode(threshold, deltaTime) {
+                const requiredDuration = this.settings.timerDuration || 30;
+                const punishDuration = this.settings.punishDuration || 30;
+
+                if (this.currentVolume < threshold) {
+                    // 安静状态
+                    if (this.quietStartTime === null) {
+                        this.quietStartTime = Date.now();
+                        this.noisyStartTime = null;
+                        this.noisyTimer = 0;
+                        this.hideAlert();
+                    }
+                    
+                    // 实时更新监控数据
+                    this.quietTimer = Math.floor((Date.now() - this.quietStartTime) / 1000);
+                    if (deltaTime && deltaTime > 0 && deltaTime < 1) this.totalQuietTime += deltaTime;
+
+                    // 越安静，时间流逝越快 (奖励系数)
+                    // 假设阈值50，当前20，差值30。当前40，差值10。
+                    // 基础速度 1x，最大速度 2.5x
+                    const diff = Math.max(0, threshold - this.currentVolume);
+                    const speedFactor = 1 + (diff / threshold) * 1.5;
+                    
+                    // 使用虚拟计时器累加
+                    if (!this.virtualQuietTime) this.virtualQuietTime = 0;
+                    this.virtualQuietTime += 0.1 * speedFactor; // 假设每100ms调用一次
+                    
+                    // 更新显示用的计时器 (为了UI显示平滑，这里还是用真实时间差，但在判断时用虚拟时间)
+                    // 修正：为了简单展示，我们直接用虚拟时间判断
+                    if (this.virtualQuietTime >= requiredDuration) {
+                        this.rewardStudents();
+                        // 安静加分不再全屏显示，避免打扰
+                        // this.showAlert('green', '🎉 极度专注！全班加分！');
+                        // setTimeout(() => this.hideAlert(), 2000);
+                        this.quietStartTime = Date.now();
+                        this.virtualQuietTime = 0;
+                    }
+                } else {
+                    // 吵闹状态
+                    this.virtualQuietTime = 0;
+                    this.quietTimer = 0;
+                    if (this.noisyStartTime === null) {
+                        this.noisyStartTime = Date.now();
+                        this.quietStartTime = null;
+                        this.showAlert('red', '⚠️ 保持安静！');
+                    }
+                    
+                    this.noisyTimer = Math.floor((Date.now() - this.noisyStartTime) / 1000);
+                    
+                    if (this.noisyTimer >= punishDuration) {
+                        this.punishStudents();
+                        this.showAlert('red', '🚫 持续吵闹！全班扣分！');
+                        setTimeout(() => this.hideAlert(), 2000);
+                        this.noisyStartTime = Date.now();
+                        this.noisyTimer = 0;
+                    }
+                }
+            }
+
+            processReadMode(threshold, deltaTime) {
+                const requiredDuration = 20; // 朗读模式周期稍短
+                
+                if (this.currentVolume > threshold) {
+                    // 朗读状态 (声音够大)
+                    if (this.quietStartTime === null) {
+                        this.quietStartTime = Date.now(); // 复用变量名作为“达标开始时间”
+                        this.hideAlert();
+                    }
+
+                    // 实时更新监控数据
+                    this.quietTimer = Math.floor((Date.now() - this.quietStartTime) / 1000);
+                    if (deltaTime && deltaTime > 0 && deltaTime < 1) this.totalQuietTime += deltaTime;
+
+                    // 声音越响，越快
+                    // 假设阈值50，当前80，差值30
+                    const diff = Math.max(0, this.currentVolume - threshold);
+                    const speedFactor = 1 + (diff / 50) * 2; // 最大3x速度
+
+                    if (!this.virtualQuietTime) this.virtualQuietTime = 0;
+                    this.virtualQuietTime += 0.1 * speedFactor;
+
+                    if (this.virtualQuietTime >= requiredDuration) {
+                        this.rewardStudents();
+                        this.showAlert('green', '🗣️ 书声琅琅！全班加分！');
+                        setTimeout(() => this.hideAlert(), 2000);
+                        this.quietStartTime = Date.now();
+                        this.virtualQuietTime = 0;
+                    }
+                } else {
+                    // 声音太小
+                    // 朗读模式下，声音小不惩罚，只是不加分，或者提示大声点
+                    this.virtualQuietTime = Math.max(0, (this.virtualQuietTime || 0) - 0.05); // 缓慢衰减
+                    this.quietStartTime = null;
+                    this.quietTimer = 0;
+                    
+                    // 如果长时间没声音，可以提示
+                    // 这里简化处理，只在界面显示状态
+                }
+            }
+
+            showAlert(type, text) {
+                const alert = document.getElementById('alertOverlay');
+                alert.className = `fullscreen-alert ${type}`;
+                alert.textContent = text;
+            }
+
+            hideAlert() {
+                const alert = document.getElementById('alertOverlay');
+                alert.className = 'fullscreen-alert';
+            }
+            
+            // 计算升级所需经验：等级 * 系数
+            getExpForNextLevel(level) {
+                return level * (this.settings.levelDifficulty || 100);
+            }
+
+            // 获取当前等级对应的图片
+            getTreeImage(level) {
+                const stage = this.treeStages.find(s => level >= s.min && level <= s.max) || this.treeStages[0];
+                return stage.url;
+            }
+
+            switchView(viewName) {
+                document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`[data-view="${viewName}"]`).classList.add('active');
+
+                if (viewName === 'class') {
+                    document.getElementById('classTreeView').classList.add('active');
+                    document.getElementById('studentsView').style.display = 'none';
+                    this.updateClassTree();
+                } else {
+                    document.getElementById('classTreeView').classList.remove('active');
+                    document.getElementById('studentsView').style.display = 'grid';
+                }
+            }
+
+            getClassExpForNextLevel(level) {
+                return level * 500; // 班级升级需要更多经验
+            }
+
+            addClassExp(amount) {
+                this.classTree.exp += amount;
+                this.classTree.totalExp += amount;
+                
+                const maxExp = this.getClassExpForNextLevel(this.classTree.level);
+                if (this.classTree.exp >= maxExp) {
+                    this.classTree.exp -= maxExp;
+                    this.classTree.level++;
+                    this.showNotification('🎉 班级神树升级啦！', 'success');
+                }
+                
+                this.updateClassTree();
+                
+                // 如果在班级视图，显示能量球
+                if (document.getElementById('classTreeView').classList.contains('active')) {
+                    this.showEnergyBubble(amount);
+                }
+            }
+
+            updateClassTree() {
+                const img = document.getElementById('classTreeImg');
+                img.src = this.getTreeImage(this.classTree.level);
+                
+                document.getElementById('classTreeLevel').textContent = this.classTree.level;
+                document.getElementById('classTotalExp').textContent = this.classTree.totalExp;
+                
+                const maxExp = this.getClassExpForNextLevel(this.classTree.level);
+                const percent = Math.min((this.classTree.exp / maxExp) * 100, 100);
+                document.getElementById('classExpFill').style.width = `${percent}%`;
+                document.getElementById('classNextExp').textContent = maxExp - this.classTree.exp;
+            }
+
+            showEnergyBubble(amount) {
+                const container = document.getElementById('classTreeView');
+                const bubble = document.createElement('div');
+                bubble.className = 'energy-bubble';
+                bubble.textContent = `+${amount}`;
+                
+                // 随机位置
+                const left = 20 + Math.random() * 60; // 20% - 80%
+                const bottom = 20 + Math.random() * 30; // 20% - 50%
+                
+                bubble.style.left = `${left}%`;
+                bubble.style.bottom = `${bottom}%`;
+                
+                container.appendChild(bubble);
+                
+                setTimeout(() => {
+                    bubble.remove();
+                }, 2000);
+            }
+
+            rewardStudents() {
+                const expGain = this.settings.expPerReward;
+                let levelUpCount = 0;
+                let evolvedCount = 0;
+
+                this.students.forEach(student => {
+                    if (student.level >= 100) return;
+
+                    student.exp += expGain;
+                    const maxExp = this.getExpForNextLevel(student.level);
+                    
+                    if (student.exp >= maxExp) {
+                        student.exp -= maxExp;
+                        student.level++;
+                        levelUpCount++;
+                        
+                        // 检查是否进化 (每20级)
+                        if (student.petId && (student.level - 1) % 20 === 0) {
+                            evolvedCount++;
+                            // 播放进化动画 (只播放第一个，避免刷屏)
+                            if (evolvedCount === 1) {
+                                this.showLevelUpAnimation(student);
+                            }
+                        }
+                    }
+                });
+
+                // 班级树加分
+                const classGain = Math.floor(this.students.length * expGain * 0.5);
+                this.addClassExp(classGain);
+
+                if (levelUpCount > 0) {
+                    this.showNotification(`全班获得经验！${levelUpCount}位同学升级了！`, 'success');
+                } else {
+                    this.showNotification(`全班安静，经验值 +${expGain}`, 'success');
+                }
+                
+                this.renderStudents();
+                this.updateProgress();
+                this.saveData();
+            }
+            
+            punishStudents() {
+                const expLoss = this.settings.expPerPunish;
+                
+                this.students.forEach(student => {
+                    if (student.level === 1 && student.exp === 0) return; // 最低等级不扣
+
+                    student.exp -= expLoss;
+                    if (student.exp < 0) {
+                        if (student.level > 1) {
+                            student.level--;
+                            student.exp = this.getExpForNextLevel(student.level) + student.exp; // 加上负数
+                        } else {
+                            student.exp = 0;
+                        }
+                    }
+
+                    // 视觉反馈：震动 + 飘字
+                    const card = document.querySelector(`[data-student-id="${student.id}"]`);
+                    if (card) {
+                        // 重置动画
+                        card.classList.remove('shake-red');
+                        void card.offsetWidth; // 触发重绘
+                        card.classList.add('shake-red');
+                        
+                        // 创建飘字元素
+                        const floatEl = document.createElement('div');
+                        floatEl.className = 'exp-float-minus';
+                        floatEl.textContent = `-${expLoss}`;
+                        card.appendChild(floatEl);
+                        
+                        // 清理元素
+                        setTimeout(() => floatEl.remove(), 1000);
+                    }
+                });
+                
+                this.showNotification(`环境嘈杂，全班经验值 -${expLoss}`, 'warning');
+                
+                // 延迟刷新列表，以免打断动画
+                setTimeout(() => {
+                    this.renderStudents();
+                    this.updateProgress();
+                }, 1000);
+                
+                this.saveData();
+            }
+            
+            updateDisplay() {
+                document.getElementById('volumeValue').textContent = `${this.currentVolume} dB`;
+                document.getElementById('volumeFill').style.width = `${Math.min(this.currentVolume, 100)}%`;
+                
+                // 同步更新班级树视图的音量面板
+                const treeFill = document.getElementById('treeVolumeFill');
+                const treeValue = document.getElementById('treeVolumeValue');
+                if (treeFill && treeValue) {
+                    treeFill.style.width = `${Math.min(this.currentVolume, 100)}%`;
+                    treeValue.textContent = `${this.currentVolume} dB`;
+                    if (this.currentVolume > this.settings.volumeThreshold) {
+                        treeValue.style.color = '#FF4444';
+                    } else {
+                        treeValue.style.color = '#004737';
+                    }
+                }
+            }
+            
+            updateProgressLabels() {
+                // 简化为只更新进度，不再切换标签
+                this.updateProgress();
+            }
+            
+            updateProgress() {
+                // 功能已移除
+            }
+            
+            feedAll() {
+                const expGain = 30;
+                let levelUpCount = 0;
+                this.students.forEach(student => {
+                    if (student.level >= 100) return;
+                    
+                    // 喂养消除饥饿状态
+                    student.isHungry = false;
+                    
+                    student.exp += expGain;
+                    const maxExp = this.getExpForNextLevel(student.level);
+                    if (student.exp >= maxExp) {
+                        student.exp -= maxExp;
+                        student.level++;
+                        levelUpCount++;
+                        
+                        if (student.petId && (student.level - 1) % 20 === 0) {
+                            this.showLevelUpAnimation(student);
+                        }
+                    }
+                });
+                
+                const classGain = Math.floor(this.students.length * expGain * 0.5);
+                this.addClassExp(classGain);
+
+                this.showNotification(`全班喂养成功！宠物们很开心，经验 +${expGain}`, 'success');
+                this.renderStudents();
+                this.saveData();
+            }
+
+            updateLeaderboard() {
+                const list = document.getElementById('leaderboard');
+                if(!list) return;
+                list.innerHTML = '';
+                
+                // 按等级降序，然后按经验降序
+                const topStudents = [...this.students]
+                    .sort((a, b) => {
+                        if (b.level !== a.level) return b.level - a.level;
+                        return b.exp - a.exp;
+                    })
+                    .slice(0, 5);
+                
+                topStudents.forEach((s, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'leaderboard-item';
+                    item.innerHTML = `
+                        <div class="rank rank-${index+1}">${index+1}</div>
+                        <div class="rank-info">
+                            <div class="rank-name">${s.name}</div>
+                            <div class="rank-level">Lv.${s.level}</div>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+
+            // 获取宠物图片
+            getPetImage(petId, level) {
+                const pet = this.PET_TYPES.find(p => p.id === petId);
+                if (!pet) return null;
+                // 每20级进化一次，最多6个阶段 (0-5)
+                const stage = Math.min(Math.floor((level - 1) / 20), 5);
+                return pet.stages[stage];
+            }
+
+            // 获取宠物阶段名称
+            getPetStageName(level) {
+                const stages = ['萌宠蛋', '幼年期', '成长期', '成熟期', '完全体', '究极体'];
+                const stage = Math.min(Math.floor((level - 1) / 20), 5);
+                return stages[stage];
+            }
+
+            // 打开宠物选择模态框
+            openPetSelection(studentId) {
+                this.currentActionStudentId = studentId;
+                const grid = document.getElementById('petGridContainer');
+                grid.innerHTML = this.PET_TYPES.map(pet => `
+                    <div class="pet-option" onclick="game.selectPet('${pet.id}', '${pet.name}')">
+                        <img src="${pet.stages[1]}" alt="${pet.name}">
+                        <div class="pet-name">${pet.name}</div>
+                    </div>
+                `).join('');
+                this.showModal('petSelectionModal');
+            }
+
+            // 选择宠物
+            selectPet(petId, petName) {
+                const student = this.students.find(s => s.id === this.currentActionStudentId);
+                if (student) {
+                    student.petId = petId;
+                    student.petName = petName;
+                    student.petStage = 0;
+                    this.renderStudents();
+                    this.saveData();
+                    this.showNotification(`成功领养了 ${petName}！`, 'success');
+                    this.closeModal('petSelectionModal');
+                    
+                    // 播放特效
+                    this.showLevelUpAnimation(student, true);
+                }
+            }
+
+            // 升级动画
+            showLevelUpAnimation(student, isNewPet = false) {
+                const overlay = document.getElementById('levelUpOverlay');
+                const content = document.getElementById('levelUpContent');
+                const petImg = this.getPetImage(student.petId, student.level);
+                const stageName = this.getPetStageName(student.level);
+                
+                content.innerHTML = `
+                    <div style="font-size: 60px; margin-bottom: 10px;">${isNewPet ? '🥚' : '🎉'}</div>
+                    <h2 style="color: #FFDE5E; font-size: 28px; margin-bottom: 10px;">${isNewPet ? '领养成功！' : '升级啦！'}</h2>
+                    <div style="color: white; font-size: 20px; margin-bottom: 20px;">${student.name} 的伙伴</div>
+                    <img src="${petImg}" style="width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255,255,255,0.5)); animation: pulse 1s infinite;">
+                    <div style="color: #A7DB9A; font-size: 24px; font-weight: bold; margin-top: 15px;">Lv.${student.level} ${stageName}</div>
+                `;
+                
+                overlay.style.display = 'flex';
+                
+                // 播放音效 (简单模拟)
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 3000);
+            }
+
+            renderStudents() {
+                const container = document.getElementById('studentsContainer');
+                container.innerHTML = '';
+                container.style.gridTemplateColumns = `repeat(${this.columnCount}, 1fr)`;
+                
+                const sortedStudents = [...this.students].sort((a, b) => a.position - b.position);
+                
+                sortedStudents.forEach(student => {
+                    // 兼容旧数据
+                    if (!student.level) student.level = 1;
+                    if (student.exp === undefined) student.exp = 0;
+
+                    const card = document.createElement('div');
+                    card.className = 'student-card';
+                    card.dataset.studentId = student.id;
+                    card.draggable = this.editMode;
+                    
+                    if (this.selectedStudent === student.id) {
+                        card.classList.add('selected');
+                    }
+                    
+                    const treeUrl = this.getTreeImage(student.level);
+                    const maxExp = this.getExpForNextLevel(student.level);
+                    const expPercent = Math.min((student.exp / maxExp) * 100, 100);
+                    
+                    // 宠物逻辑
+                    let petDisplay = '';
+                    let petBadge = '';
+                    let statusBubble = '';
+                    
+                    if (student.petId) {
+                        const petImg = this.getPetImage(student.petId, student.level);
+                        const stageName = this.getPetStageName(student.level);
+                        petDisplay = `<img src="${petImg}" alt="Pet">`;
+                        petBadge = `<div class="pet-stage-badge">${stageName}</div>`;
+                        
+                        if (student.isHungry) {
+                            statusBubble = `<div class="status-bubble" style="display:block">饿了...</div>`;
+                        }
+                    } else {
+                        // 未领养显示蛋
+                        petDisplay = `<img src="https://musk-online.fbcontent.cn/pub-musk-ai-studio/workflow/file/picture/iALmz67rzmGKEkozJvARMB.jpg" alt="Egg" style="opacity:0.7">`;
+                        petBadge = `<div class="pet-stage-badge" style="background:#ccc">未领养</div>`;
+                    }
+
+                    card.innerHTML = `
+                        <button class="side-btn btn-left-sub" data-action="sub-exp">-</button>
+                        <button class="side-btn btn-right-add" data-action="add-exp">+</button>
+                        
+                        <div class="student-stats-box">
+                            <div class="mini-level-badge">Lv.${student.level}</div>
+                            <div class="mini-exp-track">
+                                <div class="mini-exp-fill" style="width: ${expPercent}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="student-pet-container">
+                            ${petDisplay}
+                            ${petBadge}
+                            ${statusBubble}
+                        </div>
+
+                        <div class="student-name">${student.name}</div>
+                    `;
+                    
+                    card.addEventListener('click', (e) => {
+                        if (e.target.classList.contains('side-btn')) {
+                            const action = e.target.dataset.action;
+                            this.handleStudentAction(student.id, action);
+                            e.stopPropagation();
+                        } else if (!this.editMode) {
+                            if (!student.petId) {
+                                this.openPetSelection(student.id);
+                            } else {
+                                this.showStudentActionModal(student.id);
+                            }
+                        }
+                    });
+                    
+                    if (this.editMode) {
+                        this.addDragEvents(card);
+                    }
+                    
+                    container.appendChild(card);
+                });
+                
+                this.updateProgress();
+                this.updateLeaderboard();
+            }
+            
+            addDragEvents(card) {
+                card.addEventListener('dragstart', (e) => {
+                    this.draggedElement = card;
+                    card.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('dragging');
+                    this.draggedElement = null;
+                    document.querySelectorAll('.student-card').forEach(c => {
+                        c.classList.remove('drag-over');
+                    });
+                });
+                
+                card.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (this.draggedElement && this.draggedElement !== card) {
+                        card.classList.add('drag-over');
+                    }
+                });
+                
+                card.addEventListener('dragleave', () => {
+                    card.classList.remove('drag-over');
+                });
+                
+                card.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    card.classList.remove('drag-over');
+                    
+                    if (this.draggedElement && this.draggedElement !== card) {
+                        this.swapStudentPositions(
+                            parseInt(this.draggedElement.dataset.studentId),
+                            parseInt(card.dataset.studentId)
+                        );
+                    }
+                });
+            }
+            
+            swapStudentPositions(id1, id2) {
+                const student1 = this.students.find(s => s.id === id1);
+                const student2 = this.students.find(s => s.id === id2);
+                
+                if (student1 && student2) {
+                    const tempPosition = student1.position;
+                    student1.position = student2.position;
+                    student2.position = tempPosition;
+                    
+                    this.renderStudents();
+                    this.showNotification(`已交换 ${student1.name} 和 ${student2.name} 的座位`, 'success');
+                    this.saveData();
+                }
+            }
+            
+            showStudentActionModal(studentId) {
+                const student = this.students.find(s => s.id === studentId);
+                if (!student) return;
+                
+                this.currentActionStudentId = studentId;
+                document.getElementById('actionStudentName').textContent = student.name;
+                this.showModal('studentActionModal');
+            }
+
+            applyScoreChange(studentId, score, reason) {
+                const student = this.students.find(s => s.id === studentId);
+                if (!student) return;
+
+                // 兼容旧数据
+                if (!student.level) student.level = 1;
+                if (student.exp === undefined) student.exp = 0;
+
+                if (score > 0) {
+                    student.exp += score;
+                    const maxExp = this.getExpForNextLevel(student.level);
+                    if (student.exp >= maxExp) {
+                        student.exp -= maxExp;
+                        student.level++;
+                    }
+                    this.addClassExp(score); // 班级树同步加分
+                    this.showNotification(`${student.name} ${reason}: +${score}分`, 'success');
+                } else {
+                    student.exp += score; // score is negative
+                    if (student.exp < 0) {
+                        if (student.level > 1) {
+                            student.level--;
+                            student.exp = this.getExpForNextLevel(student.level) + student.exp;
+                        } else {
+                            student.exp = 0;
+                        }
+                    }
+                    this.showNotification(`${student.name} ${reason}: ${score}分`, 'warning');
+                }
+                
+                this.renderStudents();
+                this.saveData();
+            }
+
+            handleLevelChange(studentId, action) {
+                const student = this.students.find(s => s.id === studentId);
+                if (!student) return;
+
+                if (action === 'level-up') {
+                    if (student.level < 100) {
+                        student.level++;
+                        student.exp = 0;
+                        // 检查进化 (每20级)
+                        if (student.petId && (student.level - 1) % 20 === 0) {
+                             this.showLevelUpAnimation(student);
+                        }
+                        this.showNotification(`${student.name} 升了一级！`, 'success');
+                    }
+                } else if (action === 'level-down') {
+                    if (student.level > 1) {
+                        student.level--;
+                        student.exp = 0;
+                        this.showNotification(`${student.name} 降了一级`, 'warning');
+                    }
+                }
+                this.renderStudents();
+                this.saveData();
+            }
+
+            handleStudentAction(studentId, action) {
+                const student = this.students.find(s => s.id === studentId);
+                if (!student) return;
+                
+                // 兼容旧数据
+                if (!student.level) student.level = 1;
+                if (student.exp === undefined) student.exp = 0;
+
+                const expAmount = 50; // 手动操作每次50点
+
+                switch (action) {
+                    case 'add-exp':
+                        student.exp += expAmount;
+                        const maxExp = this.getExpForNextLevel(student.level);
+                        if (student.exp >= maxExp) {
+                            student.exp -= maxExp;
+                            student.level++;
+                        }
+                        this.addClassExp(expAmount); // 班级树同步加分
+                        this.showNotification(`已为 ${student.name} 增加经验`, 'success');
+                        break;
+                    case 'sub-exp':
+                        student.exp -= expAmount;
+                        if (student.exp < 0) {
+                            if (student.level > 1) {
+                                student.level--;
+                                student.exp = this.getExpForNextLevel(student.level) + student.exp;
+                            } else {
+                                student.exp = 0;
+                            }
+                        }
+                        this.showNotification(`已为 ${student.name} 扣除经验`, 'warning');
+                        break;
+                }
+                
+                this.renderStudents();
+                this.saveData();
+            }
+            
+            selectStudent(studentId) {
+                this.selectedStudent = this.selectedStudent === studentId ? null : studentId;
+                this.renderStudents();
+                
+                if (this.selectedStudent) {
+                    const student = this.students.find(s => s.id === studentId);
+                    this.showNotification(`已选中 ${student.name}`, 'success');
+                }
+            }
+            
+            deductAllStudents() {
+                const expLoss = 50; // 手动全班扣除50点
+                this.students.forEach(student => {
+                    if (student.level === 1 && student.exp === 0) return;
+
+                    student.exp -= expLoss;
+                    if (student.exp < 0) {
+                        if (student.level > 1) {
+                            student.level--;
+                            student.exp = this.getExpForNextLevel(student.level) + student.exp;
+                        } else {
+                            student.exp = 0;
+                        }
+                    }
+                });
+                this.showNotification('全班扣除经验值', 'warning');
+                this.renderStudents();
+                this.saveData();
+            }
+            
+            randomCall() {
+                if (this.students.length === 0) return;
+                
+                document.querySelectorAll('.student-card').forEach(card => {
+                    card.classList.remove('highlighted');
+                });
+                
+                const randomIndex = Math.floor(Math.random() * this.students.length);
+                const randomStudent = this.students[randomIndex];
+                
+                setTimeout(() => {
+                    const card = document.querySelector(`[data-student-id="${randomStudent.id}"]`);
+                    if (card) {
+                        card.classList.add('highlighted');
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+                
+                this.showNotification(`随机点名：${randomStudent.name}`, 'success');
+                
+                setTimeout(() => {
+                    const card = document.querySelector(`[data-student-id="${randomStudent.id}"]`);
+                    if (card) {
+                        card.classList.remove('highlighted');
+                    }
+                }, 3000);
+            }
+            
+            resetProgress() {
+                if (confirm('确定要重置所有学生的进度吗？此操作不可撤销。')) {
+                    this.students.forEach(student => {
+                        student.level = 1;
+                        student.exp = 0;
+                    });
+                    
+                    this.totalQuietTime = 0;
+                    this.renderStudents();
+                    this.updateDisplay();
+                    this.showNotification('进度已重置', 'success');
+                    this.saveData();
+                }
+            }
+            
+            importStudents() {
+                const names = document.getElementById('studentNames').value
+                    .split('\n')
+                    .map(name => name.trim())
+                    .filter(name => name.length > 0);
+                
+                if (names.length === 0) {
+                    this.showNotification('请输入学生姓名', 'warning');
+                    return;
+                }
+                
+                this.students = names.map((name, index) => ({
+                    id: index + 1,
+                    name: name,
+                    level: 1,
+                    exp: 0,
+                    position: index
+                }));
+                
+                this.renderStudents();
+                this.closeModal('importModal');
+                this.showNotification(`成功导入 ${names.length} 名学生`, 'success');
+                this.saveData();
+                
+                document.getElementById('studentNames').value = '';
+            }
+            
+            updateRules() {
+                const rulesList = document.getElementById('rulesList');
+                rulesList.innerHTML = '';
+                
+                const rules = [
+                    '点击"开始检测"允许使用麦克风',
+                    `当音量 < ${this.settings.volumeThreshold} 分贝时计时启动`,
+                    `坚持 ${this.settings.timerDuration} 秒全班同学获得经验值`,
+                    '经验值满了会自动升级，树木形态会发生变化',
+                    '最高等级为 100 级，努力培养出神树吧！',
+                    `当音量 > ${this.settings.volumeThreshold} 分贝并持续 ${this.settings.punishDuration} 秒时，全班同学将扣除经验值`,
+                    '点击学生卡片可以手动增加或扣除经验'
+                ];
+                
+                rules.forEach(rule => {
+                    const li = document.createElement('li');
+                    li.textContent = rule;
+                    rulesList.appendChild(li);
+                });
+            }
+            
+            saveDetailedSettings() {
+                this.settings.volumeThreshold = parseInt(document.getElementById('detailedVolumeThreshold').value);
+                this.settings.timerDuration = parseInt(document.getElementById('detailedTimerDuration').value);
+                this.settings.micSensitivity = parseFloat(document.getElementById('detailedMicSensitivity').value);
+                
+                if (document.getElementById('resetProgressCheck').checked) {
+                    this.resetProgress();
+                }
+                
+                this.updateRules();
+                this.closeModal('settingsModal');
+                this.showNotification('设置已保存', 'success');
+                this.saveData();
+            }
+            
+            showModal(modalId) {
+                document.getElementById(modalId).style.display = 'block';
+                
+                if (modalId === 'settingsModal') {
+                    document.getElementById('detailedVolumeThreshold').value = this.settings.volumeThreshold;
+                    document.getElementById('detailedTimerDuration').value = this.settings.timerDuration;
+                    document.getElementById('detailedMicSensitivity').value = this.settings.micSensitivity;
+                    document.getElementById('resetProgressCheck').checked = false;
+                }
+            }
+            
+            closeModal(modalId) {
+                document.getElementById(modalId).style.display = 'none';
+            }
+            
+
+
+            openSettings() {
+                // 回显数据
+                document.getElementById('setThreshold').value = this.settings.volumeThreshold;
+                document.getElementById('setQuietDuration').value = this.settings.timerDuration;
+                document.getElementById('setPunishDuration').value = this.settings.punishDuration;
+                document.getElementById('setExpReward').value = this.settings.expPerReward;
+                document.getElementById('setExpPunish').value = this.settings.expPerPunish;
+                document.getElementById('setLevelDifficulty').value = this.settings.levelDifficulty || 100;
+                document.getElementById('setColumnCount').value = this.columnCount;
+                
+                this.showModal('settingsModal');
+            }
+
+            saveSettings() {
+                this.settings.volumeThreshold = parseInt(document.getElementById('setThreshold').value);
+                this.settings.timerDuration = parseInt(document.getElementById('setQuietDuration').value);
+                this.settings.punishDuration = parseInt(document.getElementById('setPunishDuration').value);
+                this.settings.expPerReward = parseInt(document.getElementById('setExpReward').value);
+                this.settings.expPerPunish = parseInt(document.getElementById('setExpPunish').value);
+                this.settings.levelDifficulty = parseInt(document.getElementById('setLevelDifficulty').value);
+                
+                const newColCount = parseInt(document.getElementById('setColumnCount').value);
+                if (newColCount !== this.columnCount) {
+                    this.columnCount = newColCount;
+                    document.getElementById('columnCount').value = newColCount; // 同步外部控件
+                    this.renderStudents();
+                }
+
+                // 同步外部滑块
+                document.getElementById('volumeThresholdSlider').value = this.settings.volumeThreshold;
+                document.getElementById('thresholdValue').textContent = `${this.settings.volumeThreshold} dB`;
+
+                this.saveData();
+                this.closeModal('settingsModal');
+                this.showNotification('⚙️ 工作台设置已保存', 'success');
+            }
+
+            showNotification(message, type = 'success') {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.className = `notification ${type}`;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            window.game = new QuietTreeGame();
+        });
+</script>
+</body>
+</html>
