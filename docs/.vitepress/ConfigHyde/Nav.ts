@@ -10,6 +10,13 @@ export const Nav = [
       { text: "⏰时间", link: "/time" },
       { text: "📚编程", link: "/program" },
       { text: "📚工具", link: "/tools/tools-index" },
+      // 诗词页是 public 下独立的 HTML，VitePress 站内路由会把 .html 后缀剥掉。
+      // 写成带真实域名的外链可绕过站内路由，URL 原样保留 .html，且仅影响这一个导航项。
+      {
+        text: "🥅诗词",
+        link: "https://www.sakaay.com/poetry/1.html",
+        target: "_self",
+      },
 
     ],
   },

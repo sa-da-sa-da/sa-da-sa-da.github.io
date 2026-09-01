@@ -1,0 +1,54 @@
+.poetry-audio {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid var(--audio-border, rgba(255, 255, 255, .25));
+    border-radius: 999px;
+    padding: 8px 12px;
+    color: var(--audio-color, rgba(255, 255, 255, .76));
+    background: var(--audio-bg, rgba(5, 10, 12, .3));
+    cursor: pointer;
+    pointer-events: auto;
+    font-size: 10px;
+    line-height: 1;
+    white-space: nowrap;
+    transition: opacity .16s ease-out, color .16s ease-out, background-color .16s ease-out
+}
+
+.poetry-audio:before {
+    content: "▶";
+    font-size: 8px
+}
+
+.poetry-audio.is-playing {
+    color: var(--audio-active-color, #182124);
+    background: var(--audio-active-bg, #e2c08f)
+}
+
+.poetry-audio.is-playing:before {
+    content: "Ⅱ"
+}
+
+.poetry-audio.has-error {
+    opacity: .62
+}
+
+.poetry-audio:focus-visible {
+    outline: 2px solid var(--audio-focus, #e2c08f);
+    outline-offset: 3px
+}
+
+@media(max-width:540px) {
+    .poetry-audio {
+        min-height: 40px;
+        padding: 8px 10px
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .poetry-audio {
+        transition: none
+    }
+}

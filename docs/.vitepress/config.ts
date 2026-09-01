@@ -376,7 +376,7 @@ export default defineConfig({
   title: "当以读书通世事", //左上角网站名称
   description: description,
 
-  cleanUrls: true, //设置为true就是让链接后不默认添加.html
+  cleanUrls: true, // 保持开启：其他站内页面 URL 不挂 .html 尾标（诗词页改用外链形式直连 .html，无需关闭此项）
 
   lastUpdated: true,
   lang: "zh-CN",
