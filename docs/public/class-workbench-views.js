@@ -495,27 +495,25 @@ window.WB_VIEWS = (function () {
     return out;
   }
 
-  // 待办 → 目标表字段 自动匹配预填
+  // 待办 → 目标表字段 自动匹配预填（严格按 type 分支，避免 select 被标签正则误匹配）
   function guessFieldValue(field, todo) {
     var n = (field.name || '').toLowerCase();
     var lbl = field.label || '';
     var t = field.type;
-    // 日期字段：用待办截止日，无则今天
+    // 1) 日期字段 → 待办截止日，无则今天
     if (t === 'date') return todo.due || WB.today();
-    // 学生姓名：待办里没有学生，留空由用户补
-    if (n === 'name' || /学生姓名|姓名/.test(lbl)) return '';
-    // 标题 / 主题 / 名称类 text
-    if (n === 'title' || n === 'theme' || n === 'topic' || /标题|主题|名称/.test(lbl)) return todo.title || '';
-    // 长文本：详情/备注/内容/说明等
-    if (t === 'textarea' || /内容|详情|备注|说明|情况|措施|总结|反馈|要点|描述|结果|目标|计划|反馈|议程|纪要/.test(lbl)) {
-      return todo.note || todo.title || '';
-    }
-    // 下拉：优先匹配待办优先级，否则取默认值
+    // 2) 下拉字段 → 只能取 options 内的合法值（优先匹配待办优先级）
     if (t === 'select') {
       var opts = field.options || [];
       if (todo.priority && opts.indexOf(todo.priority) >= 0) return todo.priority;
       return field.default || opts[0] || '';
     }
+    // 3) 长文本字段 → 待办备注（无备注则用标题）
+    if (t === 'textarea') return todo.note || todo.title || '';
+    // 4) 单行文本：按字段名/标签匹配
+    if (n === 'name' || /学生姓名|姓名/.test(lbl)) return '';   // 待办无学生，留空
+    if (n === 'title' || n === 'theme' || n === 'topic' || /标题|主题|名称/.test(lbl)) return todo.title || '';
+    if (/详情|备注|说明|描述|情况|结果/.test(lbl)) return todo.note || '';
     return '';
   }
 
@@ -840,6 +838,54 @@ window.WB_VIEWS = (function () {
     return sc;
   }
 
+  // ============ 教师个人课表：与班级课表完全独立的第二套数据 ============
+  // 存于 WB.state.teacherSched（不挂在 state.schedule 下），两套课表数据互不影响：
+  // 班级课表改动不会同步到教师课表，教师课表也不会影响班级课表。
+  function getTeacherSched() {
+    if (!WB.state.teacherSched) {
+      WB.state.teacherSched = {
+        days: DEFAULT_DAYS.slice(),
+        periods: DEFAULT_PERIODS.map(function (p) { return { name: p.name, time: p.time }; }),
+        subjects: Object.assign({}, SUBJ_INIT),
+        teachers: {},   // { 姓名: { grid: { '周一-第1节': { subject, class, note } } } }
+        cur: ''         // 当前查看的教师
+      };
+    }
+    var ts = WB.state.teacherSched;
+    if (!ts.days) ts.days = DEFAULT_DAYS.slice();
+    if (!ts.periods || !ts.periods.length) ts.periods = DEFAULT_PERIODS.map(function (p) { return { name: p.name, time: p.time }; });
+    if (!ts.subjects) ts.subjects = Object.assign({}, SUBJ_INIT);
+    if (!ts.teachers) ts.teachers = {};
+    if (typeof ts.cur === 'undefined') ts.cur = '';
+    return ts;
+  }
+
+  // 当前教师的课表网格（自动初始化）
+  function getCurTeacherGrid() {
+    var ts = getTeacherSched();
+    if (!ts.cur) return {};
+    if (!ts.teachers[ts.cur]) ts.teachers[ts.cur] = { grid: {} };
+    if (!ts.teachers[ts.cur].grid) ts.teachers[ts.cur].grid = {};
+    return ts.teachers[ts.cur].grid;
+  }
+
+  // 教师候选名单：已建个人课表的 + 班级课表/通讯录中出现的姓名（仅作姓名候选，不共享课表数据）
+  function listTeacherSchedNames() {
+    var ts = getTeacherSched();
+    var arr = Object.keys(ts.teachers || {});
+    var sc = getSchedule();
+    Object.keys(sc.grid || {}).forEach(function (k) {
+      var c = sc.grid[k];
+      if (c && c.teacher) {
+        var n = stripWeekFlag(c.teacher);
+        if (n && arr.indexOf(n) < 0) arr.push(n);
+      }
+    });
+    Object.keys(sc.teachers || {}).forEach(function (n) { if (n && arr.indexOf(n) < 0) arr.push(n); });
+    if (ts.cur && arr.indexOf(ts.cur) < 0) arr.push(ts.cur);
+    return arr.sort(function (a, b) { return a.localeCompare(b, 'zh'); });
+  }
+
   function hexToRgba(hex, a) {
     var c = String(hex).replace('#', '');
     if (c.length === 3) c = c.split('').map(function (x) { return x + x; }).join('');
@@ -856,18 +902,19 @@ window.WB_VIEWS = (function () {
   function renderSchedule() {
     var sc = getSchedule();
     if (sc.mode === 'teacher') return renderTeacherTable();
+    if (sc.mode === 'personal') return renderPersonalSchedule();
     var days = sc.days, periods = sc.periods;
     var todayMap = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
     var today = todayMap[new Date().getDay()];
 
     var html = '<div class="card">';
     html += '<div class="card-title">📅 课程表 <span class="extra">图形化周课表 · 点击格子录入科目与任课教师</span></div>';
+    html += renderSchedTabs('grid');
     html += '<div class="table-toolbar">';
     html += '<button class="btn btn-primary" id="sched-add-sub">＋ 添加科目</button>';
     html += '<button class="btn" id="sched-edit-periods">🕐 编辑时段</button>';
     html += '<button class="btn" id="sched-days" title="自定义每周显示星期几">📆 设置周次</button>';
     html += '<button class="btn" id="sched-stats">📊 课时统计</button>';
-    html += '<button class="btn" id="sched-teacher" title="查看各科任课教师及联系方式">👨‍🏫 任课表</button>';
     html += '<button class="btn" id="sched-clear">🧹 清空课表</button>';
     html += '<div class="spacer"></div>';
     html += '<button class="btn" id="sched-export">⬇ 导出课表</button>';
@@ -924,6 +971,9 @@ window.WB_VIEWS = (function () {
   function bindSchedule() {
     var root = rebindRoot();
     root.addEventListener('click', function (e) {
+      // 平行切换：班级课表 / 任课表 / 教师课表
+      var tab = e.target.closest('[data-sched-tab]');
+      if (tab) { getSchedule().mode = tab.dataset.schedTab; WB.saveState(); renderScheduleRefresh(); return; }
       var cell = e.target.closest('.sched-cell');
       if (cell) { openSchedCell(cell.dataset.key); return; }
       var btn = e.target.closest('button');
@@ -934,6 +984,7 @@ window.WB_VIEWS = (function () {
       else if (id === 'sched-days') editScheduleDays();
       else if (id === 'sched-stats') showScheduleStats();
       else if (id === 'sched-teacher') { getSchedule().mode = 'teacher'; WB.saveState(); renderScheduleRefresh(); }
+      else if (id === 'sched-personal') { getSchedule().mode = 'personal'; WB.saveState(); renderScheduleRefresh(); }
       else if (id === 'sched-clear') clearSchedule();
       else if (id === 'sched-export') exportSchedule();
     });
@@ -1218,6 +1269,7 @@ window.WB_VIEWS = (function () {
     var sc = getSchedule();
     el('content').innerHTML = renderSchedule();
     if (sc.mode === 'teacher') bindTeacherTable();
+    else if (sc.mode === 'personal') bindPersonalSchedule();
     else bindSchedule();
   }
 
@@ -1228,7 +1280,7 @@ window.WB_VIEWS = (function () {
     var set = {};
     Object.keys(sc.teachers).forEach(function (t) { if (t) set[t] = true; });
     Object.keys(sc.grid).forEach(function (k) {
-      var t = sc.grid[k].teacher;
+      var t = stripWeekFlag(sc.grid[k].teacher);
       if (t) set[t] = true;
     });
     return Object.keys(set).sort();
@@ -1276,8 +1328,10 @@ window.WB_VIEWS = (function () {
 
     var html = '<div class="card">';
     html += '<div class="card-title">👨‍🏫 任课表 <span class="extra">各科任课教师一览 · 点击教师查看联系方式</span></div>';
+    html += renderSchedTabs('teacher');
     html += '<div class="table-toolbar">';
-    html += '<button class="btn" id="tt-back">📅 返回课程表</button>';
+    html += '<button class="btn" id="tt-back">📅 班级课表</button>';
+    html += '<button class="btn" id="tt-personal" title="查看某位教师的个人周课表">👤 教师课表</button>';
     html += '<button class="btn btn-primary" id="tt-add">＋ 添加教师</button>';
     html += '<div class="spacer"></div>';
     html += '<span class="tt-total">共 ' + list.length + ' 位教师</span>';
@@ -1335,6 +1389,9 @@ window.WB_VIEWS = (function () {
   function bindTeacherTable() {
     var root = rebindRoot();
     root.addEventListener('click', function (e) {
+      // 平行切换：班级课表 / 任课表 / 教师课表
+      var tab = e.target.closest('[data-sched-tab]');
+      if (tab) { getSchedule().mode = tab.dataset.schedTab; WB.saveState(); renderScheduleRefresh(); return; }
       var card = e.target.closest('.tt-card');
       if (card) { openTeacherEditor(card.dataset.tt); return; }
       var btn = e.target.closest('button');
@@ -1344,7 +1401,321 @@ window.WB_VIEWS = (function () {
         WB.saveState();
         renderScheduleRefresh();
       } else if (btn.id === 'tt-add') addTeacherManually();
+      else if (btn.id === 'tt-personal') { getSchedule().mode = 'personal'; WB.saveState(); renderScheduleRefresh(); }
     });
+  }
+
+  // ============ 教师个人课表（与班级课表 / 任课表 平行的第三视图）============
+  // 剥离教师名中混入的单双周标记
+  function stripWeekFlag(raw) {
+    return String(raw || '').replace(/[\s·]*(单周|双周|单双周|隔周|单周上|双周上)\s*$/, '').trim();
+  }
+
+  // 切换到某位教师的个人课表（供任课表详情弹窗调用）
+  function gotoPersonalSchedule(teacherName) {
+    var ts = getTeacherSched();
+    ts.cur = teacherName;
+    if (!ts.teachers[teacherName]) ts.teachers[teacherName] = { grid: {} };
+    getSchedule().mode = 'personal';   // 仅用于视图切换，不涉及数据共享
+    WB.saveState();
+    renderScheduleRefresh();
+  }
+
+  // 当前班级名称（用于教师课表「任教班级」回填）
+  function curClassName() {
+    var cls = (WB.state && WB.state.classes) || null;
+    if (cls && cls.list && cls.list.length) {
+      for (var i = 0; i < cls.list.length; i++) {
+        if (cls.list[i].id === cls.cur) return cls.list[i].name || '本班';
+      }
+    }
+    return '本班';
+  }
+
+  // 三个视图的平行切换标签：班级课表 / 任课表 / 教师课表
+  function renderSchedTabs(active) {
+    var tabs = [
+      { id: 'grid', label: '📅 班级课表' },
+      { id: 'teacher', label: '👨‍🏫 任课表' },
+      { id: 'personal', label: '👤 教师课表' }
+    ];
+    var h = '<div class="sched-tabs">';
+    tabs.forEach(function (t) {
+      h += '<button class="sched-tab' + (t.id === active ? ' active' : '') + '" data-sched-tab="' + t.id + '">' + H(t.label) + '</button>';
+    });
+    h += '</div>';
+    return h;
+  }
+
+  function renderPersonalSchedule() {
+    var ts = getTeacherSched();
+    var days = ts.days, periods = ts.periods;
+    var teachers = listTeacherSchedNames();
+    var cur = ts.cur || '';
+
+    var html = '<div class="card">';
+    html += '<div class="card-title">👤 教师个人课表 <span class="extra">独立于班级课表 · 可跨班级录入 · 点击格子编辑</span></div>';
+    html += renderSchedTabs('personal');
+    html += '<div class="table-toolbar">';
+    html += '<button class="btn btn-primary" id="ps-add-teacher" title="新增一位教师并录入其个人课表">＋ 新教师</button>';
+    html += '<button class="btn" id="ps-edit-periods" title="设置教师课表自己的节次与时间">🕐 编辑时段</button>';
+    html += '<button class="btn" id="ps-days" title="设置教师课表要显示的星期">📆 设置周次</button>';
+    html += '<button class="btn" id="ps-add-sub">＋ 添加科目</button>';
+    html += '<button class="btn btn-danger" id="ps-clear">🧹 清空</button>';
+    html += '<div class="spacer"></div>';
+    html += '<label style="display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap">教师：';
+    html += '<select id="ps-teacher-sel" class="filter">';
+    html += '<option value="">— 请选择 —</option>';
+    teachers.forEach(function (t) {
+      html += '<option value="' + H(t) + '"' + (t === cur ? ' selected' : '') + '>' + H(t) + '</option>';
+    });
+    html += '</select></label>';
+    html += '<button class="btn" id="ps-print" title="打印该教师课表">🖨 打印</button>';
+    html += '</div>';
+
+    if (!cur) {
+      html += '<div class="empty">请选择或新增一位教师后录入课表。<br><span style="font-size:11px">本表与班级课表<b>完全独立</b>：互不同步，可自由录入该教师在各班的课。</span></div>';
+      html += '</div>';
+      return html;
+    }
+
+    // 本表自己的数据，不读取班级课表
+    var grid = getCurTeacherGrid();
+
+    // 统计：按科目 / 按班级
+    var subjCount = {}, classCount = {}, total = 0;
+    Object.keys(grid).forEach(function (k) {
+      var c = grid[k];
+      if (!c || !c.subject) return;
+      total++;
+      subjCount[c.subject] = (subjCount[c.subject] || 0) + 1;
+      var cn = c.class || '未填班级';
+      classCount[cn] = (classCount[cn] || 0) + 1;
+    });
+
+    html += '<div class="schedule-legend">';
+    html += '<span class="lg-t">' + H(cur) + ' · 共 ' + total + ' 节/周：</span>';
+    Object.keys(subjCount).forEach(function (s) {
+      var c = ts.subjects[s] || '#64748b';
+      html += '<span class="legend-item" style="background:' + hexToRgba(c, 0.14) + ';color:' + darkenHex(c) + ';border:1px solid ' + c + '">' + H(s) + ' ×' + subjCount[s] + '</span>';
+    });
+    if (!total) html += '<span style="font-size:12px;color:var(--c-text-3)">暂无排课，点击格子录入</span>';
+    html += '</div>';
+
+    if (Object.keys(classCount).length) {
+      html += '<div class="schedule-legend"><span class="lg-t">任教班级：</span>';
+      Object.keys(classCount).forEach(function (cl) {
+        html += '<span class="legend-item" style="background:var(--c-primary-bg);color:var(--c-primary);border:1px solid var(--c-primary-2)">' + H(cl) + ' ×' + classCount[cl] + '</span>';
+      });
+      html += '</div>';
+    }
+
+    // 周课表网格（可点击编辑）
+    var todayMap = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    var today = todayMap[new Date().getDay()];
+    html += '<div class="sched-scroll"><table class="sched">';
+    html += '<thead><tr><th class="sched-time">节次 / 时间</th>';
+    days.forEach(function (d) {
+      html += '<th class="' + (d === today ? 'today' : '') + '">' + H(d) + '</th>';
+    });
+    html += '</tr></thead><tbody>';
+    periods.forEach(function (p) {
+      html += '<tr>';
+      html += '<td class="sched-time"><div class="t-name">' + H(p.name) + '</div><div class="t-time">' + H(p.time || '') + '</div></td>';
+      days.forEach(function (d) {
+        var key = d + '-' + p.name;
+        var m = grid[key];
+        if (m && m.subject) {
+          var c = ts.subjects[m.subject] || '#64748b';
+          html += '<td class="sched-cell ps-cell has" data-key="' + H(key) + '" style="background:' + hexToRgba(c, 0.14) + ';border-left:4px solid ' + c + '">';
+          html += '<div class="s-subj" style="color:' + darkenHex(c) + '">' + H(m.subject) + '</div>';
+          html += '<div class="s-teacher">' + H(m.class || '未填班级') + '</div>';
+          if (m.note) html += '<div class="s-note">' + H(m.note) + '</div>';
+          html += '</td>';
+        } else {
+          html += '<td class="sched-cell ps-cell" data-key="' + H(key) + '"><div class="s-empty">＋</div></td>';
+        }
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '<div class="sched-hint">💡 本表与班级课表<b>完全独立</b>，互不同步；点击任意格子录入该教师的课（可填不同任教班级）。</div>';
+    html += '</div>';
+    return html;
+  }
+
+  // 编辑教师个人课表的某一格
+  function openPersonalCell(key) {
+    var ts = getTeacherSched();
+    var cur = ts.cur;
+    if (!cur) { WB.showToast('请先选择教师'); return; }
+    var grid = getCurTeacherGrid();
+    var cellData = grid[key] || {};
+
+    // 班级候选：本表已录入过的班级
+    var classSet = {};
+    Object.keys(grid).forEach(function (k) { if (grid[k].class) classSet[grid[k].class] = 1; });
+    var classList = Object.keys(classSet);
+
+    var body = '<div style="font-size:13px;margin-bottom:10px;color:var(--c-text-2)">' + H(cur) + ' · ' + H(key) + '</div>';
+    body += '<label><span class="lbl">科目</span><input id="pc-subj" list="pc-subj-list" value="' + H(cellData.subject || '') + '" placeholder="如 数学">';
+    body += '<datalist id="pc-subj-list">';
+    Object.keys(ts.subjects).forEach(function (s) { body += '<option value="' + H(s) + '">'; });
+    body += '</datalist></label>';
+    body += '<label><span class="lbl">任教班级</span><input id="pc-class" list="pc-class-list" value="' + H(cellData.class || '') + '" placeholder="如 初二(3)班">';
+    body += '<datalist id="pc-class-list">';
+    classList.forEach(function (c) { body += '<option value="' + H(c) + '">'; });
+    body += '</datalist></label>';
+    body += '<label class="full"><span class="lbl">备注</span><input id="pc-note" value="' + H(cellData.note || '') + '" placeholder="如 单周 / 实验室 / 走班"></label>';
+    body += '<div style="font-size:12px;color:var(--c-text-3);margin-top:6px">💡 任教班级可填任意班级，不限于本班</div>';
+
+    WB.openModal('编辑课程 · ' + H(key), body, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: '清除本格', cls: 'btn btn-danger', act: 'del' },
+      { text: '保存', cls: 'btn btn-primary', act: 'save' }
+    ], function (act) {
+      if (act === 'del') {
+        delete grid[key];
+        WB.saveState(); renderScheduleRefresh();
+        return;
+      }
+      if (act !== 'save') return;
+      var subj = el('pc-subj').value.trim();
+      if (!subj) { WB.showToast('请填写科目'); return false; }
+      // 新科目自动登记到本表配色
+      if (!ts.subjects[subj]) {
+        ts.subjects[subj] = SUBJ_COLORS[Object.keys(ts.subjects).length % SUBJ_COLORS.length];
+      }
+      grid[key] = {
+        subject: subj,
+        class: el('pc-class').value.trim(),
+        note: el('pc-note').value.trim()
+      };
+      WB.saveState();
+      renderScheduleRefresh();
+    });
+  }
+
+  function bindPersonalSchedule() {
+    var root = rebindRoot();
+    root.addEventListener('click', function (e) {
+      // 平行切换：班级课表 / 任课表 / 教师课表
+      var tab = e.target.closest('[data-sched-tab]');
+      if (tab) { getSchedule().mode = tab.dataset.schedTab; WB.saveState(); renderScheduleRefresh(); return; }
+      // 格子点击：编辑该节次
+      var cell = e.target.closest('.ps-cell');
+      if (cell) { openPersonalCell(cell.dataset.key); return; }
+      var btn = e.target.closest('button');
+      if (btn) {
+        if (btn.id === 'ps-back') {
+          getSchedule().mode = 'grid'; WB.saveState(); renderScheduleRefresh(); return;
+        }
+        if (btn.id === 'ps-clear') {
+          var nm = getTeacherSched().cur;
+          if (!nm) { WB.showToast('请先选择教师'); return; }
+          if (!confirm('确定清空「' + nm + '」的个人课表吗？')) return;
+          var ts2 = getTeacherSched();
+          if (!ts2.teachers[nm]) ts2.teachers[nm] = { grid: {} };
+          ts2.teachers[nm].grid = {};
+          WB.saveState(); renderScheduleRefresh();
+          return;
+        }
+        if (btn.id === 'ps-add-teacher') { addPersonalTeacher(); return; }
+        if (btn.id === 'ps-print') { window.print(); return; }
+        if (btn.id === 'ps-edit-periods') { editTeacherPeriods(); return; }
+        if (btn.id === 'ps-days') { editTeacherDays(); return; }
+        if (btn.id === 'ps-add-sub') { addTeacherSubject(); return; }
+      }
+    });
+    var sel = el('ps-teacher-sel');
+    if (sel) {
+      sel.addEventListener('change', function () {
+        getTeacherSched().cur = this.value;
+        WB.saveState();
+        renderScheduleRefresh();
+      });
+    }
+  }
+
+  // 新增一位教师（可为其建立独立的个人课表）
+  function addPersonalTeacher() {
+    var body = '<label class="full"><span class="lbl">教师姓名</span><input id="pt-name" placeholder="请输入教师姓名"></label>';
+    body += '<div style="font-size:12px;color:var(--c-text-3);margin-top:6px">💡 新增后即可为其录入跨班级的个人课表（与班级课表互不影响）</div>';
+    WB.openModal('＋ 新教师', body, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: '确定', cls: 'btn btn-primary', act: 'save' }
+    ], function (act) {
+      if (act !== 'save') return;
+      var n = el('pt-name').value.trim();
+      if (!n) { WB.showToast('请输入姓名'); return false; }
+      var ts = getTeacherSched();
+      ts.cur = n;
+      if (!ts.teachers[n]) ts.teachers[n] = { grid: {} };
+      WB.saveState();
+      renderScheduleRefresh();
+    });
+  }
+
+  // ---- 教师课表：独立的时段 / 周次 / 科目设置 ----
+  function editTeacherPeriods() {
+    var ts = getTeacherSched();
+    var html = '<div style="font-size:12px;color:var(--c-text-2);margin-bottom:8px">每行一节，格式：节次名称 时间（时间可留空）。仅影响教师课表。</div>';
+    html += '<textarea id="tp-text" rows="12" style="width:100%">';
+    ts.periods.forEach(function (p) { html += H(p.name + ' ' + (p.time || '')) + '\n'; });
+    html += '</textarea>';
+    WB.openModal('🕐 编辑时段（教师课表）', html, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: '保存', cls: 'btn btn-primary', act: 'save' }
+    ], function (act) {
+      if (act !== 'save') return;
+      var lines = el('tp-text').value.split('\n');
+      var arr = [];
+      lines.forEach(function (l) {
+        var s = l.trim();
+        if (!s) return;
+        var m = s.split(/\s+/);
+        arr.push({ name: m[0], time: m.slice(1).join(' ') });
+      });
+      if (!arr.length) { WB.showToast('请至少保留一个节次'); return false; }
+      ts.periods = arr;
+      WB.saveState(); renderScheduleRefresh();
+    });
+  }
+
+  function editTeacherDays() {
+    var ts = getTeacherSched();
+    var html = '<div style="font-size:12px;color:var(--c-text-2);margin-bottom:10px">勾选教师课表要显示的星期（仅影响本表）。</div>';
+    html += '<div class="sched-days-ck">';
+    DEFAULT_DAYS.forEach(function (d) {
+      var on = ts.days.indexOf(d) >= 0;
+      html += '<label class="sched-day-ck' + (on ? ' on' : '') + '"><input type="checkbox" value="' + d + '"' + (on ? ' checked' : '') + '>' + d + '</label>';
+    });
+    html += '</div>';
+    WB.openModal('📆 设置周次（教师课表）', html, [
+      { text: '取消', cls: 'btn', act: 'close' },
+      { text: '保存', cls: 'btn btn-primary', act: 'save' }
+    ], function (act) {
+      if (act !== 'save') return;
+      var picked = [];
+      Array.prototype.forEach.call(document.querySelectorAll('.sched-day-ck input:checked'), function (cb) { picked.push(cb.value); });
+      if (!picked.length) { WB.showToast('请至少保留一个星期'); return false; }
+      ts.days = DEFAULT_DAYS.filter(function (d) { return picked.indexOf(d) >= 0; });
+      WB.saveState(); renderScheduleRefresh();
+    });
+  }
+
+  function addTeacherSubject() {
+    var ts = getTeacherSched();
+    var name = prompt('请输入科目名称（仅添加到教师课表）：');
+    if (!name) return;
+    name = name.trim();
+    if (!name) return;
+    if (!ts.subjects[name]) {
+      ts.subjects[name] = SUBJ_COLORS[Object.keys(ts.subjects).length % SUBJ_COLORS.length];
+      WB.saveState();
+      renderScheduleRefresh();
+      WB.showToast('已添加科目：' + name);
+    } else WB.showToast('该科目已存在');
   }
 
   // 教师详情弹窗：联系方式编辑 + 任课明细
@@ -1379,10 +1750,13 @@ window.WB_VIEWS = (function () {
 
     WB.openModal('👨‍🏫 教师 · ' + H(name), body, [
       { text: '关闭', cls: 'btn', act: 'close' },
+      { text: '📅 个人课表', cls: 'btn', act: 'schedule' },
       { text: '删除登记', cls: 'btn btn-danger', act: 'remove' },
       { text: '保存', cls: 'btn btn-primary', act: 'save' }
     ], function (act) {
       if (act === 'close') return;
+      // 跳转到该教师的个人课表
+      if (act === 'schedule') { gotoPersonalSchedule(name); return; }
       var newName = el('tt-name').value.trim();
       if (!newName) { WB.showToast('姓名不能为空'); return false; }
       if (act === 'remove') {

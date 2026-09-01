@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>浏览器本地抠图工具</title>
+  <style>
+    * {box-sizing: border-box;font-family: system-ui, sans-serif;}
+    body {max-width: 1100px;margin: 24px auto;padding: 0 16px;}
+    .wrap {gap:16px;display:grid;grid-template-columns: 1fr 1fr;}
+    @media(max-width:720px){.wrap{grid-template-columns:1fr;}}
+    .card {border:1px solid #ddd;padding:18px;border-radius:10px;}
+    button {padding:9px 16px;border:none;background:#2563eb;color:#fff;border-radius:6px;cursor:pointer;margin:4px;}
+    button:disabled{background:#94a3b8;cursor:not-allowed;}
+    .progress-bar{height:10px;background:#e2e8f0;border-radius:5px;margin:12px 0;overflow:hidden;}
+    .progress-fill{height:100%;width:0%;background:#2563eb;transition:0.2s;}
+    .log{font-size:13px;color:#475569;margin:8px 0;min-height:20px;}
+    /* 棋盘格透明背景 */
+    .checker {
+      background: #cccccc;
+      background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='10' height='10' fill='%23eeeeee'/%3E%3Crect x='10' y='10' width='10' height='10' fill='%23eeeeee'/%3E%3C/svg%3E");
+      border:1px solid #aaa;
+      max-width:100%;
+      max-height:480px;
+    }
+    #previewImg {display:block;max-width:100%;}
+    .bg-opt{margin-top:10px;}
+  </style>
+</head>
+<body>
+<h1>本地AI抠图｜图片不离开浏览器</h1>
+<div class="wrap">
+  <div class="card">
+    <h3>1.选择图片</h3>
+    <input type="file" id="fileInput" accept="image/*">
+    <br><br>
+    <button id="btnRun">开始抠图（40MB量化模型）</button>
+    <button id="btnReset">重置</button>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="log" id="logText">等待操作...</div>
+    <div>
+      <h4>原图预览</h4>
+      <img id="originImg" style="max-width:100%;max-height:320px;display:none;">
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>2.抠图结果（棋盘格=透明）</h3>
+    <div class="checker">
+      <img id="previewImg">
+    </div>
+    <div class="bg-opt">
+      <h4>更换底色</h4>
+      <button data-color="#ffffff">白色</button>
+      <button data-color="#ff0000">红色</button>
+      <button data-color="#00419c">蓝色</button>
+      <button data-color="">恢复透明</button>
+      <div style="margin-top:8px;">
+        <input type="color" id="colorPick">
+        <button id="btnCustomBg">应用自定义底色</button>
+      </div>
+    </div>
+    <br>
+    <button id="btnDownload" disabled>下载PNG图片</button>
+  </div>
+</div>
+
+<script type="module">
+import { removeBackground } from "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm"
+
+const fileInput = document.getElementById('fileInput')
+const btnRun = document.getElementById('btnRun')
+const btnReset = document.getElementById('btnReset')
+const btnDownload = document.getElementById('btnDownload')
+const progressFill = document.getElementById('progressFill')
+const logText = document.getElementById('logText')
+const originImg = document.getElementById('originImg')
+const previewImg = document.getElementById('previewImg')
+const colorPick = document.getElementById('colorPick')
+const btnCustomBg = document.getElementById('btnCustomBg')
+
+let sourceFile = null
+let resultForegroundBlob = null   // 原始透明前景，永不被覆盖
+let resultImageUrl = null        // 当前预览/下载所用的合成图 URL
+
+// 选择原图
+fileInput.onchange = function(){
+  const f = this.files[0]
+  if(!f) return
+  sourceFile = f
+  originImg.src = URL.createObjectURL(f)
+  originImg.style.display = 'block'
+  resetResult()
+  logText.innerText = "已选图片，点击开始抠图"
+}
+
+// 更新进度UI
+function setProgress(text, percent){
+  logText.innerText = text
+  progressFill.style.width = `${percent}%`
+}
+
+// 重置
+function resetResult(){
+  resultForegroundBlob = null
+  if(resultImageUrl) URL.revokeObjectURL(resultImageUrl)
+  resultImageUrl = null
+  previewImg.src = ''
+  btnDownload.disabled = true
+  progressFill.style.width = '0%'
+}
+btnReset.onclick = ()=>{
+  fileInput.value = ''
+  sourceFile = null
+  originImg.src = ''
+  originImg.style.display = 'none'
+  resetResult()
+  logText.innerText = "等待操作..."
+}
+
+// 执行抠图
+btnRun.onclick = async ()=>{
+  if(!sourceFile){
+    alert("请先选择图片")
+    return
+  }
+  btnRun.disabled = true
+  resetResult()
+  try{
+    const blob = await removeBackground(sourceFile, {
+      model:"isnet_quint8", //40MB量化模型
+      output:{format:"image/png", type:"foreground"},
+      progress:(key, current, total)=>{
+        if(total>0){
+          const pct = Math.round(current / total *100)
+          let label = ""
+          if(key==='download') label="正在下载模型"
+          else if(key==='load') label="加载模型"
+          else if(key==='run') label="AI推理抠图"
+          else if(key==='postprocess') label="后处理"
+          setProgress(`${label} ${pct}%`, pct)
+        }else{
+          if(key==='download') setProgress("准备下载模型...",0)
+          if(key==='load') setProgress("加载模型中...",0)
+          if(key==='run') setProgress("AI推理中，请稍等...",0)
+        }
+      }
+    })
+    resultForegroundBlob = blob
+    resultImageUrl = URL.createObjectURL(blob)
+    previewImg.src = resultImageUrl
+    btnDownload.disabled = false
+    setProgress("抠图完成！可随时更换底色或下载",100)
+  }catch(err){
+    console.error(err)
+    setProgress(`出错：${err.message}`,0)
+    alert("抠图失败："+err.message)
+  }finally{
+    btnRun.disabled = false
+  }
+}
+
+//下载
+btnDownload.onclick = function(){
+  if(!resultImageUrl) return
+  const a = document.createElement('a')
+  a.href = resultImageUrl
+  a.download = "cutout.png"
+  a.click()
+}
+
+// 基于原始透明前景，按指定底色合成（colorHex 为空则恢复透明）
+async function composite(colorHex){
+  const img = new Image()
+  img.src = URL.createObjectURL(resultForegroundBlob)
+  await new Promise(resolve=>img.onload=resolve)
+  const canvas = document.createElement('canvas')
+  canvas.width = img.width
+  canvas.height = img.height
+  const ctx = canvas.getContext('2d')
+  if(colorHex){
+    ctx.fillStyle = colorHex
+    ctx.fillRect(0,0,canvas.width,canvas.height)
+  }
+  ctx.drawImage(img,0,0)
+  const blob = await new Promise(resolve=>canvas.toBlob(resolve,"image/png"))
+  return blob
+}
+
+// 应用底色：每次都从原始前景重新合成，因此可反复切换、可恢复透明
+async function applyBg(colorHex){
+  if(!resultForegroundBlob) return
+  if(resultImageUrl) URL.revokeObjectURL(resultImageUrl)
+  const blob = await composite(colorHex)
+  resultImageUrl = URL.createObjectURL(blob)
+  previewImg.src = resultImageUrl
+}
+
+// 快捷底色按钮
+document.querySelectorAll('[data-color]').forEach(btn=>{
+  btn.onclick = ()=>applyBg(btn.dataset.color)
+})
+btnCustomBg.onclick = ()=>applyBg(colorPick.value)
+</script>
+</body>
+</html>

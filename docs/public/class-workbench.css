@@ -801,6 +801,16 @@ table.data .avatar {
 }
 
 /* ===== 课程表（图形化） ===== */
+/* 课程表三视图平行切换标签 */
+.sched-tabs { display: flex; gap: 4px; margin: 10px 0 2px; border-bottom: 1px solid var(--c-border); }
+.sched-tab {
+  padding: 7px 14px; border: none; background: transparent; cursor: pointer;
+  font-size: 13px; font-weight: 500; color: var(--c-text-2);
+  border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap;
+}
+.sched-tab:hover { color: var(--c-primary); background: var(--c-primary-bg); }
+.sched-tab.active { color: var(--c-primary); border-bottom-color: var(--c-primary); font-weight: 600; }
+
 .schedule-legend { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 0 10px; }
 .schedule-legend .lg-t { font-size: 12px; color: var(--c-text-2); }
 .legend-item { font-size: 11px; padding: 2px 9px; border-radius: 12px; cursor: default; user-select: none; }
