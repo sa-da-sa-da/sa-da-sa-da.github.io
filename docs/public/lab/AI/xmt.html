@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>姓名贴打印小工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Microsoft Yahei", system-ui, sans-serif;
+        }
+        body {
+            background-color: #f4f7fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #222;
+            margin-bottom:24px;
+            font-size:24px;
+        }
+        .main-wrap {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap:20px;
+        }
+        .panel {
+            background:#fff;
+            border-radius:12px;
+            padding:20px;
+            box-shadow: 0 2px 12px #00000014;
+        }
+        .panel h3 {
+            margin-bottom:16px;
+            color:#333;
+            border-left:4px solid #409eff;
+            padding-left:10px;
+        }
+        .mode-tabs {
+            display:flex;
+            gap:8px;
+            margin-bottom:16px;
+        }
+        .mode-tabs button {
+            flex:1;
+            padding:10px;
+            border:1px solid #ddd;
+            background:#f8f8f8;
+            border-radius:6px;
+            cursor:pointer;
+            font-size:15px;
+        }
+        .mode-tabs button.active {
+            background:#409eff;
+            color:#fff;
+            border-color:#409eff;
+        }
+        .form-item {
+            margin-bottom:14px;
+        }
+        label {
+            display:block;
+            margin-bottom:4px;
+            font-size:14px;
+            color:#444;
+        }
+        input,textarea,select {
+            width:100%;
+            padding:8px 10px;
+            border:1px solid #dcdfe6;
+            border-radius:6px;
+            font-size:14px;
+        }
+        textarea {
+            min-height:90px;
+            resize:vertical;
+        }
+        .btn-group {
+            display:flex;
+            gap:10px;
+            margin:16px 0;
+        }
+        button {
+            padding:9px 14px;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+            font-size:14px;
+        }
+        .btn-primary {
+            background:#409eff;
+            color:#fff;
+        }
+        .btn-success {
+            background:#67c23a;
+            color:#fff;
+        }
+        .btn-warning {
+            background:#e6a23c;
+            color:#fff;
+        }
+        .template-list {
+            display:grid;
+            grid-template-columns: repeat(3,1fr);
+            gap:8px;
+            margin:10px 0;
+        }
+        .template-item {
+            height:60px;
+            border:2px solid #eee;
+            border-radius:6px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:12px;
+            cursor:pointer;
+        }
+        .template-item.active {
+            border-color:#409eff;
+        }
+        .preview-box {
+            background:#fff;
+            padding:20px;
+            border-radius:12px;
+            box-shadow:0 2px 12px #00000014;
+        }
+        .a4-paper {
+            width:210mm;
+            min-height:297mm;
+            background:#ffffff;
+            margin:0 auto;
+            padding:12mm;
+            position:relative;
+            overflow:hidden;
+        }
+        .sticker-wrap {
+            display:grid;
+            gap:var(--gap,6px);
+            grid-template-columns: repeat(var(--col,4), 1fr);
+        }
+        .sticker-item {
+            aspect-ratio:3 /1;
+            border:1px dashed #aaa;
+            border-radius:6px;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            padding:4px;
+            position:relative;
+            overflow:hidden;
+        }
+        .sticker-bg {
+            position:absolute;
+            inset:0;
+            z-index:1;
+            background-size:cover;
+            background-position:center;
+        }
+        .sticker-text {
+            position:relative;
+            z-index:2;
+            text-align:center;
+        }
+        .sticker-name {
+            font-size:var(--font-size,18px);
+            font-weight:bold;
+        }
+        .sticker-other {
+            font-size:calc(var(--font-size,18px)*0.6);
+            margin-top:2px;
+        }
+        @media print {
+            body {
+                background:#fff;
+                padding:0;
+            }
+            .panel,.btn-group,h1 {
+                display:none !important;
+            }
+            .a4-paper {
+                width:100%;
+                height:100%;
+                padding:0;
+                margin:0;
+            }
+            .sticker-item {
+                border:none !important;
+            }
+        }
+        .hide {
+            display:none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🏷️ 学生姓名贴打印工具</h1>
+    <div class="main-wrap">
+        <!-- 左侧设置面板 -->
+        <div class="panel">
+            <h3>使用模式</h3>
+            <div class="mode-tabs">
+                <button id="modeParent" class="active">👨‍👩‍👧 家长单人模式</button>
+                <button id="modeTeacher">👩‍🏫 教师批量模式</button>
+            </div>
+
+            <!-- 家长模式 -->
+            <div id="panelParent">
+                <div class="form-item">
+                    <label>学生姓名</label>
+                    <input type="text" id="pName" placeholder="请输入姓名">
+                </div>
+                <div class="form-item">
+                    <label>班级（选填）</label>
+                    <input type="text" id="pClass" placeholder="如：一年级1班">
+                </div>
+                <div class="form-item">
+                    <label>学号（选填）</label>
+                    <input type="text" id="pNo" placeholder="学号可留空">
+                </div>
+            </div>
+
+            <!-- 教师批量模式 -->
+            <div id="panelTeacher" class="hide">
+                <div class="form-item">
+                    <label>批量导入（Excel / TXT）</label>
+                    <input type="file" id="fileUpload" accept=".xlsx,.xls,.txt">
+                    <div style="font-size:12px;color:#666;margin:4px 0;">
+                        Excel格式：第一列姓名，第二列班级，第三列学号；TXT每行：姓名|班级|学号
+                    </div>
+                </div>
+                <div class="form-item">
+                    <label>手动批量录入（姓名|班级|学号，一行一条）</label>
+                    <textarea id="batchText" placeholder="张三|一年级1班|01&#10;李四|一年级1班|02"></textarea>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-primary" id="parseBatch">解析文本</button>
+                    <button class="btn-warning" id="clearBatch">清空列表</button>
+                </div>
+                <div id="batchCount" style="font-size:13px;color:#409eff;margin-bottom:8px;">已读取：0名学生</div>
+            </div>
+
+            <h3>选择模板</h3>
+            <div class="template-list">
+                <div class="template-item active" data-bg="">空白(手写)</div>
+                <div class="template-item" data-bg="#e8f4ff">浅蓝清新</div>
+                <div class="template-item" data-bg="#fff2e8">暖橙可爱</div>
+                <div class="template-item" data-bg="#e8ffe8">薄荷绿</div>
+                <div class="template-item" data-bg="#fff0f6">浅粉少女</div>
+                <div class="template-item" data-bg="#f0f2f5">浅灰简约</div>
+            </div>
+            <div class="form-item">
+                <label>自定义背景图片（可选，会覆盖模板颜色）</label>
+                <input type="file" id="customBgInput" accept="image/*">
+            </div>
+
+            <h3>打印参数设置</h3>
+            <div class="form-item">
+                <label>列数：<span id="colVal">4</span></label>
+                <input type="range" id="colCount" min="2" max="8" value="4">
+            </div>
+            <div class="form-item">
+                <label>文字大小：<span id="fontVal">18</span>px</label>
+                <input type="range" id="fontSize" min="10" max="32" value="18">
+            </div>
+            <div class="form-item">
+                <label>标签间距：<span id="gapVal">6</span>px</label>
+                <input type="range" id="gapSize" min="0" max="20" value="6">
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-success" id="renderBtn">🔄 生成预览</button>
+                <button class="btn-primary" id="printBtn">🖨️ A4打印</button>
+            </div>
+        </div>
+
+        <!-- 右侧预览区域 -->
+        <div class="preview-box">
+            <h3>打印预览（A4纸张）</h3>
+            <div class="a4-paper" id="a4Wrap">
+                <div class="sticker-wrap" id="stickerContainer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 模式切换
+const modeParentBtn = document.getElementById('modeParent');
+const modeTeacherBtn = document.getElementById('modeTeacher');
+const panelParent = document.getElementById('panelParent');
+const panelTeacher = document.getElementById('panelTeacher');
+
+let studentList = [];
+let selectBgColor = "";
+let customBgUrl = "";
+
+modeParentBtn.onclick = ()=>{
+    modeParentBtn.classList.add('active');
+    modeTeacherBtn.classList.remove('active');
+    panelParent.classList.remove('hide');
+    panelTeacher.classList.add('hide');
+};
+modeTeacherBtn.onclick = ()=>{
+    modeTeacherBtn.classList.add('active');
+    modeParentBtn.classList.remove('active');
+    panelTeacher.classList.remove('hide');
+    panelParent.classList.add('hide');
+};
+
+//模板选择
+const templateItems = document.querySelectorAll('.template-item');
+templateItems.forEach(item=>{
+    item.onclick = ()=>{
+        templateItems.forEach(i=>i.classList.remove('active'));
+        item.classList.add('active');
+        selectBgColor = item.dataset.bg;
+    }
+});
+
+//自定义背景图
+document.getElementById('customBgInput').onchange = function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev=>{
+        customBgUrl = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+};
+
+//滑块联动
+const colCount = document.getElementById('colCount');
+const fontSize = document.getElementById('fontSize');
+const gapSize = document.getElementById('gapSize');
+document.getElementById('colVal').textContent = colCount.value;
+document.getElementById('fontVal').textContent = fontSize.value;
+document.getElementById('gapVal').textContent = gapSize.value;
+colCount.oninput = ()=>document.getElementById('colVal').textContent = colCount.value;
+fontSize.oninput = ()=>document.getElementById('fontVal').textContent = fontSize.value;
+gapSize.oninput = ()=>document.getElementById('gapVal').textContent = gapSize.value;
+
+//文件上传解析 Excel / TXT
+document.getElementById('fileUpload').onchange = function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const name = file.name.toLowerCase();
+    const reader = new FileReader();
+    if(name.endsWith('.xlsx')||name.endsWith('.xls')){
+        reader.onload = function(ev){
+            const wb = XLSX.read(ev.target.result,{type:'binary'});
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(ws,{header:1});
+            studentList = [];
+            json.forEach(row=>{
+                if(row[0]){
+                    studentList.push({
+                        name:row[0]||'',
+                        klass:row[1]||'',
+                        no:row[2]||''
+                    })
+                }
+            });
+            document.getElementById('batchCount').innerText = `已读取：${studentList.length}名学生`;
+        };
+        reader.readAsBinaryString(file);
+    }else if(name.endsWith('.txt')){
+        reader.onload = function(ev){
+            parseTextContent(ev.target.result);
+        };
+        reader.readAsText(file);
+    }
+};
+
+//解析文本域
+function parseTextContent(text){
+    studentList = [];
+    const lines = text.split('\n');
+    lines.forEach(line=>{
+        const arr = line.split('|');
+        if(arr[0]){
+            studentList.push({
+                name:(arr[0]||'').trim(),
+                klass:(arr[1]||'').trim(),
+                no:(arr[2]||'').trim()
+            })
+        }
+    });
+    document.getElementById('batchCount').innerText = `已读取：${studentList.length}名学生`;
+}
+document.getElementById('parseBatch').onclick = ()=>{
+    parseTextContent(document.getElementById('batchText').value);
+};
+document.getElementById('clearBatch').onclick = ()=>{
+    studentList = [];
+    document.getElementById('batchText').value = '';
+    document.getElementById('batchCount').innerText = '已读取：0名学生';
+};
+
+//渲染预览
+document.getElementById('renderBtn').onclick = function(){
+    const container = document.getElementById('stickerContainer');
+    container.innerHTML = '';
+    //设置css变量
+    container.style.setProperty('--col', colCount.value);
+    container.style.setProperty('--font-size', fontSize.value+'px');
+    container.style.setProperty('--gap', gapSize.value+'px');
+
+    let renderData = [];
+    if(!panelParent.classList.contains('hide')){
+        //家长单人模式，铺满多份
+        const pName = document.getElementById('pName').value.trim();
+        const pClass = document.getElementById('pClass').value.trim();
+        const pNo = document.getElementById('pNo').value.trim();
+        if(!pName){
+            alert('请输入学生姓名');
+            return;
+        }
+        //生成30个铺满页面
+        for(let i=0;i<30;i++){
+            renderData.push({name:pName,klass:pClass,no:pNo});
+        }
+    }else{
+        //教师批量
+        renderData = [...studentList];
+        if(renderData.length===0){
+            alert('请导入文件或者录入学生信息');
+            return;
+        }
+    }
+
+    renderData.forEach(stu=>{
+        const div = document.createElement('div');
+        div.className = 'sticker-item';
+        let bgDom = `<div class="sticker-bg" style="`;
+        if(customBgUrl){
+            bgDom += `background-image:url(${customBgUrl});`;
+        }else if(selectBgColor){
+            bgDom += `background-color:${selectBgColor};`;
+        }
+        bgDom += `"></div>`;
+
+        let otherText = [];
+        if(stu.klass) otherText.push(stu.klass);
+        if(stu.no) otherText.push(stu.no);
+        const otherStr = otherText.join(' ');
+
+        div.innerHTML = bgDom + `
+        <div class="sticker-text">
+            <div class="sticker-name">${stu.name}</div>
+            ${otherStr?`<div class="sticker-other">${otherStr}</div>`:''}
+        </div>`;
+        container.appendChild(div);
+    })
+};
+
+//打印
+document.getElementById('printBtn').onclick = ()=>{
+    window.print();
+}
+</script>
+</body>
+</html>

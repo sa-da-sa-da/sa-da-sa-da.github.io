@@ -495,27 +495,25 @@ window.WB_VIEWS = (function () {
     return out;
   }
 
-  // 待办 → 目标表字段 自动匹配预填
+  // 待办 → 目标表字段 自动匹配预填（严格按 type 分支，避免 select 被标签正则误匹配）
   function guessFieldValue(field, todo) {
     var n = (field.name || '').toLowerCase();
     var lbl = field.label || '';
     var t = field.type;
-    // 日期字段：用待办截止日，无则今天
+    // 1) 日期字段 → 待办截止日，无则今天
     if (t === 'date') return todo.due || WB.today();
-    // 学生姓名：待办里没有学生，留空由用户补
-    if (n === 'name' || /学生姓名|姓名/.test(lbl)) return '';
-    // 标题 / 主题 / 名称类 text
-    if (n === 'title' || n === 'theme' || n === 'topic' || /标题|主题|名称/.test(lbl)) return todo.title || '';
-    // 长文本：详情/备注/内容/说明等
-    if (t === 'textarea' || /内容|详情|备注|说明|情况|措施|总结|反馈|要点|描述|结果|目标|计划|反馈|议程|纪要/.test(lbl)) {
-      return todo.note || todo.title || '';
-    }
-    // 下拉：优先匹配待办优先级，否则取默认值
+    // 2) 下拉字段 → 只能取 options 内的合法值（优先匹配待办优先级）
     if (t === 'select') {
       var opts = field.options || [];
       if (todo.priority && opts.indexOf(todo.priority) >= 0) return todo.priority;
       return field.default || opts[0] || '';
     }
+    // 3) 长文本字段 → 待办备注（无备注则用标题）
+    if (t === 'textarea') return todo.note || todo.title || '';
+    // 4) 单行文本：按字段名/标签匹配
+    if (n === 'name' || /学生姓名|姓名/.test(lbl)) return '';   // 待办无学生，留空
+    if (n === 'title' || n === 'theme' || n === 'topic' || /标题|主题|名称/.test(lbl)) return todo.title || '';
+    if (/详情|备注|说明|描述|情况|结果/.test(lbl)) return todo.note || '';
     return '';
   }
 

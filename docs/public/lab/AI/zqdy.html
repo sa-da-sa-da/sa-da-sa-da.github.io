@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>会议桌签生成工具｜纯前端离线版</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+    <style>
+        * {box-sizing: border-box;margin:0;padding:0;font-family: "SimHei", "Microsoft YaHei", sans-serif;}
+        body {background:#e8edf2;display:flex;height:100vh;overflow:hidden;}
+        /* 左侧控制面板 */
+        .panel-left {width:420px;background:#fff;border-right:1px solid #ccc;overflow-y:auto;padding:16px;flex-shrink:0;}
+        .panel-right {flex:1;padding:20px;overflow:auto;background:#dee2e6;}
+        h3 {margin:12px 0 8px;color:#222;font-size:16px;border-bottom:1px solid #eee;padding-bottom:4px;}
+        textarea {width:100px;width:100%;height:100px;padding:8px;border:1px solid #bbb;border-radius:4px;font-size:14px;resize:vertical;}
+        input[type="number"],input[type="text"] {padding:6px;width:110px;border:1px solid #bbb;border-radius:3px;}
+        .row-item {display:flex;gap:8px;align-items:center;margin:6px 0;flex-wrap:wrap;}
+        button {padding:7px 12px;border:none;background:#2b65d9;color:#fff;border-radius:4px;cursor:pointer;font-size:13px;margin:3px;}
+        button.secondary {background:#6c757d;}
+        button.del {background:#dc3545;}
+        .tip {font-size:12px;color:#666;margin:4px 0;}
+        /* A4预览容器 */
+        .a4-wrap {width:210mm;margin:0 auto;background:#fff;box-shadow:0 2px 12px #aaa;padding:0;position:relative;}
+        @media print {
+            body * {visibility:hidden;}
+            .a4-wrap, .a4-wrap * {visibility:visible;}
+            .a4-wrap {width:100%;box-shadow:none;margin:0;padding:0;}
+            .no-print {display:none !important;}
+        }
+        /* 桌签单页：一张A4一个姓名，上下两份桌签 */
+        .page-a4 {position:relative;width:210mm;min-height:297mm;padding:var(--a4-margin);}
+        .card-container {position:relative;border:1px solid #000;width:var(--card-w);height:var(--card-h);margin:0 auto;overflow:hidden;}
+        .fold-line {position:absolute;left:0;right:0;top:50%;height:0;border-top:1px dashed #000;z-index:2;}
+        .num-tag {position:absolute;top:4px;left:6px;font-size:10px;color:#333;z-index:3;}
+        .text-top {position:absolute;top:0;left:0;right:0;height:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:var(--font-size);overflow:hidden;}
+        .text-bottom {position:absolute;bottom:0;left:0;right:0;height:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:var(--font-size);transform:rotate(180deg);overflow:hidden;}
+        /* 图片图层 */
+        .img-layer {position:absolute;pointer-events:none;z-index:1;}
+        .bg-layer {position:absolute;inset:0;z-index:0;pointer-events:none;}
+        .logo-item {border:1px dashed #999;padding:4px;margin:4px;border-radius:4px;display:flex;align-items:center;gap:6px;}
+    </style>
+</head>
+<body>
+<div class="panel-left no-print">
+    <h3>名单录入（一行一个姓名）</h3>
+    <textarea id="nameList" placeholder="张三&#10;李四&#10;王五"></textarea>
+    <div class="row-item">
+        <button onclick="importExcel()">导入Excel(xlsx)</button>
+        <button onclick="importTxt()">导入TXT</button>
+        <button onclick="clearNames()">清空名单</button>
+    </div>
+    <div class="tip">导入Excel取第一列文本；txt一行一个名字</div>
+
+    <h3>打印参数设置</h3>
+    <div class="row-item">
+        <label>A4页边距(mm)</label>
+        <input type="number" id="a4Margin" value="12">
+    </div>
+    <div class="row-item">
+        <label>卡片宽度(mm)</label>
+        <input type="number" id="cardW" value="180">
+    </div>
+    <div class="row-item">
+        <label>卡片高度(mm)</label>
+        <input type="number" id="cardH" value="240">
+    </div>
+    <div class="row-item">
+        <label>基准字号(px)</label>
+        <input type="number" id="baseFont" value="72">
+    </div>
+    <div class="row-item">
+        <label><input type="checkbox" id="showSerial" checked> 显示左上角编号</label>
+    </div>
+    <div class="row-item">
+        <button onclick="refreshPreview()">刷新预览</button>
+    </div>
+
+    <h3>背景与Logo图片图层</h3>
+    <div class="row-item">
+        <button onclick="uploadBg()">上传背景图</button>
+        <button onclick="toggleBg()">开关背景</button>
+        <button onclick="clearBg()">清除背景</button>
+    </div>
+    <div class="row-item">
+        <button onclick="uploadLogo()">添加Logo图片</button>
+    </div>
+    <div id="logoListBox"></div>
+    <div class="tip">选中图片后可调整宽高，支持多张叠加</div>
+
+    <h3>模板本地保存</h3>
+    <div class="row-item">
+        <input type="text" id="tplName" placeholder="模板名称">
+        <button onclick="saveTemplate()">保存当前模板</button>
+    </div>
+    <div id="tplListBox"></div>
+
+    <h3>输出操作</h3>
+    <div class="row-item">
+        <button onclick="window.print()">浏览器打印(A4)</button>
+        <button onclick="exportPdf()">导出PDF文件</button>
+    </div>
+    <div class="tip">打印设置：纸张A4，缩放：实际大小，取消页眉页脚</div>
+</div>
+
+<div class="panel-right">
+    <div class="a4-wrap" id="previewBox"></div>
+</div>
+
+<!-- 文件隐藏input -->
+<input type="file" id="fileExcel" accept=".xlsx,.xls" style="display:none">
+<input type="file" id="fileTxt" accept=".txt" style="display:none">
+<input type="file" id="fileBgImg" accept="image/*" style="display:none">
+<input type="file" id="fileLogoImg" accept="image/*" style="display:none">
+
+<script>
+// 全局状态
+let state = {
+    names:[],
+    a4Margin:12,
+    cardW:180,
+    cardH:240,
+    baseFont:72,
+    showSerial:true,
+    bgImage:null,
+    bgEnable:true,
+    logos:[] // [{src,w,h,x,y}]
+};
+
+// 初始化
+document.addEventListener('DOMContentLoaded',()=>{
+    bindInputs();
+    refreshPreview();
+    renderTemplateList();
+});
+
+function bindInputs(){
+    document.getElementById('a4Margin').addEventListener('change',e=>state.a4Margin=Number(e.target.value));
+    document.getElementById('cardW').addEventListener('change',e=>state.cardW=Number(e.target.value));
+    document.getElementById('cardH').addEventListener('change',e=>state.cardH=Number(e.target.value));
+    document.getElementById('baseFont').addEventListener('change',e=>state.baseFont=Number(e.target.value));
+    document.getElementById('showSerial').addEventListener('change',e=>state.showSerial=e.target.checked);
+    document.getElementById('nameList').addEventListener('input',e=>{
+        state.names = e.target.value.split('\n').map(s=>s.trim()).filter(s=>s);
+    });
+}
+
+// 刷新右侧A4预览
+function refreshPreview(){
+    state.a4Margin = Number(document.getElementById('a4Margin').value);
+    state.cardW = Number(document.getElementById('cardW').value);
+    state.cardH = Number(document.getElementById('cardH').value);
+    state.baseFont = Number(document.getElementById('baseFont').value);
+    state.showSerial = document.getElementById('showSerial').checked;
+    state.names = document.getElementById('nameList').value.split('\n').map(s=>s.trim()).filter(s=>s);
+
+    const wrap = document.getElementById('previewBox');
+    wrap.innerHTML = '';
+
+    state.names.forEach((name,idx)=>{
+        const page = document.createElement('div');
+        page.className = 'page-a4';
+        page.style.setProperty('--a4-margin', state.a4Margin+'mm');
+        page.style.width = '210mm';
+        page.style.minHeight = '297mm';
+
+        // 背景图层
+        if(state.bgImage && state.bgEnable){
+            const bgDom = document.createElement('div');
+            bgDom.className = 'bg-layer';
+            bgDom.style.backgroundImage = `url(${state.bgImage})`;
+            bgDom.style.backgroundSize = 'cover';
+            bgDom.style.backgroundPosition = 'center';
+            page.appendChild(bgDom);
+        }
+
+        // logo图层
+        state.logos.forEach(logo=>{
+            const imgDom = document.createElement('div');
+            imgDom.className = 'img-layer';
+            imgDom.style.left = logo.x+'mm';
+            imgDom.style.top = logo.y+'mm';
+            imgDom.style.width = logo.w+'mm';
+            imgDom.style.height = logo.h+'mm';
+            imgDom.style.backgroundImage = `url(${logo.src})`;
+            imgDom.style.backgroundSize = 'contain';
+            imgDom.style.backgroundRepeat = 'no-repeat';
+            page.appendChild(imgDom);
+        });
+
+        // 桌签卡片主体
+        const card = document.createElement('div');
+        card.className = 'card-container';
+        card.style.setProperty('--card-w', state.cardW+'mm');
+        card.style.setProperty('--card-h', state.cardH+'mm');
+        card.style.setProperty('--font-size', state.baseFont+'px');
+
+        // 左上角编号
+        if(state.showSerial){
+            const numDom = document.createElement('div');
+            numDom.className = 'num-tag';
+            numDom.innerText = String(idx+1);
+            card.appendChild(numDom);
+        }
+        // 折叠虚线
+        const fold = document.createElement('div');
+        fold.className = 'fold-line';
+        card.appendChild(fold);
+
+        // 正向文字
+        const tTop = document.createElement('div');
+        tTop.className = 'text-top';
+        tTop.innerText = name;
+        card.appendChild(tTop);
+
+        // 180度倒置下半部分
+        const tBot = document.createElement('div');
+        tBot.className = 'text-bottom';
+        tBot.innerText = name;
+        card.appendChild(tBot);
+
+        page.appendChild(card);
+        wrap.appendChild(page);
+    });
+}
+
+// 导入Excel
+function importExcel(){
+    document.getElementById('fileExcel').click();
+    document.getElementById('fileExcel').onchange = function(ev){
+        const f = ev.target.files[0];
+        if(!f) return;
+        const reader = new FileReader();
+        reader.onload = e=>{
+            const wb = XLSX.read(e.target.result,{type:'binary'});
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+            const arr = XLSX.utils.sheet_to_json(sheet,{header:1});
+            const names = [];
+            arr.forEach(row=>{
+                if(row[0]) names.push(String(row[0]).trim());
+            });
+            document.getElementById('nameList').value = names.join('\n');
+            state.names = names;
+            refreshPreview();
+        };
+        reader.readAsBinaryString(f);
+    }
+}
+
+// 导入TXT
+function importTxt(){
+    document.getElementById('fileTxt').click();
+    document.getElementById('fileTxt').onchange = function(ev){
+        const f = ev.target.files[0];
+        if(!f) return;
+        const r = new FileReader();
+        r.onload = e=>{
+            document.getElementById('nameList').value = e.target.result;
+            state.names = e.target.result.split('\n').map(s=>s.trim()).filter(s=>s);
+            refreshPreview();
+        };
+        r.readAsText(f);
+    }
+}
+
+function clearNames(){
+    document.getElementById('nameList').value = '';
+    state.names = [];
+    refreshPreview();
+}
+
+// 背景图
+function uploadBg(){
+    document.getElementById('fileBgImg').click();
+    document.getElementById('fileBgImg').onchange = ev=>{
+        const f = ev.target.files[0];
+        if(!f) return;
+        const r = new FileReader();
+        r.onload = e=>{
+            state.bgImage = e.target.result;
+            state.bgEnable = true;
+            refreshPreview();
+        };
+        r.readAsDataURL(f);
+    }
+}
+function toggleBg(){
+    state.bgEnable = !state.bgEnable;
+    refreshPreview();
+}
+function clearBg(){
+    state.bgImage = null;
+    refreshPreview();
+}
+
+// 添加Logo
+function uploadLogo(){
+    document.getElementById('fileLogoImg').click();
+    document.getElementById('fileLogoImg').onchange = ev=>{
+        const f = ev.target.files[0];
+        if(!f) return;
+        const r = new FileReader();
+        r.onload = e=>{
+            state.logos.push({
+                src:e.target.result,
+                w:30,h:20,x:5,y:5
+            });
+            renderLogoList();
+            refreshPreview();
+        };
+        r.readAsDataURL(f);
+    }
+}
+
+function renderLogoList(){
+    const box = document.getElementById('logoListBox');
+    box.innerHTML = '';
+    state.logos.forEach((item,i)=>{
+        const div = document.createElement('div');
+        div.className = 'logo-item';
+        div.innerHTML = `
+        <span>Logo${i+1}</span>
+        W:<input type="number" value="${item.w}" style="width:60px" onchange="updateLogo(${i},'w',this.value)">
+        H:<input type="number" value="${item.h}" style="width:60px" onchange="updateLogo(${i},'h',this.value)">
+        X:<input type="number" value="${item.x}" style="width:60px" onchange="updateLogo(${i},'x',this.value)">
+        Y:<input type="number" value="${item.y}" style="width:60px" onchange="updateLogo(${i},'y',this.value)">
+        <button class="del" onclick="delLogo(${i})">删除</button>
+        `;
+        box.appendChild(div);
+    });
+}
+function updateLogo(idx,key,val){
+    state.logos[idx][key] = Number(val);
+    refreshPreview();
+}
+function delLogo(idx){
+    state.logos.splice(idx,1);
+    renderLogoList();
+    refreshPreview();
+}
+
+// 本地模板存储 localStorage
+function saveTemplate(){
+    const tplName = document.getElementById('tplName').value.trim();
+    if(!tplName){alert('请输入模板名称');return;}
+    const tplData = {
+        a4Margin:state.a4Margin,
+        cardW:state.cardW,
+        cardH:state.cardH,
+        baseFont:state.baseFont,
+        showSerial:state.showSerial,
+        bgImage:state.bgImage,
+        bgEnable:state.bgEnable,
+        logos:state.logos
+    };
+    let allTpl = JSON.parse(localStorage.getItem('tableCardTpls')||'{}');
+    allTpl[tplName] = tplData;
+    localStorage.setItem('tableCardTpls',JSON.stringify(allTpl));
+    renderTemplateList();
+    alert('模板保存成功');
+}
+
+function renderTemplateList(){
+    const box = document.getElementById('tplListBox');
+    box.innerHTML = '';
+    const allTpl = JSON.parse(localStorage.getItem('tableCardTpls')||'{}');
+    Object.keys(allTpl).forEach(name=>{
+        const div = document.createElement('div');
+        div.className = 'row-item';
+        div.innerHTML = `
+        <span>${name}</span>
+        <button onclick="loadTpl('${name}')">加载</button>
+        <button class="del" onclick="removeTpl('${name}')">删除</button>
+        `;
+        box.appendChild(div);
+    });
+}
+
+function loadTpl(tplName){
+    const allTpl = JSON.parse(localStorage.getItem('tableCardTpls')||'{}');
+    const tpl = allTpl[tplName];
+    if(!tpl) return;
+    state.a4Margin = tpl.a4Margin;
+    state.cardW = tpl.cardW;
+    state.cardH = tpl.cardH;
+    state.baseFont = tpl.baseFont;
+    state.showSerial = tpl.showSerial;
+    state.bgImage = tpl.bgImage;
+    state.bgEnable = tpl.bgEnable;
+    state.logos = tpl.logos;
+
+    document.getElementById('a4Margin').value = state.a4Margin;
+    document.getElementById('cardW').value = state.cardW;
+    document.getElementById('cardH').value = state.cardH;
+    document.getElementById('baseFont').value = state.baseFont;
+    document.getElementById('showSerial').checked = state.showSerial;
+    renderLogoList();
+    refreshPreview();
+    alert('模板加载完成');
+}
+
+function removeTpl(tplName){
+    const allTpl = JSON.parse(localStorage.getItem('tableCardTpls')||'{}');
+    delete allTpl[tplName];
+    localStorage.setItem('tableCardTpls',JSON.stringify(allTpl));
+    renderTemplateList();
+}
+
+// 导出PDF
+function exportPdf(){
+    const opt = {
+        margin:0,
+        filename:'会议桌签.pdf',
+        image:{type:'jpeg',quality:0.98},
+        html2canvas:{scale:2},
+        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+    };
+    const targetDom = document.getElementById('previewBox');
+    html2pdf().set(opt).from(targetDom).save();
+}
+</script>
+</body>
+</html>
