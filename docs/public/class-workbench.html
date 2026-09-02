@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#4f46e5">
+<style>
+  /* 隐私模式开启时按钮高亮 */
+  #btn-privacy.on { background: #4f46e5; color: #fff; border-color: transparent; }
+</style>
 <title>班主任工作台 · 一站式班级管理</title>
 <link rel="stylesheet" href="class-workbench.css">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2897720906666216"
@@ -17,6 +21,7 @@
       <button class="btn-icon menu-toggle" id="btn-menu" aria-label="打开菜单">☰</button>
       <div class="crumb" id="crumb">加载中…</div>
       <div class="top-actions">
+        <button class="btn btn-ghost" id="btn-privacy">🙈 隐私</button>
         <button class="btn btn-ghost" id="btn-version">📦 版本</button>
         <button class="btn btn-ghost" id="btn-backup">💾 备份</button>
         <button class="btn btn-ghost" id="btn-restore">♻ 恢复</button>
