@@ -6,6 +6,8 @@ window.WB_VIEWS = (function () {
   'use strict';
   var WB = window.WB;
   var H = WB.escapeHtml;
+  // 隐私遮罩：隐私模式下把姓名/电话等敏感信息替换为 ***
+  function HM(v) { return WB.privacyOn() ? '***' : H(v); }
   var uid = WB.uid;            // 生成唯一ID（供新增待办/周计划/归档写入使用）
   function el(id) { return document.getElementById(id); }
 
@@ -170,8 +172,8 @@ window.WB_VIEWS = (function () {
     return items.slice(0, 6).map(function (p) {
       return '<div class="row">' +
         '<span class="tag">' + H(p.relation || '家长') + '</span>' +
-        '<span class="text">' + H(p.name) + ' · ' + H(p.parentName || '') + '</span>' +
-        '<a class="btn btn-sm btn-ghost" href="tel:' + H(p.phone) + '">拨打</a>' +
+        '<span class="text">' + HM(p.name) + ' · ' + HM(p.parentName || '') + '</span>' +
+        '<a class="btn btn-sm btn-ghost" href="tel:' + HM(p.phone) + '">拨打</a>' +
         '<button class="btn btn-sm btn-ghost" data-act="tbl-del" data-tbl="contacts" data-id="' + H(p.__id || '') + '" title="删除">✕</button>' +
         '</div>';
     }).join('');
@@ -189,7 +191,7 @@ window.WB_VIEWS = (function () {
       var prefix = s.nextFollow ? '跟进 ' : '';
       return '<div class="row">' +
         '<span class="tag ' + cls + '">' + H(s.category || s.level || '特殊') + '</span>' +
-        '<span class="text">' + H(s.name) + '</span>' +
+        '<span class="text">' + HM(s.name) + '</span>' +
         '<span class="time" style="' + (dl.cls === 'over' ? 'color:var(--c-danger);font-weight:600' : (dl.cls === 'soon' ? 'color:var(--c-warning);font-weight:600' : '')) + '">' + prefix + dl.text + '</span>' +
         '<button class="btn btn-sm btn-ghost" data-act="tbl-del" data-tbl="' + srcTbl + '" data-id="' + H(s.__id || '') + '" title="删除">✕</button>' +
         '</div>';
@@ -928,7 +930,7 @@ window.WB_VIEWS = (function () {
       html += '<span class="lg-t">科目：</span>';
       subjKeys.forEach(function (k) {
         var c = sc.subjects[k];
-        html += '<span class="legend-item" style="background:' + hexToRgba(c, 0.14) + ';color:' + darkenHex(c) + ';border:1px solid ' + c + '">' + H(k) + '</span>';
+        html += '<span class="legend-item" style="background:' + hexToRgba(c, 0.14) + ';color:' + darkenHex(c) + ';border:1px solid ' + c + '">' + HM(k) + '</span>';
       });
       html += '</div>';
     }
@@ -942,7 +944,7 @@ window.WB_VIEWS = (function () {
     html += '</tr></thead><tbody>';
     periods.forEach(function (p) {
       html += '<tr>';
-      html += '<td class="sched-time"><div class="t-name">' + H(p.name) + '</div><div class="t-time">' + H(p.time || '') + '</div></td>';
+      html += '<td class="sched-time"><div class="t-name">' + HM(p.name) + '</div><div class="t-time">' + H(p.time || '') + '</div></td>';
       days.forEach(function (d) {
         var key = d + '-' + p.name;
         var cell = sc.grid[key];
@@ -952,8 +954,8 @@ window.WB_VIEWS = (function () {
           // 渲染时清洗：从 teacher 中剥离单双周标记
           var dispTeacher = String(cell.teacher || '').replace(/[\s·]*(单周|双周|单双周|隔周|单周上|双周上)\s*$/, '').trim();
           html += '<td class="sched-cell has" data-key="' + H(key) + '" style="background:' + hexToRgba(c, 0.14) + ';border-left:4px solid ' + c + '">';
-          html += '<div class="s-subj" style="color:' + darkenHex(c) + '">' + H(subj) + '</div>';
-          if (dispTeacher) html += '<div class="s-teacher">' + H(dispTeacher) + '</div>';
+          html += '<div class="s-subj" style="color:' + darkenHex(c) + '">' + HM(subj) + '</div>';
+          if (dispTeacher) html += '<div class="s-teacher">' + HM(dispTeacher) + '</div>';
           if (cell.note) html += '<div class="s-note">' + H(cell.note) + '</div>';
           html += '</td>';
         } else {
@@ -1136,7 +1138,7 @@ window.WB_VIEWS = (function () {
         var pct = Math.round(cnt[k] / total * 100);
         html += '<div style="display:flex;align-items:center;gap:8px;padding:3px 0">' +
           '<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:' + c + ';flex-shrink:0"></span>' +
-          '<span style="width:70px;flex-shrink:0">' + H(k) + '</span>' +
+          '<span style="width:70px;flex-shrink:0">' + HM(k) + '</span>' +
           '<span style="flex:1;background:var(--c-border);border-radius:4px;height:14px;overflow:hidden">' +
           '<span style="display:block;height:100%;width:' + pct + '%;background:' + c + '"></span></span>' +
           '<span style="font-weight:600;width:36px;text-align:right;flex-shrink:0">' + cnt[k] + '节</span>' +
@@ -1351,7 +1353,7 @@ window.WB_VIEWS = (function () {
       html += '<div class="tt-card" data-tt="' + H(t.name) + '" title="点击查看 / 编辑联系方式">';
       html += '<div class="tt-head">';
       html += '<div class="tt-avatar" style="background:' + hexToRgba(color, 0.15) + ';color:' + darkenHex(color) + '">' + H(t.name.slice(0, 1)) + '</div>';
-      html += '<div class="tt-id"><b>' + H(t.name) + '</b>';
+      html += '<div class="tt-id"><b>' + HM(t.name) + '</b>';
       html += '<span>' + t.total + ' 节/周' + (subjKeys.length ? ' · ' + subjKeys.length + ' 科' : ' · 未排课') + '</span></div>';
       html += '<span class="tt-arrow">›</span>';
       html += '</div>';
@@ -1359,7 +1361,7 @@ window.WB_VIEWS = (function () {
         html += '<div class="tt-subjs">';
         subjKeys.forEach(function (s) {
           var c = sc.subjects[s] || '#64748b';
-          html += '<span class="tt-subj" style="background:' + hexToRgba(c, 0.14) + ';color:' + darkenHex(c) + ';border:1px solid ' + c + '">' + H(s) + ' ×' + t.subjects[s] + '</span>';
+          html += '<span class="tt-subj" style="background:' + hexToRgba(c, 0.14) + ';color:' + darkenHex(c) + ';border:1px solid ' + c + '">' + HM(s) + ' ×' + t.subjects[s] + '</span>';
         });
         html += '</div>';
       } else {
@@ -1367,9 +1369,9 @@ window.WB_VIEWS = (function () {
       }
       html += '<div class="tt-meta">';
       html += info.phone
-        ? '<span class="tt-phone">📞 ' + H(info.phone) + '</span>'
+        ? '<span class="tt-phone">📞 ' + HM(info.phone) + '</span>'
         : '<span class="tt-phone none">📞 未登记手机号</span>';
-      if (info.wechat) html += '<span class="tt-phone">💬 ' + H(info.wechat) + '</span>';
+      if (info.wechat) html += '<span class="tt-phone">💬 ' + HM(info.wechat) + '</span>';
       html += '</div>';
       html += '</div>';
     });
@@ -1467,7 +1469,7 @@ window.WB_VIEWS = (function () {
     html += '<select id="ps-teacher-sel" class="filter">';
     html += '<option value="">— 请选择 —</option>';
     teachers.forEach(function (t) {
-      html += '<option value="' + H(t) + '"' + (t === cur ? ' selected' : '') + '>' + H(t) + '</option>';
+      html += '<option value="' + H(t) + '"' + (t === cur ? ' selected' : '') + '>' + HM(t) + '</option>';
     });
     html += '</select></label>';
     html += '<button class="btn" id="ps-print" title="打印该教师课表">🖨 打印</button>';
@@ -1494,10 +1496,10 @@ window.WB_VIEWS = (function () {
     });
 
     html += '<div class="schedule-legend">';
-    html += '<span class="lg-t">' + H(cur) + ' · 共 ' + total + ' 节/周：</span>';
+    html += '<span class="lg-t">' + HM(cur) + ' · 共 ' + total + ' 节/周：</span>';
     Object.keys(subjCount).forEach(function (s) {
       var c = ts.subjects[s] || '#64748b';
-      html += '<span class="legend-item" style="background:' + hexToRgba(c, 0.14) + ';color:' + darkenHex(c) + ';border:1px solid ' + c + '">' + H(s) + ' ×' + subjCount[s] + '</span>';
+      html += '<span class="legend-item" style="background:' + hexToRgba(c, 0.14) + ';color:' + darkenHex(c) + ';border:1px solid ' + c + '">' + HM(s) + ' ×' + subjCount[s] + '</span>';
     });
     if (!total) html += '<span style="font-size:12px;color:var(--c-text-3)">暂无排课，点击格子录入</span>';
     html += '</div>';
@@ -1521,14 +1523,14 @@ window.WB_VIEWS = (function () {
     html += '</tr></thead><tbody>';
     periods.forEach(function (p) {
       html += '<tr>';
-      html += '<td class="sched-time"><div class="t-name">' + H(p.name) + '</div><div class="t-time">' + H(p.time || '') + '</div></td>';
+      html += '<td class="sched-time"><div class="t-name">' + HM(p.name) + '</div><div class="t-time">' + H(p.time || '') + '</div></td>';
       days.forEach(function (d) {
         var key = d + '-' + p.name;
         var m = grid[key];
         if (m && m.subject) {
           var c = ts.subjects[m.subject] || '#64748b';
           html += '<td class="sched-cell ps-cell has" data-key="' + H(key) + '" style="background:' + hexToRgba(c, 0.14) + ';border-left:4px solid ' + c + '">';
-          html += '<div class="s-subj" style="color:' + darkenHex(c) + '">' + H(m.subject) + '</div>';
+          html += '<div class="s-subj" style="color:' + darkenHex(c) + '">' + HM(m.subject) + '</div>';
           html += '<div class="s-teacher">' + H(m.class || '未填班级') + '</div>';
           if (m.note) html += '<div class="s-note">' + H(m.note) + '</div>';
           html += '</td>';
@@ -1557,7 +1559,7 @@ window.WB_VIEWS = (function () {
     Object.keys(grid).forEach(function (k) { if (grid[k].class) classSet[grid[k].class] = 1; });
     var classList = Object.keys(classSet);
 
-    var body = '<div style="font-size:13px;margin-bottom:10px;color:var(--c-text-2)">' + H(cur) + ' · ' + H(key) + '</div>';
+    var body = '<div style="font-size:13px;margin-bottom:10px;color:var(--c-text-2)">' + HM(cur) + ' · ' + H(key) + '</div>';
     body += '<label><span class="lbl">科目</span><input id="pc-subj" list="pc-subj-list" value="' + H(cellData.subject || '') + '" placeholder="如 数学">';
     body += '<datalist id="pc-subj-list">';
     Object.keys(ts.subjects).forEach(function (s) { body += '<option value="' + H(s) + '">'; });
@@ -1961,7 +1963,7 @@ window.WB_VIEWS = (function () {
   function renderScoreTable(withRank, subjects) {
     var html = '<div class="table-wrap"><div class="table-scroll"><table class="data"><thead><tr>';
     html += '<th>学号</th><th>姓名</th>';
-    subjects.forEach(function (s) { html += '<th>' + H(s) + '</th>'; });
+    subjects.forEach(function (s) { html += '<th>' + HM(s) + '</th>'; });
     html += '<th>总分</th><th>班级排名</th><th>等级</th><th>操作</th></tr></thead><tbody id="score-tbody">';
 
     if (withRank.length === 0) {
@@ -1969,12 +1971,12 @@ window.WB_VIEWS = (function () {
     } else {
       withRank.forEach(function (row) {
         html += '<tr>';
-        html += '<td>' + H(row.studentNo || '') + '</td>';
-        html += '<td class="ga-name" data-act="trend" data-name="' + H(row.name) + '" title="点击查看跨批次成绩趋势">📈 ' + H(row.name) + '</td>';
+        html += '<td>' + HM(row.studentNo || '') + '</td>';
+        html += '<td class="ga-name" data-act="trend" data-name="' + H(row.name) + '" title="点击查看跨批次成绩趋势">📈 ' + HM(row.name) + '</td>';
         subjects.forEach(function (s) {
           var rk = row['__rk_' + s];
           html += '<td>' + (row[s] != null ? H(row[s]) : '—') +
-            (rk ? ' <span class="ga-srank" title="' + H(s) + '第 ' + rk + ' 名">#' + rk + '</span>' : '') +
+            (rk ? ' <span class="ga-srank" title="' + HM(s) + '第 ' + rk + ' 名">#' + rk + '</span>' : '') +
             '</td>';
         });
         html += '<td style="font-weight:600;color:var(--c-primary)">' + row.__total.toFixed(1) +
@@ -2018,7 +2020,7 @@ window.WB_VIEWS = (function () {
         '<span class="ga-hist-bar" style="height:' + Math.max(h, s.c > 0 ? 8 : 2) + '%;background:' + s.cls + '"></span>' +
         '<span style="font-size:11px;color:var(--c-text-2)">' + (s.c / withRank.length * 100).toFixed(0) + '%</span></div>';
     });
-    html += '</div><div class="ga-hist-legend">' + segs.map(function (s) { return H(s.name); }).join(' · ') + '</div></div>';
+    html += '</div><div class="ga-hist-legend">' + segs.map(function (s) { return HM(s.name); }).join(' · ') + '</div></div>';
     return html;
   }
 
@@ -2109,7 +2111,7 @@ window.WB_VIEWS = (function () {
       var sMax = Math.max.apply(null, vals);
       var sMin = Math.min.apply(null, vals);
       var failN = vals.filter(function (v) { return v < 60; }).length;
-      html += '<div class="cell"><div class="k">' + H(s) + '</div>' +
+      html += '<div class="cell"><div class="k">' + HM(s) + '</div>' +
         '<div class="v small">' + sAvg.toFixed(1) + '</div>' +
         '<div class="k" style="margin-top:2px">最高 ' + sMax + ' / 最低 ' + sMin +
         (failN > 0 ? ' / <span style="color:var(--c-danger)">不及格 ' + failN + ' 人</span>' : '') +
@@ -2261,13 +2263,13 @@ window.WB_VIEWS = (function () {
       '<div class="card-title" style="color:var(--c-success);margin-bottom:6px">🚀 进步榜（名次上升 Top' + asc.length + '）</div>' +
       '<div style="font-size:12px;color:var(--c-text-2);line-height:1.8">' +
       (asc.filter(function (r) { return r.dr > 0; }).map(function (r) {
-        return H(r.name) + ' <b style="color:var(--c-success)">↑' + r.dr + '</b>（' + r.ra + '→' + r.rb + '）';
+        return HM(r.name) + ' <b style="color:var(--c-success)">↑' + r.dr + '</b>（' + r.ra + '→' + r.rb + '）';
       }).join('、') || '<span class="empty">—</span>') + '</div></div>';
     html += '<div class="card" style="border-color:#fecaca;background:#fef2f2">' +
       '<div class="card-title" style="color:var(--c-danger);margin-bottom:6px">⚠️ 退步预警（名次下降 Top' + desc.length + '）</div>' +
       '<div style="font-size:12px;color:var(--c-text-2);line-height:1.8">' +
       (desc.map(function (r) {
-        return H(r.name) + ' <b style="color:var(--c-danger)">↓' + (-r.dr) + '</b>（' + r.ra + '→' + r.rb + '）';
+        return HM(r.name) + ' <b style="color:var(--c-danger)">↓' + (-r.dr) + '</b>（' + r.ra + '→' + r.rb + '）';
       }).join('、') || '<span class="empty">—</span>') + '</div></div>';
     html += '</div>';
 
@@ -2276,7 +2278,7 @@ window.WB_VIEWS = (function () {
       '<th>姓名</th><th>' + H(aName) + ' 总分</th><th>名次</th><th>' + H(bName) + ' 总分</th><th>名次</th>' +
       '<th>总分变化</th><th>名次变化</th></tr></thead><tbody>';
     cmp.rows.forEach(function (r) {
-      html += '<tr><td>' + H(r.name) + '</td><td>' + r.ta.toFixed(1) + '</td><td>' + r.ra + '</td>' +
+      html += '<tr><td>' + HM(r.name) + '</td><td>' + r.ta.toFixed(1) + '</td><td>' + r.ra + '</td>' +
         '<td>' + r.tb.toFixed(1) + '</td><td>' + r.rb + '</td>' +
         '<td style="color:' + (r.dt > 0 ? 'var(--c-success)' : r.dt < 0 ? 'var(--c-danger)' : 'var(--c-text-3)') + '">' +
         (r.dt > 0 ? '+' : '') + r.dt.toFixed(1) + '</td>' +
@@ -2313,25 +2315,25 @@ window.WB_VIEWS = (function () {
     html += '<div class="card" style="border-color:#a7f3d0;background:#f0fdf4">' +
       '<div class="card-title" style="color:var(--c-success);margin-bottom:6px">🏆 尖子生 (' + top.length + ')</div>' +
       '<div style="font-size:12px;color:var(--c-text-2);line-height:1.8">' +
-      (top.map(function (r) { return H(r.name) + ' (' + r.__total.toFixed(1) + ')'; }).join('、') || '<span class="empty">—</span>') +
+      (top.map(function (r) { return HM(r.name) + ' (' + r.__total.toFixed(1) + ')'; }).join('、') || '<span class="empty">—</span>') +
       '</div></div>';
 
     html += '<div class="card" style="border-color:#fde68a;background:#fffbeb">' +
       '<div class="card-title" style="color:var(--c-warn);margin-bottom:6px">🎯 临界生 (' + critical.length + ')</div>' +
       '<div style="font-size:12px;color:var(--c-text-2);line-height:1.8">' +
-      (critical.map(function (r) { return H(r.name) + ' (' + r.__total.toFixed(1) + ')'; }).join('、') || '<span class="empty">—</span>') +
+      (critical.map(function (r) { return HM(r.name) + ' (' + r.__total.toFixed(1) + ')'; }).join('、') || '<span class="empty">—</span>') +
       '</div></div>';
 
     html += '<div class="card" style="border-color:#fecaca;background:#fef2f2">' +
       '<div class="card-title" style="color:var(--c-danger);margin-bottom:6px">📉 学困生 (' + weak.length + ')</div>' +
       '<div style="font-size:12px;color:var(--c-text-2);line-height:1.8">' +
-      (weak.map(function (r) { return H(r.name) + ' (' + r.__total.toFixed(1) + ')'; }).join('、') || '<span class="empty">—</span>') +
+      (weak.map(function (r) { return HM(r.name) + ' (' + r.__total.toFixed(1) + ')'; }).join('、') || '<span class="empty">—</span>') +
       '</div></div>';
 
     html += '<div class="card">' +
       '<div class="card-title" style="margin-bottom:6px">⚠️ 偏科筛查 (' + imbalanced.length + ')</div>' +
       '<div style="font-size:12px;color:var(--c-text-2);line-height:1.8">' +
-      (imbalanced.map(function (r) { return H(r.name); }).join('、') || '<span class="empty">—</span>') +
+      (imbalanced.map(function (r) { return HM(r.name); }).join('、') || '<span class="empty">—</span>') +
       '</div></div>';
 
     html += '</div>';
@@ -2407,7 +2409,7 @@ window.WB_VIEWS = (function () {
     var subjects = (exam && exam.subjects) || [];
     var lines = getLines();
     var head = '<div class="lr lr-head"><span>线名称</span><span>总分线</span>' +
-      subjects.map(function (s) { return '<span>' + H(s) + ' 线</span>'; }).join('') + '<span></span></div>';
+      subjects.map(function (s) { return '<span>' + HM(s) + ' 线</span>'; }).join('') + '<span></span></div>';
     var body = '<div class="lines-editor" id="lines-box">' + head +
       lines.map(function (l, i) { return linesRowHtml(l, i, subjects); }).join('') +
       '<button class="btn btn-sm lr-add">＋ 添加一条分数线</button>' +
@@ -2513,7 +2515,7 @@ window.WB_VIEWS = (function () {
       });
       var best = Math.max.apply(null, vals.filter(function (v) { return v != null; }));
       var worst = Math.min.apply(null, vals.filter(function (v) { return v != null; }));
-      html += '<tr><td style="font-weight:600">' + H(s) + '</td>';
+      html += '<tr><td style="font-weight:600">' + HM(s) + '</td>';
       vals.forEach(function (v) {
         if (v == null) { html += '<td>—</td>'; return; }
         var cls = (g.order.length > 1 && v === best) ? ' class="best"' : (g.order.length > 1 && v === worst) ? ' class="worst"' : '';
@@ -2540,7 +2542,7 @@ window.WB_VIEWS = (function () {
       html += '<tr><td style="font-weight:600">' + H(c) + '</td><td class="best">' + hit.length + '</td>' +
         '<td>' + (hit.length / top.length * 100).toFixed(0) + '%</td>' +
         '<td style="font-size:12px;color:var(--c-text-2)">' + (hit.map(function (r) {
-          return H(r.name) + '(' + r.__total.toFixed(0) + ')';
+          return HM(r.name) + '(' + r.__total.toFixed(0) + ')';
         }).join('、') || '—') + '</td></tr>';
     });
     html += '</tbody></table></div></div>';
@@ -2562,7 +2564,7 @@ window.WB_VIEWS = (function () {
       '<th>线</th><th>总分线</th><th>单科线</th><th>上线人数</th><th>上线率</th><th>上线名单</th></tr></thead><tbody>';
     lines.forEach(function (ln) {
       var hit = withRank.filter(function (r) { return linePass(r, ln); });
-      var names = hit.slice(0, 15).map(function (r) { return H(r.name) + '(' + r.__total.toFixed(0) + ')'; }).join('、');
+      var names = hit.slice(0, 15).map(function (r) { return HM(r.name) + '(' + r.__total.toFixed(0) + ')'; }).join('、');
       html += '<tr><td><b>' + H(ln.name) + '</b></td><td>' + ln.total + '</td><td style="font-size:12px;color:var(--c-text-2)">' +
         lineSubsHtml(ln) + '</td>' +
         '<td class="best">' + hit.length + '</td><td>' + (hit.length / withRank.length * 100).toFixed(1) + '%</td>' +
@@ -2592,7 +2594,7 @@ window.WB_VIEWS = (function () {
           if (isNaN(v)) return false;
           return subLines[s].every(function (x) { return v >= x.v; });
         });
-        html += '<tr><td style="font-weight:600">' + H(s) + '</td><td style="font-size:12px;color:var(--c-text-2)">' + req + '</td>' +
+        html += '<tr><td style="font-weight:600">' + HM(s) + '</td><td style="font-size:12px;color:var(--c-text-2)">' + req + '</td>' +
           '<td class="best">' + hit.length + '</td><td>' + (hit.length / withRank.length * 100).toFixed(1) + '%</td></tr>';
       });
       html += '</tbody></table></div>';
@@ -2644,7 +2646,7 @@ window.WB_VIEWS = (function () {
       html += '<div style="margin-bottom:8px"><b>' + H(ln.name) + '</b>（' + ln.total + ' 分）临界 ' + crit.length + ' 人：' +
         '<span style="font-size:12px;color:var(--c-text-2)">' +
         (crit.map(function (r) {
-          return H(r.name) + '(' + r.__total.toFixed(0) + '分，差' + (ln.total - r.__total).toFixed(0) + ')';
+          return HM(r.name) + '(' + r.__total.toFixed(0) + '分，差' + (ln.total - r.__total).toFixed(0) + ')';
         }).join('、') || '—') + '</span></div>';
     });
     html += '</div>';
@@ -2708,7 +2710,7 @@ window.WB_VIEWS = (function () {
     html += '<div style="margin-top:10px"><b>⚠️ 偏科筛查（' + imbalanced.length + ' 人）</b>' +
       '<span style="font-size:12px;color:var(--c-text-2)">：总分中游且某科名次与总分名次相差 20 名以上</span><br>' +
       '<span style="font-size:12px;color:var(--c-text-2)">' +
-      (imbalanced.map(function (r) { return H(r.name); }).join('、') || '—') + '</span></div>';
+      (imbalanced.map(function (r) { return HM(r.name); }).join('、') || '—') + '</span></div>';
     html += '</div>';
     return html;
   }
@@ -2796,7 +2798,7 @@ window.WB_VIEWS = (function () {
   function renderReportPanel(withRank, subjects) {
     if (!withRank.length) return '<div class="empty">暂无成绩数据</div>';
     var opts = withRank.map(function (r) {
-      return '<option value="' + H(r.name) + '">' + H(r.name) + '</option>';
+      return '<option value="' + HM(r.name) + '">' + HM(r.name) + '</option>';
     }).join('');
     var html = '<div class="card" style="margin-top:12px"><div class="card-title">👤 学生报告 <span class="extra">成绩明细 · 优势科目 · 薄弱科目 · 历次趋势 · 提升建议</span></div>';
     html += '<div class="ga-cmp-bar">' +
@@ -2841,7 +2843,7 @@ window.WB_VIEWS = (function () {
       var all = wr.map(function (x) { return parseFloat(x[s]); }).filter(function (x) { return !isNaN(x); });
       var avg = all.reduce(function (a, b) { return a + b; }, 0) / all.length;
       var d = v - avg;
-      body += '<tr><td>' + H(s) + '</td><td class="best">' + v + '</td><td>' + rk + '</td>' +
+      body += '<tr><td>' + HM(s) + '</td><td class="best">' + v + '</td><td>' + rk + '</td>' +
         '<td>' + avg.toFixed(1) + '</td>' +
         '<td style="color:' + (d >= 0 ? 'var(--c-success)' : 'var(--c-danger)') + '">' + (d >= 0 ? '+' : '') + d.toFixed(1) + '</td></tr>';
     });
@@ -3538,7 +3540,7 @@ window.WB_VIEWS = (function () {
         var bd = idx === 0 ? '#fecaca' : idx === 1 ? '#fde68a' : idx === 2 ? '#a7f3d0' : 'var(--c-border)';
         html += '<div style="padding:10px 14px;border-radius:8px;background:' + bg + ';border:1px solid ' + bd + ';display:flex;align-items:center;gap:10px">';
         html += '<span style="font-size:18px;font-weight:700;color:var(--c-primary);width:28px;text-align:center">' + (idx + 1) + '</span>';
-        html += '<div style="flex:1"><div style="font-weight:600;font-size:14px">' + H(s.name) + '</div>';
+        html += '<div style="flex:1"><div style="font-weight:600;font-size:14px">' + HM(s.name) + '</div>';
         html += '<div style="font-size:12px;color:var(--c-text-2)">当前总分 <strong>' + s.total + '</strong></div></div>';
         html += '</div>';
       });
@@ -3555,7 +3557,7 @@ window.WB_VIEWS = (function () {
       recent.forEach(function (r) {
         var v = parseFloat(r.value) || 0;
         var vCls = v > 0 ? 'color:var(--c-success)' : (v < 0 ? 'color:var(--c-danger)' : '');
-        html += '<tr><td>' + H(r.date) + '</td><td>' + H(r.name) + '</td>';
+        html += '<tr><td>' + H(r.date) + '</td><td>' + HM(r.name) + '</td>';
         html += '<td style="' + vCls + ';font-weight:600">' + (v > 0 ? '+' : '') + v + '</td>';
         html += '<td>' + H(r.reason) + '</td><td>' + H(r.type || '—') + '</td></tr>';
       });
@@ -3684,7 +3686,7 @@ window.WB_VIEWS = (function () {
           // 成员标签
           var names = rec.members.split(/[,，、\s]+/).filter(Boolean);
           names.forEach(function (n) {
-            html += '<span class="dw-member">' + H(n) + '</span>';
+            html += '<span class="dw-member">' + HM(n) + '</span>';
           });
           // 评价与积分
           if (rec.rating && rec.rating !== '—') {
@@ -3707,7 +3709,7 @@ window.WB_VIEWS = (function () {
     if (pcArr.length > 0) {
       html += '<div class="dw-stats"><strong>📊 本周值日统计：</strong>';
       pcArr.forEach(function (p) {
-        html += '<span class="dw-stat-item">' + H(p.name) + ' ×' + p.c + '</span>';
+        html += '<span class="dw-stat-item">' + HM(p.name) + ' ×' + p.c + '</span>';
       });
       html += '</div>';
     } else {
@@ -4033,7 +4035,7 @@ window.WB_VIEWS = (function () {
       beds += '<span class="dorm-bed-tag">' + dormBedNo(i) + dormBedLevel(i) + '</span>';
       if (rec) {
         var g = dormRecGender(rec);
-        beds += '<span class="dorm-bed-name' + (g === '男' ? ' m' : g === '女' ? ' f' : '') + '">' + H(rec.name) + '</span>';
+        beds += '<span class="dorm-bed-name' + (g === '男' ? ' m' : g === '女' ? ' f' : '') + '">' + HM(rec.name) + '</span>';
       } else {
         beds += '<span class="dorm-bed-plus">＋</span>';
       }
@@ -4124,7 +4126,7 @@ window.WB_VIEWS = (function () {
         var dm = r._sid || ('n:' + r.name + ':' + (r.__id || ''));
         var on = DORM_PENDING === dm ? ' on' : '';
         html += '<span class="dorm-pend' + on + (g === '男' ? ' m' : g === '女' ? ' f' : '') + '" data-dm="' + H(dm) + '">' +
-          H(r.name) + (g ? '<i>' + (g === '男' ? '♂' : '♀') + '</i>' : '') + '</span>';
+          HM(r.name) + (g ? '<i>' + (g === '男' ? '♂' : '♀') + '</i>' : '') + '</span>';
       });
       html += '</div>';
       html += '<div class="dorm-pend-tip">' + (DORM_PENDING ? '已选中，点击空床位即可入住' : '点击学生后再点空床，或直接点空床从花名册选择') + '</div>';
@@ -4152,8 +4154,8 @@ window.WB_VIEWS = (function () {
   // 已占床：换人 / 移出 / 编辑档案
   function openDormBedEditor(room, bedNo, rec) {
     var body = '<div style="font-size:13px;margin-bottom:10px;color:var(--c-text-2)">' +
-      '当前入住：<b style="color:var(--c-text)">' + H(rec.name) + '</b> · ' + H(room.name) + ' ' + bedNo + ' 号床' +
-      (rec.roommate ? '<br><small>室友：' + H(rec.roommate) + '</small>' : '') + '</div>';
+      '当前入住：<b style="color:var(--c-text)">' + HM(rec.name) + '</b> · ' + H(room.name) + ' ' + bedNo + ' 号床' +
+      (rec.roommate ? '<br><small>室友：' + HM(rec.roommate) + '</small>' : '') + '</div>';
     WB.openModal('床位 · ' + H(room.name) + ' ' + bedNo + '号', body, [
       { text: '关闭', cls: 'btn', act: 'close' },
       { text: '编辑档案', cls: 'btn', act: 'edit' },

@@ -34,6 +34,38 @@
       .replace(/'/g, '&#39;');
   }
 
+  // ============ 隐私遮罩（一键隐藏，截图防泄露） ============
+  function privacyOn() {
+    try { return localStorage.getItem('wb_privacy') === '1'; } catch (e) { return false; }
+  }
+  function maskText(v) { return privacyOn() ? '***' : v; }
+  // 判断字段是否为隐私字段（姓名 / 学号 / 电话 / 住址 / 家长 / 紧急联系人 / 室友 / 健康等）
+  function isPrivateField(f) {
+    if (!f) return false;
+    var n = String(f.name || '').toLowerCase();
+    if (['name','studentno','phone','address','wechat','parentname','guardianphone','emergencyphone','roommate','building','roomno','bedno','host','handler','allergy','chronic','medication'].indexOf(n) >= 0) return true;
+    var lbl = f.label || '';
+    if (/姓名|学号|联系电话|家庭住址|微信号|家长(姓名|电话)|紧急联系人|室友|床位号|房间号|楼栋|主讲人|处理人|过敏源|慢性病|常用药物/.test(lbl)) return true;
+    return false;
+  }
+  // 通用表格单元格渲染（自动对隐私字段打码）
+  function cellHtml(tableId, f, row) {
+    if (f.type === 'tags') {
+      var rtags = Array.isArray(row[f.name]) ? row[f.name] : [];
+      return '<td><div class="cell-tags">' + (rtags.map(tagChipHtml).join('') || '<span style="color:var(--c-text-3)">—</span>') + '</div></td>';
+    }
+    if (f.name === 'name') {
+      return '<td>' + renderNameCell(tableId, row, row[f.name]) + '</td>';
+    }
+    var v = row[f.name];
+    if (isPrivateField(f)) v = maskText(v);
+    var tdCls = f.type === 'textarea' ? ' class="wrap"' : '';
+    var disp = v;
+    if (f.type === 'textarea' && disp) disp = escapeHtml(disp).slice(0, 80) + (String(disp).length > 80 ? '…' : '');
+    else disp = escapeHtml(disp);
+    return '<td' + tdCls + '>' + (disp || '<span style="color:var(--c-text-3)">—</span>') + '</td>';
+  }
+
   function showToast(msg, duration) {
     var t = el('toast');
     t.textContent = msg;
@@ -308,12 +340,12 @@
 
   // 家长通讯录姓名列：显示「学号 · 姓名」，并对重名学生给出角标，避免混淆
   function renderNameCell(tableId, row, nameVal) {
-    if (tableId !== 'contacts') return escapeHtml(nameVal);
-    var no = row.studentNo || '';
+    if (tableId !== 'contacts') return escapeHtml(maskText(nameVal));
+    var no = maskText(row.studentNo || '');
     var dup = 0;
     (getTable('contacts') || []).forEach(function (r) { if (r.name && r.name === nameVal) dup++; });
     var h = (no ? '<span class="sn-no">' + escapeHtml(no) + '</span><span class="sn-sep"> · </span>' : '') +
-            (escapeHtml(nameVal) || '<span style="color:var(--c-text-3)">—</span>');
+            (escapeHtml(maskText(nameVal)) || '<span style="color:var(--c-text-3)">—</span>');
     if (dup > 1) h += ' <span class="dup-badge" title="存在重名学生，请核对学号">×' + dup + '</span>';
     return h;
   }
@@ -830,22 +862,7 @@
         var cls = sel.has(idx) ? ' class="selected"' : '';
         html += '<tr' + cls + '>';
         html += '<td class="checkbox-cell"><input type="checkbox" data-sel="' + idx + '"' + checked + '></td>';
-        visibleFields.forEach(function (f) {
-          if (f.type === 'tags') {
-            var rtags = Array.isArray(row[f.name]) ? row[f.name] : [];
-            html += '<td><div class="cell-tags">' + (rtags.map(tagChipHtml).join('') || '<span style="color:var(--c-text-3)">—</span>') + '</div></td>';
-            return;
-          }
-          if (f.name === 'name') {
-            html += '<td>' + renderNameCell(tableId, row, row[f.name]) + '</td>';
-            return;
-          }
-          var v = row[f.name];
-          var tdCls = f.type === 'textarea' ? ' class="wrap"' : '';
-          if (f.type === 'textarea' && v) v = escapeHtml(v).slice(0, 80) + (v.length > 80 ? '…' : '');
-          else v = escapeHtml(v);
-          html += '<td' + tdCls + '>' + (v || '<span style="color:var(--c-text-3)">—</span>') + '</td>';
-        });
+        visibleFields.forEach(function (f) { html += cellHtml(tableId, f, row); });
         html += '<td class="op"><button class="btn btn-sm" data-act="edit" data-idx="' + idx + '">编辑</button>' +
                 '<button class="btn btn-sm btn-danger" data-act="del" data-idx="' + idx + '">删除</button></td>';
         html += '</tr>';
@@ -1095,22 +1112,7 @@
       var trCls = sel.has(idx) ? ' class="selected"' : '';
       html += '<tr' + trCls + '>';
       html += '<td class="checkbox-cell"><input type="checkbox" data-sel="' + idx + '"' + checked + '></td>';
-      visibleFields.forEach(function (f) {
-        if (f.type === 'tags') {
-          var tags = Array.isArray(row[f.name]) ? row[f.name] : [];
-          html += '<td><div class="cell-tags">' + (tags.map(tagChipHtml).join('') || '<span style="color:var(--c-text-3)">—</span>') + '</div></td>';
-          return;
-        }
-        if (f.name === 'name') {
-          html += '<td>' + renderNameCell(tableId, row, row[f.name]) + '</td>';
-          return;
-        }
-        var v = row[f.name];
-        var tdCls = f.type === 'textarea' ? ' class="wrap"' : '';
-        if (f.type === 'textarea' && v) v = escapeHtml(v).slice(0, 80) + (v.length > 80 ? '…' : '');
-        else v = escapeHtml(v);
-        html += '<td' + tdCls + '>' + (v || '<span style="color:var(--c-text-3)">—</span>') + '</td>';
-      });
+      visibleFields.forEach(function (f) { html += cellHtml(tableId, f, row); });
       html += '<td class="op"><button class="btn btn-sm" data-act="edit" data-idx="' + idx + '">编辑</button>' +
               '<button class="btn btn-sm btn-danger" data-act="del" data-idx="' + idx + '">删除</button></td>';
       html += '</tr>';
@@ -1660,7 +1662,7 @@
         '<div><button class="btn btn-sm" id="seatmap-resync" title="重新从花名册同步">↻ 刷新花名册</button>' +
         '<button class="btn btn-sm" id="seatmap-newtab" title="在新标签打开">↗ 新标签打开</button></div>' +
       '</div>' +
-      '<iframe id="' + iframeId + '" src="seat-map/seat-map.html?wb=1" style="width:100%;height:calc(100vh - 160px);border:none;display:block"></iframe>' +
+      '<iframe id="' + iframeId + '" src="seat-map/seat-map.html?wb=1' + (privacyOn() ? '&privacy=1' : '') + '" style="width:100%;height:calc(100vh - 160px);border:none;display:block"></iframe>' +
     '</div>';
   }
 
@@ -1677,7 +1679,7 @@
         });
         localStorage.setItem(SEATMAP_ROSTER_KEY, JSON.stringify(roster));
       } catch (e) {}
-      window.open('seat-map/seat-map.html?wb=1', '_blank');
+      window.open('seat-map/seat-map.html?wb=1' + (privacyOn() ? '&privacy=1' : ''), '_blank');
     };
 
     // 重新同步花名册到 iframe
@@ -1690,7 +1692,7 @@
         localStorage.setItem(SEATMAP_ROSTER_KEY, JSON.stringify(roster));
       } catch (e) {}
       // 触发 iframe 重载，seat-map 启动时会重新读 localStorage
-      seatMapIframeRef.src = 'seat-map/seat-map.html?wb=1&t=' + Date.now();
+      seatMapIframeRef.src = 'seat-map/seat-map.html?wb=1' + (privacyOn() ? '&privacy=1' : '') + '&t=' + Date.now();
       showToast('已重新同步花名册');
     };
 
@@ -2028,10 +2030,26 @@
   }
 
   // ============ 事件绑定 ============
+  // 一键隐藏隐私信息（截图防泄露）：状态存 localStorage，刷新保持
+  function togglePrivacy() {
+    var on = privacyOn();
+    try { localStorage.setItem('wb_privacy', on ? '0' : '1'); } catch (e) {}
+    updatePrivacyBtn();
+    render();
+    showToast(on ? '已显示真实信息' : '已隐藏隐私信息（可安全截图）');
+  }
+  function updatePrivacyBtn() {
+    var b = el('btn-privacy');
+    if (!b) return;
+    if (privacyOn()) { b.textContent = '👁 已隐'; b.classList.add('on'); }
+    else { b.textContent = '🙈 隐私'; b.classList.remove('on'); }
+  }
+
   function bindGlobal() {
     el('btn-version').addEventListener('click', openVersions);
     el('btn-backup').addEventListener('click', backupAll);
     el('btn-restore').addEventListener('click', restoreAll);
+    el('btn-privacy').addEventListener('click', togglePrivacy);
     el('file-restore').addEventListener('change', function (e) {
       var file = e.target.files[0];
       if (file) handleRestoreFile(file);
@@ -2056,6 +2074,7 @@
     state.tables = state.tables || {};
     migrateRosterTags();
     bindGlobal();
+    updatePrivacyBtn();
     render();
   }
 
@@ -2078,7 +2097,9 @@
     // 统一学生选择器：所有需要选学生的场景复用，数据源唯一来自花名册
     openStudentPicker: openStudentPicker,
     isStudentPickerField: isStudentPickerField,
-    closeModal: closeModal
+    closeModal: closeModal,
+    privacyOn: privacyOn,
+    maskText: maskText
   };
 
   // DOM ready
