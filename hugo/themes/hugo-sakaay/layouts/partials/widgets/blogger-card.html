@@ -1,0 +1,33 @@
+{{ $b := site.Params.blogger }}
+{{ if $b }}
+<div class="blogger-card"{{ with $b.backgroundImage }} style="background-image:url('{{ . }}')"{{ end }}>
+  <div class="blogger-inner">
+    <div class="avatar-wrapper {{ $b.shape | default "circle-rotate" }}">
+      {{ if and (eq ($b.shape | default "circle-rotate") "circle-rotate") $b.circleBgImg }}
+      <span class="avatar-circle-bg" style="background-image:url('{{ $b.circleBgImg }}')"></span>
+      {{ end }}
+      <img class="blogger-avatar" src="{{ $b.avatar }}" alt="{{ $b.name }}" loading="lazy">
+      {{ with $b.status }}
+      <span class="status-icon" title="{{ .title | default "" }}" style="{{ with .size }}font-size:{{ . }}px{{ end }}">{{ .icon }}</span>
+      {{ end }}
+    </div>
+    <div class="blogger-name">{{ $b.name }}</div>
+    <div class="blogger-slogan">{{ $b.slogan }}</div>
+    {{ with $b.social }}
+    <div class="blogger-social-icons">
+      {{ range . }}
+      <a class="blogger-social-icon" href="{{ .url }}" target="_blank" rel="noopener" title="{{ .name }}">
+        {{ if .icon }}
+          {{ if hasPrefix .icon "/" }}
+            <img src="{{ .icon }}" alt="{{ .name }}" style="width:16px;height:16px">
+          {{ else }}
+            {{ partial "icon.html" (dict "name" .icon) }}
+          {{ end }}
+        {{ end }}
+      </a>
+      {{ end }}
+    </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

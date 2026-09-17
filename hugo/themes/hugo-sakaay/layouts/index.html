@@ -1,0 +1,95 @@
+{{ define "main" }}
+{{ $hero := site.Params.hero }}
+{{ with hugo.Data.heroBackgrounds }}
+<script>window.heroBgImages = {{ . | jsonify | safeJS }};</script>
+<style>:root { --home-body-bg: url('{{ index . 1 | default (index . 0) }}'); }</style>
+{{ end }}
+{{ if $hero.enabled }}
+<section class="hero-section{{ if not $hero.fullscreen }} hero-static{{ end }}" id="hero">
+  {{ if site.Params.heroBg.enabled }}
+    <div class="hero-bg is-active" id="heroBg"></div>
+    <div class="hero-mask"></div>
+  {{ end }}
+
+  <div class="hero-content">
+    <h1 class="hero-title">{{ $hero.name | default site.Title }}</h1>
+    {{ with $hero.tagline }}<p class="hero-tagline">{{ . }}</p>{{ end }}
+    <span class="hero-subtitle" id="heroSubtitle"
+          data-items="{{ range site.Params.heroSubtitle.items }}{{ .text }}||{{ end }}"
+          data-type-speed="{{ site.Params.heroSubtitle.typeSpeed | default 90 }}"
+          data-delete-speed="{{ site.Params.heroSubtitle.deleteSpeed | default 45 }}"
+          data-hold="{{ site.Params.heroSubtitle.hold | default 1800 }}"
+          data-next-delay="{{ site.Params.heroSubtitle.nextDelay | default 600 }}">
+      <span id="heroSubtitleText"></span><span class="hero-subtitle__caret">|</span>
+    </span>
+
+    {{ with $hero.actions }}
+    <div class="hero-actions">
+      {{ range . }}
+      <a class="btn {{ if eq .theme "brand" }}btn-brand{{ else }}btn-ghost{{ end }}" href="{{ .url | relURL }}" {{ if hasPrefix .url "http" }}target="_blank" rel="noopener"{{ end }}>{{ .text }}</a>
+      {{ end }}
+    </div>
+    {{ end }}
+
+    {{ with $hero.features }}
+    <div class="hero-features">
+      {{ range . }}
+      <div class="feature-item">
+        <div class="feature-title">{{ .title }}</div>
+        <div class="feature-details">{{ .details }}</div>
+      </div>
+      {{ end }}
+    </div>
+    {{ end }}
+  </div>
+
+  <a class="hero-scroll-indicator" href="#content" aria-label="向下滚动">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 5v14M6 13l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </a>
+
+  {{ if site.Params.heroBg.enabled }}
+  <svg class="hero-waves" xmlns="http://www.w3.org/2000/svg" viewBox="0 24 150 28" preserveAspectRatio="none">
+    <defs>
+      <path id="wave-path" d="M-160 44c30 0 58-18 88-18s58 18 88 18 58-18 88-18 58 18 88 18v44h-352z"/>
+    </defs>
+    <g class="parallax">
+      <use href="#wave-path" x="48" y="0" fill="rgba(255,255,255,0.28)"/>
+      <use href="#wave-path" x="48" y="3" fill="rgba(255,255,255,0.20)"/>
+      <use href="#wave-path" x="48" y="5" fill="rgba(255,255,255,0.12)"/>
+      <use href="#wave-path" x="48" y="7" fill="rgba(255,255,255,0.06)"/>
+    </g>
+  </svg>
+  {{ end }}
+</section>
+{{ end }}
+
+<div class="home-content-section" id="content">
+  <div class="container">
+    {{/* 与原站一致：左侧卡片栏 + 右侧内容（正文介绍放在右侧主列内） */}}
+    <div class="home-content">
+      {{ partial "home-sidebar.html" . }}
+      <div class="main-column">
+        {{ with .Content }}
+        <div class="home-intro content-container">
+          <div class="vp-doc">{{ . }}</div>
+        </div>
+        {{ end }}
+        <section class="posts-section">
+          <h2 class="section-title"><span class="title-icon">📝</span>最新文章</h2>
+          <div class="post-grid" id="postGrid">
+            {{ $pages := where site.RegularPages "Type" "ne" "page" }}
+            {{ $pages = $pages.ByDate.Reverse }}
+            {{ $pager := .Paginate $pages }}
+            {{ range $pager.Pages }}
+              {{ partial "article-card.html" . }}
+            {{ end }}
+          </div>
+          {{ partial "pagination.html" . }}
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+{{ end }}

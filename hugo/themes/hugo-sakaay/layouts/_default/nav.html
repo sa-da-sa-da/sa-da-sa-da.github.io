@@ -1,0 +1,29 @@
+{{ define "main" }}
+<div class="full-page">
+  <div class="nav-page-header">
+    <h1>{{ .Title | default "网站导航" }}</h1>
+    <p class="search-page-desc">收录常用自建服务与外部资源，点击卡片直达。</p>
+    <div class="search-bar">
+      <input type="text" id="navSearch" placeholder="输入关键词过滤站点…" autocomplete="off">
+    </div>
+  </div>
+
+  {{ range hugo.Data.apps }}
+  <section class="nav-group">
+    <h2 class="nav-group-title">{{ .title }}</h2>
+    <div class="nav-grid">
+      {{ range .items }}
+      <a class="nav-card-item" href="{{ .url }}" target="_blank" rel="noopener"
+         data-name="{{ .name }}" data-desc="{{ .desc }}">
+        <span class="nav-card-icon">{{ with .icon }}{{ . }}{{ else }}🔗{{ end }}</span>
+        <span>
+          <span class="nav-card-name">{{ .name }}</span>
+          <span class="nav-card-desc">{{ .desc }}</span>
+        </span>
+      </a>
+      {{ end }}
+    </div>
+  </section>
+  {{ end }}
+</div>
+{{ end }}

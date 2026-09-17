@@ -1,0 +1,22 @@
+{{- $pages := where site.RegularPages "Type" "ne" "page" -}}
+{{- $pages = where $pages "Params.noindex" "!=" true -}}
+{{- $items := slice -}}
+{{- range $i, $p := $pages -}}
+  {{- $plain := $p.Plain -}}
+  {{- $headers := "" -}}
+  {{- range $p.Fragments.Headings -}}{{- $headers = printf "%s %s" $headers .Title -}}{{- end -}}
+  {{- $item := dict
+    "id" (add $i 1)
+    "title" $p.Title
+    "normalizedTitle" (lower $p.Title)
+    "headers" (trim $headers " ")
+    "content" (truncate 3000 $plain)
+    "normalizedContent" (lower (truncate 3000 $plain))
+    "url" $p.RelPermalink
+    "categories" ($p.Params.categories | default (slice))
+    "tags" ($p.Params.tags | default (slice))
+    "date" ($p.Date.Format "2006-01-02")
+  -}}
+  {{- $items = $items | append $item -}}
+{{- end -}}
+{{- jsonify (dict "indent" "  ") $items -}}

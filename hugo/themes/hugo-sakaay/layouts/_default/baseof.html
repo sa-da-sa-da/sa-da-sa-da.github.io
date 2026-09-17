@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default "zh-CN" }}" data-home-style="blog-card">
+<head>
+{{ partial "head.html" . }}
+</head>
+<body class="{{ if .IsHome }}home-page{{ end }}{{ if eq .Type "docs" }} doc-page{{ end }}">
+  {{ partial "header.html" . }}
+
+  <main class="main-content" id="VPContent">
+    {{ block "main" . }}{{ end }}
+  </main>
+
+  {{ partial "footer.html" . }}
+  {{/* 随页面变化、但位于内容区之外的部分；SPA 导航时与 #VPContent 一起替换 */}}
+  <div id="page-extras">{{ partial "mobile-bar.html" . }}</div>
+  {{ partial "back-to-top.html" . }}
+  {{ partial "search-modal.html" . }}
+  {{ partial "scripts.html" . }}
+</body>
+</html>

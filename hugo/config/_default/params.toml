@@ -1,0 +1,294 @@
+# ============================================================
+#  站点参数（原 VitePress 站点配置的等价迁移）
+# ============================================================
+
+# ---------- 基础 ----------
+description = "✨高中信息技术教师的多元工作记录站 | 学生编程 / 机器人学习的技术支持平台"
+keywords = ["信息技术", "教学", "Python", "VEX", "机器人", "考试", "知识库"]
+author = "sakaay|飒龘"
+logo = "/img/logo.png"
+favicon = "/favicon.ico"
+siteStartDate = "2021-10-19T00:00:00+08:00"
+layoutMode = "blog-card"
+themeSize = "large"
+sidebarTrigger = true
+sidebar = true
+windowTransition = true
+
+# 首页/文章日期格式
+dateFormat = "2006-01-02"
+
+# ---------- 博主卡片 ----------
+[blogger]
+  name = "sakaay|飒龘"
+  slogan = "当以读书通世事"
+  avatar = "/img/xyy.webp"
+  shape = "circle-rotate"
+  circleBgImg = "https://img.sakaay.com/d/img/sakaay/14.avif"
+  circleBgMask = false
+  backgroundImage = "https://img.sakaay.com/d/img/bz/1.avif"
+  [blogger.status]
+    icon = "😜"
+    size = 24
+    title = "有趣"
+  [[blogger.social]]
+    name = "Gitee"
+    icon = "gitee"
+    url = "https://github.com/sa-da-sa-da"
+
+# ---------- 首页 Hero ----------
+[hero]
+  enabled = true
+  name = "sakaay"
+  text = "当以读书通世事"
+  tagline = "✨高中信息技术教师的多元工作记录站 | 学生编程 / 机器人学习的技术支持平台"
+  image = "/img/logo.png"
+  fullscreen = true
+  autoPlay = true
+  interval = 8000
+
+[heroBg]
+  enabled = true
+  autoPlay = true
+  mode = "static"
+
+[[heroSubtitle.items]]
+  text = "当以读书通世事"
+[[heroSubtitle.items]]
+  text = "学而不思则罔，思而不学则殆"
+[[heroSubtitle.items]]
+  text = "信息技术 · 创客教育 · 人工智能"
+[heroSubtitle]
+  typeSpeed = 90
+  deleteSpeed = 45
+  hold = 1800
+  nextDelay = 600
+  shuffle = false
+
+[[hero.actions]]
+  text = "编程"
+  url = "https://ee.sakaay.com"
+  theme = "brand"
+[[hero.actions]]
+  text = "机器人"
+  url = "/steam/steam-index"
+  theme = "alt"
+[[hero.actions]]
+  text = "网盘"
+  url = "https://zf.sakaay.com"
+  theme = "alt"
+[[hero.actions]]
+  text = "时间"
+  url = "https://time.sakaay.com"
+  theme = "alt"
+
+[[hero.features]]
+  title = "轻量高效 · 配置灵活"
+  details = "基于 Hugo 构建，秒级构建速度，内容以 Markdown 组织，维护成本极低。"
+[[hero.features]]
+  title = "多角色教师的自留地"
+  details = "教案、教材、考试题库、班级工具一站收纳，覆盖教学全流程。"
+[[hero.features]]
+  title = "学生专属技术支持站"
+  details = "Python 在线编辑器、VEX 机器人教程、AI 创作工具，边学边练。"
+[[hero.features]]
+  title = "深耕教学 · 探索 AI"
+  details = "持续引入 AI 助力编程与图像生成，把新技术带进课堂。"
+
+# ---------- 首页侧边栏卡片 ----------
+[homeSidebar]
+  [homeSidebar.blogger]
+    enabled = true
+  [homeSidebar.announcement]
+    enabled = true
+  [homeSidebar.calendar]
+    enabled = true
+  [homeSidebar.timeProgress]
+    enabled = true
+  [homeSidebar.recentComments]
+    enabled = true
+    pageSize = 5
+    totalSize = 50
+  [homeSidebar.featuredPosts]
+    enabled = true
+    limit = 5
+    interval = 5000
+  [homeSidebar.categories]
+    enabled = true
+    limit = 8
+  [homeSidebar.hotTags]
+    enabled = true
+    limit = 21
+  [homeSidebar.friendLinks]
+    enabled = false
+    limit = 5
+    interval = 5000
+  [homeSidebar.siteInfo]
+    enabled = true
+  [homeSidebar.wechatOfficial]
+    enabled = true
+
+# ---------- 文档侧边栏卡片 ----------
+[docSidebar]
+  [docSidebar.categories]
+    enabled = true
+    limit = 8
+  [docSidebar.hotTags]
+    enabled = true
+    limit = 21
+  [docSidebar.siteInfo]
+    enabled = true
+
+# ---------- 搜索 ----------
+[search]
+  enabled = true
+  provider = "flexsearch"   # flexsearch | algolia
+  placeholder = "搜索文档"
+  [search.algolia]
+    enabled = false          # 保留配置备用
+    appId = "6AC1N60WH4"
+    apiKey = "90f7d1ece3094d290fe42fcaf6cdfd3c"
+    indexName = "onedayxyy"
+
+# ---------- 评论 ----------
+[comment]
+  enabled = true
+  type = "twikoo"
+  envId = "https://twikoo.onedayxyy.cn/"
+  version = "1.6.41"
+
+# ---------- 赞赏 ----------
+[appreciation]
+  enabled = true
+  position = "doc-after"
+  icon = "weChatPay"
+  expandTitle = "打赏支持"
+  collapseTitle = "下次一定"
+  expand = false
+  wechatQR = "/img/alipay/1.png"
+  alipayQR = "/img/alipay/2.png"
+
+# ---------- 公告 ----------
+[announcement]
+  enabled = true
+  title = "公告"
+  [announcement.content]
+    title = "sakaay 当以读书通世事"
+    text = "高中信息技术教师的工作记录站，教案 / 题库 / 创客 / AI 工具一站收录，欢迎交流学习！"
+    url = "/about/website"
+
+# ---------- 公众号 ----------
+[wechatOfficial]
+  enabled = true
+  title = "关注公众号"
+  name = "sakaay小站"
+  qrcode = "/img/wechat/qrcode.png"
+  desc = "扫码关注，获取更多教学资源"
+
+# ---------- 文章信息 ----------
+[articleAnalyze]
+  showIcon = true
+  showInfo = true
+  showAuthor = true
+  showCreateDate = true
+  showUpdateDate = true
+  showCategory = true
+  showTag = true
+  wordCount = true
+  readingTime = true
+
+# 文章超过半年提示过时
+[articleTopTip]
+  enabled = true
+  months = 6
+  text = "文章发布较早，内容可能过时，阅读注意甄别。"
+
+# 代码块
+[codeBlock]
+  collapseHeight = 700
+  overlay = true
+  overlayHeight = 400
+
+# ---------- 风险链接提示 ----------
+[riskLink]
+  enabled = true
+  whitelist = ["https://*.sakaay.com/", "https://time.sakaay.com/", "https://github.com/", "https://gitee.com/"]
+  blacklist = []
+
+# ---------- 分享 ----------
+[articleShare]
+  enabled = true
+
+# ---------- 页脚 ----------
+[footer]
+  showServices = true
+  copyrightYearStart = 2021
+  copyrightSuffix = "sakaay|飒龘 当以读书通世事"
+  customMessage = "初闻不知曲中意，再听已是曲中人"
+  motto = "初闻不知曲中意，再听已是曲中人"
+  themeName = "Theme By sakaay"
+  [footer.icp]
+    enabled = true
+    number = "豫ICP备2024096633号-1"
+    url = "http://beian.miit.gov.cn/"
+  [footer.security]
+    enabled = true
+    number = "豫公网安备41010702003985号"
+    url = "https://beian.mps.gov.cn/#/query/webSearch?code=41010702003985"
+  [footer.privacy]
+    enabled = true
+    text = "隐私政策"
+    url = "/pages/5e2700"
+
+# ---------- 统计分析 ----------
+[analytics]
+  [analytics.baidu]
+    enabled = true
+    id = "d5ee872d9aa1ef8021f4a3921b2e9c2a"
+  [analytics.google]
+    enabled = true
+    id = "G-K5GNDW3L7K"
+  [analytics.clarity]
+    enabled = true
+    id = "v0l0n6c09l"
+  [analytics.la51]
+    enabled = true
+    id = "3LmZHLhDZIDpMaT0"
+  [analytics.vercount]
+    enabled = false
+
+# ---------- 广告 ----------
+[ads]
+  enabled = true
+  client = "ca-pub-2897720906666216"
+  articleSlot = "2668661755"
+  sidebarSlot = "4522753183"
+  footerSlot = "4281684534"
+  navSlot = "7966054610"
+  autoInject = true
+  every = 5
+  maxAds = 3
+
+# ---------- 其它 ----------
+[titleChange]
+  enabled = true
+  hidden = "w(ﾟДﾟ)w 不要走！再看看嘛！"
+  back = "♪(^∇^*)欢迎回来！"
+  resetDelay = 2000
+
+[scrollProgress]
+  enabled = true
+
+[backTop]
+  enabled = true
+
+[toComment]
+  enabled = true
+
+[cursorEffects]
+  enabled = false   # 鼠标拖尾星星
+
+[homepage]
+  paginatePCSize = 39
+  mobileInitialShow = 10
+  mobileLoadMoreStep = 10

@@ -1,0 +1,47 @@
+{{ define "main" }}
+<div class="center-page">
+  <div class="center-page-container">
+    <div class="tk-archives">
+      <div class="tk-archives__header">
+        <h1>归档</h1>
+        <span class="count">共 {{ len (where site.RegularPages "Type" "ne" "page") }} 篇</span>
+      </div>
+
+      {{ $pages := where site.RegularPages "Type" "ne" "page" }}
+      {{ $pages = $pages.ByDate.Reverse }}
+      {{ $grouped := $pages.GroupByDate "2006" }}
+
+      <div class="contribute-chart-wrapper">
+        <div class="sidebar-card">
+          <div class="card-title"><span class="title-icon">📊</span><span class="title-text">文章贡献图</span></div>
+          <div id="contributeChart" style="min-height:120px;overflow-x:auto">
+            {{ range $grouped }}
+              <div class="contribute-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <span style="font-size:.78rem;color:var(--text-muted);min-width:44px">{{ .Key }}</span>
+                <span style="font-size:.78rem;color:var(--text-secondary)">{{ len .Pages }} 篇</span>
+                <span style="flex:1;height:8px;border-radius:999px;background:var(--vp-c-bg-alt);overflow:hidden;display:inline-block">
+                  <span style="display:block;height:100%;width:{{ mul (div (len .Pages) (len $pages)) 100 }}%;background:var(--gradient-cyber)"></span>
+                </span>
+              </div>
+            {{ end }}
+          </div>
+        </div>
+      </div>
+
+      <div class="tk-archives__timeline">
+        {{ range $grouped }}
+        <div class="archive-year">{{ .Key }} 年</div>
+        {{ range .Pages }}
+        <div class="archive-item">
+          <span class="archive-date">{{ .Date.Format "01-02" }}</span>
+          <a class="archive-title" href="{{ .RelPermalink }}">{{ .Title }}</a>
+        </div>
+        {{ end }}
+        {{ end }}
+      </div>
+
+      {{ partial "comment.html" . }}
+    </div>
+  </div>
+</div>
+{{ end }}

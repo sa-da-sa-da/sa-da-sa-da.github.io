@@ -1,0 +1,277 @@
+// ============================================================
+//  正文排版 / 代码块 / 容器 / 表格
+// ============================================================
+.vp-doc {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text-color);
+  word-wrap: break-word;
+
+  h1 { font-size: 2rem; margin: 1.5rem 0 1rem; }
+  h2 {
+    font-size: 1.5rem; margin: 2rem 0 1rem;
+    padding-bottom: 0.3rem; border-bottom: 1px solid var(--border-color);
+  }
+  h3 { font-size: 1.25rem; margin: 1.6rem 0 0.8rem; }
+  h4 { font-size: 1.1rem; margin: 1.4rem 0 0.7rem; }
+
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1rem; }
+  li { margin: 4px 0; }
+  blockquote {
+    margin: 1rem 0; padding: 0.6rem 1rem;
+    border-left: 4px solid var(--primary-color);
+    background: var(--vp-c-bg-alt); border-radius: 0 8px 8px 0;
+    color: var(--text-secondary);
+    p:last-child { margin-bottom: 0; }
+  }
+  img { border-radius: 8px; box-shadow: var(--vp-shadow-1); margin: 0.5rem 0; }
+  table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    margin: 1rem 0; font-size: 0.92rem;
+    border-radius: 10px; overflow: hidden;
+    box-shadow: 0 2px 12px rgba(6, 182, 212, 0.2);
+    th {
+      background: #cffafe; color: #0e4690; font-weight: 600;
+      border-bottom: 1px solid #75e2f5; padding: 9px 12px; text-align: left;
+    }
+    td { padding: 9px 12px; border-bottom: 1px solid rgba(6, 182, 212, 0.3); }
+    tbody tr:nth-child(odd) { background: rgba(207, 250, 254, 0.4); }
+    tbody tr:nth-child(even) { background: #ffffff; }
+    tbody tr:hover { background: rgba(207, 250, 254, 0.6); }
+  }
+  .dark-mode & table th { background: #6e6099; color: #fafaff; border-bottom-color: #ad9dd3; }
+  .dark-mode & table td { border-bottom-color: rgba(139, 92, 246, 0.3); }
+  .dark-mode & table tbody tr:nth-child(odd) { background: rgba(167, 139, 250, 0.15); }
+  .dark-mode & table tbody tr:nth-child(even) { background: rgba(167, 139, 250, 0.05); }
+  .dark-mode & table tbody tr:hover { background: rgba(167, 139, 250, 0.25); }
+
+  hr { margin: 2rem 0; border-top: 1px solid var(--border-color); }
+
+  // 脚注
+  .footnotes { font-size: 0.9rem; color: var(--text-secondary); }
+}
+
+// ---------- 代码块 ----------
+.vp-code {
+  position: relative;
+  margin: 1rem 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--code-bg);
+  border: 1px solid var(--border-color);
+  pre {
+    margin: 0; padding: 1rem 1.1rem; overflow-x: auto;
+    code {
+      background: none; padding: 0; font-size: 0.88rem; line-height: 1.7;
+      font-family: 'Monaco', 'Menlo', 'Consolas', 'Courier New', monospace;
+    }
+  }
+  .code-lang {
+    position: absolute; top: 6px; right: 52px;
+    font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;
+  }
+  .copy-code-btn {
+    position: absolute; top: 6px; right: 8px;
+    padding: 3px 8px; border-radius: 6px; font-size: 0.72rem;
+    background: var(--card-bg); border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    &:hover { color: var(--primary-color); border-color: var(--primary-color); }
+  }
+  &.is-collapsed {
+    max-height: 400px; overflow: hidden;
+    &::after {
+      content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 90px;
+      background: linear-gradient(180deg, transparent, var(--code-bg));
+      pointer-events: none;
+    }
+  }
+}
+.code-expand-btn {
+  display: block; width: 100%;
+  padding: 6px 0; text-align: center; font-size: 0.8rem;
+  background: var(--code-bg); color: var(--primary-color);
+  border-top: 1px solid var(--border-color);
+}
+p code, li code, td code {
+  padding: 2px 6px; border-radius: 4px;
+  background: var(--tk-fill-color-light); color: var(--primary-color);
+  font-size: 0.88em;
+  font-family: 'Monaco', 'Menlo', 'Consolas', 'Courier New', monospace;
+}
+
+// ---------- 容器（tip / warning / danger ...） ----------
+.custom-block {
+  margin: 1rem 0; padding: 0.9rem 1.1rem;
+  border-radius: 10px; border-left: 5px solid var(--tk-custom-block-info-left);
+  background: var(--tk-custom-block-info-bg);
+  .custom-block-title { font-weight: 600; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 6px; }
+  p:last-child { margin-bottom: 0; }
+  &.tip { border-left-color: var(--tk-custom-block-tip-left); background: var(--tk-custom-block-tip-bg); }
+  &.warning { border-left-color: var(--tk-custom-block-warning-left); background: var(--tk-custom-block-warning-bg); }
+  &.danger { border-left-color: var(--tk-custom-block-danger-left); background: var(--tk-custom-block-danger-bg); }
+  &.note { border-left-color: var(--tk-custom-block-note-left); background: var(--tk-custom-block-note-bg); }
+  &.important { border-left-color: var(--tk-custom-block-important-left); background: var(--tk-custom-block-important-bg); }
+  &.caution { border-left-color: var(--tk-custom-block-caution-left); background: var(--tk-custom-block-caution-bg); }
+  &.details { border-left-color: var(--tk-custom-block-details-left); background: var(--tk-custom-block-details-bg); }
+}
+
+// ---------- 文章元信息 ----------
+.tk-article-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  font-size: 0.85rem; color: var(--text-secondary);
+  margin-bottom: 1.25rem; padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  .tk-article-meta__item { display: inline-flex; align-items: center; gap: 4px; }
+  .meta-tag-link {
+    padding: 1px 8px; border-radius: 999px; background: var(--tag-bg);
+    color: var(--primary-color); font-size: 0.78rem;
+    &:hover { background: var(--primary-color); color: #fff; }
+  }
+}
+
+.doc-footer-nav {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem;
+  .doc-nav-item {
+    padding: 0.9rem 1rem; border-radius: 10px;
+    border: 1px solid var(--border-color); background: var(--card-bg);
+    transition: all 0.25s ease;
+    .nav-label { font-size: 0.75rem; color: var(--text-muted); }
+    .nav-title { font-size: 0.92rem; font-weight: 500; }
+    &:hover { border-color: var(--primary-color); transform: translateY(-2px); }
+    &.is-next { text-align: right; }
+  }
+}
+
+.doc-copyright {
+  margin-top: 1.5rem; padding: 1rem 1.1rem;
+  border-radius: 10px; background: var(--vp-c-bg-alt);
+  border: 1px dashed var(--border-color);
+  font-size: 0.85rem; color: var(--text-secondary);
+}
+
+// ---------- 赞赏 ----------
+.appreciation {
+  margin-top: 1.5rem; text-align: center;
+  .appreciation-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 18px; border-radius: 999px;
+    background: var(--gradient-primary); color: #fff; font-size: 0.88rem;
+  }
+  .appreciation-content {
+    display: none; margin-top: 1rem;
+    &.is-open { display: block; }
+    img { width: 180px; border-radius: 10px; margin: 0 8px; }
+  }
+}
+
+// ---------- 目录 ----------
+.tk-aside-outline {
+  .outline-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.6rem; color: var(--text-color); }
+  .vp-outline-list { list-style: none; margin: 0; padding: 0; }
+  .vp-outline-item { margin: 0; }
+  .outline-link {
+    display: block; padding: 4px 10px; margin: 1px 0;
+    border-radius: 6px; font-size: 0.84rem; color: var(--text-secondary);
+    border-left: 2px solid transparent;
+    &:hover { color: var(--primary-color); background: var(--tk-fill-color-light); }
+    &.is-active { color: var(--primary-color); border-left-color: var(--primary-color); background: var(--tk-fill-color-light); }
+  }
+  // 层级缩进用嵌套结构表达（原生 TableOfContents 无 level-N 类）
+  .vp-outline-list .vp-outline-list {
+    padding-left: 10px;
+    .outline-link { font-size: 0.8rem; }
+    .vp-outline-list .outline-link { font-size: 0.78rem; }
+  }
+}
+
+// ---------- 文档侧边栏树 ----------
+.sidebar-title {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem;
+  color: var(--text-color);
+}
+.sidebar-tree { list-style: none; margin: 0; padding: 0; font-size: 0.88rem; }
+.sidebar-tree li { margin: 1px 0; }
+.sidebar-tree-row { display: flex; align-items: center; gap: 2px; }
+.sidebar-tree-toggle {
+  display: flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; flex-shrink: 0; border-radius: 5px;
+  color: var(--text-muted);
+  transition: transform 0.22s ease, color 0.2s ease;
+  svg { width: 13px; height: 13px; }
+  &:hover { color: var(--primary-color); background: var(--tk-fill-color-light); }
+}
+.sidebar-tree-group {
+  &.is-collapsed > .sidebar-tree { display: none; }
+  &.is-collapsed > .sidebar-tree-row .sidebar-tree-toggle { transform: rotate(0deg); }
+  &:not(.is-collapsed) > .sidebar-tree-row .sidebar-tree-toggle { transform: rotate(90deg); }
+  &.is-branch-active > .sidebar-tree-row .sidebar-tree-toggle { color: var(--primary-color); }
+}
+.sidebar-tree-link {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-radius: 8px; color: var(--text-secondary);
+  flex: 1; min-width: 0;
+  transition: all 0.2s ease;
+  .sidebar-tree-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &:hover { background: var(--tk-fill-color-light); color: var(--primary-color); }
+  &.is-active {
+    background: var(--tk-fill-color-light); color: var(--primary-color); font-weight: 600;
+    box-shadow: inset 2px 0 0 var(--primary-color);
+  }
+  &.is-open { color: var(--text-color); font-weight: 600; }
+}
+
+// ---------- 文件夹（分组）行与普通页面区分开 ----------
+.sidebar-tree-group > .sidebar-tree-row {
+  border-radius: 8px;
+  margin: 3px 0 2px;
+  background: var(--vp-c-bg-alt);
+  border: 1px solid var(--border-color);
+  padding: 1px 4px 1px 0;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+
+  .sidebar-tree-link {
+    font-weight: 600;
+    color: var(--text-color);
+    padding-left: 6px;
+    &:hover { background: transparent; color: var(--primary-color); }
+    &.is-active { background: transparent; box-shadow: none; }
+  }
+  .sidebar-tree-toggle { color: var(--primary-color); }
+
+  &:hover { background: var(--tk-fill-color-light); border-color: var(--primary-color); }
+}
+.sidebar-tree-group.is-branch-active > .sidebar-tree-row {
+  border-color: var(--primary-color);
+  background: var(--tk-fill-color-light);
+}
+
+// 子级用一条引导线表达层级
+.sidebar-tree-group > .sidebar-tree {
+  padding-left: 12px;
+  margin-left: 10px;
+  border-left: 1px dashed var(--border-color);
+}
+
+// 暗色模式下 --vp-c-bg-alt 与页面底色几乎一致，单独给一层可见的底色
+.dark-mode .sidebar-tree-group > .sidebar-tree-row {
+  background: rgba(148, 163, 184, 0.14);
+  border-color: rgba(148, 163, 184, 0.28);
+  &:hover { background: var(--tk-fill-color-light); border-color: var(--primary-color); }
+}
+.dark-mode .sidebar-tree-group.is-branch-active > .sidebar-tree-row {
+  background: var(--tk-fill-color-light);
+  border-color: var(--primary-color);
+}
+
+// 折叠成窄轨时恢复紧凑样式
+body.simple-sidebar-collapsed .sidebar-tree-group > .sidebar-tree-row {
+  background: transparent; border-color: transparent; padding-right: 0;
+  &:hover { background: transparent; }
+}
+.sidebar-collapse-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 6px; color: var(--text-muted);
+  &:hover { background: var(--tk-fill-color-light); color: var(--primary-color); }
+}

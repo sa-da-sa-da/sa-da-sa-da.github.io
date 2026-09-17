@@ -1,0 +1,25 @@
+{
+  "name": "docs-xx-hugo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "sakaay 站点 Hugo 版（自建主题 hugo-sakaay）",
+  "type": "module",
+  "scripts": {
+    "dev": "hugo server --port 1313 --disableFastRender --cleanDestinationDir",
+    "build": "hugo --minify --cleanDestinationDir",
+    "build:deploy": "hugo --minify --cleanDestinationDir && node scripts/prepare-deploy.mjs",
+    "check:deploy": "node scripts/prepare-deploy.mjs",
+    "preview": "hugo server --port 1313 --disableFastRender --renderToDisk --cleanDestinationDir",
+    "migrate": "node scripts/migrate-content.mjs",
+    "new": "hugo new content"
+  },
+  "devDependencies": {
+    "hugo-extended": "^0.166.0",
+    "js-yaml": "^5.4.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "hugo-extended"
+    ]
+  }
+}

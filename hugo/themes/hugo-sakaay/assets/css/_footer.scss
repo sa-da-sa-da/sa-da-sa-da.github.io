@@ -1,0 +1,80 @@
+// ============================================================
+//  页脚 / 回到顶部 / 消息提示
+// ============================================================
+.site-footer {
+  background: var(--footer-bg);
+  border-top: 1px solid var(--border-color);
+  padding: 2.5rem 0 1.5rem;
+  margin-top: 3rem;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.footer-content {
+  max-width: var(--vp-layout-max-width);
+  margin: 0 auto; padding: 0 1.5rem;
+  text-align: center;
+}
+
+.footer-animals {
+  margin-bottom: 1rem;
+  img { max-height: 60px; }
+}
+
+.footer-services {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  margin-bottom: 1rem;
+  .service-badge { display: inline-flex; img { height: 20px; } }
+}
+
+.footer-info {
+  display: flex; flex-direction: column; gap: 6px; align-items: center;
+  .theme-by, .copyright, .icp-record, .separator { font-size: 0.82rem; }
+  a { color: var(--text-secondary); &:hover { color: var(--primary-color); } }
+}
+
+.footer-motto {
+  margin-top: 1rem; font-size: 0.84rem; color: var(--text-muted);
+  font-style: italic;
+}
+
+// ---------- 回到顶部 ----------
+.rocket-wheel {
+  position: fixed; right: 24px; bottom: 90px; z-index: 50;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  .rocket-btn {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--card-bg); border: 1px solid var(--border-color);
+    box-shadow: var(--vp-shadow-2);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary);
+    transition: all 0.28s ease;
+    &:hover { color: var(--primary-color); transform: translateY(-3px); border-color: var(--primary-color); }
+    svg { width: 19px; height: 19px; }
+  }
+  .scroll-progress-ring { position: absolute; inset: 0; }
+}
+
+// ---------- 主题切换涟漪 ----------
+.theme-ripple-overlay {
+  position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+}
+
+// ---------- 复制提示 ----------
+.copy-notice {
+  position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(20px);
+  z-index: 200; padding: 10px 20px; border-radius: 10px;
+  background: var(--card-bg); border: 1px solid var(--border-color);
+  box-shadow: var(--vp-shadow-3); font-size: 0.86rem;
+  opacity: 0; transition: all 0.28s ease; pointer-events: none;
+  &.is-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+// ---------- 图片查看器 ----------
+.image-viewer {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0, 0, 0, 0.86);
+  display: flex; align-items: center; justify-content: center;
+  cursor: zoom-out;
+  img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+}

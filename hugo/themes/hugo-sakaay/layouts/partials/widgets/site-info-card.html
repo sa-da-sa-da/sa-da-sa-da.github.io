@@ -1,0 +1,19 @@
+{{ $pages := where site.RegularPages "Type" "ne" "page" }}
+{{ $words := 0 }}
+{{ range $pages }}{{ $words = add $words .WordCount }}{{ end }}
+{{ $now := now }}
+{{ $week := $now.AddDate 0 0 -7 }}
+{{ $month := $now.AddDate 0 -1 0 }}
+<div class="sidebar-card tk-site-info-card">
+  <div class="card-title"><span class="title-icon">🐱</span><span class="title-text">站点统计</span></div>
+  <div class="tk-site-info-body">
+    <div class="info-list">
+      <div class="info-item"><span class="info-label">文章数目</span><span class="info-value">{{ len $pages }} 篇</span></div>
+      <div class="info-item"><span class="info-label">近一周新增</span><span class="info-value">{{ len (where $pages "Date" "ge" $week) }} 篇</span></div>
+      <div class="info-item"><span class="info-label">近一月新增</span><span class="info-value">{{ len (where $pages "Date" "ge" $month) }} 篇</span></div>
+      <div class="info-item"><span class="info-label">已运行时间</span><span class="info-value" id="siteRuntime">计算中…</span></div>
+      <div class="info-item"><span class="info-label">本站总字数</span><span class="info-value">{{ if gt $words 10000 }}{{ div $words 10000 }}w{{ else }}{{ $words }}{{ end }} 字</span></div>
+      <div class="info-item"><span class="info-label">最后更新</span><span class="info-value">{{ (index (sort $pages "Lastmod" "desc") 0).Lastmod.Format "2006-01-02" }}</span></div>
+    </div>
+  </div>
+</div>

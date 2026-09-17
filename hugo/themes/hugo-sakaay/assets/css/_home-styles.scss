@@ -1,0 +1,67 @@
+// ============================================================
+//  首页展示风格预设（对应原博客的「配置切换」6 套预设）
+//  由 html[data-home-style] 驱动，JS 负责切换与持久化
+//  doc | blog | blog-part | blog-full | blog-body | blog-card
+// ============================================================
+
+// ---------- 文档预设：隐藏 Banner，改为文档式列表 ----------
+html[data-home-style="doc"] {
+  .home-page .hero-section { display: none; }
+  .home-page .home-content-section { padding-top: 2rem; }
+  .post-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .post-grid .card-cover { display: none; }
+  .post-grid .card-excerpt { display: -webkit-box; }
+  .post-grid .article-card { border-radius: 12px; }
+}
+
+// ---------- 博客预设：中等 Banner，双列列表 ----------
+html[data-home-style="blog"] {
+  .home-page .hero-section { min-height: 62vh; }
+  .home-page .hero-features { display: none; }
+  .post-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+// ---------- 博客小图：小 Banner ----------
+html[data-home-style="blog-part"] {
+  .home-page .hero-section { min-height: 46vh; }
+  .home-page .hero-features { display: none; }
+  .home-page .hero-title { font-size: clamp(2rem, 5vw, 3.4rem); }
+  .home-page .hero-subtitle { font-size: 1rem; margin-bottom: 1.25rem; }
+  .home-page .hero-scroll-indicator { display: none; }
+}
+
+// ---------- 博客大图：全屏 Banner（默认观感） ----------
+html[data-home-style="blog-full"] {
+  .home-page .hero-section { min-height: 100vh; }
+}
+
+// ---------- 博客全图：全站背景图 + 碎片化卡片与文章页 ----------
+html[data-home-style="blog-body"] {
+  .home-page .hero-section { min-height: 72vh; background: transparent; }
+
+  body {
+    background-image: var(--home-body-bg, none);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+
+  .article-card,
+  .home-sidebar .sidebar-card,
+  .blogger-card,
+  .content-container {
+    background-color: var(--glass-bg-color);
+    backdrop-filter: blur(var(--glass-backdrop-blur));
+    -webkit-backdrop-filter: blur(var(--glass-backdrop-blur));
+    border-color: var(--glass-border-color);
+  }
+
+  .home-content-section { background: rgba(255, 255, 255, 0.08); }
+  .site-footer { background: var(--glass-bg-color); backdrop-filter: blur(12px); }
+}
+
+// ---------- 博客卡片：卡片文章列表 + 左侧卡片栏（站点默认） ----------
+html[data-home-style="blog-card"] {
+  .home-page .hero-section { min-height: 100vh; }
+}

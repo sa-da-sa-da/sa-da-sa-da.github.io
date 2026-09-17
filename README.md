@@ -1,82 +1,57 @@
-<h1 align="center">vitepress-theme-teek</h1>
+<h1 align="center">sakaay 站点</h1>
 
 <div align="center">
 
-[Github](https://github.com/Kele-Bingtang/vitepress-theme-teek) ｜ [Gitee](https://gitee.com/kele-bingtang/vitepress-theme-teek) ｜ [Preview](https://notes.teek.top/) ｜[Docs](http://vp.teek.top/)
-
-✨一个轻量、简洁高效、灵活配置、易于扩展的 VitePress       主题。
+当以读书通世事 · 高中信息技术教师的多元工作记录站
 
 </div>
 
-<p align="center">
-  <a title="Github release" target="_blank" href="https://github.com/Kele-Bingtang/vitepress-theme-teek/releases">
-    <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/Kele-Bingtang/vitepress-theme-teek?logo=github">
-  </a>
+## 项目结构
 
-  <a title="Npm Version" target="_blank" href="https://www.npmjs.com/package/vitepress-theme-teek">
-    <img src="https://img.shields.io/npm/v/vitepress-theme-teek?logo=npm&color=%09%23bf00ff" alt="https://img.shields.io/npm/v/vitepress-theme-teek?color=%09%23bf00ff">
-  </a>
+| 目录 | 说明 |
+| --- | --- |
+| `hugo/` | **主站**：Hugo 站点（自建主题 `hugo-sakaay`），部署目标 |
+| `docs/` | legacy：原 VitePress + teek 主题站点；同时作为 Hugo 的静态资源来源（`hugo.toml` 挂载 `../docs/public`） |
+| `.github/workflows/deploy-hugo-pages.yml` | 主流水线：推送 `main`/`master` 自动构建并发布 Hugo 站到 GitHub Pages |
+| `.github/workflows/deploy-gh-pages.yml` | legacy 流水线：VitePress，已改为仅手动触发（回退用） |
 
-  <img src="https://img.shields.io/badge/v18.x-x?logo=node.js&label=node" alt="node version">
-  <img src="https://img.shields.io/github/languages/code-size/Kele-Bingtang/vitepress-theme-teek?logo=Visual Studio Code&logoColor=blue" alt="GitHub code size in bytes">
-
-  <a title="GitHub Discussions" target="_blank" href="https://github.com/Kele-Bingtang/vitepress-theme-teek/discussions">
-    <img src="https://img.shields.io/github/discussions/Kele-Bingtang/vitepress-theme-teek?color=9cf&logo=github" alt="GitHub Discussions">
-  </a>
-
-  <a title="MIT License" target="_blank" href="https://github.com/Kele-Bingtang/vitepress-theme-teek/blob/master/LICENSE">
-    <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License">
-  </a>
-</p>
-
-## Teek 在线安装
-
-具体信息见如下链接：《[Teek](https://onedayxyy.cn/teek)》
-
-![image-20250702074216619](https://img.onedayxyy.cn/images/image-20250702074216619.png)
-
-## 本地运行
-
-项目拉取
+## 本地开发（Hugo 主站）
 
 ```bash
-git clone https://cnb.cool/onedayxyy/vitepress-theme-teek-one-public.git
+# 首次：安装 hugo 目录下的依赖（hugo-extended 二进制）
+pnpm --dir hugo install
+
+# 本地预览 http://localhost:1313
+pnpm dev
+
+# 生产构建（产物 hugo/public）
+pnpm build
+
+# 构建 + 部署前校验（会剔除超出平台单文件体积限制的资源）
+pnpm build:deploy
+
+# 从 docs/ 重新迁移内容到 hugo/content（幂等）
+pnpm migrate
 ```
 
-依赖安装（只能用 pnpm 安装依赖）
+> 站点构建依赖 `docs/public` 下的静态资源，因此 `docs/` 目录不可删除。
+
+## 部署
+
+1. **GitHub Pages（主站）**：推送到 `main` 后由 `deploy-hugo-pages.yml` 自动构建部署（需在仓库 Settings → Pages 中将 Source 设为 GitHub Actions）。
+2. **EdgeOne Makers**：项目 `sakaayhugo`，构建配置见 `hugo/README.md` 的「部署」章节（注意平台单文件 25MiB 上限，`pnpm build:deploy` 会自动处理）。
+
+## legacy：VitePress 站点
+
+如需回退到 VitePress 版本，可在 Actions 页手动触发 `Deploy VitePress (legacy, manual only)`：
 
 ```bash
-pnpm install
+pnpm install         # 根目录依赖（VitePress）
+pnpm docs:dev        # 本地预览
+pnpm docs:build      # 产物 docs/.vitepress/dist
 ```
-
-文档项目启动
-
-```bash
-pnpm docs:dev
-```
-
-## GitHub Pages 部署
-
-本项目已配置 GitHub Actions 工作流，可以自动构建并部署到 GitHub Pages。
-
-### 部署步骤
-
-1. **推送代码到 GitHub 仓库**
-   - 将项目代码推送到您的 GitHub 仓库的 `main` 或 `master` 分支
-   - 工作流会自动触发构建和部署过程
-
-2. **配置 GitHub Pages 设置**
-   - 在 GitHub 仓库的 "Settings" → "Pages" 中
-   - 确保 Source 选择为 "GitHub Actions"
-
-3. **查看部署状态**
-   - 在仓库的 "Actions" 标签页中可以查看部署进度
-   - 部署成功后，您可以通过 `https://[用户名].github.io/[仓库名]` 访问网站
-
-### 手动触发部署
-
-您也可以在 GitHub 仓库的 "Actions" 标签页中手动触发工作流运行。
 
 ## License
 
-[MIT](./LICENSE) License © 2025 [Teeker](https://github.com/Kele-Bingtang)
+[MIT](./LICENSE)
+

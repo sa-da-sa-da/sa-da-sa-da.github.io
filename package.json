@@ -1,10 +1,15 @@
 {
   "private": true,
-  "name": "vitepress-theme-teek-docs-template",
-  "version": "1.0.0",
-  "description": "vitepress-theme-teek 文档模板",
+  "name": "sakaay-docs",
+  "version": "2.0.0",
+  "description": "sakaay 站点（主站：Hugo / hugo 目录；legacy：VitePress / docs 目录）",
   "type": "module",
   "scripts": {
+    "dev": "pnpm --dir hugo dev",
+    "build": "pnpm --dir hugo build",
+    "build:deploy": "pnpm --dir hugo build:deploy",
+    "check:deploy": "pnpm --dir hugo check:deploy",
+    "migrate": "pnpm --dir hugo migrate",
     "docs:dev": "vitepress dev docs",
     "docs:build": "node --max-old-space-size=131072 node_modules/vitepress/bin/vitepress.js build docs",
     "docs:preview": "vitepress preview docs"

@@ -1,0 +1,119 @@
+{{ $title := .Title }}
+{{ if .IsHome }}{{ $title = site.Title }}{{ end }}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="color-scheme" content="light dark">
+<title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ $title }} | {{ site.Title }}{{ end }}</title>
+<meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ site.Params.description }}{{ end }}">
+<meta name="keywords" content="{{ with .Keywords }}{{ delimit . "," }}{{ else }}{{ delimit site.Params.keywords "," }}{{ end }}">
+<meta name="author" content="{{ site.Params.author }}">
+<link rel="icon" href="{{ site.Params.favicon | default "/favicon.ico" }}">
+
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+<meta property="og:title" content="{{ $title }}">
+<meta property="og:description" content="{{ with .Description }}{{ . }}{{ else }}{{ site.Params.description }}{{ end }}">
+<meta property="og:url" content="{{ .Permalink }}">
+{{ with .Params.coverImg }}<meta property="og:image" content="{{ . }}">{{ end }}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ $title }}">
+<meta name="twitter:description" content="{{ with .Description }}{{ . }}{{ else }}{{ site.Params.description }}{{ end }}">
+
+{{ hugo.Generator }}
+<link rel="canonical" href="{{ .Permalink }}">
+<link rel="alternate" type="application/rss+xml" href="{{ with .OutputFormats.Get "rss" }}{{ .RelPermalink }}{{ end }}">
+
+<!-- 预连接 -->
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+
+<!-- 样式 -->
+{{ $css := resources.Get "css/main.scss" | toCSS (dict "outputStyle" "compressed") | minify | fingerprint }}
+<link rel="stylesheet" href="{{ $css.RelPermalink }}" integrity="{{ $css.Data.Integrity }}" media="all">
+
+<!-- 同源导航使用 View Transitions，避免整页跳转的白屏闪烁（不支持的浏览器自动忽略） -->
+<meta name="view-transition" content="same-origin">
+<style>
+  @view-transition { navigation: auto; }
+  ::view-transition-old(root),
+  ::view-transition-new(root) { animation-duration: 0.22s; }
+</style>
+
+<!-- 主题初始化：避免刷新闪白 -->
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('theme');
+      var dark = saved ? saved === 'dark'
+        : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      window.__INITIAL_THEME__ = dark ? 'dark' : 'light';
+      if (dark) document.documentElement.classList.add('dark-mode');
+
+      // 首页展示风格预设（配置切换），在首帧前应用，避免闪烁
+      var st = localStorage.getItem('tk:configStyle');
+      var allowed = ['doc', 'blog', 'blog-part', 'blog-full', 'blog-body', 'blog-card'];
+      if (st && allowed.indexOf(st) > -1) {
+        document.documentElement.setAttribute('data-home-style', st);
+      }
+
+      // 独立面板配置：宽度 / 主题色 / 霓虹灯（均与布局预设互不影响）
+      var pw = parseInt(localStorage.getItem('tk:pageWidth'), 10);
+      if (pw >= 900) document.documentElement.style.setProperty('--tk-page-max-width', pw + 'px');
+      var dw = parseInt(localStorage.getItem('tk:docWidth'), 10);
+      if (dw >= 30) document.documentElement.style.setProperty('--tk-doc-max-width', Math.min(100, dw) + '%');
+      var TC = {
+        'vp-blue': ['#646cff', '#8a95ff'], 'vp-green': ['#10b981', '#34d399'],
+        'vp-brown': ['#b45309', '#d97706'], 'vp-red': ['#ef4444', '#f87171'],
+        'ep-blue': ['#409EFF', '#66b2ff'], 'ep-green': ['#67C23A', '#85cf60'],
+        'ep-yellow': ['#E6A23C', '#ecb86a'], 'ep-red': ['#F56C6C', '#f89292']
+      };
+      var tc = localStorage.getItem('tk:themeColor');
+      if (tc && TC[tc]) {
+        document.documentElement.style.setProperty('--primary-color', TC[tc][0]);
+        document.documentElement.style.setProperty('--secondary-color', TC[tc][1]);
+      }
+      var neon = localStorage.getItem('tk:neon');
+      if (neon) document.documentElement.setAttribute('data-neon', neon);
+      var nm = localStorage.getItem('tk:neonMode');
+      if (nm) document.documentElement.setAttribute('data-neon-mode', nm === 'stroke' ? 'stroke' : 'glow');
+    } catch (e) { window.__INITIAL_THEME__ = 'light'; }
+  })();
+</script>
+
+<!-- 统计分析 -->
+{{ with site.Params.analytics }}
+  {{ with .baidu }}{{ if .enabled }}
+  <script>
+    var _hmt = _hmt || [];
+    (function () {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?{{ .id }}";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+  {{ end }}{{ end }}
+  {{ with .google }}{{ if .enabled }}
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{ .id }}"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '{{ .id }}');
+  </script>
+  {{ end }}{{ end }}
+  {{ with .clarity }}{{ if .enabled }}
+  <script>
+    (function (c, l, a, r, i, t, y) {
+      c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
+      t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
+      y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+    })(window, document, "clarity", "script", "{{ .id }}");
+  </script>
+  {{ end }}{{ end }}
+{{ end }}
+
+<!-- Google AdSense -->
+{{ with site.Params.ads }}{{ if .enabled }}
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ .client }}" crossorigin="anonymous"></script>
+{{ end }}{{ end }}

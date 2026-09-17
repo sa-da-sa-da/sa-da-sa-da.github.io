@@ -1,0 +1,4 @@
+{{- /* PDF 阅读器：{{< pdf-reader bookId="book-think-python" >}} 或 {{< pdf-reader src="/xx.pdf" >}} */ -}}
+{{- $bookId := .Get "bookId" | default "" -}}
+{{- $src := .Get "src" | default "" -}}
+<div class="sk-pdf-reader" data-props="{{ (dict "bookId" $bookId "src" $src) | jsonify }}"></div>

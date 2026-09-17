@@ -1,0 +1,12 @@
+{{ $opts := dict "target" "es2018" "minify" true }}
+{{ $js := resources.Get "js/main.js" | js.Build $opts | minify | fingerprint }}
+<script src="{{ $js.RelPermalink }}" integrity="{{ $js.Data.Integrity }}" defer></script>
+
+{{ $siteConfig := dict
+  "siteStart" (site.Params.siteStartDate | default "2021-10-19T00:00:00+08:00")
+  "titleChange" (site.Params.titleChange | default dict)
+  "comment" (site.Params.comment | default dict)
+  "ads" (site.Params.ads | default dict)
+  "cursorEffects" (site.Params.cursorEffects.enabled | default false)
+}}
+<script type="application/json" id="site-config">{{ $siteConfig | jsonify | safeJS }}</script>

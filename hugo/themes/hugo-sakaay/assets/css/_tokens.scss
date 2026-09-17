@@ -1,0 +1,183 @@
+// ============================================================
+//  设计令牌 —— 亮色 / 暗色两套
+//  配色遵循 sakaay 站点的青蓝主色体系
+// ============================================================
+
+:root {
+  // 品牌三色
+  --primary-color: #0e7490;
+  --secondary-color: #06b6d4;
+  --accent-color: #ec4899;
+
+  --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--secondary-color) 0%, color-mix(in srgb, var(--secondary-color) 72%, #fff) 100%);
+  --gradient-cyber: linear-gradient(120deg, var(--primary-color) 0%, var(--secondary-color) 50%, color-mix(in srgb, var(--secondary-color) 65%, #fff) 100%);
+
+  // 文本
+  --text-color: #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+
+  // 背景层级
+  --bg-color: #f9fafb;
+  --card-bg: #ffffff;
+  --header-bg: rgba(255, 255, 255, 0.92);
+  --footer-bg: #f9fafb;
+  --code-bg: #e8f5f5;
+  --tag-bg: #ecfeff;
+
+  // 边框与分割
+  --border-color: #e5e7eb;
+  --divider-color: rgba(60, 60, 67, 0.12);
+
+  // VitePress 兼容层（便于沿用既有样式习惯）
+  --vp-c-bg: #ffffff;
+  --vp-c-bg-alt: #f6f6f7;
+  --vp-c-bg-elv: #ffffff;
+  --vp-c-text-1: #1f2937;
+  --vp-c-text-2: #6b7280;
+  --vp-c-text-3: #909399;
+  --vp-c-brand-1: var(--primary-color);
+  --vp-c-brand-2: var(--secondary-color);
+  --vp-c-brand-3: var(--secondary-color);
+  --vp-c-border: #c2c2c4;
+  --vp-c-divider: rgba(60, 60, 67, 0.12);
+  --vp-c-gutter: rgba(0, 0, 0, 0.04);
+  --vp-c-default-soft: color-mix(in srgb, var(--primary-color) 8%, transparent);
+  --vp-nav-bg-color: rgba(255, 255, 255, 0.92);
+  --vp-nav-height: 64px;
+  --vp-sidebar-width: 280px;
+  --vp-layout-max-width: 1440px;
+
+  // 兼容别名（历史样式沿用）
+  --tk-bg-color: var(--card-bg);
+  --tk-line-color: var(--border-color);
+  --tk-theme-color: var(--primary-color);
+  --tk-text-color: var(--text-color);
+  --tk-fill-color: var(--vp-c-bg-alt);
+  --tk-fill-color-light: color-mix(in srgb, var(--primary-color) 8%, transparent);
+  --tk-transition-duration: 0.3s;
+
+  // 配置切换：页面 / 文档内容最大宽度（由面板滑块动态覆盖）
+  --tk-page-max-width: 1660px;
+  --tk-doc-max-width: 100%;
+
+  // 阴影
+  --vp-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --vp-shadow-2: 0 3px 12px rgba(0, 0, 0, 0.07), 0 1px 4px rgba(0, 0, 0, 0.07);
+  --vp-shadow-3: 0 12px 32px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.08);
+
+  // 卡片（尺寸对齐原站首页卡片比例：封面 170px、标题 0.95rem）
+  --card-gap: 1.25rem;
+  --card-padding: 0.85rem 0.9rem 0.9rem;
+  --card-border-radius: 10px;
+  --card-cover-height: 170px;
+  --card-title-size: 0.95rem;
+  --card-excerpt-size: 0.82rem;
+  --card-meta-size: 0.72rem;
+
+  // 侧栏卡片
+  --sidebar-card-border-radius: 12px;
+  --sidebar-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --sidebar-card-margin-bottom: 1.5rem;
+  --sidebar-card-padding: 1.5rem;
+
+  // 布局宽度
+  --tk-layout-full-width-max-width: 1440px;
+  --tk-layout-page-max-width: 100%;
+  --tk-layout-doc-max-width: 100%;
+
+  // 玻璃拟态
+  --glass-bg-color: rgba(255, 255, 255, 0.35);
+  --glass-border-color: rgba(255, 255, 255, 0.3);
+  --glass-backdrop-blur: 20px;
+
+  // 过渡
+  --theme-transition-duration: 0.15s;
+  --theme-transition-timing: ease-out;
+
+  color-scheme: light;
+}
+
+.dark-mode {
+  --primary-color: #22d3ee;
+  --secondary-color: #0891b2;
+  --accent-color: #f472b6;
+
+  --gradient-primary: linear-gradient(135deg, color-mix(in srgb, var(--primary-color) 75%, transparent) 0%, color-mix(in srgb, var(--secondary-color) 75%, transparent) 100%);
+  --gradient-secondary: linear-gradient(135deg, color-mix(in srgb, var(--secondary-color) 75%, transparent) 0%, color-mix(in srgb, var(--secondary-color) 82%, #fff) 100%);
+  --gradient-cyber: linear-gradient(120deg, color-mix(in srgb, var(--primary-color) 75%, transparent) 0%, color-mix(in srgb, var(--secondary-color) 75%, transparent) 50%, color-mix(in srgb, var(--accent-color) 75%, transparent) 100%);
+
+  --text-color: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
+  --header-bg: rgba(30, 41, 59, 0.88);
+  --footer-bg: #0f172a;
+  --code-bg: #1a2332;
+  --tag-bg: #164e63;
+
+  --border-color: #334155;
+  --divider-color: rgba(148, 163, 184, 0.25);
+
+  --vp-c-bg: #0f182a;
+  --vp-c-bg-alt: #101c31;
+  --vp-c-bg-elv: #15233c;
+  --vp-c-text-1: #e5f0ff;
+  --vp-c-text-2: #9fb4d0;
+  --vp-c-text-3: #7b8ea8;
+  --vp-c-brand-1: var(--primary-color);
+  --vp-c-brand-2: var(--secondary-color);
+  --vp-c-brand-3: var(--secondary-color);
+  --vp-c-border: rgba(56, 189, 248, 0.35);
+  --vp-c-divider: rgba(148, 163, 184, 0.25);
+  --vp-c-gutter: rgba(148, 163, 184, 0.12);
+  --vp-c-default-soft: color-mix(in srgb, var(--primary-color) 12%, transparent);
+  --vp-nav-bg-color: rgba(10, 15, 25, 0.85);
+
+  --tk-fill-color-light: color-mix(in srgb, var(--primary-color) 15%, transparent);
+
+  --vp-shadow-1: 0 6px 16px rgba(8, 18, 38, 0.4);
+  --vp-shadow-2: 0 12px 28px rgba(8, 18, 38, 0.45);
+  --vp-shadow-3: 0 18px 40px rgba(8, 18, 38, 0.5);
+
+  --sidebar-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+
+  --glass-bg-color: rgba(30, 41, 59, 0.35);
+  --glass-border-color: rgba(255, 255, 255, 0.1);
+
+  color-scheme: dark;
+}
+
+// 容器（tip / warning / danger ...）
+:root {
+  --tk-custom-block-info-bg: #f6f6f7;
+  --tk-custom-block-info-left: #909399;
+  --tk-custom-block-tip-bg: #f0f9ff;
+  --tk-custom-block-tip-left: #67c23a;
+  --tk-custom-block-warning-bg: #fdf6ec;
+  --tk-custom-block-warning-left: #e6a23c;
+  --tk-custom-block-danger-bg: #fef0f0;
+  --tk-custom-block-danger-left: #f56c6c;
+  --tk-custom-block-note-bg: #eef9fd;
+  --tk-custom-block-note-left: #409eff;
+  --tk-custom-block-important-bg: #f4eefe;
+  --tk-custom-block-important-left: #a371f7;
+  --tk-custom-block-caution-bg: #fef0f0;
+  --tk-custom-block-caution-left: #f56c6c;
+  --tk-custom-block-details-bg: #f6f6f7;
+  --tk-custom-block-details-left: #909399;
+}
+
+.dark-mode {
+  --tk-custom-block-info-bg: #2c2c2c;
+  --tk-custom-block-tip-bg: #1a2c1a;
+  --tk-custom-block-warning-bg: #2b2410;
+  --tk-custom-block-danger-bg: #2b1a1a;
+  --tk-custom-block-note-bg: #182838;
+  --tk-custom-block-important-bg: #230555;
+  --tk-custom-block-caution-bg: #2b1a1a;
+  --tk-custom-block-details-bg: #2c2c2c;
+}

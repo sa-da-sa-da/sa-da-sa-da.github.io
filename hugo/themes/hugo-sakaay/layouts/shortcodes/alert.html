@@ -1,0 +1,13 @@
+{{- /* 提示容器：{{< alert type="tip" title="提示" >}}内容{{< /alert >}} */ -}}
+{{- $type := .Get "type" | default "info" -}}
+{{- $title := .Get "title" | default "" -}}
+{{- if not $title -}}
+  {{- $map := dict "tip" "提示" "warning" "警告" "danger" "危险" "info" "信息" "note" "注意" "important" "重要" "caution" "警告" "details" "详细信息" -}}
+  {{- $title = index $map $type | default "信息" -}}
+{{- end -}}
+<div class="custom-block {{ $type }}">
+<div class="custom-block-title">{{ $title }}</div>
+
+{{ .Inner | markdownify }}
+
+</div>

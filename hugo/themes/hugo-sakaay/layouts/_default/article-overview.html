@@ -1,0 +1,30 @@
+{{ define "main" }}
+<div class="center-page">
+  <div class="center-page-container">
+    <h1 style="margin-bottom:.5rem">{{ .Title | default "文章清单" }}</h1>
+    {{ $pages := where site.RegularPages "Type" "ne" "page" }}
+    {{ $pages = $pages.ByDate.Reverse }}
+    <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1.25rem">共 {{ len $pages }} 篇</p>
+
+    <div class="overview-table-wrap">
+      <table class="overview-table">
+        <thead>
+          <tr><th style="width:60px">#</th><th>标题</th><th style="width:140px">分类</th><th style="width:110px">日期</th></tr>
+        </thead>
+        <tbody>
+          {{ range $i, $p := $pages }}
+          <tr>
+            <td>{{ add 1 $i }}</td>
+            <td><a href="{{ $p.RelPermalink }}">{{ $p.Title }}</a></td>
+            <td>{{ with $p.Params.categories }}{{ index . 0 }}{{ end }}</td>
+            <td>{{ $p.Date.Format "2006-01-02" }}</td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
+
+    {{ with .Content }}<div class="vp-doc" style="margin-top:1.5rem">{{ . }}</div>{{ end }}
+  </div>
+</div>
+{{ end }}

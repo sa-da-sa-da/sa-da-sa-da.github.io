@@ -1,0 +1,19 @@
+{{ $dir := .Params.cataloguePath }}
+{{ $pages := where site.RegularPages "Params.srcDir" "eq" $dir }}
+{{ $pages = $pages.ByWeight }}
+{{ if gt (len $pages) 0 }}
+<div class="catalogue-list">
+  {{ range $i, $p := $pages }}
+  <a class="catalogue-item" href="{{ $p.RelPermalink }}">
+    <span class="catalogue-index">{{ add 1 $i }}</span>
+    <span class="catalogue-main">
+      <span class="catalogue-title">{{ $p.Title }}</span>
+      {{ with $p.Description }}<span class="catalogue-desc">{{ . }}</span>{{ end }}
+    </span>
+    <span class="catalogue-date">{{ $p.Date.Format "2006-01-02" }}</span>
+  </a>
+  {{ end }}
+</div>
+{{ else }}
+<div class="search-empty">该目录暂无内容</div>
+{{ end }}

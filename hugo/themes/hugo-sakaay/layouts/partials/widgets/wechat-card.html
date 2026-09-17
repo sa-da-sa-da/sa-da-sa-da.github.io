@@ -1,0 +1,11 @@
+{{ $w := site.Params.wechatOfficial }}
+{{ if and $w $w.enabled }}
+<div class="sidebar-card wechat-official-card">
+  <div class="card-title"><span class="title-icon">📱</span><span class="title-text">{{ $w.title | default "关注公众号" }}</span></div>
+  <div class="wechat-body" style="text-align:center">
+    {{ with $w.qrcode }}<img src="{{ . }}" alt="{{ $w.name }}" style="width:150px;border-radius:10px" loading="lazy">{{ end }}
+    <div style="margin-top:.5rem;font-size:.85rem;font-weight:600">{{ $w.name }}</div>
+    {{ with $w.desc }}<div style="font-size:.78rem;color:var(--text-secondary)">{{ . }}</div>{{ end }}
+  </div>
+</div>
+{{ end }}

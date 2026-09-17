@@ -1,0 +1,67 @@
+name: Deploy Hugo site to GitHub Pages (main)
+
+# 说明：
+#  - 这是主站流水线：推送到 main/master 即自动构建并发布 Hugo 站点。
+#  - VitePress 的旧流水线（deploy-gh-pages.yml）已改为仅手动触发，作为回退手段保留。
+on:
+  push:
+    branches: [ main, master ]
+  # 仍支持手动触发
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-hugo
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hugo
+    env:
+      HUGO_VERSION: 0.166.0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install Hugo Extended
+        run: |
+          wget -q -O hugo.tar.gz "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz"
+          mkdir -p "$HOME/.local/bin"
+          tar -xzf hugo.tar.gz -C "$HOME/.local/bin" hugo
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: hugo --minify --cleanDestinationDir
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: hugo/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

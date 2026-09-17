@@ -1,0 +1,28 @@
+{{/* 文档左侧栏目录。
+     要点：
+     1. 根节点取「顶层分区」(.FirstSection)，否则点进子文件夹后同级其它条目会消失；
+     2. 全量渲染所有层级（不因是否激活而裁剪），保证任何时候目录都是完整的；
+     3. 折叠按钮必须始终可见，否则折叠后无法再次展开。 */}}
+{{ $current := . }}
+{{ $root := .FirstSection }}
+{{ if not $root }}{{ $root = .CurrentSection }}{{ end }}
+<aside class="VPSidebar" id="VPSidebar">
+  <div class="sidebar-title">
+    <span class="sidebar-heading">{{ with $root }}{{ .Title }}{{ else }}{{ site.Title }}{{ end }}</span>
+    {{ if site.Params.sidebarTrigger }}
+    <button class="sidebar-collapse-btn" type="button" id="sidebarCollapse"
+            title="收起 / 展开目录" aria-label="收起或展开目录" aria-expanded="true">
+      <svg class="icon-collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    {{ end }}
+  </div>
+
+  {{ if $root }}
+    {{ $pages := where $root.Pages "Params.sidebar" "!=" false }}
+    {{ if gt (len $pages) 0 }}
+      {{ partial "sidebar-tree.html" (dict "pages" $pages "current" $current) }}
+    {{ end }}
+  {{ end }}
+</aside>

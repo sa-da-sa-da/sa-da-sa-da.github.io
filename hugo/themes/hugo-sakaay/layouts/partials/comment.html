@@ -1,0 +1,9 @@
+{{ $c := site.Params.comment }}
+{{ if and $c $c.enabled (ne .Params.comment false) }}
+{{/* twikoo 由 assets/js/twikoo.js 按需加载（写在内容区的 <script> 在 SPA 切换后不会执行） */}}
+<div class="tk-doc-comment" id="twikoo">
+  <div id="tcomment"
+       data-env-id="{{ $c.envId }}"
+       data-twikoo-version="{{ $c.version | default "1.6.41" }}"></div>
+</div>
+{{ end }}

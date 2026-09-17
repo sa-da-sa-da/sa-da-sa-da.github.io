@@ -1,0 +1,33 @@
+{{/* 递归渲染目录树：所有层级默认展开，文件夹可点击折叠 */}}
+{{ $current := .current }}
+<ul class="sidebar-tree">
+  {{ range .pages }}
+    {{ $isActive := eq $current.RelPermalink .RelPermalink }}
+    {{ $isAncestor := and (ne $current.RelPermalink .RelPermalink) (hasPrefix $current.RelPermalink .RelPermalink) }}
+    {{ $children := where .Pages "Params.sidebar" "!=" false }}
+    {{ if gt (len $children) 0 }}
+      <li class="sidebar-tree-item sidebar-tree-group{{ if $isAncestor }} is-branch-active{{ end }}">
+        <div class="sidebar-tree-row">
+          <button class="sidebar-tree-toggle" type="button" aria-expanded="true" title="展开 / 收起" aria-label="展开或收起">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <a class="sidebar-tree-link{{ if $isActive }} is-active{{ end }}{{ if $isAncestor }} is-open{{ end }}"
+             href="{{ .RelPermalink }}" title="{{ .Title }}">
+            <span class="sidebar-tree-dot" aria-hidden="true"></span>
+            <span class="sidebar-tree-text">{{ .Title }}</span>
+          </a>
+        </div>
+        {{ partial "sidebar-tree.html" (dict "pages" $children "current" $current) }}
+      </li>
+    {{ else }}
+      <li class="sidebar-tree-item">
+        <a class="sidebar-tree-link{{ if $isActive }} is-active{{ end }}" href="{{ .RelPermalink }}" title="{{ .Title }}">
+          <span class="sidebar-tree-dot" aria-hidden="true"></span>
+          <span class="sidebar-tree-text">{{ .Title }}</span>
+        </a>
+      </li>
+    {{ end }}
+  {{ end }}
+</ul>

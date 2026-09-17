@@ -1,0 +1,30 @@
+{{- /*
+  唱片墙（「音乐」页用）：{{< vinyl-wall target="/yule/music-player" >}} ... {{< /vinyl-wall >}}
+
+  数据格式与 music-player 一致，每行一首：标题 | 歌手 | 封面 | 音源
+  音源在唱片墙上不播放，仅用于播放器页；这里渲染唱片卡片，
+  点击跳转 target 页并选中对应歌曲（#t=序号）。
+*/ -}}
+{{- $songs := slice -}}
+{{- range (split (string .Inner) "\n") -}}
+  {{- $line := trim . " \t\r" -}}
+  {{- if and $line (not (hasPrefix $line "<!--")) -}}
+    {{- $body := $line -}}
+    {{- if hasPrefix $body "- " -}}{{- $body = trim (strings.TrimPrefix "- " $body) " \t" -}}{{- end -}}
+    {{- $parts := split $body "|" -}}
+    {{- if ge (len $parts) 1 -}}
+      {{- $title := trim (index $parts 0) " \t" -}}
+      {{- $artist := "" -}}{{- if ge (len $parts) 2 -}}{{- $artist = trim (index $parts 1) " \t" -}}{{- end -}}
+      {{- $cover := "" -}}{{- if ge (len $parts) 3 -}}{{- $cover = trim (index $parts 2) " \t" -}}{{- end -}}
+      {{- $src := "" -}}{{- if ge (len $parts) 4 -}}{{- $src = trim (index $parts 3) " \t" -}}{{- end -}}
+      {{- if and $title $cover -}}
+        {{- $songs = $songs | append (dict "title" $title "artist" $artist "cover" $cover "src" $src) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if $songs -}}
+{{- $target := .Get "target" | default "#" -}}
+{{- $data := dict "songs" $songs "target" $target -}}
+<div class="sk-vinyl-wall" data-props="{{ $data | jsonify }}"></div>
+{{- end -}}

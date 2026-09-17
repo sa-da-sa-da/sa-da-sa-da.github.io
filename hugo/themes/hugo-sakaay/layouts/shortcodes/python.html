@@ -1,0 +1,5 @@
+{{- /* Python 在线编辑器：{{< python problemId="hello-world" >}} */ -}}
+{{- $id := .Get "problemId" | default "" -}}
+<div class="sk-python" data-problem-id="{{ $id }}">
+<script type="application/json">{{ (dict "problemId" $id) | jsonify | safeJS }}</script>
+</div>

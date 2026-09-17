@@ -1,0 +1,9 @@
+{{ define "main" }}
+<div class="center-page">
+  <div class="center-page-container">
+    <div class="product-detail" id="productDetail"></div>
+    {{ with .Content }}<div class="vp-doc">{{ . }}</div>{{ end }}
+  </div>
+</div>
+<script id="products-data" type="application/json">{{ hugo.Data.products | jsonify | safeJS }}</script>
+{{ end }}

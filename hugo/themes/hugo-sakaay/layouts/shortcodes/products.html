@@ -1,0 +1,3 @@
+{{- /* 文创产品网格：{{< products category="stationery" >}} */ -}}
+{{- $cat := .Get "category" | default "" -}}
+<div class="sk-products" data-category="{{ $cat }}"></div>

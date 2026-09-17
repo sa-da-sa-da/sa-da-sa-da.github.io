@@ -1,0 +1,23 @@
+{{/* 居中单页布局（对应 VitePress 的 layout: page）。
+     注意：不要命名为 page.html —— Hugo 会把 page.html 当作普通单页的默认模板，
+     从而覆盖 _default/single.html，导致所有文章丢失三栏结构。 */}}
+{{ define "main" }}
+<div class="center-page">
+  <div class="center-page-container">
+    {{ $content := .Content }}
+    {{ $head := substr $content 0 800 }}
+    {{ $hasOwnH1 := strings.Contains $head "<h1" }}
+    <div class="content-container">
+      {{ if not $hasOwnH1 }}<h1 class="simple-page-title">{{ .Title }}</h1>{{ end }}
+
+      {{ if .Params.catalogue }}{{ partial "catalogue.html" . }}{{ end }}
+
+      <div class="vp-doc tk-doc-content">{{ $content }}</div>
+
+      {{ if and site.Params.comment.enabled (ne .Params.comment false) }}
+        {{ partial "comment.html" . }}
+      {{ end }}
+    </div>
+  </div>
+</div>
+{{ end }}

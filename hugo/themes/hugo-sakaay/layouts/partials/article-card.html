@@ -1,0 +1,29 @@
+{{ $p := . }}
+<article class="article-card{{ if $p.Params.featured }} is-featured{{ end }}{{ if $p.Params.sticky }} is-sticky{{ end }}"
+         data-categories="{{ with $p.Params.categories }}{{ delimit . "," }}{{ end }}"
+         data-tags="{{ with $p.Params.tags }}{{ delimit . "," }}{{ end }}">
+  <a class="card-link" href="{{ $p.RelPermalink }}" aria-label="{{ $p.Title }}">
+    {{ with $p.Params.coverImg }}
+    <div class="card-cover">
+      <img src="{{ . }}" alt="{{ $p.Title }}" loading="lazy" decoding="async">
+      <div class="card-badges">
+        {{ if $p.Params.sticky }}<span class="badge badge-sticky">置顶</span>{{ end }}
+        {{ if $p.Params.featured }}<span class="badge badge-featured">推荐</span>{{ end }}
+      </div>
+    </div>
+    {{ end }}
+    <div class="card-content">
+      <h3 class="card-title">{{ $p.Title }}</h3>
+      {{ with $p.Description }}<p class="card-excerpt">{{ . }}</p>{{ end }}
+      <div class="card-footer">
+        <span class="card-meta-item meta-date">{{ $p.Date.Format "2006-01-02" }}</span>
+        {{ with $p.Params.categories }}
+        <span class="card-meta-item meta-category">📁 {{ index . 0 }}</span>
+        {{ end }}
+        {{ with $p.Params.tags }}
+        <span class="card-meta-item meta-tag">{{ range first 2 . }}#{{ . }} {{ end }}</span>
+        {{ end }}
+      </div>
+    </div>
+  </a>
+</article>

@@ -1,0 +1,55 @@
+// ============================================================
+//  响应式
+// ============================================================
+@media (min-width: 1440px) {
+  :root { --vp-layout-max-width: 1500px; }
+  .post-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1920px) {
+  :root { --vp-layout-max-width: 1700px; }
+  .VPDoc { max-width: 1800px; }
+}
+
+@media (max-width: 1280px) {
+  .VPDoc { grid-template-columns: var(--vp-sidebar-width) minmax(0, 1fr); }
+  .VPDoc .aside { display: none; }
+  .VPDoc.no-sidebar { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 1024px) {
+  .content-wrapper { grid-template-columns: minmax(0, 1fr); }
+  .home-content { grid-template-columns: minmax(0, 1fr); }
+  .home-sidebar { position: static; order: 2; }
+  .main-column { order: 1; }
+  .post-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .VPNavBarMenu { display: none; }
+  .mobile-toggle { display: flex; }
+  .nav-clock { display: none; }
+}
+
+@media (max-width: 768px) {
+  :root { --card-cover-height: 160px; --sidebar-card-padding: 1rem; }
+  body { padding-bottom: 56px; }
+  .VPDoc {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px 1rem 80px;
+  }
+  .VPDoc .VPSidebar { display: none; }
+  .content-container { padding: 1.25rem 1rem 1.5rem; border-radius: 10px; }
+  .post-grid { grid-template-columns: minmax(0, 1fr); }
+  .home-content-section { padding: 2rem 0; }
+  .hero-features { grid-template-columns: minmax(0, 1fr); }
+  .mobile-nav-bar { display: flex; }
+  .rocket-wheel { right: 14px; bottom: 76px; }
+  .DocSearch-Button .DocSearch-Button-Keys { display: none; }
+  .DocSearch-Button .search-text { display: none; }
+  .doc-footer-nav { grid-template-columns: minmax(0, 1fr); }
+  .tk-calendar-body { flex-direction: column; }
+  .calendar-mini { width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .VPNavBarTitle .title { display: none; }
+  .site-footer { padding: 2rem 0 4.5rem; }
+}

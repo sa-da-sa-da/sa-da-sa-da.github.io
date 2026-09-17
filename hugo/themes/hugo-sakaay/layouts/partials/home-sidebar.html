@@ -1,0 +1,13 @@
+{{ $hs := site.Params.homeSidebar }}
+<aside class="home-sidebar">
+  {{ if $hs.blogger.enabled }}{{ partial "widgets/blogger-card.html" . }}{{ end }}
+  {{ if $hs.announcement.enabled }}{{ partial "widgets/announcement-card.html" . }}{{ end }}
+  {{ if $hs.calendar.enabled }}{{ partial "widgets/calendar-card.html" . }}{{ end }}
+  {{ if $hs.timeProgress.enabled }}{{ partial "widgets/time-progress-card.html" . }}{{ end }}
+  {{ if $hs.recentComments.enabled }}{{ partial "widgets/recent-comments-card.html" . }}{{ end }}
+  {{ if $hs.featuredPosts.enabled }}{{ partial "widgets/featured-posts-card.html" . }}{{ end }}
+  {{ if $hs.categories.enabled }}{{ partial "widgets/categories-card.html" . }}{{ end }}
+  {{ if $hs.hotTags.enabled }}{{ partial "widgets/hot-tags-card.html" . }}{{ end }}
+  {{ if $hs.siteInfo.enabled }}{{ partial "widgets/site-info-card.html" . }}{{ end }}
+  {{ if $hs.wechatOfficial.enabled }}{{ partial "widgets/wechat-card.html" . }}{{ end }}
+</aside>

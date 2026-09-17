@@ -1,0 +1,304 @@
+[
+  {
+    "title": "自建服务",
+    "items": [
+      {
+        "name": "AI生图",
+        "desc": "基于千问IMAGE模型的AI生图和图像编辑应用",
+        "icon": "🎨",
+        "url": "https://aitu.sakaay.com"
+      },
+      {
+        "name": "AI编程",
+        "desc": "基于阿里云千问大模型的AI辅助青少年编程的工具",
+        "icon": "💻",
+        "url": "https://ee.sakaay.com"
+      },
+      {
+        "name": "AI知识库",
+        "desc": "谷歌翻译",
+        "icon": "📚",
+        "url": "https://xa.sakaay.com/welcome"
+      },
+      {
+        "name": "Zfile网盘",
+        "desc": "基于千问大模型的AI知识库",
+        "icon": "☁️",
+        "url": "https://zf.sakaay.com"
+      }
+    ]
+  },
+  {
+    "title": "工作事务",
+    "items": [
+      {
+        "name": "郑州教育信息网",
+        "desc": "郑州教育信息网",
+        "icon": "🏫",
+        "url": "https://www.zzedu.net.cn/"
+      },
+      {
+        "name": "河南专技在线",
+        "desc": "河南专技在线",
+        "icon": "📖",
+        "url": "https://hnzj.ghlearning.com/"
+      },
+      {
+        "name": "豫教通",
+        "desc": "豫教通",
+        "icon": "📘",
+        "url": "https://basic.henan.smartedu.cn/"
+      },
+      {
+        "name": "国家智慧公共服务平台",
+        "desc": "国家智慧公共服务平台",
+        "icon": "🌐",
+        "url": "https://www.smartedu.cn/"
+      },
+      {
+        "name": "继续教育",
+        "desc": "继续教育",
+        "icon": "🎓",
+        "url": "https://www.hnzjgl.gov.cn/"
+      },
+      {
+        "name": "河南教师教育网",
+        "desc": "河南教师教育网",
+        "icon": "👩‍🏫",
+        "url": "https://www.hateacher.cn/"
+      },
+      {
+        "name": "学科网",
+        "desc": "学科网",
+        "icon": "📑",
+        "url": "https://www.zxxk.com/"
+      },
+      {
+        "name": "智学网",
+        "desc": "智学网",
+        "icon": "📊",
+        "url": "https://www.zhixue.com/login.html"
+      },
+      {
+        "name": "正确云",
+        "desc": "正确云",
+        "icon": "✅",
+        "url": "https://www.zhixue.com/login.html"
+      },
+      {
+        "name": "全国教师管理系统",
+        "desc": "全国教师管理系统",
+        "icon": "👨‍💼",
+        "url": "http://jiaoshi.jyt.henan.gov.cn/全国教师管理"
+      },
+      {
+        "name": "郑州市教育科研服务平台",
+        "desc": "郑州市教育科研服务平台",
+        "icon": "🔬",
+        "url": "https://www.zzedu.net.cn/zzjyky/"
+      },
+      {
+        "name": "百度文库（内网）",
+        "desc": "百度文库（内网）",
+        "icon": "📄",
+        "url": "https://wenku.baidu.com/"
+      },
+      {
+        "name": "知网（内网）",
+        "desc": "知网（内网）",
+        "icon": "📰",
+        "url": "https://cfed.cnki.net/"
+      },
+      {
+        "name": "u空间(在家办公)",
+        "desc": "u空间(在家办公)",
+        "icon": "🏠",
+        "url": "https://uws.ruijie.com.cn/#/Download"
+      }
+    ]
+  },
+  {
+    "title": "创客",
+    "items": [
+      {
+        "name": "DFROBOT",
+        "desc": "DFROBOT 创客社区",
+        "icon": "🔧",
+        "url": "https://mc.dfrobot.com.cn/"
+      },
+      {
+        "name": "PROS",
+        "desc": "普渡大学机器人操作系统",
+        "icon": "📚",
+        "url": "https://pros.cs.purdue.edu/"
+      },
+      {
+        "name": "世界机器人大赛",
+        "desc": "世界机器人大赛官网",
+        "icon": "🔧",
+        "url": "https://www.worldrobotconference.com/"
+      },
+      {
+        "name": "航天创新",
+        "desc": "青少年航天创新大赛",
+        "icon": "📚",
+        "url": "https://nysic.declare.htgjjl.com/index.aspx?"
+      }
+    ]
+  },
+  {
+    "title": "常用工具",
+    "items": [
+      {
+        "name": "GitHub",
+        "desc": "代码托管",
+        "icon": "/assets/icon/Github.png",
+        "url": "https://github.com"
+      },
+      {
+        "name": "Gitee",
+        "desc": "代码托管",
+        "icon": "/assets/icon/Gitee.png",
+        "url": "https://github.com"
+      },
+      {
+        "name": "Cloudflare",
+        "desc": "CDN与安全",
+        "icon": "/assets/icon/Cloudflare.png",
+        "url": "https://dash.cloudflare.com"
+      },
+      {
+        "name": "Edge One",
+        "desc": "腾讯 Pages",
+        "icon": "/assets/icon/EdgeOne.png",
+        "url": "https://cloud.tencent.com/login?s_url=https%3A%2F%2Fconsole.cloud.tencent.com%2Fedgeone"
+      },
+      {
+        "name": "Gmail",
+        "desc": "谷歌邮箱",
+        "icon": "/assets/icon/Gmail.png",
+        "url": "https://mail.google.com"
+      },
+
+      {
+        "name": "Translate",
+        "desc": "谷歌翻译",
+        "icon": "/assets/icon/Gmail翻译.png",
+        "url": "https://translate.google.com"
+      }
+    ]
+  },
+  {
+    "title": "常用工具",
+    "items": [
+      {
+        "name": "CleverPDF",
+        "desc": "PDF 转换工具",
+        "icon": "https://www.cleverpdf.com/cn/favicon.ico",
+        "url": "https://www.cleverpdf.com/cn"
+      },
+      {
+        "name": "BookStack",
+        "desc": "书架",
+        "icon": "🔧",
+        "url": "https://bookstack.cn"
+      },
+      {
+        "name": "DeepSeek",
+        "desc": "深度求索",
+        "icon": "/assets/icon/DeepSeek.png",
+        "url": "https://chat.deepseek.com"
+      }
+    ]
+  },
+
+  {
+    "title": "博客搭建",
+    "items": [
+      {
+        "name": "Asave",
+        "desc": "免费图床",
+        "icon": "/assets/icon/Asave.png",
+        "url": "https://asave.rutno.com/"
+      },
+      {
+        "name": "imgur",
+        "desc": "免费图床",
+        "icon": "/assets/icon/imgRL.png",
+        "url": "https://www.imgur.la/"
+      },
+      {
+        "name": "明月浩空",
+        "desc": "网站音乐播放器",
+        "icon": "/assets/icon/明月浩空播放器.png",
+        "url": "https://myhkw.cn/"
+      },
+      {
+        "name": "Iconify",
+        "desc": "免费的图标icon",
+        "icon": "/assets/icon/Iconify.png",
+        "url": "https://icon-sets.iconify.design/"
+      }
+    ]
+  },
+
+  {
+    "title": "域名 & 测速",
+    "items": [
+      {
+        "name": "Duck DNS",
+        "desc": "免费Duck域名",
+        "icon": "/assets/icon/DuckDNS.png",
+        "url": "https://www.duckdns.org/"
+      },
+      {
+        "name": "Dynv6",
+        "desc": "免费二级域名Dynv6",
+        "icon": "/assets/icon/Dynv6.png",
+        "url": "https://dynv6.com/"
+      },
+      {
+        "name": "Freemyip",
+        "desc": "免费二级域名",
+        "icon": "/assets/icon/Freemyip.png",
+        "url": "https://freemyip.com/"
+      },
+      {
+        "name": "us.kg",
+        "desc": "免费二级域名",
+        "icon": "/assets/icon/USKG.png",
+        "url": "https://domain.digitalplat.org/"
+      },
+      {
+        "name": "DNSHE",
+        "desc": "免费二级域名",
+        "icon": "/assets/icon/DNSHE.png",
+        "url": "https://my.dnshe.com/aff.php?aff=VY40B1C2B2"
+      },
+      {
+        "name": "ipw",
+        "desc": "IP查询",
+        "icon": "/assets/icon/ipw.png",
+        "url": "https://ipw.cn/"
+      },
+      {
+        "name": "IP",
+        "desc": "查询IP",
+        "icon": "/assets/icon/IP.png",
+        "url": "https://ip.skk.moe/"
+      },
+      {
+        "name": "cesu",
+        "desc": "测速网-免费在线ping检测",
+        "icon": "/assets/icon/cesu.png",
+        "url": "https://www.cesu.net/"
+      },
+      {
+        "name": "猫饭",
+        "desc": "NAT类型在线检测",
+        "icon": "/assets/icon/mao.png",
+        "url": "https://mao.fan/mynat"
+      }
+    ]
+  }
+]

@@ -1,0 +1,38 @@
+{{ define "main" }}
+{{/* section（文件夹落地页）沿用三栏布局，让左侧目录常驻；
+     taxonomy term（分类/标签详情）保持居中列表。 */}}
+{{ if eq .Kind "section" }}
+{{ $root := .FirstSection }}
+{{ if not $root }}{{ $root = . }}{{ end }}
+<div class="VPDoc no-aside">
+  {{ partial "sidebar.html" . }}
+  <div class="content">
+    <div class="content-container">
+      <header class="tk-doc-header">
+        <h1 class="tk-doc-header__title">{{ .Title }}</h1>
+        <div class="tk-article-meta">
+          <span class="tk-article-meta__item">📄 共 {{ len .Pages }} 个页面</span>
+        </div>
+      </header>
+      {{ with .Content }}<div class="vp-doc tk-doc-content">{{ . }}</div>{{ end }}
+      <div class="post-grid" id="postGrid">{{ range .Paginator.Pages }}{{ partial "article-card.html" . }}{{ end }}</div>
+      {{ partial "pagination.html" . }}
+    </div>
+  </div>
+</div>
+{{ else }}
+<div class="center-page">
+  <div class="center-page-container">
+    <h1 style="margin-bottom:1rem">{{ .Title }}</h1>
+    {{ with .Content }}<div class="vp-doc">{{ . }}</div>{{ end }}
+
+    <div class="post-grid" id="postGrid" style="margin-top:1.5rem">
+      {{ range .Paginator.Pages }}
+        {{ partial "article-card.html" . }}
+      {{ end }}
+    </div>
+    {{ partial "pagination.html" . }}
+  </div>
+</div>
+{{ end }}
+{{ end }}

@@ -1,0 +1,18 @@
+{{ define "main" }}
+<div class="full-page">
+  <h1 style="margin-bottom:1rem">{{ .Title }}</h1>
+  {{ with .Content }}<div class="vp-doc">{{ . }}</div>{{ end }}
+  <div class="embed-block">
+    <iframe id="embedFrame" src="about:blank" data-src="{{ .Params.iframeUrl }}"
+            loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
+            referrerpolicy="no-referrer-when-downgrade"
+            style="width:100%;height:calc(100vh - 220px);min-height:520px"></iframe>
+  </div>
+</div>
+<script>
+  (function () {
+    var f = document.getElementById('embedFrame');
+    if (f) f.src = f.dataset.src;
+  })();
+</script>
+{{ end }}

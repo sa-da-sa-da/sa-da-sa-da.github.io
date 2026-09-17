@@ -1,0 +1,7 @@
+{{/* 输出带样式类名的本页导航 HTML（Hugo 原生 TableOfContents 不带 class） */}}
+{{ $toc := .TableOfContents }}
+{{ $html := $toc
+  | replaceRE `<a href="#` `<a class="outline-link" href="#`
+  | replaceRE `<ul>` `<ul class="vp-outline-list">`
+  | replaceRE `<li>` `<li class="vp-outline-item">` }}
+{{ return $html }}

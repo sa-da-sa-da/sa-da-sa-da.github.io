@@ -1,0 +1,37 @@
+{{ if gt .Paginator.TotalPages 1 }}
+<div class="pagination-wrapper">
+  <nav class="pagination" aria-label="分页">
+    {{ if .Paginator.HasPrev }}
+      <a class="page-link" href="{{ .Paginator.Prev.URL }}" aria-label="上一页">‹</a>
+    {{ else }}
+      <span class="page-link is-disabled">‹</span>
+    {{ end }}
+
+    {{ $current := .Paginator.PageNumber }}
+    {{ $total := .Paginator.TotalPages }}
+    {{ range .Paginator.Pagers }}
+      {{ $diff := sub .PageNumber $current }}{{ if lt $diff 0 }}{{ $diff = sub 0 $diff }}{{ end }}
+      {{ if or (le $diff 2) (eq .PageNumber 1) (eq .PageNumber $total) }}
+        <a class="page-link{{ if eq .PageNumber $current }} is-active{{ end }}" href="{{ .URL }}">{{ .PageNumber }}</a>
+      {{ else }}
+        {{ if or (eq .PageNumber (sub $current 3)) (eq .PageNumber (add $current 3)) }}
+          <span class="page-ellipsis">…</span>
+        {{ end }}
+      {{ end }}
+    {{ end }}
+
+    {{ if .Paginator.HasNext }}
+      <a class="page-link" href="{{ .Paginator.Next.URL }}" aria-label="下一页">›</a>
+    {{ else }}
+      <span class="page-link is-disabled">›</span>
+    {{ end }}
+
+    <span class="page-info">
+      <span>前往</span>
+      <input type="number" id="gotoPage" min="1" max="{{ $total }}" value="{{ $current }}" aria-label="页码">
+      <button class="goto-btn" type="button" id="gotoPageBtn" data-total="{{ $total }}">跳转</button>
+      <span>共 {{ .Paginator.TotalNumberOfElements }} 条</span>
+    </span>
+  </nav>
+</div>
+{{ end }}

@@ -1,0 +1,27 @@
+{{ if site.Params.backTop.enabled }}
+<div class="rocket-wheel">
+  {{ if site.Params.toComment.enabled }}
+  <button class="rocket-btn" type="button" id="scrollToComment" title="前往评论区" aria-label="前往评论区">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 11.5a8.4 8.4 0 01-9 8.4 9.7 9.7 0 01-3.6-.7L3 21l1.9-5.1A8.4 8.4 0 1121 11.5z" stroke-linecap="round"/>
+    </svg>
+  </button>
+  {{ end }}
+  <button class="rocket-btn" type="button" id="scrollToBottom" title="前往底部" aria-label="前往底部">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 5v14M6 13l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <button class="rocket-btn" type="button" id="backToTop" title="回到顶部" aria-label="回到顶部">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 19V5M6 11l6-6 6 6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+{{ end }}
+
+{{ if site.Params.scrollProgress.enabled }}
+<div class="scroll-progress" id="scrollProgress"></div>
+{{ end }}
+
+<div class="copy-notice" id="copyNotice"></div>

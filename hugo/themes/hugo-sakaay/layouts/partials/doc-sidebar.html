@@ -1,0 +1,11 @@
+{{ $ds := site.Params.docSidebar }}
+<aside class="content-aside">
+  {{ if $ds.categories.enabled }}{{ partial "widgets/categories-card.html" . }}{{ end }}
+  {{ if $ds.hotTags.enabled }}{{ partial "widgets/hot-tags-card.html" . }}{{ end }}
+  {{ if $ds.siteInfo.enabled }}{{ partial "widgets/site-info-card.html" . }}{{ end }}
+  {{ with site.Params.ads }}{{ if and .enabled .sidebarSlot }}
+  <div class="sidebar-card ad-block">
+    <ins class="adsbygoogle" style="display:block" data-ad-client="{{ .client }}" data-ad-slot="{{ .sidebarSlot }}" data-ad-format="auto" data-full-width-responsive="true"></ins>
+  </div>
+  {{ end }}{{ end }}
+</aside>

@@ -1,0 +1,33 @@
+{{ if site.Params.search.enabled }}
+<div class="search-modal" id="searchModal" role="dialog" aria-modal="true" aria-label="搜索">
+  <div class="search-modal-container">
+    <div class="search-modal-header">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5" stroke-linecap="round"/>
+      </svg>
+      <input type="text" id="searchInput" placeholder="{{ site.Params.search.placeholder | default "搜索文档" }}" autocomplete="off">
+      <button class="search-cancel" type="button" id="searchCancel">取消</button>
+    </div>
+    <div class="search-modal-body" id="searchBody"></div>
+    <div class="search-modal-footer">
+      <span><kbd>↩</kbd> 选择</span>
+      <span><kbd>↓</kbd><kbd>↑</kbd> 切换</span>
+      <span><kbd>esc</kbd> 关闭</span>
+      <span style="margin-left:auto">搜索提供商：{{ if eq site.Params.search.provider "algolia" }}Algolia{{ else }}FlexSearch{{ end }}</span>
+    </div>
+  </div>
+</div>
+
+<script id="search-config" type="application/json">
+{{ $cfg := dict
+  "provider" (site.Params.search.provider | default "flexsearch")
+  "indexUrl" ("/search-index.json" | relURL)
+  "algolia" (dict
+    "appId" (site.Params.search.algolia.appId | default "")
+    "apiKey" (site.Params.search.algolia.apiKey | default "")
+    "indexName" (site.Params.search.algolia.indexName | default "")
+  )
+}}
+{{ $cfg | jsonify | safeJS }}
+</script>
+{{ end }}

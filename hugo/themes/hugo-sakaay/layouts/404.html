@@ -1,0 +1,11 @@
+{{ define "main" }}
+<div class="full-page text-center" style="padding-top:6rem">
+  <img src="/404.png" alt="404" style="max-width:320px" onerror="this.style.display='none'">
+  <h1 style="font-size:2.5rem;margin:1rem 0">404 - 页面走丢了</h1>
+  <p style="color:var(--text-secondary)">你访问的页面不存在，也许它已经被搬走了。</p>
+  <div style="margin-top:1.5rem;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <a class="btn btn-brand" href="{{ "/" | relURL }}">返回首页</a>
+    <button class="btn" type="button" id="searchTrigger404">搜索文档</button>
+  </div>
+</div>
+{{ end }}

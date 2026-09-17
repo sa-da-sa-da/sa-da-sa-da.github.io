@@ -1,0 +1,32 @@
+[
+  {
+    "title": "本地 · 静音(Silent)",
+    "artist": "本地音频",
+    "cover": "/img/xyy.webp",
+    "src": "/music/slient.wav"
+  },
+  {
+    "title": "Big Buck Bunny Theme",
+    "artist": "Blender Foundation (BGM)",
+    "cover": "/img/xyy-1.webp",
+    "src": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+  },
+  {
+    "title": "Sintel Trailer Theme",
+    "artist": "Jan Morgenstern (BGM)",
+    "cover": "/img/xyy-2.webp",
+    "src": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+  },
+  {
+    "title": "Spring Theme",
+    "artist": "Blender Studio (BGM)",
+    "cover": "/img/xyy-3.webp",
+    "src": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+  },
+  {
+    "title": "Think Python Reading",
+    "artist": "Lo-fi Study Beats",
+    "cover": "/img/xyy.webp",
+    "src": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3"
+  }
+]

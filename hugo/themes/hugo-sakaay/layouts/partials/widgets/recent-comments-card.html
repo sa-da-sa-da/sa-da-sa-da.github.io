@@ -1,0 +1,16 @@
+{{ $rc := site.Params.homeSidebar.recentComments }}
+{{ $comment := site.Params.comment }}
+{{ if and $rc $rc.enabled $comment.enabled }}
+<div class="sidebar-card recent-comments-card">
+  <div class="card-title"><span class="title-icon">💬</span><span class="title-text">最新评论</span></div>
+  <div class="recent-comments-body">
+    <div id="recent-comments-list" class="comments-list" data-items-per-page="{{ $rc.pageSize | default 5 }}">
+      <div class="comments-loading"><span class="loading-spinner"></span> 加载中…</div>
+    </div>
+  </div>
+</div>
+{{/* twikoo 由 assets/js/twikoo.js 按需加载 */}}
+{{ $rcCfg := dict "envId" ($comment.envId | default "") "pageSize" ($rc.pageSize | default 5) "totalSize" ($rc.totalSize | default 50) }}
+<span data-twikoo-version="{{ $comment.version | default "1.6.41" }}" hidden></span>
+<script id="recent-comments-config" type="application/json">{{ $rcCfg | jsonify | safeJS }}</script>
+{{ end }}

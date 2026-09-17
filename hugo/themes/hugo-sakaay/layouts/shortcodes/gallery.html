@@ -1,0 +1,38 @@
+{{- /*
+  照片墙 / 相册画廊
+  用法（在 md 里直接列图片，每行一张，可用 | 追加说明文字）：
+
+  {{< gallery caption="2025 校园随拍" colw="240" >}}
+  - https://img.sakaay.com/d/img/bz/xxx.avif
+  - https://img.sakaay.com/d/img/bz/yyy.avif | 运动会那天
+  - ![optional](https://img.sakaay.com/d/img/bz/zzz.avif) | 也可以用 markdown 图片语法
+  {{< /gallery >}}
+
+  参数：
+  - caption：整组标题（可选）
+  - colw：每列最小宽度 px，默认 240（越小列越多）
+*/ -}}
+{{- $caption := .Get "caption" | default "" -}}
+{{- $colw := .Get "colw" | default "240" -}}
+{{- $images := slice -}}
+{{- range (split (string .Inner) "\n") -}}
+  {{- $line := trim . " \t\r" -}}
+  {{- if and $line (not (hasPrefix $line "<!--")) -}}
+    {{- $cap := "" -}}
+    {{- $body := $line -}}
+    {{- if in $body "|" -}}
+      {{- $parts := split $body "|" -}}
+      {{- $body = index $parts 0 -}}
+      {{- $cap = index $parts 1 -}}
+    {{- end -}}
+    {{- $urls := findRE `https?://[^\s\)]+` $body -}}
+    {{- with $urls -}}
+      {{- $src := index . 0 -}}
+      {{- $images = $images | append (dict "src" $src "caption" (trim $cap " ")) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if $images -}}
+{{- $data := dict "images" $images "caption" $caption "colw" $colw -}}
+<div class="sk-gallery" data-props="{{ $data | jsonify }}"></div>
+{{- end -}}

@@ -1,0 +1,19 @@
+{{ $limit := site.Params.homeSidebar.categories.limit | default 8 }}
+{{ $terms := site.Taxonomies.categories }}
+{{ if gt (len $terms) 0 }}
+<div class="sidebar-card tk-categories-card">
+  <div class="card-title"><span class="title-icon">📁</span><span class="title-text">文章分类</span></div>
+  <div class="tk-categories">
+    {{ range $i, $t := $terms.ByCount }}
+    <a class="tk-category-item{{ if ge $i $limit }} tk-category-hidden{{ end }}"
+       href="{{ $t.Page.RelPermalink }}" data-category="{{ $t.Page.Title }}">
+      <span class="tk-category-name">{{ $t.Page.Title }}</span>
+      <span class="tk-count">{{ $t.Count }}</span>
+    </a>
+    {{ end }}
+    {{ if gt (len $terms) $limit }}
+    <button class="tk-category-more" type="button" data-toggle="categories">更多 …</button>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

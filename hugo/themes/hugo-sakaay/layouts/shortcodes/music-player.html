@@ -1,0 +1,38 @@
+{{- /*
+  音乐播放器：{{< music-player >}} ... {{< /music-player >}}
+
+  在 md 里直接列歌单，每行一首，用 | 分隔字段：
+    标题 | 歌手 | 封面 | 音源
+
+  示例：
+  {{< music-player >}}
+  - 本地 · 静音(Silent) | 本地音频 | /img/xyy.webp | /music/slient.wav
+  - Big Buck Bunny Theme | Blender Foundation (BGM) | /img/xyy-1.webp | https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3
+  {{< /music-player >}}
+
+  说明：
+  - 封面可空（显示 🎵 占位）
+  - 音源支持相对路径（含 # 《》 等字符会自动编码）或 http(s) 直链
+*/ -}}
+{{- $songs := slice -}}
+{{- range (split (string .Inner) "\n") -}}
+  {{- $line := trim . " \t\r" -}}
+  {{- if and $line (not (hasPrefix $line "<!--")) -}}
+    {{- $body := $line -}}
+    {{- if hasPrefix $body "- " -}}{{- $body = trim (strings.TrimPrefix "- " $body) " \t" -}}{{- end -}}
+    {{- $parts := split $body "|" -}}
+    {{- if ge (len $parts) 1 -}}
+      {{- $title := trim (index $parts 0) " \t" -}}
+      {{- $artist := "" -}}{{- if ge (len $parts) 2 -}}{{- $artist = trim (index $parts 1) " \t" -}}{{- end -}}
+      {{- $cover := "" -}}{{- if ge (len $parts) 3 -}}{{- $cover = trim (index $parts 2) " \t" -}}{{- end -}}
+      {{- $src := "" -}}{{- if ge (len $parts) 4 -}}{{- $src = trim (index $parts 3) " \t" -}}{{- end -}}
+      {{- if and $title $src -}}
+        {{- $songs = $songs | append (dict "title" $title "artist" $artist "cover" $cover "src" $src) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if $songs -}}
+{{- $data := dict "songs" $songs -}}
+<div class="sk-music-player" data-props="{{ $data | jsonify }}"></div>
+{{- end -}}

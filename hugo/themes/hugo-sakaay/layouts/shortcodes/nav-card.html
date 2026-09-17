@@ -1,0 +1,20 @@
+{{- /* 导航卡片组：
+  {{< nav-card >}}
+  - name: xxx
+    desc: 描述
+    img: /img/logo.png
+    link: https://example.com
+  {{< /nav-card >}}
+*/ -}}
+{{- $list := .Inner | transform.Unmarshal -}}
+<div class="nav-grid">
+{{- range $list }}
+  <a class="nav-card-item" href="{{ .link | default "#" }}" target="_blank" rel="noopener">
+    <img src="{{ .img | default "/img/logo.png" }}" alt="{{ .name }}" loading="lazy">
+    <span>
+      <span class="nav-card-name">{{ .name }}</span>
+      <span class="nav-card-desc">{{ .desc }}</span>
+    </span>
+  </a>
+{{- end }}
+</div>

@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "content": "今天天气真好，去公园散步了～ 🌸",
+    "images": [
+      "https://picsum.photos/600/400?random=10",
+      "https://picsum.photos/600/400?random=11"
+    ],
+    "timeOffsetMs": -3600000,
+    "timeLabel": "1小时前",
+    "likes": 15,
+    "liked": false,
+    "comments": 3
+  },
+  {
+    "id": 2,
+    "content": "分享一下新做的晚餐，味道还不错！",
+    "images": [
+      "https://picsum.photos/600/400?random=20"
+    ],
+    "timeOffsetMs": -86400000,
+    "timeLabel": "1天前",
+    "likes": 28,
+    "liked": true,
+    "comments": 7
+  },
+  {
+    "id": 3,
+    "content": "周末去看了一场精彩的电影，强烈推荐！",
+    "images": [],
+    "timeOffsetMs": -172800000,
+    "timeLabel": "2天前",
+    "likes": 12,
+    "liked": false,
+    "comments": 2
+  }
+]

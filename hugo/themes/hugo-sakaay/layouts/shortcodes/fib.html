@@ -1,0 +1,9 @@
+{{- /*
+  填空题（题干中用 {blank} 标记空位）
+  用法：{{< fib title="①处应填入{blank}" answers="物联网|大数据" explanation="解析" >}}
+*/ -}}
+{{- $answers := split (.Get "answers") "|" -}}
+{{- $data := dict "type" "fib" "title" (.Get "title") "correct" $answers "explanation" (.Get "explanation" | default "") -}}
+<div class="sk-question" data-type="fib">
+<script type="application/json">{{ $data | jsonify | safeJS }}</script>
+</div>

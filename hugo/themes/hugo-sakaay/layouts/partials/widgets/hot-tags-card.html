@@ -1,0 +1,27 @@
+{{ $limit := site.Params.homeSidebar.hotTags.limit | default 21 }}
+{{ $terms := site.Taxonomies.tags }}
+{{ if gt (len $terms) 0 }}
+{{ $palette := slice
+  (dict "bg" "#eff6ff" "fg" "#1d4ed8")
+  (dict "bg" "#faf5ff" "fg" "#7c3aed")
+  (dict "bg" "#fdf2f8" "fg" "#be185d")
+  (dict "bg" "#ecfdf5" "fg" "#047857")
+  (dict "bg" "#fffbeb" "fg" "#b45309")
+  (dict "bg" "#ecfeff" "fg" "#0e7490")
+  (dict "bg" "#eef2ff" "fg" "#4338ca") }}
+<div class="sidebar-card tk-hot-tags-card">
+  <div class="card-title"><span class="title-icon">🏷️</span><span class="title-text">热门标签</span></div>
+  <div class="tk-tags-cloud">
+    {{ range $i, $t := first $limit $terms.ByCount }}
+      {{ $c := index $palette (mod $i 7) }}
+      <a class="tk-tag" href="{{ $t.Page.RelPermalink }}" data-tag="{{ $t.Page.Title }}"
+         style="background:{{ $c.bg }};color:{{ $c.fg }}">
+        {{ $t.Page.Title }}<span class="tk-count">{{ $t.Count }}</span>
+      </a>
+    {{ end }}
+  </div>
+  {{ if gt (len $terms) $limit }}
+  <a class="tk-tag-more" href="{{ "/tags" | relURL }}" style="display:block;margin-top:.75rem;font-size:.82rem">更多 …</a>
+  {{ end }}
+</div>
+{{ end }}

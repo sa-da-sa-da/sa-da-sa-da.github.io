@@ -1,0 +1,13 @@
+{{ $a := site.Params.appreciation }}
+{{ if and $a $a.enabled (ne .Params.appreciation false) }}
+<div class="appreciation">
+  <button class="appreciation-toggle" type="button" id="appreciationToggle">
+    <span>{{ $a.icon | default "☕" }}</span>
+    <span id="appreciationToggleText">{{ if $a.expand }}{{ $a.collapseTitle | default "下次一定" }}{{ else }}{{ $a.expandTitle | default "打赏支持" }}{{ end }}</span>
+  </button>
+  <div class="appreciation-content{{ if $a.expand }} is-open{{ end }}" id="appreciationContent">
+    {{ with $a.wechatQR }}<img src="{{ . }}" alt="微信支付" loading="lazy">{{ end }}
+    {{ with $a.alipayQR }}<img src="{{ . }}" alt="支付宝" loading="lazy">{{ end }}
+  </div>
+</div>
+{{ end }}

@@ -1,0 +1,18 @@
+{{ $prev := .PrevInSection }}
+{{ $next := .NextInSection }}
+{{ if or $prev $next }}
+<div class="doc-footer-nav">
+  {{ if $prev }}
+  <a class="doc-nav-item is-prev" href="{{ $prev.RelPermalink }}">
+    <div class="nav-label">← 上一篇</div>
+    <div class="nav-title">{{ $prev.Title }}</div>
+  </a>
+  {{ else }}<span></span>{{ end }}
+  {{ if $next }}
+  <a class="doc-nav-item is-next" href="{{ $next.RelPermalink }}">
+    <div class="nav-label">下一篇 →</div>
+    <div class="nav-title">{{ $next.Title }}</div>
+  </a>
+  {{ end }}
+</div>
+{{ end }}

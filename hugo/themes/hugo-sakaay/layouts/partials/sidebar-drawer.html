@@ -1,0 +1,25 @@
+{{/* 移动端 / 窄屏 目录抽屉 */}}
+{{ $current := . }}
+{{ $root := .FirstSection }}
+{{ if not $root }}{{ $root = .CurrentSection }}{{ end }}
+{{ $section := $root }}
+<div class="side-drawer" id="sideDrawer" aria-hidden="true">
+  <div class="side-drawer-panel">
+    <div class="side-drawer-head">
+      <span class="side-drawer-title">{{ with $section }}{{ .Title }}{{ else }}目录{{ end }}</span>
+      <button class="side-drawer-close" type="button" id="sideDrawerClose" aria-label="关闭目录">✕</button>
+    </div>
+    <div class="side-drawer-body">
+      {{ if $section }}
+        {{ $pages := where $section.Pages "Params.sidebar" "!=" false }}
+        {{ if gt (len $pages) 0 }}
+          {{ partial "sidebar-tree.html" (dict "pages" $pages "current" $current) }}
+        {{ else }}
+          <p class="side-drawer-empty">暂无子页面</p>
+        {{ end }}
+      {{ else }}
+        {{ partial "sidebar-tree.html" (dict "pages" (where site.RegularPages "Type" "ne" "page") "current" $current) }}
+      {{ end }}
+    </div>
+  </div>
+</div>

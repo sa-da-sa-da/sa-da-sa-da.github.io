@@ -1,0 +1,33 @@
+{{- /*
+  电影海报墙（「电影」页用）：{{< movie-wall >}} ... {{< /movie-wall >}}
+
+  数据格式与 movie-player 一致，每行一部：
+    标题 | 封面 | 简介 | 时长 | 画质 | 标签(逗号) | 源
+  源填直链或 bilibili:BV号（海报墙上不播放，仅用于播放器）。
+  点击海报 → 联动同页电影播放器并选中该片。
+*/ -}}
+{{- $movies := slice -}}
+{{- range (split (string .Inner) "\n") -}}
+  {{- $line := trim . " \t\r" -}}
+  {{- if and $line (not (hasPrefix $line "<!--")) -}}
+    {{- $body := $line -}}
+    {{- if hasPrefix $body "- " -}}{{- $body = trim (strings.TrimPrefix "- " $body) " \t" -}}{{- end -}}
+    {{- $parts := split $body "|" -}}
+    {{- if ge (len $parts) 1 -}}
+      {{- $title := trim (index $parts 0) " \t" -}}
+      {{- $cover := "" -}}{{- if ge (len $parts) 2 -}}{{- $cover = trim (index $parts 1) " \t" -}}{{- end -}}
+      {{- $desc := "" -}}{{- if ge (len $parts) 3 -}}{{- $desc = trim (index $parts 2) " \t" -}}{{- end -}}
+      {{- $dur := "" -}}{{- if ge (len $parts) 4 -}}{{- $dur = trim (index $parts 3) " \t" -}}{{- end -}}
+      {{- $quality := "" -}}{{- if ge (len $parts) 5 -}}{{- $quality = trim (index $parts 4) " \t" -}}{{- end -}}
+      {{- $src := "" -}}{{- if ge (len $parts) 7 -}}{{- $src = trim (index $parts 6) " \t" -}}{{- end -}}
+      {{- $embed := false -}}{{- if hasPrefix $src "bilibili:" -}}{{- $embed = true -}}{{- end -}}
+      {{- if and $title $cover -}}
+        {{- $movies = $movies | append (dict "title" $title "cover" $cover "desc" $desc "duration" $dur "quality" $quality "embed" $embed) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if $movies -}}
+{{- $data := dict "movies" $movies -}}
+<div class="sk-movie-wall" data-props="{{ $data | jsonify }}"></div>
+{{- end -}}

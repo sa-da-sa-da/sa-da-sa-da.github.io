@@ -1,0 +1,9 @@
+{{ $toc := partial "toc-list.html" . }}
+{{ if $toc }}
+<aside class="aside">
+  <div class="tk-aside-outline">
+    <div class="outline-title">本页导航</div>
+    {{ $toc | safeHTML }}
+  </div>
+</aside>
+{{ end }}

@@ -1,0 +1,74 @@
+{
+  "categories": [
+    { "key": "全部", "label": "全部" },
+    { "key": "相册", "label": "相册" },
+    { "key": "音乐", "label": "音乐" },
+    { "key": "电影", "label": "电影" },
+    { "key": "游戏", "label": "游戏" },
+    { "key": "书城", "label": "书城" }
+  ],
+  "categoryColors": {
+    "相册": "#4f46e5",
+    "音乐": "#db2777",
+    "电影": "#dc2626",
+    "游戏": "#16a34a",
+    "书城": "#c2410c"
+  },
+  "items": [
+    {
+      "id": "ug-cloud-album",
+      "title": "绿联云 · 家庭相册",
+      "subtitle": "NAS · 在线相册",
+      "category": "相册",
+      "cover": "https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201803/ed9d19ea8fa2ccca012bb8ac333e7166.jpg",
+      "desc": "绿联私有云家庭相册，随时随地在线浏览，记录与回味生活中的美好瞬间。",
+      "tags": ["NAS", "家庭相册", "在线浏览"],
+      "playUrl": "https://ug.link/dxp4800plus-zk-ud4v/photo/share/?id=2&pagetype=share&uuid=de42a38a-9964-43a5-bc3e-04aa49486e3c",
+      "btnText": "打开相册"
+    },
+    {
+      "id": "music-library",
+      "title": "我的音乐",
+      "subtitle": "音乐 · 站内播放器（含本地音频）",
+      "category": "音乐",
+      "cover": "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=modern%20music%20streaming%20app%20concept%2C%20purple%20pink%20neon%20gradient%2C%20glowing%20headphones%20and%20floating%20music%20notes%2C%20dark%20background%2C%20digital%20art&image_size=landscape_16_9",
+      "desc": "站内音乐播放器：内置本地 Silent.wav + 4 首在线测试曲，支持歌单切换、进度/音量/三种播放模式，旋转封面动效。往 public/music/ 放 mp3/wav 就能扩展歌单。",
+      "tags": ["站内播放器", "本地文件", "播放控制"],
+      "playUrl": "/yule/music",
+      "btnText": "进入播放器"
+    },
+    {
+      "id": "movie-local-mv",
+      "title": "本地视频 · 演唱会/反乌托邦 MV",
+      "subtitle": "电影 · 站内播放器（本地视频）",
+      "category": "电影",
+      "cover": "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=concert%20stage%20spotlight%20mixed%20with%20dystopian%20cyberpunk%20city%20scenes%2C%20cinematic%20split%20banner%2C%20vibrant%20neon%20lights&image_size=landscape_16_9",
+      "desc": "站内视频播放器：内置 2 个本地 mp4（演唱会转场 · 友谊 / 反乌托邦 Pt.2 MV），走原生控件（进度/前后10s/音量/全屏）；另外还有《大雄兔》《辛特尔》两部开源动画（B站 iframe 模式）。",
+      "tags": ["本地视频", "原生播放器", "MV"],
+      "playUrl": "/yule/movie",
+      "btnText": "立即播放"
+    },
+    {
+      "id": "game-2048",
+      "title": "2048",
+      "subtitle": "游戏 · 网页版",
+      "category": "游戏",
+      "cover": "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=colorful%20number%20puzzle%20tiles%20floating%20in%20space%2C%20orange%20yellow%20gradient%2C%20mobile%20puzzle%20game%20art%2C%20glossy%203d%20blocks&image_size=landscape_16_9",
+      "desc": "经典数字合并小游戏：滑动方块让相同数字相加，挑战合成 2048，休闲又烧脑。",
+      "tags": ["休闲益智", "经典", "网页游戏"],
+      "playUrl": "https://play2048.co/",
+      "btnText": "开始游戏"
+    },
+    {
+      "id": "book-think-python",
+      "title": "Think Python 2e",
+      "subtitle": "书城 · PDF 在线阅读",
+      "category": "书城",
+      "cover": "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=open%20book%20with%20glowing%20code%20symbols%20floating%2C%20green%20blue%20gradient%2C%20modern%20tech%20illustration%2C%20reading%20concept&image_size=landscape_16_9",
+      "desc": "经典 Python 入门书《Think Python》第二版英文原版（CC 授权免费），在站内 PDF 阅读器中阅读，支持缩放、旋转、滚动/单页切换、跳页、下载。",
+      "tags": ["Python", "编程入门", "站内阅读器"],
+      "playUrl": "/yule/book-reader?id=book-think-python",
+      "btnText": "开始阅读"
+    }
+  ]
+}

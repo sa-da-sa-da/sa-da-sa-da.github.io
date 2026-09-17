@@ -1,0 +1,4 @@
+{{- /* 3D 模型查看器：{{< three-d path="/tree.obj" type="obj" >}} */ -}}
+{{- $path := .Get "path" | default "" -}}
+{{- $type := .Get "type" | default "obj" -}}
+<div class="sk-3d" data-props="{{ (dict "modelPath" $path "fileType" $type) | jsonify }}"></div>

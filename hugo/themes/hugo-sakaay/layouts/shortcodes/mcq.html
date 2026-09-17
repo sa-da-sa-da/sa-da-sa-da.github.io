@@ -1,0 +1,13 @@
+{{- /*
+  选择题 / 多选题
+  用法：
+  {{< mcq title="题干" options="选项A|选项B|选项C" correct="1" explanation="解析" >}}
+  correct 为正确项下标（从 0 开始），多项用逗号分隔，如 correct="0,2"
+*/ -}}
+{{- $options := split (.Get "options") "|" -}}
+{{- $correct := slice -}}
+{{- range split (.Get "correct") "," -}}{{- $correct = $correct | append (int (trim . " ")) -}}{{- end -}}
+{{- $data := dict "type" "mcq" "title" (.Get "title") "options" $options "correct" $correct "explanation" (.Get "explanation" | default "") "images" (slice) -}}
+<div class="sk-question" data-type="mcq">
+<script type="application/json">{{ $data | jsonify | safeJS }}</script>
+</div>

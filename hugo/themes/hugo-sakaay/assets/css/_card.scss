@@ -1,0 +1,289 @@
+// ============================================================
+//  文章卡片 / 侧栏卡片
+// ============================================================
+.article-card {
+  display: flex; flex-direction: column;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-border-radius);
+  overflow: hidden;
+  box-shadow: var(--vp-shadow-1);
+  transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--vp-shadow-2);
+    border-color: var(--primary-color);
+    .card-cover img { transform: scale(1.06); }
+    .card-title { color: var(--primary-color); }
+  }
+  &.is-featured { border-color: var(--accent-color); }
+  &.is-sticky { border-color: var(--secondary-color); }
+}
+
+.card-cover {
+  position: relative;
+  height: var(--card-cover-height);
+  overflow: hidden;
+  background: var(--vp-c-bg-alt);
+  img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.6s ease;
+  }
+  .card-badges {
+    position: absolute; top: 10px; left: 10px;
+    display: flex; gap: 6px;
+    .badge {
+      background: rgba(0, 0, 0, 0.55); color: #fff;
+      backdrop-filter: blur(4px);
+      &.badge-featured { background: var(--accent-color); }
+      &.badge-sticky { background: var(--secondary-color); }
+    }
+  }
+}
+
+.card-content { padding: var(--card-padding); display: flex; flex-direction: column; flex: 1; }
+
+.card-title {
+  font-size: var(--card-title-size);
+  font-weight: 600; line-height: 1.45;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.25s ease;
+}
+
+.card-excerpt {
+  font-size: var(--card-excerpt-size);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  flex: 1;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+/* 首页卡片栅格：对齐原站「图片 + 标题 + 元信息」的紧凑卡片（不展示摘要） */
+.post-grid {
+  .card-excerpt { display: none; }
+  .card-title { margin-bottom: 0.5rem; }
+  .card-footer { gap: 8px; }
+  .card-cover { height: var(--card-cover-height); }
+}
+
+.card-footer {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  font-size: var(--card-meta-size); color: var(--text-muted);
+  .card-meta-item { display: inline-flex; align-items: center; gap: 3px; }
+  .meta-category { color: var(--primary-color); }
+  .meta-tag { color: var(--text-secondary); }
+}
+
+// ---------- 侧栏卡片通用外壳 ----------
+.sidebar-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--sidebar-card-border-radius);
+  box-shadow: var(--sidebar-card-shadow);
+  padding: var(--sidebar-card-padding);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  &:hover { box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1); transform: translateY(-2px); }
+}
+
+.card-title {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 1.05rem; font-weight: 600;
+  margin-bottom: 1rem; padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--border-color);
+  .title-icon { font-size: 1.1rem; }
+}
+
+// ---------- 博主卡片 ----------
+.blogger-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--sidebar-card-border-radius);
+  box-shadow: var(--sidebar-card-shadow);
+  overflow: hidden;
+  background-size: cover; background-position: center;
+  .blogger-inner {
+    padding: var(--sidebar-card-padding);
+    text-align: center;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.28));
+  }
+  .avatar-wrapper {
+    position: relative;
+    width: 110px; height: 110px; margin: 0 auto 0.75rem;
+    display: flex; align-items: center; justify-content: center;
+    &.circle-rotate .blogger-avatar { border-radius: 50%; transition: transform 0.6s ease; }
+    &.circle-rotate:hover .blogger-avatar { transform: rotate(360deg); }
+    &.circle .blogger-avatar { border-radius: 50%; }
+    &.square .blogger-avatar { border-radius: 12px; }
+    .avatar-circle-bg {
+      position: absolute; inset: -6px; border-radius: 50%;
+      background-size: cover; background-position: center;
+      animation: rotate-bg 18s linear infinite;
+      z-index: 0;
+    }
+    .blogger-avatar {
+      position: relative; z-index: 1;
+      width: 110px; height: 110px; object-fit: cover;
+      border: 3px solid #fff;
+    }
+    .status-icon {
+      position: absolute; right: 2px; bottom: 2px; z-index: 2;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--card-bg); display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--vp-shadow-1);
+    }
+  }
+  .blogger-name {
+    font-size: 1.15rem; font-weight: 700; color: #fff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  }
+  .blogger-slogan {
+    font-size: 0.85rem; color: rgba(255, 255, 255, 0.9); margin-top: 4px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  }
+  .blogger-social-icons {
+    display: flex; justify-content: center; gap: 10px; margin-top: 0.75rem;
+    .blogger-social-icon {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(255, 255, 255, 0.22);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; transition: all 0.25s ease;
+      &:hover { background: var(--primary-color); transform: translateY(-2px); }
+      svg { width: 16px; height: 16px; }
+    }
+  }
+}
+
+@keyframes rotate-bg { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+// ---------- 分类 / 标签 ----------
+.tk-category-item, .tk-tag-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 10px; border-radius: 8px;
+  font-size: 0.92rem; color: var(--text-color);
+  margin-bottom: 2px;
+  transition: background-color 0.2s ease;
+  &:hover { background: var(--tk-fill-color-light); }
+  .tk-count {
+    font-size: 0.78rem; color: var(--text-muted);
+    background: var(--vp-c-bg-alt); border-radius: 999px; padding: 0 7px;
+  }
+}
+
+.tk-tags-cloud {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  .tk-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 0.82rem;
+    transition: transform 0.2s ease;
+    &:hover { transform: translateY(-2px); }
+  }
+}
+
+// ---------- 精选文章 ----------
+.tk-featured-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 7px 0; border-bottom: 1px dashed var(--border-color);
+  &:last-child { border-bottom: none; }
+  .tk-featured-number {
+    flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 0.72rem; font-weight: 600;
+  }
+  .tk-featured-title {
+    font-size: 0.88rem; line-height: 1.5; color: var(--text-color);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    &:hover { color: var(--primary-color); }
+  }
+  .tk-featured-date { font-size: 0.75rem; color: var(--text-muted); }
+}
+
+// ---------- 日历 / 时间进度 ----------
+.tk-calendar-body { display: flex; gap: 12px; }
+.calendar-left { flex: 1; }
+.calendar-day {
+  font-size: 2.4rem; font-weight: 700; line-height: 1;
+  background: var(--gradient-primary); -webkit-background-clip: text;
+  background-clip: text; color: transparent;
+}
+.calendar-sub { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+.calendar-mini {
+  width: 148px; flex-shrink: 0;
+  .calendar-weekdays {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    font-size: 0.68rem; color: var(--text-muted); text-align: center;
+  }
+  .calendar-days {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
+    margin-top: 4px;
+    span {
+      aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      font-size: 0.68rem; border-radius: 4px; color: var(--text-secondary);
+      &.is-today { background: var(--primary-color); color: #fff; font-weight: 600; }
+    }
+  }
+}
+
+.time-progress-body { display: flex; flex-direction: column; gap: 12px; }
+.progress-item {
+  .progress-info {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;
+    .progress-percent { font-weight: 600; color: var(--primary-color); }
+  }
+  .progress-bar {
+    height: 8px; border-radius: 999px; background: var(--vp-c-bg-alt); overflow: hidden;
+    .progress-fill { height: 100%; border-radius: 999px; background: var(--gradient-cyber); transition: width 0.6s ease; }
+  }
+}
+
+// ---------- 站点统计 ----------
+.info-list { display: flex; flex-direction: column; gap: 6px; }
+.info-item {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.85rem; padding: 4px 0;
+  border-bottom: 1px dashed var(--border-color);
+  &:last-child { border-bottom: none; }
+  .info-label { color: var(--text-secondary); }
+  .info-value { font-weight: 600; color: var(--primary-color); }
+}
+
+// ---------- 友链 ----------
+.tk-friend-item {
+  display: flex; align-items: center; gap: 10px; padding: 7px 0;
+  .tk-friend-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
+  .tk-friend-name { font-size: 0.9rem; font-weight: 500; }
+  .tk-friend-desc {
+    font-size: 0.76rem; color: var(--text-muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px;
+  }
+}
+
+// ---------- 归档 ----------
+.tk-archives__header {
+  display: flex; align-items: baseline; gap: 8px; margin-bottom: 1.5rem;
+  .count { color: var(--text-muted); font-size: 0.9rem; }
+}
+.tk-archives__timeline {
+  position: relative; padding-left: 1.5rem;
+  &::before {
+    content: ''; position: absolute; left: 5px; top: 6px; bottom: 6px;
+    width: 2px; background: var(--border-color);
+  }
+}
+.archive-year { font-size: 1.4rem; font-weight: 700; margin: 1.5rem 0 0.75rem; }
+.archive-item {
+  position: relative; padding: 6px 0; display: flex; gap: 10px; align-items: baseline;
+  &::before {
+    content: ''; position: absolute; left: -1.5rem; top: 14px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--primary-color); box-shadow: 0 0 0 3px var(--card-bg);
+  }
+  .archive-date { font-size: 0.8rem; color: var(--text-muted); min-width: 62px; font-variant-numeric: tabular-nums; }
+  .archive-title { font-size: 0.95rem; &:hover { color: var(--primary-color); } }
+}

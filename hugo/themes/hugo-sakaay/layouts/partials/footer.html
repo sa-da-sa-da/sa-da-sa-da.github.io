@@ -1,0 +1,56 @@
+{{ $f := site.Params.footer }}
+<footer class="site-footer">
+  <div class="footer-content">
+    {{ if $f.showServices }}
+    <div class="footer-services">
+      <a class="service-badge" target="_blank" href="https://gohugo.io/" title="本站框架基于 Hugo">
+        <img alt="Hugo" src="https://img.shields.io/badge/Frame-Hugo-FF4088?logo=hugo&logoColor=fff">
+      </a>
+      <a class="service-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="本站内容采用 CC BY-NC-SA 4.0 国际许可协议">
+        <img alt="Copyright" src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?logo=coursera&logoColor=fff">
+      </a>
+      <a class="service-badge" target="_blank" href="https://twikoo.js.org/" title="本站评论系统使用 Twikoo">
+        <img alt="Twikoo" src="https://img.shields.io/badge/Comments-Twikoo-0072F9">
+      </a>
+      <a class="service-badge" target="_blank" href="https://github.com/FlexSearch/flexsearch" title="本站搜索服务使用 FlexSearch">
+        <img alt="FlexSearch" src="https://img.shields.io/badge/Search-FlexSearch-3095FA">
+      </a>
+      <a class="service-badge" target="_blank" href="https://51.la/" title="本站统计服务使用 51.LA">
+        <img alt="51.LA" src="https://img.shields.io/badge/51.LA-000000?logo=51.LA&label=Count&color=%23FF6A00">
+      </a>
+      <a class="service-badge" target="_blank" href="https://nginx.org/" title="本站反向代理服务 Nginx">
+        <img alt="Nginx" src="https://img.shields.io/badge/Nginx-Proxy?logo=Nginx&label=Proxy">
+      </a>
+    </div>
+    {{ end }}
+
+    <div class="footer-info">
+      {{ with $f.themeName }}<span class="theme-by">{{ . }}</span>{{ end }}
+      <span class="copyright">
+        Copyright © {{ with $f.copyrightYearStart }}{{ . }}-{{ end }}{{ now.Format "2006" }}
+        {{ with $f.copyrightSuffix }}{{ . }}{{ else }}{{ site.Title }}{{ end }}
+      </span>
+      {{ with $f.icp }}{{ if .enabled }}
+      <span class="icp-record">
+        <a href="{{ .url }}" target="_blank" rel="noopener">{{ .number }}</a>
+      </span>
+      {{ end }}{{ end }}
+      {{ with $f.security }}{{ if .enabled }}
+      <span class="icp-record">
+        <a href="{{ .url }}" target="_blank" rel="noopener">{{ .number }}</a>
+      </span>
+      {{ end }}{{ end }}
+      {{ with $f.privacy }}{{ if .enabled }}
+      <span><a class="privacy-link" href="{{ .url }}">{{ .text }}</a></span>
+      {{ end }}{{ end }}
+      <span id="runtime"></span>
+    </div>
+
+    {{ with $f.motto }}<div class="footer-motto">{{ . }}</div>{{ end }}
+  </div>
+
+  {{ with site.Params.analytics.la51 }}{{ if .enabled }}
+  <script id="LA-DATA-WIDGET" crossorigin="anonymous" charset="UTF-8"
+          src="https://v6-widget.51.la/v6/{{ .id }}/quote.js?theme=#1690FF,#333333,#999999,#007BFF,#FFFFFF,#1690FF,12&f=12&display=0,0,1,1,1,1,1,1"></script>
+  {{ end }}{{ end }}
+</footer>

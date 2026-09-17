@@ -1,0 +1,9 @@
+{{- /*
+  判断题
+  用法：{{< tf title="题干" correct="0" explanation="解析" >}}   correct: 0=正确 1=错误
+*/ -}}
+{{- $correct := slice (int (.Get "correct" | default "0")) -}}
+{{- $data := dict "type" "tf" "title" (.Get "title") "options" (slice "正确" "错误") "correct" $correct "explanation" (.Get "explanation" | default "") "images" (slice) -}}
+<div class="sk-question" data-type="tf">
+<script type="application/json">{{ $data | jsonify | safeJS }}</script>
+</div>

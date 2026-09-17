@@ -1,9 +1,9 @@
-name: Deploy to GitHub Pages
+name: Deploy VitePress (legacy, manual only)
 
+# 说明：
+#  - VitePress 版本已不再是主站，本流水线改为「仅手动触发」，作为回退手段保留。
+#  - 主站流水线见 deploy-hugo-pages.yml（推送 main/master 自动部署 Hugo）。
 on:
-  # 当推送到main或master分支时触发
-  push:
-    branches: [ main, master ]
   # 允许手动触发工作流
   workflow_dispatch:
 

@@ -1,0 +1,46 @@
+{{ define "main" }}
+<div class="center-page">
+  <div class="center-page-container">
+    <h1 style="margin-bottom:1rem">{{ .Title }}</h1>
+
+    {{ with .Content }}<div class="vp-doc">{{ . }}</div>{{ end }}
+
+    {{ $links := .Params.links }}
+    {{ if $links }}
+      {{ range $links }}
+        <h2 class="friend-group-title">{{ .title }}</h2>
+        <div class="friend-grid">
+          {{ range .list }}
+          <a class="friend-card" href="{{ .link }}" target="_blank" rel="noopener">
+            <img src="{{ .avatar | default "/img/logo.png" }}" alt="{{ .name }}" loading="lazy">
+            <span>
+              <span class="friend-name">{{ .name }}</span>
+              <span class="friend-desc">{{ .descr | default .desc | default "" }}</span>
+            </span>
+          </a>
+          {{ end }}
+        </div>
+      {{ end }}
+    {{ end }}
+
+    {{ with hugo.Data.friendLinks }}
+      {{ range .groups }}
+        <h2 class="friend-group-title">{{ .title }}</h2>
+        <div class="friend-grid">
+          {{ range .links }}
+          <a class="friend-card" href="{{ .url }}" target="_blank" rel="noopener">
+            <img src="{{ .avatar | default "/img/logo.png" }}" alt="{{ .name }}" loading="lazy">
+            <span>
+              <span class="friend-name">{{ .name }}</span>
+              <span class="friend-desc">{{ .description | default "" }}</span>
+            </span>
+          </a>
+          {{ end }}
+        </div>
+      {{ end }}
+    {{ end }}
+
+    {{ partial "comment.html" . }}
+  </div>
+</div>
+{{ end }}

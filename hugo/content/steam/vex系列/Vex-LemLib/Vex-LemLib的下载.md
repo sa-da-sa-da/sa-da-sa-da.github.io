@@ -1,0 +1,60 @@
+---
+title: vex LemLib的下载
+date: '2025-11-06T17:24:35+08:00'
+url: /steam/vex/vex-lemllib-download
+categories:
+  - 创客
+tags:
+  - vex LemLib
+coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201803/91b05a804e53f49a903a6a68aff89321.jpg
+weight: 0
+srcDir: steam/vex系列/Vex-LemLib
+---
+
+<div class="ad-block">
+<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
+</div>
+
+
+
+# 下载
+
+## 手动下载
+
+LemLib 可以从 LemLib 的 GitHub 仓库中的[发布](https://github.com/LemLib/LemLib/releases)标签页以[PROS](https://pros.cs.purdue.edu/)模板的形式下载。
+
+## 仓库下载
+
+如果你不想在每次有新版本发布时都重新下载 LemLib，我们已经设置了一个仓库以使更新过程更容易。
+
+你可以使用以下命令将仓库添加到你的`pros-cli`安装中。
+
+```bash
+pros c add-depot LemLib https://raw.githubusercontent.com/LemLib/LemLib/depot/stable.json # 添加 LemLib 的稳定仓库
+pros c apply LemLib # 应用 LemLib 的最新稳定版本
+```
+
+要更新 LemLib，你只需要运行以下命令：
+
+```bash
+pros c upgrade
+```
+
+### 测试版仓库
+
+
+> LemLib 的测试版可能没有经过充分测试或记录。使用需自行承担风险。
+
+
+如果你想使用 LemLib 的测试版，你可以像这样添加我们的测试版仓库：
+
+```bash
+pros c add-depot LemLib https://raw.githubusercontent.com/LemLib/LemLib/depot/beta.json # 添加 LemLib 的测试版仓库
+```
+
+## 后续步骤
+
+一旦你下载了 LemLib，我们建议你查看我们的教程。
+
+
+> 本文来自 [LemLib](https://lemlib.readthedocs.io/en/stable），经翻译发布于此以供大家学习使用！侵删！

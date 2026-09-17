@@ -1,0 +1,26 @@
+{{ define "main" }}
+<div class="login-page">
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-logo">
+        {{ with .Params.logo }}<img src="{{ . }}" alt="logo">{{ end }}
+        <span class="login-name">{{ .Params.name | default site.Title }}</span>
+      </div>
+      <div class="login-form">
+        <label class="login-field">
+          <span>账号</span>
+          <input type="text" id="loginUser" placeholder="请输入账号" autocomplete="username">
+        </label>
+        <label class="login-field">
+          <span>密码</span>
+          <input type="password" id="loginPass" placeholder="请输入密码" autocomplete="current-password">
+        </label>
+        <button class="btn btn-brand login-submit" type="button" id="loginSubmit">登录</button>
+        <div class="login-tip" id="loginTip"></div>
+      </div>
+      {{ with .Content }}<div class="vp-doc" style="margin-top:1rem">{{ . }}</div>{{ end }}
+    </div>
+    <div class="login-side"{{ with .Params.leftImg }} style="background-image:url('{{ . }}')"{{ end }}></div>
+  </div>
+</div>
+{{ end }}

@@ -1,0 +1,60 @@
+{
+  "filters": [
+    { "key": "all", "label": "全部回忆" },
+    { "key": "date", "label": "约会时光" },
+    { "key": "travel", "label": "旅行足迹" },
+    { "key": "festival", "label": "节日庆典" },
+    { "key": "daily", "label": "日常点滴" }
+  ],
+  "categoryNames": {
+    "date": "约会时光",
+    "travel": "旅行足迹",
+    "festival": "节日庆典",
+    "daily": "日常点滴"
+  },
+  "defaultSortOrder": "desc",
+  "photos": [
+    {
+      "id": 1,
+      "date": "2023-10-15",
+      "description": "第一次一起看海，海风很轻，你的笑容很甜。我们在沙滩上写下彼此的名字，约定要一起看遍世界的每一片海。",
+      "url": "https://picsum.photos/id/1039/800/600",
+      "category": "date"
+    },
+    {
+      "id": 2,
+      "date": "2023-09-21",
+      "description": "中秋节一起做月饼，虽然形状不太完美，但这是我们一起完成的第一个节日美食。月光下的你，比月亮还要温柔。",
+      "url": "https://picsum.photos/id/292/800/600",
+      "category": "festival"
+    },
+    {
+      "id": 3,
+      "date": "2023-08-05",
+      "description": "周末一起去郊外露营，晚上躺在帐篷里看星星，你说要把最亮的那颗星星命名为我们的名字。",
+      "url": "https://picsum.photos/id/883/800/600",
+      "category": "travel"
+    },
+    {
+      "id": 4,
+      "date": "2023-07-10",
+      "description": "第一次一起做饭，你负责洗菜我负责炒，虽然有点手忙脚乱，但吃到嘴里的那一刻觉得无比幸福。",
+      "url": "https://picsum.photos/id/431/800/600",
+      "category": "daily"
+    },
+    {
+      "id": 5,
+      "date": "2023-06-01",
+      "description": "儿童节一起去了游乐园，你像个孩子一样拉着我玩遍了所有项目，旋转木马上的笑容是我见过最美的风景。",
+      "url": "https://picsum.photos/id/338/800/600",
+      "category": "date"
+    },
+    {
+      "id": 6,
+      "date": "2023-05-20",
+      "description": "520收到的惊喜，你说每天都要像今天一样爱我。其实有你的每一天，都是情人节。",
+      "url": "https://picsum.photos/id/240/800/600",
+      "category": "festival"
+    }
+  ]
+}

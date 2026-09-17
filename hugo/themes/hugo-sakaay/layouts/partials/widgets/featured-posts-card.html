@@ -1,0 +1,23 @@
+{{ $posts := where site.RegularPages "Params.featured" true }}
+{{ $posts = sort $posts "Params.weight" "asc" }}
+{{ if eq (len $posts) 0 }}{{ $posts = first 5 (where site.RegularPages "Type" "ne" "page") }}{{ end }}
+{{ $limit := site.Params.homeSidebar.featuredPosts.limit | default 5 }}
+{{ if gt (len $posts) 0 }}
+{{ $colors := slice "#0891b2" "#8b5cf6" "#ec4899" "#10b981" "#f59e0b" }}
+<div class="sidebar-card tk-featured-posts-card">
+  <div class="card-title"><span class="title-icon">⭐</span><span class="title-text">精选文章</span></div>
+  <div class="tk-featured-posts">
+    {{ range $i, $p := first $limit $posts }}
+    <div class="tk-featured-item">
+      <span class="tk-featured-number" style="background-color:{{ index $colors (mod $i 5) }}">{{ add 1 $i }}</span>
+      <div class="tk-featured-content">
+        <a class="tk-featured-title" href="{{ $p.RelPermalink }}">
+          {{ if $p.Params.sticky }}<span class="tk-featured-badge">置顶</span>{{ end }}{{ $p.Title }}
+        </a>
+        <div class="tk-featured-date">{{ $p.Date.Format "2006-01-02" }}</div>
+      </div>
+    </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

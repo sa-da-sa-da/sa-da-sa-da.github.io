@@ -1,0 +1,6 @@
+{{- /* 广告位：{{< ad slot="2668661755" >}} */ -}}
+{{- $slot := .Get "slot" | default site.Params.ads.articleSlot -}}
+{{- $client := .Get "client" | default site.Params.ads.client -}}
+<div class="ad-block">
+<ins class="adsbygoogle" style="display:block" data-ad-client="{{ $client }}" data-ad-slot="{{ $slot }}" data-ad-format="auto" data-full-width-responsive="true"></ins>
+</div>

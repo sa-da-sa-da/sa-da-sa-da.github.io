@@ -1,0 +1,50 @@
+{{ define "main" }}
+{{ $plural := .Data.Plural }}
+{{ $isTag := eq $plural "tags" }}
+{{ $title := cond $isTag "标签" "分类" }}
+<div class="center-page">
+  <div class="center-page-container">
+    <h1 style="margin-bottom:.5rem">{{ with .Title }}{{ . }}{{ else }}{{ $title }}{{ end }}</h1>
+    <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1.5rem">
+      共 {{ len .Data.Terms }} 个{{ $title }}
+    </p>
+
+    {{ if $isTag }}
+      {{ $palette := slice
+        (dict "bg" "#eff6ff" "fg" "#1d4ed8")
+        (dict "bg" "#faf5ff" "fg" "#7c3aed")
+        (dict "bg" "#fdf2f8" "fg" "#be185d")
+        (dict "bg" "#ecfdf5" "fg" "#047857")
+        (dict "bg" "#fffbeb" "fg" "#b45309")
+        (dict "bg" "#ecfeff" "fg" "#0e7490")
+        (dict "bg" "#eef2ff" "fg" "#4338ca") }}
+      <div class="tk-tags-cloud">
+        {{ range $i, $t := .Data.Terms.ByCount }}
+          {{ $c := index $palette (mod $i 7) }}
+          <a class="tk-tag" href="{{ $t.Page.RelPermalink }}" style="background:{{ $c.bg }};color:{{ $c.fg }}">
+            {{ $t.Page.Title }}<span class="tk-count">{{ $t.Count }}</span>
+          </a>
+        {{ end }}
+      </div>
+    {{ else }}
+      <div class="post-grid">
+        {{ range .Data.Terms.ByCount }}
+        <a class="article-card" href="{{ .Page.RelPermalink }}">
+          <div class="card-content">
+            <h3 class="card-title">📁 {{ .Page.Title }}</h3>
+            <p class="card-excerpt">
+              {{ with .Page.Description }}{{ . }}{{ else }}共 {{ .Count }} 篇文章{{ end }}
+            </p>
+            <div class="card-footer">
+              <span class="card-meta-item">📄 {{ .Count }} 篇</span>
+            </div>
+          </div>
+        </a>
+        {{ end }}
+      </div>
+    {{ end }}
+
+    {{ partial "comment.html" . }}
+  </div>
+</div>
+{{ end }}

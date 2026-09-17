@@ -1,0 +1,57 @@
+{{- /*
+  电影 / 视频播放器：{{< movie-player >}} ... {{< /movie-player >}}
+
+  在 md 里直接列片单，每行一部，用 | 分隔字段：
+    标题 | 封面 | 简介 | 时长 | 画质 | 标签(逗号分隔) | 源
+
+  其中「源」两种写法：
+  - 直链：填 mp4/webm 地址或站内相对路径（自动编码）
+  - B 站：填 bilibili:BV号  → 自动转成 iframe 嵌入地址
+
+  示例：
+  {{< movie-player >}}
+  - 大雄兔 Big Buck Bunny | /img/xyy-3.webp | Blender 基金会开源动画：大耳兔复仇记 | 10:34 | 1080P | 动画短片,开源电影,喜剧 | bilibili:BV1Fb4111732
+  - 演唱会转场 · 友谊 | /img/xyy-1.webp | 本地视频：演唱会转场合集 |  | 本地高清 | 本地视频,演唱会,剪辑 | /music/video_#演唱会_0_1.mp4
+  {{< /movie-player >}}
+
+  说明：封面 / 时长 / 画质 / 标签 / 简介 均可留空
+*/ -}}
+{{- $movies := slice -}}
+{{- range (split (string .Inner) "\n") -}}
+  {{- $line := trim . " \t\r" -}}
+  {{- if and $line (not (hasPrefix $line "<!--")) -}}
+    {{- $body := $line -}}
+    {{- if hasPrefix $body "- " -}}{{- $body = trim (strings.TrimPrefix "- " $body) " \t" -}}{{- end -}}
+    {{- $parts := split $body "|" -}}
+    {{- if ge (len $parts) 1 -}}
+      {{- $title := trim (index $parts 0) " \t" -}}
+      {{- $cover := "" -}}{{- if ge (len $parts) 2 -}}{{- $cover = trim (index $parts 1) " \t" -}}{{- end -}}
+      {{- $desc := "" -}}{{- if ge (len $parts) 3 -}}{{- $desc = trim (index $parts 2) " \t" -}}{{- end -}}
+      {{- $dur := "" -}}{{- if ge (len $parts) 4 -}}{{- $dur = trim (index $parts 3) " \t" -}}{{- end -}}
+      {{- $quality := "" -}}{{- if ge (len $parts) 5 -}}{{- $quality = trim (index $parts 4) " \t" -}}{{- end -}}
+      {{- $tagStr := "" -}}{{- if ge (len $parts) 6 -}}{{- $tagStr = trim (index $parts 5) " \t" -}}{{- end -}}
+      {{- $src := "" -}}{{- if ge (len $parts) 7 -}}{{- $src = trim (index $parts 6) " \t" -}}{{- end -}}
+
+      {{- $video := "" -}}{{- $embed := "" -}}
+      {{- if hasPrefix $src "bilibili:" -}}
+        {{- $bv := trim (strings.TrimPrefix "bilibili:" $src) " \t" -}}
+        {{- $embed = printf "https://player.bilibili.com/player.html?bvid=%s&page=1&autoplay=0&danmaku=1&high_quality=1" $bv -}}
+      {{- else -}}
+        {{- $video = $src -}}
+      {{- end -}}
+
+      {{- $tags := slice -}}
+      {{- if $tagStr -}}
+        {{- range (split $tagStr ",") -}}{{- $tags = $tags | append (trim . " \t") -}}{{- end -}}
+      {{- end -}}
+
+      {{- if and $title (or $video $embed) -}}
+        {{- $movies = $movies | append (dict "title" $title "cover" $cover "desc" $desc "duration" $dur "quality" $quality "tags" $tags "src" $video "embedUrl" $embed) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if $movies -}}
+{{- $data := dict "movies" $movies -}}
+<div class="sk-movie-player" data-props="{{ $data | jsonify }}"></div>
+{{- end -}}

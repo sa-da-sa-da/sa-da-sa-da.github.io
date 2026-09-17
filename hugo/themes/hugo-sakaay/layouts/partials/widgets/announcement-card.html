@@ -1,0 +1,13 @@
+{{ $a := site.Params.announcement }}
+{{ if and $a $a.enabled }}
+<div class="sidebar-card announcement-card">
+  <div class="card-title"><span class="title-icon">📢</span><span class="title-text">{{ $a.title | default "公告" }}</span></div>
+  <div class="announcement-body">
+    {{ with $a.content }}
+      {{ with .title }}<div class="announcement-title">{{ . }}</div>{{ end }}
+      {{ with .text }}<p class="announcement-text">{{ . }}</p>{{ end }}
+      {{ with .url }}<a class="btn btn-brand" href="{{ . | relURL }}" style="margin-top:.5rem">查看详情</a>{{ end }}
+    {{ end }}
+  </div>
+</div>
+{{ end }}

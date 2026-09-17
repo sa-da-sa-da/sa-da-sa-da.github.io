@@ -1,0 +1,17 @@
+{
+  "storageKey": "timelineEvents",
+  "contentPassword": "",
+  "defaultSort": "asc",
+  "events": [
+    {
+      "date": "2021-07-08",
+      "title": "初见",
+      "description": "茫茫人海，我们相遇。那一天，我们在一起了，我好幸福。"
+    },
+    {
+      "date": "2022-01-25",
+      "title": "后来",
+      "description": "再见竟是，再也不见。至此，我从未真正地快乐过……"
+    }
+  ]
+}

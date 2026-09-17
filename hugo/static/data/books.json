@@ -1,0 +1,22 @@
+[
+  {
+    "id": "book-think-python",
+    "title": "Think Python 2e",
+    "author": "Allen B. Downey",
+    "cover": "/img/xyy.webp",
+    "desc": "经典 Python 入门书《像计算机科学家一样思考 Python》第二版英文原版（CC BY-NC 3.0 免费授权），从变量、函数、迭代到面向对象、算法分析，循序渐进。",
+    "src": "https://greenteapress.com/thinkpython2/thinkpython2.pdf",
+    "tags": ["Python", "编程入门", "英文原版"],
+    "year": "2015 / 2nd ed."
+  },
+  {
+    "id": "book-github-ossu-cs",
+    "title": "OSSU Computer Science Guide",
+    "author": "Open Source Society University",
+    "cover": "/img/xyy-1.webp",
+    "desc": "开源社会大学（OSSU）的计算机科学自学路径白皮书，整合全球顶尖公开课与学习资源，推荐给想系统自学 CS 的同学。",
+    "src": "https://greenteapress.com/thinkpython2/thinkpython2.pdf",
+    "tags": ["计算机科学", "自学路径", "开源"],
+    "year": "持续更新"
+  }
+]

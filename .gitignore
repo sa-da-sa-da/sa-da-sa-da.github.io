@@ -62,9 +62,7 @@ extract_urls.py
 config_example.json
 indexnow_submit.py
 indexnow_submit.py
-docs/public/music/video_#演唱会转场终于轮到我了##友谊..._0_1.mp4
-docs/public/music/slient.wav
-docs/public/music/video_《反乌托邦Pt.2》【亚细亚旷世..._0.mp4
+# 以下 music/ 下的本地媒体是站内音乐播放器与电影页的片源，必须提交（线上构建依赖）
 docs/35.工具/本地文档工具箱.md
 docs/public/lab/AI/pdf.html
 docs/public/poetry/generated/autumn-thoughts/hero.jpg
@@ -121,3 +119,10 @@ docs/public/poetry/generated/chushibiao/line-7.jpg
 docs/public/poetry/generated/chushibiao/line-8.jpg
 docs/35.工具/班主任工作台-快速上手.md
 docs/35.工具/班主任工作台-技术文档.md
+
+# 本地临时产物
+.cache/
+.playwright-cli/
+
+# IDE / 助手配置
+.codebuddy/

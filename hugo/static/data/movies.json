@@ -1,0 +1,42 @@
+[
+  {
+    "id": "movie-local-mv-1",
+    "title": "演唱会转场 · 友谊",
+    "cover": "/img/xyy-1.webp",
+    "desc": "本地视频：演唱会转场合集，友谊主题创意剪辑（原生播放器模式）。",
+    "quality": "本地高清",
+    "tags": ["本地视频", "演唱会", "剪辑"],
+    "src": "/music/video_#演唱会转场终于轮到我了##友谊..._0_1.mp4",
+    "encodeSrc": true
+  },
+  {
+    "id": "movie-local-mv-2",
+    "title": "反乌托邦 Pt.2 · 亚细亚旷世",
+    "cover": "/img/xyy-2.webp",
+    "desc": "本地视频：《反乌托邦 Pt.2》亚细亚旷世主题 MV（原生播放器模式）。",
+    "quality": "本地高清",
+    "tags": ["本地视频", "MV", "反乌托邦"],
+    "src": "/music/video_《反乌托邦Pt.2》【亚细亚旷世..._0.mp4",
+    "encodeSrc": true
+  },
+  {
+    "id": "movie-big-buck-bunny",
+    "title": "大雄兔 Big Buck Bunny",
+    "cover": "/img/xyy-3.webp",
+    "desc": "Blender 基金会 2008 年开源动画：大耳兔反击三只调皮小兔子的爆笑复仇记，全片 10 分 34 秒（B 站嵌入模式）。",
+    "duration": "10:34",
+    "quality": "1080P",
+    "tags": ["动画短片", "开源电影", "喜剧"],
+    "embedUrl": "https://player.bilibili.com/player.html?bvid=BV1Fb4111732&page=1&autoplay=0&danmaku=1&high_quality=1"
+  },
+  {
+    "id": "movie-sintel",
+    "title": "辛特尔 Sintel",
+    "cover": "/img/xyy.webp",
+    "desc": "Blender 基金会第三部开源电影：少女孤身跋山涉水，只为寻回失散的小飞龙，画面质感媲美商业动画（B 站嵌入模式）。",
+    "duration": "14:48",
+    "quality": "高清",
+    "tags": ["奇幻", "开源电影", "冒险"],
+    "embedUrl": "https://player.bilibili.com/player.html?bvid=BV1iW411j7bn&page=1&autoplay=0&danmaku=1&high_quality=1"
+  }
+]

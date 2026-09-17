@@ -1,0 +1,10 @@
+name = "hugo-sakaay"
+license = "MIT"
+description = "sakaay 自建 Hugo 主题：三栏知识库 + 卡片博客风格，支持目录树、本地搜索、暗色模式与 6 套首页预设"
+homepage = "https://www.sakaay.com/"
+tags = ["blog", "docs", "knowledge-base", "chinese"]
+features = ["blog", "docs", "search", "taxonomy", "responsive", "dark-mode"]
+min_version = "0.150.0"
+
+[author]
+  name = "sakaay"

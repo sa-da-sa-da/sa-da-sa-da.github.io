@@ -1,0 +1,280 @@
+# ============================================================
+#  导航菜单（与 VitePress ConfigHyde/Nav.ts 一一对应）
+#  Hugo 菜单两层结构；原 VitePress 中「生活」下的分组已扁平化
+# ============================================================
+
+[[main]]
+  name = "🏡首页"
+  url = "/"
+  weight = 1
+
+[[main]]
+  name = "📚快捷"
+  identifier = "quick"
+  url = "#"
+  weight = 2
+
+[[main]]
+  name = "🔍搜索"
+  parent = "quick"
+  url = "/nav"
+  weight = 1
+
+[[main]]
+  name = "⏰时间"
+  parent = "quick"
+  url = "/time"
+  weight = 2
+
+[[main]]
+  name = "📚编程"
+  parent = "quick"
+  url = "/program"
+  weight = 3
+
+[[main]]
+  name = "📚工具"
+  parent = "quick"
+  url = "/tools/tools-index"
+  weight = 4
+
+[[main]]
+  name = "🥅诗词"
+  parent = "quick"
+  url = "https://www.sakaay.com/poetry/1.html"
+  weight = 5
+  [main.params]
+    target = "_self"
+
+[[main]]
+  name = "📚学习"
+  identifier = "learn"
+  url = "#"
+  weight = 3
+
+[[main]]
+  name = "学习"
+  parent = "learn"
+  url = "/teach/teach-index"
+  weight = 1
+  [main.params]
+    icon = "/img/nav/linux.svg"
+
+[[main]]
+  name = "考试"
+  parent = "learn"
+  url = "/exammination/exammination-index"
+  weight = 2
+  [main.params]
+    icon = "/img/nav/linux.svg"
+
+[[main]]
+  name = "创客"
+  parent = "learn"
+  url = "/steam/steam-index"
+  weight = 3
+  [main.params]
+    icon = "/img/nav/linux.svg"
+
+[[main]]
+  name = "图说网络"
+  parent = "learn"
+  url = "/network/network-index"
+  weight = 4
+  [main.params]
+    icon = "/img/nav/linux.svg"
+
+[[main]]
+  name = "🏓生活"
+  identifier = "life"
+  url = "#"
+  weight = 4
+
+[[main]]
+  name = "📷相册"
+  parent = "life"
+  url = "/yule/photo"
+  weight = 1
+
+[[main]]
+  name = "🎬电影"
+  parent = "life"
+  url = "/yule/movie"
+  weight = 2
+
+[[main]]
+  name = "🎵音乐"
+  parent = "life"
+  url = "/yule/music"
+  weight = 3
+
+[[main]]
+  name = "精神小屋"
+  parent = "life"
+  url = "/love/inner"
+  weight = 4
+
+[[main]]
+  name = "时间管理"
+  parent = "life"
+  url = "/love/time-plan"
+  weight = 5
+
+[[main]]
+  name = "情感文案"
+  parent = "life"
+  url = "/love/wenan"
+  weight = 6
+
+[[main]]
+  name = "旅行"
+  parent = "life"
+  url = "/xingqu/travel"
+  weight = 7
+
+[[main]]
+  name = "读书"
+  parent = "life"
+  url = "/xingqu/reading"
+  weight = 8
+
+[[main]]
+  name = "校园文创"
+  parent = "life"
+  url = "/culture"
+  weight = 9
+
+[[main]]
+  name = "👏索引"
+  identifier = "index"
+  url = "#"
+  weight = 5
+
+[[main]]
+  name = "📃分类页"
+  parent = "index"
+  url = "/categories"
+  weight = 1
+
+[[main]]
+  name = "🔖标签页"
+  parent = "index"
+  url = "/tags"
+  weight = 2
+
+[[main]]
+  name = "📚归档页"
+  parent = "index"
+  url = "/archives"
+  weight = 3
+
+[[main]]
+  name = "📋清单页"
+  parent = "index"
+  url = "/articleOverview"
+  weight = 4
+
+[[main]]
+  name = "🔐登录页"
+  parent = "index"
+  url = "/login"
+  weight = 5
+
+[[main]]
+  name = "⚠️风险链接提示"
+  parent = "index"
+  url = "/risk-link"
+  weight = 6
+
+[[main]]
+  name = "🍷关于"
+  identifier = "about"
+  url = "#"
+  weight = 6
+
+[[main]]
+  name = "👋我是 sakaay"
+  parent = "about"
+  url = "/about/me"
+  weight = 1
+
+[[main]]
+  name = "🎉关于本站"
+  parent = "about"
+  url = "/about/website"
+  weight = 2
+
+[[main]]
+  name = "💖友链"
+  parent = "about"
+  url = "/about/friend-links"
+  weight = 3
+
+[[main]]
+  name = "🌐网站导航"
+  parent = "about"
+  url = "/about/websites"
+  weight = 4
+
+[[main]]
+  name = "👂留言区"
+  parent = "about"
+  url = "/about/liuyanqu"
+  weight = 5
+
+[[main]]
+  name = "💡思考"
+  parent = "about"
+  url = "/about/thouht"
+  weight = 6
+
+[[main]]
+  name = "💑情侣相册"
+  parent = "about"
+  url = "/about/love"
+  weight = 7
+
+[[main]]
+  name = "⏱️时间轴"
+  parent = "about"
+  url = "/about/time-line"
+  weight = 8
+
+[[main]]
+  name = "🌍朋友圈"
+  parent = "about"
+  url = "/about/pyq"
+  weight = 9
+
+[[main]]
+  name = "💑恋爱计时器"
+  parent = "about"
+  url = "/about/ql-timer"
+  weight = 10
+
+[[main]]
+  name = "📊网站统计"
+  parent = "about"
+  url = "https://umami.onedayxyy.cn/share/8ZlsB6Q5gDpVJiQq/sakaay"
+  weight = 11
+  [main.params]
+    external = true
+    target = "_blank"
+
+[[main]]
+  name = "🔍站点监控"
+  parent = "about"
+  url = "https://status.onedayxyy.cn/status/sakaay"
+  weight = 12
+  [main.params]
+    external = true
+    target = "_blank"
+
+[[main]]
+  name = "📦网盘"
+  parent = "about"
+  url = "https://zdir.onedayxyy.cn/"
+  weight = 13
+  [main.params]
+    external = true
+    target = "_blank"

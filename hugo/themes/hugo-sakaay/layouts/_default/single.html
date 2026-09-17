@@ -1,0 +1,79 @@
+{{ define "main" }}
+{{ $showSidebar := and site.Params.sidebar (ne .Params.sidebar false) }}
+{{ $tocHTML := partial "toc-list.html" . }}
+{{ $hasToc := gt (len $tocHTML) 0 }}
+{{/* 正文自带 h1 时不再重复渲染标题（原 VitePress 内容多为「# 标题」开头） */}}
+{{ $content := .Content }}
+{{ $head := substr $content 0 800 }}
+{{ $hasOwnH1 := strings.Contains $head "<h1" }}
+<div class="VPDoc{{ if not $showSidebar }} no-sidebar{{ end }}{{ if not $hasToc }} no-aside{{ end }}">
+  {{ if $showSidebar }}{{ partial "sidebar.html" . }}{{ end }}
+
+  <div class="content">
+    <div class="content-container">
+      <header class="tk-doc-header">
+        {{ if not $hasOwnH1 }}<h1 class="tk-doc-header__title">{{ .Title }}</h1>{{ end }}
+
+        {{ if ne .Params.article false }}
+        <div class="tk-article-meta">
+          {{ if site.Params.articleAnalyze.showAuthor }}
+          <span class="tk-article-meta__item">👤 {{ with .Params.author }}{{ . }}{{ else }}{{ site.Params.author }}{{ end }}</span>
+          {{ end }}
+          {{ if site.Params.articleAnalyze.showCreateDate }}
+          <span class="tk-article-meta__item">📅 {{ .Date.Format "2006-01-02" }}</span>
+          {{ end }}
+          {{ if and site.Params.articleAnalyze.showUpdateDate (ne (.Lastmod.Format "2006-01-02") (.Date.Format "2006-01-02")) }}
+          <span class="tk-article-meta__item">🔄 {{ .Lastmod.Format "2006-01-02" }}</span>
+          {{ end }}
+          {{ if site.Params.articleAnalyze.wordCount }}
+          <span class="tk-article-meta__item">📝 {{ .WordCount }} 字</span>
+          {{ end }}
+          {{ if site.Params.articleAnalyze.readingTime }}
+          <span class="tk-article-meta__item">⏱️ {{ .ReadingTime }} 分钟</span>
+          {{ end }}
+          {{ if site.Params.articleAnalyze.showCategory }}
+          {{ with .Params.categories }}
+          <span class="tk-article-meta__item tk-article-meta__categories">
+            📁{{ range . }}<a class="meta-tag-link" href="{{ "/categories/" | relURL }}{{ . | urlize }}">{{ . }}</a>{{ end }}
+          </span>
+          {{ end }}
+          {{ end }}
+          {{ if site.Params.articleAnalyze.showTag }}
+          {{ with .Params.tags }}
+          <span class="tk-article-meta__item tk-article-meta__tags">
+            🏷️{{ range . }}<a class="meta-tag-link" href="{{ "/tags/" | relURL }}{{ . | urlize }}">{{ . }}</a>{{ end }}
+          </span>
+          {{ end }}
+          {{ end }}
+        </div>
+        {{ end }}
+      </header>
+
+      {{ if and site.Params.articleTopTip.enabled (ne .Params.articleTopTip false) (ne .Params.article false) }}
+        {{ if .Date }}
+          {{ if gt (div (sub now.Unix .Date.Unix) 2592000) (site.Params.articleTopTip.months | default 6) }}
+          <div class="custom-block warning"><div class="custom-block-title">⚠️ 提示</div>{{ site.Params.articleTopTip.text }}</div>
+          {{ end }}
+        {{ end }}
+      {{ end }}
+
+      <div class="tk-vp-container">
+        <div class="vp-doc tk-doc-content">
+          {{ $content }}
+        </div>
+      </div>
+
+      {{ if ne .Params.article false }}
+        {{ partial "doc-copyright.html" . }}
+        {{ partial "appreciation.html" . }}
+        {{ partial "doc-prev-next.html" . }}
+      {{ end }}
+      {{ partial "comment.html" . }}
+    </div>
+  </div>
+
+  {{ if $hasToc }}{{ partial "toc.html" . }}{{ end }}
+</div>
+
+{{ if $showSidebar }}{{ partial "sidebar-drawer.html" . }}{{ end }}
+{{ end }}
