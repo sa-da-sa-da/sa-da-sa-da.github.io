@@ -87,7 +87,7 @@ iframeUrl: https://e.sakaay.com
         font-size: 14px;
         transition: background-color 0.2s ease;
       ">重试</button>
-      <a href="https://ee.sakaay.com/" target="_blank" rel="noopener noreferrer" style="
+      <a href="https://e.sakaay.com/" target="_blank" rel="noopener noreferrer" style="
         padding: 8px 16px;
         background: #f5f5f5;
         color: #333;

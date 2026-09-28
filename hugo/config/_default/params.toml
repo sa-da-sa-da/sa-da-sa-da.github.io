@@ -67,7 +67,7 @@ dateFormat = "2006-01-02"
 
 [[hero.actions]]
   text = "编程"
-  url = "https://ee.sakaay.com"
+  url = "https://e.sakaay.com"
   theme = "brand"
 [[hero.actions]]
   text = "机器人"
