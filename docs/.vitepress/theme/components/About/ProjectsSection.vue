@@ -11,21 +11,22 @@
           <div class="oss-name">{{ item.name }}</div>
           <div class="oss-desc">{{ item.desc }}</div>
           <div class="oss-data">
-            <span>
+            <span v-if="item.Star">
               <TkIcon :icon="Star" icon-type="svg" size="16px" />
               {{ item.Star }}
             </span>
-            <span>
+            <span v-if="item.Fork">
               <TkIcon :icon="Fork" icon-type="svg" size="16px" />
               {{ item.Fork }}
             </span>
-            <span>
+            <span v-if="item.View">
               <TkIcon :icon="View" icon-type="svg" size="16px" />
               {{ item.View }}
             </span>
+            <span v-if="item.visit">🔗 {{ item.visit }}</span>
           </div>
-          <a class="oss-btn" :href="item.github" target="_blank" rel="noopener noreferrer">
-            查看项目
+          <a class="oss-btn" :href="item.url || item.github" target="_blank" rel="noopener noreferrer">
+            {{ item.btnText || '查看项目' }}
           </a>
         </div>
       </div>

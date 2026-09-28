@@ -144,6 +144,21 @@
   z-index: 75;
   &.is-open { opacity: 1; visibility: visible; transform: translateY(0); }
 
+  // 窄屏：改为视口内固定居中，避免 292px 固定宽 + right:0 溢出屏幕被裁切
+  @media (max-width: 640px) {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, calc(-50% - 6px));
+    width: calc(100vw - 32px);
+    max-width: 340px;
+    max-height: 78vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    &.is-open { transform: translate(-50%, -50%); }
+  }
+
   &__head {
     display: flex; align-items: center; justify-content: space-between;
     font-size: 0.85rem; font-weight: 600; margin-bottom: 10px;

@@ -1132,14 +1132,15 @@ function renderAbout(box) {
 
     html += '<section class="about-projects"><h2 class="section-title"><span class="title-icon">📦</span>开源项目</h2>' +
       '<div class="post-grid">' + (d.ossProjects || []).map(function (pr) {
-        return '<a class="article-card" href="' + esc(pr.github || '#') + '" target="_blank" rel="noopener">' +
+        return '<a class="article-card" href="' + esc(pr.url || pr.github || '#') + '" target="_blank" rel="noopener">' +
           (pr.projectsimg ? '<div class="card-cover"><img src="' + esc(pr.projectsimg) + '" loading="lazy" alt=""></div>' : '') +
           '<div class="card-content"><h3 class="card-title">' + esc(pr.name) + '</h3>' +
           '<p class="card-excerpt">' + esc(pr.desc) + '</p>' +
           '<div class="card-footer">' +
-          '<span class="card-meta-item">⭐ ' + esc(pr.Star || '') + '</span>' +
-          '<span class="card-meta-item">🍴 ' + esc(pr.Fork || '') + '</span>' +
-          '<span class="card-meta-item">👁 ' + esc(pr.View || '') + '</span>' +
+          (pr.Star ? '<span class="card-meta-item">⭐ ' + esc(pr.Star) + '</span>' : '') +
+          (pr.Fork ? '<span class="card-meta-item">🍴 ' + esc(pr.Fork) + '</span>' : '') +
+          (pr.View ? '<span class="card-meta-item">👁 ' + esc(pr.View) + '</span>' : '') +
+          (pr.visit ? '<span class="card-meta-item">🔗 ' + esc(pr.visit) + '</span>' : '') +
           (pr.tag ? '<span class="badge" style="background:' + esc(pr.tag.bg) + ';color:' + esc(pr.tag.color) + '">' +
             esc(pr.tag.name) + '</span>' : '') +
           '</div></div></a>';

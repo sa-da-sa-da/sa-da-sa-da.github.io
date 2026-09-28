@@ -75,5 +75,5 @@
   {{ if $hasToc }}{{ partial "toc.html" . }}{{ end }}
 </div>
 
-{{ if $showSidebar }}{{ partial "sidebar-drawer.html" . }}{{ end }}
+{{/* 目录抽屉已由 mobile-bar.html 在渲染「目录」按钮时一并输出，避免重复 id */}}
 {{ end }}
