@@ -18,6 +18,9 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h10" stroke-linecap="round"/></svg>
     <span>目录</span>
   </button>
+  {{/* 抽屉与按钮成对渲染：#mobileSidebarBtn 的目标就是 #sideDrawer，
+       放在同一 partial 内可保证任何页面（含首页）点击都能打开。 */}}
+  {{ partial "sidebar-drawer.html" . }}
   {{ else }}
   <a class="mobile-tool-btn" href="{{ "/categories" | relURL }}">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h10" stroke-linecap="round"/></svg>
