@@ -3,10 +3,17 @@
 {{ $root := .FirstSection }}
 {{ if not $root }}{{ $root = .CurrentSection }}{{ end }}
 {{ $section := $root }}
+{{/* 无栏目时（如首页）回退为全站栏目树，让「目录」在首页也覆盖全部内容而非只有单一栏目 */}}
+{{ $fallbackSections := where site.Sections "Params.sidebar" "!=" false }}
+{{ if .IsHome }}
+  {{ $root = false }}
+  {{ $section = false }}
+{{ end }}
 <div class="side-drawer" id="sideDrawer" aria-hidden="true">
   <div class="side-drawer-panel">
     <div class="side-drawer-head">
-      <span class="side-drawer-title">{{ with $section }}{{ .Title }}{{ else }}目录{{ end }}</span>
+      {{/* 标题明确区分：内页写「本栏目目录」，首页写「全部内容」，避免与顶部站点导航混淆 */}}
+      <span class="side-drawer-title">{{ if .IsHome }}全部内容{{ else }}{{ with $section }}{{ .Title }}{{ else }}本栏目目录{{ end }}{{ end }}</span>
       <button class="side-drawer-close" type="button" id="sideDrawerClose" aria-label="关闭目录">✕</button>
     </div>
     <div class="side-drawer-body">
@@ -18,7 +25,12 @@
           <p class="side-drawer-empty">暂无子页面</p>
         {{ end }}
       {{ else }}
-        {{ partial "sidebar-tree.html" (dict "pages" (where site.RegularPages "Type" "ne" "page") "current" $current) }}
+        {{/* 首页：列出全部栏目及其子页面，等价于一份完整的全站内容索引 */}}
+        {{ if gt (len $fallbackSections) 0 }}
+          {{ partial "sidebar-tree.html" (dict "pages" $fallbackSections "current" $current) }}
+        {{ else }}
+          {{ partial "sidebar-tree.html" (dict "pages" (where site.RegularPages "Type" "ne" "page") "current" $current) }}
+        {{ end }}
       {{ end }}
     </div>
   </div>
