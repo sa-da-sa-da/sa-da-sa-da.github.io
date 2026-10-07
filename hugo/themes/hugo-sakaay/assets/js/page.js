@@ -5,6 +5,7 @@ import { initPageUI } from './ui.js';
 import { initPageWidgets, initComments } from './widgets.js';
 import { initHero } from './hero.js';
 import { runScripts } from './util.js';
+import { syncThemeButtons } from './theme.js';
 
 export function reinitPage() {
   const root = document.getElementById('VPContent');
@@ -21,6 +22,9 @@ export function reinitPage() {
   initPageWidgets();
   initComments();
   initHero();
+
+  // 移动端底部工具条随 #page-extras 被重建，补一次主题按钮状态同步
+  syncThemeButtons();
 
   if (typeof window.__updateScrollProgress === 'function') window.__updateScrollProgress();
 }

@@ -46,10 +46,20 @@ function toggleTheme(evt) {
   setTimeout(function () { overlay.remove(); }, 620);
 }
 
+/** SPA 导航后移动端按钮会被重建，需要重新同步图标 / aria 状态（点击已由委托接管，无需重绑） */
+export function syncThemeButtons() {
+  syncIcons();
+}
+
 export function initTheme() {
   syncIcons();
-  document.querySelectorAll('#themeToggle, [data-theme-toggle]').forEach(function (btn) {
-    btn.addEventListener('click', toggleTheme);
+  // 事件委托：移动端主题按钮位于 #page-extras，SPA 导航会整体替换该容器，
+  // 直接绑定会随旧按钮一起失效 —— 委托到 document 才能持续生效
+  document.addEventListener('click', function (e) {
+    const target = e.target;
+    if (!target || !target.closest) return;
+    const btn = target.closest('#themeToggle, [data-theme-toggle]');
+    if (btn) toggleTheme(e);
   });
   if (!localStorage.getItem(THEME_KEY)) {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');

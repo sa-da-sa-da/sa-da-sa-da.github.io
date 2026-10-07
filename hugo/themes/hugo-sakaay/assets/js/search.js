@@ -188,16 +188,18 @@ function initWorker() {
 }
 
 export function initSearch() {
-  const trigger = document.getElementById('searchTrigger');
-  const extra = document.getElementById('searchTrigger404');
   const modal = document.getElementById('searchModal');
   if (!modal) return;
 
-  if (trigger) trigger.addEventListener('click', open);
-  if (extra) extra.addEventListener('click', open);
-  ['searchTrigger404', 'mobileSearchBtn'].forEach(function (id) {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('click', open);
+  // 事件委托：#mobileSearchBtn 位于 #page-extras，SPA 导航会整体替换该容器，
+  // 直接绑定会随旧按钮一起失效；#searchTrigger / #searchTrigger404 统一走委托，避免重复绑定
+  document.addEventListener('click', function (e) {
+    const target = e.target;
+    if (!target || !target.closest) return;
+    if (target.closest('#searchTrigger, #searchTrigger404, #mobileSearchBtn')) {
+      e.preventDefault();
+      open();
+    }
   });
   const cancel = document.getElementById('searchCancel');
   if (cancel) cancel.addEventListener('click', close);
