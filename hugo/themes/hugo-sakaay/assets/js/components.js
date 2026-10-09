@@ -1083,7 +1083,7 @@ function render3D(box) {
   const path = props['model-path'] || props.modelPath || '';
   if (!path) { box.innerHTML = ''; return; }
   box.innerHTML = '<div class="embed-block" style="height:480px">' +
-    '<model-viewer src="' + esc(path) + '" alt="3D 模型" camera-controls auto-rotate ' +
+    '<model-viewer src="' + esc(path) + '" alt="3D 模型" camera-controls auto-rotate autoplay ' +
     'style="width:100%;height:480px"></model-viewer></div>';
   if (!document.querySelector('script[data-model-viewer]')) {
     const s = document.createElement('script');
