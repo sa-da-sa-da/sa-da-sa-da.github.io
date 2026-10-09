@@ -1,7 +1,13 @@
 {{ $c := site.Params.comment }}
 {{ if and $c $c.enabled (ne .Params.comment false) }}
 {{/* twikoo 由 assets/js/twikoo.js 按需加载（写在内容区的 <script> 在 SPA 切换后不会执行） */}}
-<div class="tk-doc-comment" id="twikoo">
+{{/*
+  注意：外层容器千万别用 id="twikoo"。
+  浏览器会把带 id 的元素挂成同名全局变量（window.twikoo = 该 div），
+  从而覆盖 Twikoo 脚本写入的 window.twikoo，导致 assets/js/twikoo.js 误判
+  「已加载」而返回 div，最终 tw.init is not a function，评论区永远空白。
+*/}}
+<div class="tk-doc-comment" id="tk-comment-box">
   <div id="tcomment"
        data-env-id="{{ $c.envId }}"
        data-twikoo-version="{{ $c.version | default "1.6.41" }}"></div>

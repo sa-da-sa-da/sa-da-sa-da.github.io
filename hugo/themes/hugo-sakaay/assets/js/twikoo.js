@@ -2,7 +2,11 @@
 let pending = null;
 
 export function loadTwikoo(version) {
-  if (window.twikoo) return Promise.resolve(window.twikoo);
+  // 必须校验 init 是否存在：页面上若有 id="twikoo" 的元素，浏览器会把它暴露为
+  // window.twikoo（DOM 元素），仅判真值会误以为库已加载，导致 init is not a function
+  if (window.twikoo && typeof window.twikoo.init === 'function') {
+    return Promise.resolve(window.twikoo);
+  }
   if (pending) return pending;
 
   const v = version || '1.6.41';
