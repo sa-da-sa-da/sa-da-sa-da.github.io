@@ -1089,7 +1089,9 @@ function render3D(box) {
     const s = document.createElement('script');
     s.type = 'module';
     s.dataset.modelViewer = '1';
-    s.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+    /* 自托管：ajax.googleapis.com 在国内经常连接超时（页面会空等到超时才显示），
+       改为随站点一起下发的本地副本，加载更快且不依赖境外 CDN。 */
+    s.src = '/js/vendor/model-viewer.min.js';
     document.head.appendChild(s);
   }
 }
