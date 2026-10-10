@@ -73,7 +73,7 @@ fd = socket(AF_INET,SOCK_STREAM,0);
 
 ![消息对比](https://img-blog.csdnimg.cn/img_convert/cd7c006cb4180bf751c4afd268ed44f0.png)
 
-这就是所谓的**粘包问题**，之前也写过一篇专门的[文章](https://xiaolincoding.com/network/3_tcp/tcp_stream.html)聊过这个问题。
+这就是所谓的**粘包问题**，之前也写过一篇专门的[文章](https://xiaolincoding.com/network/tcp_stream.html)聊过这个问题。
 
 说这个的目的是为了告诉大家，纯裸 TCP 是不能直接拿来用的，你需要在这个基础上加入一些**自定义的规则**，用于区分**消息边界**。
 

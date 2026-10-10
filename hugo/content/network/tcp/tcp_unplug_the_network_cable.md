@@ -149,7 +149,7 @@ TCP keepalive  是 **TCP 层（内核态）** 实现的，它是给所有基于 
 - 如果双方都没有开启 TCP keepalive 机制，那么在客户端拔掉网线后，如果客户端一直不插回网线，那么客户端和服务端的 TCP 连接状态将会一直保持存在。
 - 如果双方都开启了 TCP keepalive 机制，那么在客户端拔掉网线后，如果客户端一直不插回网线，TCP keepalive 机制会探测到对方的 TCP 连接没有存活，于是就会断开 TCP 连接。而如果在 TCP 探测期间，客户端插回了网线，那么双方原本的 TCP 连接还是能正常存在。
 
-除了客户端拔掉网线的场景，还有客户端「[主机宕机和进程崩溃](https://xiaolincoding.com/network/3_tcp/tcp_down_and_crash.html)」的两种场景。
+除了客户端拔掉网线的场景，还有客户端「[主机宕机和进程崩溃](https://xiaolincoding.com/network/tcp_down_and_crash.html)」的两种场景。
 
 第一个场景，客户端宕机这件事跟拔掉网线是一样无法被服务端的感知的，所以如果在没有数据传输，并且没有开启 TCP keepalive 机制时，，**服务端的 TCP 连接将会一直处于 ESTABLISHED 连接状态**，直到服务端重启进程。
 

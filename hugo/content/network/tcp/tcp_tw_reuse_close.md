@@ -120,7 +120,7 @@ MSL 与 TTL 的区别：MSL 的单位是时间，而 TTL 是经过路由跳数�
  net.ipv4.ip_local_port_range
 ```
 
-**如果客户端（主动关闭连接方）的 TIME_WAIT 状态过多**，占满了所有端口资源，那么就无法对「目的 IP+ 目的 PORT」都一样的服务器发起连接了，但是被使用的端口，还是可以继续对另外一个服务器发起连接的。具体可以看我这篇文章：[客户端的端口可以重复使用吗？](https://xiaolincoding.com/network/3_tcp/port.html#%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84%E7%AB%AF%E5%8F%A3%E5%8F%AF%E4%BB%A5%E9%87%8D%E5%A4%8D%E4%BD%BF%E7%94%A8%E5%90%97)
+**如果客户端（主动关闭连接方）的 TIME_WAIT 状态过多**，占满了所有端口资源，那么就无法对「目的 IP+ 目的 PORT」都一样的服务器发起连接了，但是被使用的端口，还是可以继续对另外一个服务器发起连接的。具体可以看我这篇文章：[客户端的端口可以重复使用吗？](https://xiaolincoding.com/network/port.html#%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84%E7%AB%AF%E5%8F%A3%E5%8F%AF%E4%BB%A5%E9%87%8D%E5%A4%8D%E4%BD%BF%E7%94%A8%E5%90%97)
 
 因此，客户端（主动关闭连接方）都是和「目的 IP+ 目的 PORT」都一样的服务器建立连接的话，当客户端的 TIME_WAIT 状态连接过多的话，就会受端口资源限制，如果占满了所有端口资源，那么就无法再跟「目的 IP+ 目的 PORT」都一样的服务器建立连接了。
 
@@ -129,7 +129,7 @@ MSL 与 TTL 的区别：MSL 的单位是时间，而 TTL 是经过路由跳数�
 好在，Linux 操作系统提供了两个可以系统参数来快速回收处于 TIME_WAIT 状态的连接，这两个参数都是默认关闭的：
 
 - net.ipv4.tcp_tw_reuse，如果开启该选项的话，客户端（连接发起方）在调用 connect() 函数时，**如果内核选择到的端口，已经被相同四元组的连接占用的时候，就会判断该连接是否处于 TIME_WAIT 状态，如果该连接处于 TIME_WAIT 状态并且 TIME_WAIT 状态持续的时间超过了 1 秒，那么就会重用这个连接，然后就可以正常使用该端口了**。所以该选项只适用于连接发起方。
-- net.ipv4.tcp_tw_recycle，如果开启该选项的话，允许处于 TIME_WAIT 状态的连接被快速回收，该参数在 **NAT 的网络下是不安全的**！详细见这篇文章介绍：[SYN 报文什么时候情况下会被丢弃？](https://xiaolincoding.com/network/3_tcp/syn_drop.html)
+- net.ipv4.tcp_tw_recycle，如果开启该选项的话，允许处于 TIME_WAIT 状态的连接被快速回收，该参数在 **NAT 的网络下是不安全的**！详细见这篇文章介绍：[SYN 报文什么时候情况下会被丢弃？](https://xiaolincoding.com/network/syn_drop.html)
 
 要使得上面这两个参数生效，有一个前提条件，就是要打开 TCP 时间戳，即 net.ipv4.tcp_timestamps=1（默认即为 1）。
 
@@ -219,9 +219,9 @@ RFC 1323 提到说收历史的 RST 报文是极不可能，之所以有这样的
 
 这时候有同学就问了，如果 TIME_WAIT 状态被快速复用后，刚好第四次挥手的 ACK 报文丢失了，那客户端复用 TIME_WAIT 状态后发送的 SYN 报文被处于 last_ack 状态的服务端收到了会发生什么呢？
 
-处于 last_ack 状态的服务端收到了 SYN 报文后，会回复确认号与服务端上一次发送 ACK 报文一样的 ACK 报文，这个 ACK 报文称为 [Challenge ACK](https://xiaolincoding.com/network/3_tcp/challenge_ack.html)，并不是确认收到 SYN 报文。
+处于 last_ack 状态的服务端收到了 SYN 报文后，会回复确认号与服务端上一次发送 ACK 报文一样的 ACK 报文，这个 ACK 报文称为 [Challenge ACK](https://xiaolincoding.com/network/challenge_ack.html)，并不是确认收到 SYN 报文。
 
-处于 syn_sent 状态的客户端收到服务端的  [Challenge ACK](https://xiaolincoding.com/network/3_tcp/challenge_ack.html) 后，发现不是自己期望收到的确认号，于是就会回复 RST 报文，服务端收到后，就会断开连接。
+处于 syn_sent 状态的客户端收到服务端的  [Challenge ACK](https://xiaolincoding.com/network/challenge_ack.html) 后，发现不是自己期望收到的确认号，于是就会回复 RST 报文，服务端收到后，就会断开连接。
 
 ## 总结
 

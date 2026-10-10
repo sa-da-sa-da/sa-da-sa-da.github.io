@@ -147,7 +147,7 @@ UDP 协议真的非常简单，头部只有 `8` 个字节（64 位），UDP 的�
 *3. 可靠性*
 
 - TCP 是可靠交付数据的，数据可以无差错、不丢失、不重复、按序到达。
-- UDP 是尽最大努力交付，不保证可靠交付数据。但是我们可以基于 UDP 传输协议实现一个可靠的传输协议，比如 QUIC 协议，具体可以参见这篇文章：[如何基于 UDP 协议实现可靠传输？](https://xiaolincoding.com/network/3_tcp/quic.html)
+- UDP 是尽最大努力交付，不保证可靠交付数据。但是我们可以基于 UDP 传输协议实现一个可靠的传输协议，比如 QUIC 协议，具体可以参见这篇文章：[如何基于 UDP 协议实现可靠传输？](https://xiaolincoding.com/network/quic.html)
 
 *4. 拥塞控制、流量控制*
 
@@ -225,7 +225,7 @@ UDP 协议真的非常简单，头部只有 `8` 个字节（64 位），UDP 的�
 - 客户端的端口可以重复使用吗？
 - 客户端 TCP 连接 TIME_WAIT 状态过多，会导致端口资源耗尽而无法建立新的连接吗？
 
-上面这些问题，可以看这篇文章：[TCP 和 UDP 可以使用同一个端口吗？](https://xiaolincoding.com/network/3_tcp/port.html)
+上面这些问题，可以看这篇文章：[TCP 和 UDP 可以使用同一个端口吗？](https://xiaolincoding.com/network/port.html)
 
 ## TCP 连接建立
 
@@ -309,7 +309,7 @@ TCP 的连接状态查看，在 Linux 可以通过 `netstat -napt` 命令查看�
 
 当服务端第一次收到 SYN 报文，也就是收到「旧 SYN 报文」时，就会回复 `SYN + ACK` 报文给客户端，此报文中的确认号是 91（90+1）。
 
-然后这时再收到「新 SYN 报文」时，就会回 [Challenge Ack](https://xiaolincoding.com/network/3_tcp/challenge_ack.html) 报文给客户端，**这个 ack 报文并不是确认收到「新 SYN 报文」的，而是上一次的 ack 确认号**，也就是 91（90+1）。所以客户端收到此 ACK 报文时，发现自己期望收到的确认号应该是 101，而不是 91，于是就会回 RST 报文。
+然后这时再收到「新 SYN 报文」时，就会回 [Challenge Ack](https://xiaolincoding.com/network/challenge_ack.html) 报文给客户端，**这个 ack 报文并不是确认收到「新 SYN 报文」的，而是上一次的 ack 确认号**，也就是 91（90+1）。所以客户端收到此 ACK 报文时，发现自己期望收到的确认号应该是 101，而不是 91，于是就会回 RST 报文。
 
 </div>
 
@@ -416,7 +416,7 @@ TCP 建立连接时，通过三次握手**能防止历史连接的建立，能�
 
 相反，如果每次建立连接客户端和服务端的初始化序列号都「一样」，就有大概率遇到历史报文的序列号刚「好在」对方的接收窗口内，从而导致历史报文被新连接成功接收。
 
-所以，每次初始化序列号不一样很大程度上能够避免历史报文被下一个相同四元组的连接接收，注意是很大程度上，并不是完全避免了（因为序列号会有回绕的问题，所以需要用时间戳的机制来判断历史报文，详细看篇：[TCP 是如何避免历史报文的？](https://xiaolincoding.com/network/3_tcp/isn_deff.html)）。
+所以，每次初始化序列号不一样很大程度上能够避免历史报文被下一个相同四元组的连接接收，注意是很大程度上，并不是完全避免了（因为序列号会有回绕的问题，所以需要用时间戳的机制来判断历史报文，详细看篇：[TCP 是如何避免历史报文的？](https://xiaolincoding.com/network/isn_deff.html)）。
 
 ### 初始序列号 ISN 是如何随机产生的？
 
@@ -592,7 +592,7 @@ net.core.netdev_max_backlog = 10000
 - 增大  listen() 函数中的 backlog
 - 增大 net.core.somaxconn
 
-具体为什么是三个参数决定  TCP 半连接队列的大小，可以看这篇：可以看这篇：[TCP 半连接队列和全连接队列满了会发生什么？又该如何应对？](https://xiaolincoding.com/network/3_tcp/tcp_queue.html)
+具体为什么是三个参数决定  TCP 半连接队列的大小，可以看这篇：可以看这篇：[TCP 半连接队列和全连接队列满了会发生什么？又该如何应对？](https://xiaolincoding.com/network/tcp_queue.html)
 
 > 方式三：开启 net.ipv4.tcp_syncookies 
 
@@ -665,7 +665,7 @@ $ echo 2 > /proc/sys/net/ipv4/tcp_synack_retries
 
 从上面过程可知，服务端通常需要等待完成数据的发送和处理，所以服务端的 `ACK` 和 `FIN` 一般都会分开发送，因此是需要四次挥手。
 
-但是**在特定情况下，四次挥手是可以变成三次挥手的**，具体情况可以看这篇：[TCP 四次挥手，可以变成三次吗？](https://xiaolincoding.com/network/3_tcp/tcp_three_fin.html)
+但是**在特定情况下，四次挥手是可以变成三次挥手的**，具体情况可以看这篇：[TCP 四次挥手，可以变成三次吗？](https://xiaolincoding.com/network/tcp_three_fin.html)
 
 ### 第一次挥手丢失了，会发生什么？
 
@@ -844,7 +844,7 @@ TIME_WAIT 等待 2 倍的 MSL，比较合理的解释是：网络中可能存在
 
 客户端和服务端 TIME_WAIT 过多，造成的影响是不同的。
 
-**如果客户端（主动发起关闭连接方）的 TIME_WAIT 状态过多**，占满了所有端口资源，那么就无法对「目的 IP+ 目的 PORT」都一样的服务端发起连接了，但是被使用的端口，还是可以继续对另外一个服务端发起连接的。具体可以看我这篇文章：[客户端的端口可以重复使用吗？](https://xiaolincoding.com/network/3_tcp/port.html#%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84%E7%AB%AF%E5%8F%A3%E5%8F%AF%E4%BB%A5%E9%87%8D%E5%A4%8D%E4%BD%BF%E7%94%A8%E5%90%97)
+**如果客户端（主动发起关闭连接方）的 TIME_WAIT 状态过多**，占满了所有端口资源，那么就无法对「目的 IP+ 目的 PORT」都一样的服务端发起连接了，但是被使用的端口，还是可以继续对另外一个服务端发起连接的。具体可以看我这篇文章：[客户端的端口可以重复使用吗？](https://xiaolincoding.com/network/port.html#%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84%E7%AB%AF%E5%8F%A3%E5%8F%AF%E4%BB%A5%E9%87%8D%E5%A4%8D%E4%BD%BF%E7%94%A8%E5%90%97)
 
 因此，客户端（发起连接方）都是和「目的 IP+ 目的 PORT」都一样的服务端建立连接的话，当客户端的 TIME_WAIT 状态连接过多的话，就会受端口资源限制，如果占满了所有端口资源，那么就无法再跟「目的 IP+ 目的 PORT」都一样的服务端建立连接了。
 
@@ -1083,9 +1083,9 @@ TCP 的连接信息是由内核维护的，所以当服务端的进程崩溃后�
 <div class="custom-block tip">
 <div class="custom-block-title">提示</div>
 
-关于进程崩溃和主机宕机的区别，可以参考这篇：[TCP 连接，一端断电和进程崩溃有什么区别？](https://xiaolincoding.com/network/3_tcp/tcp_down_and_crash.html)
+关于进程崩溃和主机宕机的区别，可以参考这篇：[TCP 连接，一端断电和进程崩溃有什么区别？](https://xiaolincoding.com/network/tcp_down_and_crash.html)
 
-还有一个类似的问题：「拔掉网线后，原本的 TCP 连接还存在吗？」，具体可以看这篇：[拔掉网线后，原本的 TCP 连接还存在吗？](https://xiaolincoding.com/network/3_tcp/tcp_unplug_the_network_cable.html)
+还有一个类似的问题：「拔掉网线后，原本的 TCP 连接还存在吗？」，具体可以看这篇：[拔掉网线后，原本的 TCP 连接还存在吗？](https://xiaolincoding.com/network/tcp_unplug_the_network_cable.html)
 
 </div>
 
@@ -1136,7 +1136,7 @@ int listen (int socketfd, int backlog)
 
 **但是上限值是内核参数 somaxconn 的大小，也就说 accpet 队列长度 = min(backlog, somaxconn)。**
 
-想详细了解 TCP 半连接队列和全连接队列，可以看这篇：[TCP 半连接队列和全连接队列满了会发生什么？又该如何应对？](https://xiaolincoding.com/network/3_tcp/tcp_queue.html)
+想详细了解 TCP 半连接队列和全连接队列，可以看这篇：[TCP 半连接队列和全连接队列满了会发生什么？又该如何应对？](https://xiaolincoding.com/network/tcp_queue.html)
 
 ### accept 发生在三次握手的哪一步？
 
@@ -1172,7 +1172,7 @@ accept 系统调用并不参与 TCP 三次握手过程，它只是负责从 TCP 
 
 ![半连接队列与全连接队列](https://cdn.xiaolincoding.com/gh/xiaolincoder/ImageHost/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/TCP-%E5%8D%8A%E8%BF%9E%E6%8E%A5%E5%92%8C%E5%85%A8%E8%BF%9E%E6%8E%A5/3.jpg)
 
-更想了解这个问题，可以参考这篇文章：[没有 accept，能建立 TCP 连接吗？](https://xiaolincoding.com/network/3_tcp/tcp_no_accpet.html)
+更想了解这个问题，可以参考这篇文章：[没有 accept，能建立 TCP 连接吗？](https://xiaolincoding.com/network/tcp_no_accpet.html)
 
 ### 没有 listen，能建立 TCP 连接吗？
 
@@ -1180,7 +1180,7 @@ accept 系统调用并不参与 TCP 三次握手过程，它只是负责从 TCP 
 
 客户端是可以自己连自己的形成连接（**TCP 自连接**），也可以两个客户端同时向对方发出请求建立连接（**TCP 同时打开**），这两个情况都有个共同点，就是**没有服务端参与，也就是没有 listen，就能 TCP 建立连接。**
 
-更想了解这个问题，可以参考这篇文章：[服务端没有 listen，客户端发起连接建立，会发生什么？](https://xiaolincoding.com/network/3_tcp/tcp_no_listen.html)
+更想了解这个问题，可以参考这篇文章：[服务端没有 listen，客户端发起连接建立，会发生什么？](https://xiaolincoding.com/network/tcp_no_listen.html)
 
 ---
 

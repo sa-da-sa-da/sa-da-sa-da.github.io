@@ -247,12 +247,6 @@
   weight = 9
 
 [[main]]
-  name = "💑恋爱计时器"
-  parent = "about"
-  url = "/about/ql-timer"
-  weight = 10
-
-[[main]]
   name = "📊网站统计"
   parent = "about"
   url = "https://umami.onedayxyy.cn/share/8ZlsB6Q5gDpVJiQq/sakaay"

@@ -174,7 +174,7 @@ Content-Length: 1000
 
 如上面则是告诉浏览器，本次服务器回应的数据长度是 1000 个字节，后面的字节就属于下一个回应了。
 
-大家应该都知道 HTTP 是基于 TCP 传输协议进行通信的，而使用了 TCP 传输协议，就会存在一个“粘包”的问题，**HTTP 协议通过设置回车符、换行符作为 HTTP header 的边界，通过 Content-Length 字段作为 HTTP body 的边界，这两个方式都是为了解决“粘包”的问题**。具体什么是 TCP 粘包，可以看这篇文章：[如何理解是 TCP 面向字节流协议？](https://xiaolincoding.com/network/3_tcp/tcp_stream.html)
+大家应该都知道 HTTP 是基于 TCP 传输协议进行通信的，而使用了 TCP 传输协议，就会存在一个“粘包”的问题，**HTTP 协议通过设置回车符、换行符作为 HTTP header 的边界，通过 Content-Length 字段作为 HTTP body 的边界，这两个方式都是为了解决“粘包”的问题**。具体什么是 TCP 粘包，可以看这篇文章：[如何理解是 TCP 面向字节流协议？](https://xiaolincoding.com/network/tcp_stream.html)
 
 *Connection 字段*
 
@@ -194,7 +194,7 @@ Connection: Keep-Alive
 
 开启了 HTTP Keep-Alive 机制后，连接就不会中断，而是保持连接。当客户端发送另一个请求时，它会使用同一个连接，一直持续到客户端或服务器端提出断开连接。
 
-PS：大家不要把 HTTP  Keep-Alive 和 TCP Keepalive 搞混了，这两个虽然长的像，但是不是一个东西，具体可以看我这篇文章：[TCP Keepalive 和 HTTP Keep-Alive 是一个东西吗？](https://xiaolincoding.com/network/3_tcp/tcp_http_keepalive.html)
+PS：大家不要把 HTTP  Keep-Alive 和 TCP Keepalive 搞混了，这两个虽然长的像，但是不是一个东西，具体可以看我这篇文章：[TCP Keepalive 和 HTTP Keep-Alive 是一个东西吗？](https://xiaolincoding.com/network/tcp_http_keepalive.html)
 
 *Content-Type 字段*
 
@@ -636,7 +636,7 @@ SSL/TLS 协议基本流程：
 
 前两步也就是 SSL/TLS 的建立过程，也就是 TLS 握手阶段。
 
-TLS 的「握手阶段」涉及**四次**通信，使用不同的密钥交换算法，TLS 握手流程也会不一样的，现在常用的密钥交换算法有两种：[RSA 算法](https://xiaolincoding.com/network/2_http/https_rsa.html) 和 [ECDHE 算法](https://xiaolincoding.com/network/2_http/https_ecdhe.html)。
+TLS 的「握手阶段」涉及**四次**通信，使用不同的密钥交换算法，TLS 握手流程也会不一样的，现在常用的密钥交换算法有两种：[RSA 算法](https://xiaolincoding.com/network/https_rsa.html) 和 [ECDHE 算法](https://xiaolincoding.com/network/https_ecdhe.html)。
 
 基于 RSA 算法的 TLS 握手过程比较容易理解，所以这里先用这个给大家展示 TLS 握手过程，如下图：
 
@@ -700,11 +700,11 @@ TLS 协议建立的详细流程：
 <div class="custom-block tip">
 <div class="custom-block-title">提示</div>
 
-如果想深入学习基于 RSA 算法的 HTTPS 握手过程，可以看这篇，我通过抓包的方式，逐步分析每一个过程：[HTTPS RSA 握手解析](https://xiaolincoding.com/network/2_http/https_rsa.html)
+如果想深入学习基于 RSA 算法的 HTTPS 握手过程，可以看这篇，我通过抓包的方式，逐步分析每一个过程：[HTTPS RSA 握手解析](https://xiaolincoding.com/network/https_rsa.html)
 
 不过，基于 RSA 算法的 HTTPS 存在「前向安全」的问题：如果服务端的私钥泄漏了，过去被第三方截获的所有 TLS 通讯密文都会被破解。
 
-为了解决这个问题，后面就出现了 ECDHE 密钥协商算法，我们现在大多数网站使用的正是 ECDHE 密钥协商算法，关于 ECDHE 握手的过程可以看这篇文章：[HTTPS ECDHE 握手解析](https://xiaolincoding.com/network/2_http/https_ecdhe.html#%E7%A6%BB%E6%95%A3%E5%AF%B9%E6%95%B0)
+为了解决这个问题，后面就出现了 ECDHE 密钥协商算法，我们现在大多数网站使用的正是 ECDHE 密钥协商算法，关于 ECDHE 握手的过程可以看这篇文章：[HTTPS ECDHE 握手解析](https://xiaolincoding.com/network/https_ecdhe.html#%E7%A6%BB%E6%95%A3%E5%AF%B9%E6%95%B0)
 
 </div>
 
@@ -907,7 +907,7 @@ Header: :status: 200 OK 的编码内容为：1000 1000，那么表达的含义�
 
 ![](https://cdn.xiaolincoding.com/gh/xiaolincoder/network/http/index.png)
 
-1. 最前面的 1 表示该 Header 是静态表中已经存在的 KV。（至于什么是静态表，可以看这篇：[HTTP/2 牛逼在哪？](https://xiaolincoding.com/network/2_http/http2.html)）
+1. 最前面的 1 表示该 Header 是静态表中已经存在的 KV。（至于什么是静态表，可以看这篇：[HTTP/2 牛逼在哪？](https://xiaolincoding.com/network/http2.html)）
 2. 在静态表理，“:status: 200 ok”静态表编码是 8，二进制即是 1000。
 
 因此，整体加起来就是 1000 1000。
@@ -963,7 +963,7 @@ HTTP/2 通过 Stream 的并发能力，解决了 HTTP/1 队头阻塞的问题，
 <div class="custom-block tip">
 <div class="custom-block-title">提示</div>
 
-如果想更进一步了解 HTTP/2 协议，可以看我这篇文章：[HTTP/2 牛逼在哪？](https://xiaolincoding.com/network/2_http/http2.html)
+如果想更进一步了解 HTTP/2 协议，可以看我这篇文章：[HTTP/2 牛逼在哪？](https://xiaolincoding.com/network/http2.html)
 
 </div>
 
@@ -1034,8 +1034,8 @@ HTTP/3 现在普及的进度非常的缓慢，不知道未来 UDP 是否能够�
 
 如果想更进一步了解 HTTP/3 和 QUIC 协议，可以看我这两篇文章：
 
-- [HTTP/3 强势来袭](https://xiaolincoding.com/network/2_http/http3.html)
-- [如何基于 UDP 协议实现可靠传输？](https://xiaolincoding.com/network/3_tcp/quic.html)
+- [HTTP/3 强势来袭](https://xiaolincoding.com/network/http3.html)
+- [如何基于 UDP 协议实现可靠传输？](https://xiaolincoding.com/network/quic.html)
 
 </div>
 
