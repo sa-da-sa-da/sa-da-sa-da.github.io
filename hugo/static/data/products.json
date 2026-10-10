@@ -33,9 +33,7 @@
     "price": 89.9,
     "description": "304不锈钢材质，保温效果好，印有校园logo",
     "images": [
-      "/img/culture/water-bottle.jpg",
-      "/img/culture/water-bottle2.jpg",
-      "/img/culture/water-bottle3.jpg"
+      "/img/culture/water-bottle.jpg"
     ],
     "category": "daily",
     "details": [
@@ -59,9 +57,7 @@
     "price": 69.9,
     "description": "金属笔身，可定制姓名，赠送精美礼盒",
     "images": [
-      "/img/culture/pen.jpg",
-      "/img/culture/pen2.jpg",
-      "/img/culture/pen3.jpg"
+      "/img/culture/pen.jpg"
     ],
     "category": "stationery",
     "details": [
@@ -85,9 +81,7 @@
     "price": 59.9,
     "description": "纯棉材质，舒适透气，印有校园文化图案",
     "images": [
-      "/img/culture/t-shirt.jpg",
-      "/img/culture/t-shirt2.jpg",
-      "/img/culture/t-shirt3.jpg"
+      "/img/culture/t-shirt.jpg"
     ],
     "category": "daily",
     "details": [
@@ -111,9 +105,7 @@
     "price": 19.9,
     "description": "金属材质，立体雕刻校园标志性建筑",
     "images": [
-      "/img/culture/keychain.jpg",
-      "/img/culture/keychain2.jpg",
-      "/img/culture/keychain3.jpg"
+      "/img/culture/keychain.jpg"
     ],
     "category": "gift",
     "details": [
@@ -136,11 +128,7 @@
     "name": "校园风景马克杯",
     "price": 39.9,
     "description": "陶瓷材质，印有校园四季风景图案",
-    "images": [
-      "/img/culture/mug.jpg",
-      "/img/culture/mug2.jpg",
-      "/img/culture/mug3.jpg"
-    ],
+    "images": [],
     "category": "daily",
     "details": [
       "材质：陶瓷",
