@@ -8,11 +8,6 @@ coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/a/202001/06/5e12d319576be.jp
 srcDir: network/http
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 # 3.5 HTTPS 如何优化？
 
 

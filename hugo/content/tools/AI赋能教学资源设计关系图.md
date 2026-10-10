@@ -17,9 +17,8 @@ srcDir: tools
 
 一张把 **AI 能力 → 教学流程 → 作品与资源落地** 串起来的交互关系图，点击任一节点即可高亮它的关联路径，并同步切换下方的应用工作台。
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
+
+
 
 ## 一、怎么看这张图
 

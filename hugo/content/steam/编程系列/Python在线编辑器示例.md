@@ -11,12 +11,6 @@ coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201711/f5d336
 srcDir: steam/编程系列
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
-
 # Python在线编辑器示例
 
 本页面展示了一个基于浏览器的Python在线编辑器组件，它允许您直接在浏览器中编写和执行Python代码，无需在本地安装Python环境。

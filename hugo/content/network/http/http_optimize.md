@@ -8,12 +8,6 @@ coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201803/91b05a
 srcDir: network/http
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
-
 # 3.2 HTTP/1.1 如何优化？
 
 问你一句：「**你知道 HTTP/1.1 该如何优化吗？**」

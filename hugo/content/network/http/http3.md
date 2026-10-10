@@ -8,12 +8,6 @@ coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201901/9d083f
 srcDir: network/http
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
-
 # 3.7 HTTP/3 强势来袭
 
 HTTP/3 现在（2022 年 5 月）还没正式推出，不过自 2017 年起，HTTP/3 已经更新到 34 个草案了，基本的特性已经确定下来了，对于包格式可能后续会有变化。

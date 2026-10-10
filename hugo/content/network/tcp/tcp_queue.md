@@ -8,11 +8,6 @@ coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201709/b87acc
 srcDir: network/tcp
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 # 4.4 TCP 半连接队列和全连接队列
 
 网上许多博客针对增大 TCP 半连接队列和全连接队列的方式如下：

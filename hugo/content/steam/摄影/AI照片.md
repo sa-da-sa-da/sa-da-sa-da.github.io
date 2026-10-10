@@ -11,11 +11,6 @@ weight: 0
 srcDir: steam/摄影
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 # 解锁创意无界：AITU AI图像创作平台，让想象照进现实
 当灵感闪现却受限于绘画技巧，当 deadlines 逼近却苦于设计效率，当脑海中的奇幻场景难以落地——AITU AI图像创作平台（https://aitu.sakaay.com/）正以技术之力，打破创意与实现之间的壁垒。作为专注于AI图像生成的智能平台，它让每一个拥有创意的人都能成为创作者，用简单操作解锁无限视觉可能，登录即可开启全功能创作之旅，重新定义图像创作的效率与边界。
 

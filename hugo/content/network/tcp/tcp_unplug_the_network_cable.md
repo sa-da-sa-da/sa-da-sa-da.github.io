@@ -8,11 +8,6 @@ coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/202006/ff6084
 srcDir: network/tcp
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 # 4.13 拔掉网线后，原本的 TCP 连接还存在吗？
 
 大家好，我是小林。

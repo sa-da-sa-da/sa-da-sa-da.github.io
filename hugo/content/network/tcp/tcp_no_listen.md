@@ -8,11 +8,6 @@ coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201803/37c5fc
 srcDir: network/tcp
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 # 4.19 服务端没有 listen，客户端发起连接建立，会发生什么？
 
 大家好，我是小林。

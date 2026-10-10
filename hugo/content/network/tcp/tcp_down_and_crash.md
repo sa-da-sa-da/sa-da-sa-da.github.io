@@ -8,11 +8,6 @@ coverImg: https://cdn-hsyq-static.shanhutech.cn/bizhi/staticwp/202503/58027a0807
 srcDir: network/tcp
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 # 4.12 TCP 连接，一端断电和进程崩溃有什么区别？
 
 有位读者找我说，他在面试腾讯的时候，遇到了这么个问题：

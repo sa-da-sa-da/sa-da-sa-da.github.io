@@ -11,11 +11,6 @@ weight: 11
 srcDir: teach
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 # [aitu.sakaay.com](https://aitu.sakaay.com) 网站详细使用教程（基于 Qwen-Image 模型，师生适用）
 
 ## 一、网站核心定位与技术支撑

@@ -8,11 +8,6 @@ coverImg: http://cdn-hsyq-static.shanhutech.cn/bizhi/staticwp/202503/58027a08072
 srcDir: network/http
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 # 3.3 HTTPS RSA 握手解析
 
 我前面讲，简单给大家介绍了的 HTTPS 握手过程，但是还不够细！

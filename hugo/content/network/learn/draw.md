@@ -8,11 +8,6 @@ coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201711/b546b4
 srcDir: network/learn
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 # 6.2 画图经验分享
 
 小林写这么多篇图解文章，你们猜我收到的最多的读者问题是什么？没错，就是问我是使用什么**画图**工具，看来对这一点大家都相当好奇，那干脆不如写一篇介绍下我是怎么画图的。

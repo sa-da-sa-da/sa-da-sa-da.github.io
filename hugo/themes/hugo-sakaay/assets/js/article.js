@@ -81,24 +81,119 @@ function initTocActive() {
   updateTocActive();
 }
 
-function initAds() {
-  let cfg = {};
-  try { cfg = JSON.parse(document.getElementById('site-config').textContent).ads || {}; } catch (e) { return; }
+/** 广告：滚动到附近才请求（首屏不加载），未填充则收起容器，避免打断阅读和留白 */
+const AD_LAZY_MARGIN = '320px';
+const AD_FILL_TIMEOUT = 6000;
 
-  if (cfg.enabled && typeof adsbygoogle !== 'undefined') {
-    document.querySelectorAll('.adsbygoogle').forEach(function () {
-      try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { /* ignore */ }
-    });
+/** 读取站点广告配置，失败时返回空对象（视作未开启） */
+function readAdsConfig() {
+  try {
+    return JSON.parse(document.getElementById('site-config').textContent).ads || {};
+  } catch (e) {
+    return {};
   }
+}
 
-  // 广告未填充（脚本被拦截 / 无库存）时收起占位，避免大片空白
+/** 广告容器不可见即整块收起，不留空白 */
+function hideAdBlock(block) {
+  block.style.display = 'none';
+}
+
+/**
+ * 等 AdSense 给出填充结果：
+ * filled 保持展示；unfilled 或超时仍无有效 iframe 则收起。
+ */
+function watchAdFill(block) {
+  const ins = block.querySelector('ins.adsbygoogle');
+  if (!ins) { hideAdBlock(block); return; }
+
+  const settled = function () {
+    const status = ins.getAttribute('data-ad-status');
+    if (status === 'unfilled') { hideAdBlock(block); return true; }
+    return status === 'filled';
+  };
+  if (settled()) return;
+
+  const observer = new MutationObserver(function () {
+    if (settled()) observer.disconnect();
+  });
+  observer.observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] });
+
   setTimeout(function () {
-    document.querySelectorAll('.ad-block').forEach(function (wrap) {
-      const ins = wrap.querySelector('ins');
-      const filled = ins && (ins.getAttribute('data-ad-status') === 'filled' || ins.querySelector('iframe'));
-      if (!filled) wrap.style.display = 'none';
+    observer.disconnect();
+    if (settled()) return;
+    const frame = ins.querySelector('iframe');
+    if (!frame || frame.offsetHeight < 30) hideAdBlock(block);
+  }, AD_FILL_TIMEOUT);
+}
+
+/** 每个 ins 只 push 一次；SPA 导航后重复初始化也不会触发 AdSense 报错 */
+function pushAdBlock(block) {
+  const ins = block.querySelector('ins.adsbygoogle');
+  if (!ins || ins.dataset.adPushed === '1') return;
+  ins.dataset.adPushed = '1';
+  try {
+    (window.adsbygoogle = window.adsbygoogle || []).push({});
+  } catch (e) { /* 脚本被拦截 / 重复 push：静默降级 */ }
+  watchAdFill(block);
+}
+
+/**
+ * AdSense 是 async 脚本，首次进页面时可能尚未就绪，轮询等待约 8 秒。
+ * 超时（脚本被广告拦截器挡掉）时走 onFail，避免页面留下空占位。
+ */
+function whenAdsenseReady(callback, onFail) {
+  if (typeof window.adsbygoogle !== 'undefined') { callback(); return; }
+  let tries = 0;
+  const timer = setInterval(function () {
+    if (typeof window.adsbygoogle !== 'undefined') {
+      clearInterval(timer);
+      callback();
+    } else if (++tries > 40) {
+      clearInterval(timer);
+      if (onFail) onFail();
+    }
+  }, 200);
+}
+
+/** 懒加载：广告进入视口前 320px 才 push */
+function lazyPushAdBlocks(blocks) {
+  if (!('IntersectionObserver' in window)) {
+    blocks.forEach(pushAdBlock);
+    return;
+  }
+  const io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+      io.unobserve(entry.target);
+      pushAdBlock(entry.target);
     });
-  }, 3000);
+  }, { rootMargin: AD_LAZY_MARGIN });
+  blocks.forEach(function (block) { io.observe(block); });
+}
+
+function initAds() {
+  const cfg = readAdsConfig();
+  const blocks = Array.prototype.slice.call(document.querySelectorAll('.ad-block'));
+
+  // 关闭广告时立即收起占位（旧逻辑只在开启时收起，会留下 60px 空白）
+  if (!cfg.enabled) {
+    blocks.forEach(hideAdBlock);
+    return;
+  }
+  if (!blocks.length) return;
+
+  whenAdsenseReady(function () {
+    const lazyBlocks = [];
+    blocks.forEach(function (block) {
+      if (cfg.lazyLoad === false || block.dataset.adLazy === '0') pushAdBlock(block);
+      else lazyBlocks.push(block);
+    });
+    lazyPushAdBlocks(lazyBlocks);
+  }, function () {
+    // 脚本被拦截：整块收起，不留边框空盒子
+    blocks.forEach(hideAdBlock);
+  });
 }
 
 export function initArticle() {

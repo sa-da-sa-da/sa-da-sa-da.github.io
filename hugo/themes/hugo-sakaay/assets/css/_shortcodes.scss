@@ -296,9 +296,34 @@ body.gw-lock { overflow: hidden; }
   }
 }
 
-// ---------- 广告位 ----------
-.ad-block { margin: 1rem 0; text-align: center; overflow: hidden; min-height: 60px; }
-.ad-block ins { display: block; }
+// ---------- 广告位（文末 / 侧栏统一容器） ----------
+// 与正文同宽、低对比度包裹，只占一个自然断点，不抢阅读注意力
+.ad-block {
+  position: relative;
+  margin: 2rem 0 1.5rem;
+  padding: 10px 10px 8px;
+  text-align: center;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--vp-c-bg-alt) 70%, transparent);
+  min-height: 96px;
+  ins { display: block; }
+}
+.ad-block__label {
+  display: block;
+  margin: 0 0 6px 2px;
+  font-size: 0.68rem;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-align: left;
+  color: var(--text-muted);
+}
+.ad-block--sidebar {
+  margin: 1.25rem 0 0;
+  padding: 8px 6px 6px;
+  min-height: 200px;
+}
 
 // ---------- Emoji 库 ----------
 .emoji-toolbar { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }

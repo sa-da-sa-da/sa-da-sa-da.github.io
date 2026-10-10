@@ -11,12 +11,6 @@ weight: 0
 srcDir: steam/vex系列
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
-
 VEX是一种教育型机器人平台，它使用VEX编程软件来编写机器人的控制程序。VEX编程软件使用了多种编程语言，包括基于图形界面的VEXcode和基于文本的ROBOTC。那么，什么编程语言适合VEX机器人的编程呢？以下是几种常见的选择：
 
 - VEXcode： VEX官方推出的VEXcode软件是一种基于图形界面的编程环境，适用于初学者和初级程序员。它使用类似于积木的方法，通过拖拽和连接感知器件、动作等模块来编写程序。这种方式对于没有编程经验的人来说很友好，让他们能够轻松上手。

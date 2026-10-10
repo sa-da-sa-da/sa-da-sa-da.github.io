@@ -11,11 +11,6 @@ weight: 10
 srcDir: teach
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 ## 🌟AI 助力，开启高中 Python 编程教学新体验
 
 宝子们，今天来和大家分享超酷的 AI 辅助高中 Python 编程教学流程👏！

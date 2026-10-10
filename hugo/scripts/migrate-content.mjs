@@ -441,11 +441,9 @@ function renderComponent(name, attrString) {
   }
 
   if (name === 'GoogleAd') {
-    const ads = { client: 'ca-pub-2897720906666216', slot: attrs['ad-slot'] || '2668661755' };
-    return `<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="${ads.client}" data-ad-slot="${ads.slot}" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-`;
+    // 广告位统一由模板渲染（文末 + 侧栏），正文里不再插入，避免打断阅读。
+    stats.skipped.push('GoogleAd 已由模板统一放置，正文内的广告块被移除');
+    return '';
   }
 
   stats.skipped.push(`未映射组件 ${name}（已原样保留）`);

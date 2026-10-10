@@ -1,0 +1,53 @@
+{
+  "_comment": "AI 定制工作室配置。shopUrl 填你的淘宝店链接（可以是店铺首页，也可以是某个商品页）；每个产品也能单独配 shopUrl，单独配的优先。area 决定图案默认贴在产品图的哪个位置：x/y 是中心点百分比，w 是图案宽度占比。blend 是图案与产品图的混合模式，默认 multiply（适合浅色产品，白色自动透掉）；若某产品底图是深色，把它改成 normal 即可。",
+  "shopUrl": "",
+  "shopName": "淘宝店",
+  "products": [
+    {
+      "id": "uniform",
+      "name": "校服",
+      "desc": "把 AI 图案印在校服胸前",
+      "base": "/img/culture/uniform.jpg",
+      "price": "按定制报价",
+      "shopUrl": "",
+      "area": { "x": 50, "y": 40, "w": 30 }
+    },
+    {
+      "id": "bottle",
+      "name": "水杯",
+      "desc": "保温杯专属图案，喝水也有仪式感",
+      "base": "/img/culture/water-bottle.jpg",
+      "price": "按定制报价",
+      "shopUrl": "",
+      "area": { "x": 50, "y": 52, "w": 28 }
+    },
+    {
+      "id": "pen",
+      "name": "钢笔",
+      "desc": "笔身定制你的专属图案",
+      "base": "/img/culture/pen.jpg",
+      "price": "按定制报价",
+      "shopUrl": "",
+      "area": { "x": 50, "y": 50, "w": 40 }
+    },
+    {
+      "id": "pencil",
+      "name": "铅笔",
+      "desc": "铅笔也能有自己的图案",
+      "base": "/img/culture/pencil.jpg",
+      "price": "按定制报价",
+      "shopUrl": "",
+      "area": { "x": 50, "y": 50, "w": 38 }
+    },
+    {
+      "id": "souvenir",
+      "name": "纪念品",
+      "desc": "徽章、钥匙扣等纪念小物",
+      "base": "/img/culture/souvenir.jpg",
+      "price": "按定制报价",
+      "shopUrl": "",
+      "area": { "x": 50, "y": 50, "w": 34 }
+    }
+  ],
+  "patterns": []
+}

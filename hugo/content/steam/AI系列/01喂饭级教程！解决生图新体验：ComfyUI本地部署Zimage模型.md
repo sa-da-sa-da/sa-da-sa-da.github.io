@@ -13,11 +13,6 @@ weight: 1
 srcDir: steam/AI系列
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 # 喂饭级教程！解决生图新体验：ComfyUI本地部署Zimage模型
 
 ## 一、前言

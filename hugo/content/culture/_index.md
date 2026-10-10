@@ -8,14 +8,15 @@ categories:
 coverImg: /img/culture/banner.jpg
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 # 校园文创产品展示
 
 欢迎来到校园文创产品展示页面！这里展示了我们精心设计的各类校园文创产品，希望你能找到喜欢的产品。如果需要购买请回首页添加我们的公众号获取购买链接。
+
+## AI 定制工作室
+
+挑一件产品、选一个图案，拖到你满意的位置，然后去淘宝店下单定制——你的设计你做主。
+
+<div class="sk-custom-studio"></div>
 
 ## 产品分类
 

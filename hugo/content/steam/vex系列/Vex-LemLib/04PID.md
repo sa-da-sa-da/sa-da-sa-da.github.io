@@ -11,11 +11,6 @@ weight: 4
 srcDir: steam/vex系列/Vex-LemLib
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 ## 引言
 
 在 LemLib 的大多数运动算法中都使用了 PID。LemLib 使用了两个 PID 控制器：一个用于横向运动，一个用于角运动。本教程将重点介绍这些 PID 的整定。

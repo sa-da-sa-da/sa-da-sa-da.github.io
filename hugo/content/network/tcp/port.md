@@ -10,11 +10,6 @@ srcDir: network/tcp
 
 # 4.18 TCP 和 UDP 可以使用同一个端口吗？
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 大家好，我是小林。
 
 之前有读者在字节面试的时候，被问到：**TCP 和 UDP 可以同时监听相同的端口吗？**

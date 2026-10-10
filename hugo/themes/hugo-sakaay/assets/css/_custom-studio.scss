@@ -1,0 +1,245 @@
+// ---------- AI 定制工作室（文创 /culture） ----------
+
+.cs {
+  --cs-radius: 14px;
+  margin: 1.2rem 0;
+}
+
+// 产品选择
+.cs-tabs {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.cs-tab {
+  padding: .45rem .95rem;
+  border: 1px solid var(--vp-c-divider, #e3e3e6);
+  border-radius: 999px;
+  background: var(--vp-c-bg, #fff);
+  color: var(--vp-c-text-2, #5f6368);
+  font-size: .92rem;
+  cursor: pointer;
+  transition: all .18s ease;
+
+  &:hover {
+    border-color: var(--vp-c-brand, #3a8dff);
+    color: var(--vp-c-brand, #3a8dff);
+  }
+
+  &.is-active {
+    background: var(--vp-c-brand, #3a8dff);
+    border-color: var(--vp-c-brand, #3a8dff);
+    color: #fff;
+    font-weight: 600;
+  }
+}
+
+// 主区：左预览 / 右面板
+.cs-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 1.2rem;
+  align-items: start;
+}
+
+// 预览舞台
+.cs-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--cs-radius);
+  border: 1px solid var(--vp-c-divider, #e3e3e6);
+  background:
+    linear-gradient(45deg, #fafafa 25%, transparent 25%, transparent 75%, #fafafa 75%) 0 0 / 20px 20px,
+    linear-gradient(45deg, #fafafa 25%, transparent 25%, transparent 75%, #fafafa 75%) 10px 10px / 20px 20px,
+    var(--vp-c-bg, #fff);
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+
+.cs-base {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+// 图案图层（可拖动）
+.cs-layer {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  touch-action: none;
+
+  &:active { cursor: grabbing; }
+}
+
+.cs-pattern {
+  display: block;
+  width: 100%;
+  height: auto;
+  // 白底图案叠加到产品上时，白色自动"消失"，像真的印上去
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+// 底图缺失时的优雅降级（避免出现破图）
+.cs-stage.is-missing {
+  &::after {
+    content: '产品图准备中';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--vp-c-text-3, #9aa0a6);
+    font-size: .9rem;
+    letter-spacing: .02em;
+  }
+
+  .cs-layer { display: none; }
+}
+
+.cs-hint {
+  position: absolute;
+  left: 50%;
+  bottom: .6rem;
+  transform: translateX(-50%);
+  padding: .25rem .7rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .55);
+  color: #fff;
+  font-size: .75rem;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+// 右侧面板
+.cs-panel {
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+}
+
+.cs-label {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--vp-c-text-2, #5f6368);
+  margin-top: .25rem;
+}
+
+.cs-patterns {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  gap: .55rem;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: .15rem;
+}
+
+.cs-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .3rem;
+  padding: .45rem .3rem;
+  border: 1px solid var(--vp-c-divider, #e3e3e6);
+  border-radius: 10px;
+  background: var(--vp-c-bg, #fff);
+  cursor: pointer;
+  transition: all .16s ease;
+
+  img {
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: #f6f7f9;
+  }
+
+  span {
+    font-size: .72rem;
+    color: var(--vp-c-text-2, #5f6368);
+    text-align: center;
+    line-height: 1.25;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  &:hover { border-color: var(--vp-c-brand, #3a8dff); }
+
+  &.is-active {
+    border-color: var(--vp-c-brand, #3a8dff);
+    box-shadow: 0 0 0 2px rgba(58, 141, 255, .18);
+    background: var(--vp-c-bg-alt, #f6f8fb);
+  }
+}
+
+.cs-empty {
+  grid-column: 1 / -1;
+  padding: 1.4rem .8rem;
+  text-align: center;
+  font-size: .85rem;
+  color: var(--vp-c-text-3, #9aa0a6);
+  border: 1px dashed var(--vp-c-divider, #e3e3e6);
+  border-radius: 10px;
+}
+
+.cs-range {
+  width: 100%;
+  accent-color: var(--vp-c-brand, #3a8dff);
+}
+
+.cs-actions {
+  display: flex;
+  gap: .6rem;
+  margin-top: .5rem;
+  flex-wrap: wrap;
+}
+
+.cs-btn {
+  flex: 1;
+  min-width: 110px;
+  padding: .6rem 1rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s ease;
+}
+
+.cs-btn-ghost {
+  flex: 0 0 auto;
+  min-width: 80px;
+  background: var(--vp-c-bg, #fff);
+  border-color: var(--vp-c-divider, #e3e3e6);
+  color: var(--vp-c-text-2, #5f6368);
+
+  &:hover { border-color: var(--vp-c-brand, #3a8dff); color: var(--vp-c-brand, #3a8dff); }
+}
+
+.cs-btn-primary {
+  background: linear-gradient(135deg, #ff6a3d, #ff3d6e);
+  color: #fff;
+
+  &:hover { filter: brightness(1.06); transform: translateY(-1px); }
+}
+
+.cs-note {
+  font-size: .76rem;
+  color: var(--vp-c-text-3, #9aa0a6);
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .cs-main { grid-template-columns: minmax(0, 1fr); }
+  .cs-patterns { max-height: 200px; }
+}

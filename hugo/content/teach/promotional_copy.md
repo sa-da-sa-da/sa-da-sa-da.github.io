@@ -9,11 +9,6 @@ weight: 12
 srcDir: teach
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 # 影视飓风素材库 × 闪电分镜：影视创作的双引擎
 
 ## 🎬 影视飓风素材库：千万博主的「免费4K素材金矿」

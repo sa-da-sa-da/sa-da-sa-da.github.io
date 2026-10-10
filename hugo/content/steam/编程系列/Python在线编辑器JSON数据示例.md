@@ -11,13 +11,6 @@ coverImg: https://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201711/f5d336
 srcDir: steam/编程系列
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
-
-
 # Python在线编辑器JSON数据示例
 
 本示例展示如何使用基于JSON数据格式的Python在线编辑器组件。

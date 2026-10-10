@@ -12,11 +12,6 @@ coverImg: http://cdn-hsyq-static.shanhutech.cn/bizhi/staticwp/202503/58027a08072
 srcDir: steam/编程系列
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 # Python编程题目示例
 
 本页面展示如何使用ID模式加载不同的Python编程题目示例。通过指定`problemId`属性，我们可以轻松在文档中嵌入特定的编程题目代码。

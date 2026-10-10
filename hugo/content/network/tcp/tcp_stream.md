@@ -8,11 +8,6 @@ coverImg: http://cdn-hsyq-static-bak.shanhutech.cn/bizhi/staticwp/201904/6d41dac
 srcDir: network/tcp
 ---
 
-<div class="ad-block">
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2897720906666216" data-ad-slot="2668661755" data-ad-format="auto" data-full-width-responsive="true"></ins>
-</div>
-
-
 # 4.6 如何理解是 TCP 面向字节流协议？
 
 有个读者问我，这么个问题：

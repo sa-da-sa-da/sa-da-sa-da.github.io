@@ -5,5 +5,7 @@
     <div class="outline-title">本页导航</div>
     {{ $toc | safeHTML }}
   </div>
+  {{/* 侧栏广告：置于目录下方，不进入正文阅读路径 */}}
+  {{ partial "ad-unit.html" (dict "slot" site.Params.ads.sidebarSlot "variant" "sidebar" "format" "auto") }}
 </aside>
 {{ end }}

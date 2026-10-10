@@ -67,6 +67,8 @@
         {{ partial "doc-copyright.html" . }}
         {{ partial "appreciation.html" . }}
         {{ partial "doc-prev-next.html" . }}
+        {{/* 文末广告：放在阅读结束后的自然断点（上下篇之后、评论之前），横向格式视觉更轻 */}}
+        {{ partial "ad-unit.html" (dict "slot" site.Params.ads.articleSlot "variant" "inline" "format" "horizontal") }}
       {{ end }}
       {{ partial "comment.html" . }}
     </div>

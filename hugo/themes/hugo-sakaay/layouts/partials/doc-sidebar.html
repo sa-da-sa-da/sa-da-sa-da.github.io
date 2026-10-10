@@ -3,9 +3,6 @@
   {{ if $ds.categories.enabled }}{{ partial "widgets/categories-card.html" . }}{{ end }}
   {{ if $ds.hotTags.enabled }}{{ partial "widgets/hot-tags-card.html" . }}{{ end }}
   {{ if $ds.siteInfo.enabled }}{{ partial "widgets/site-info-card.html" . }}{{ end }}
-  {{ with site.Params.ads }}{{ if and .enabled .sidebarSlot }}
-  <div class="sidebar-card ad-block">
-    <ins class="adsbygoogle" style="display:block" data-ad-client="{{ .client }}" data-ad-slot="{{ .sidebarSlot }}" data-ad-format="auto" data-full-width-responsive="true"></ins>
-  </div>
-  {{ end }}{{ end }}
+  {{/* 侧栏广告：只占侧栏底部一块，不影响正文阅读 */}}
+  {{ partial "ad-unit.html" (dict "slot" site.Params.ads.sidebarSlot "variant" "sidebar" "format" "vertical") }}
 </aside>

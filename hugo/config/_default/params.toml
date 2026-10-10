@@ -258,16 +258,16 @@ dateFormat = "2006-01-02"
     enabled = false
 
 # ---------- 广告 ----------
+# 广告位置由模板统一决定：① 文末（上下篇之后、评论之前）；② 右侧目录下方。
+# 正文里不再插广告块，避免打断阅读。
+# 注意：还需在 AdSense 后台关闭「自动广告」的锚定 / 插页格式，
+# 否则 Google 会自行在页脚之后插入浮层广告（与主题无关，代码管不到）。
 [ads]
   enabled = true
   client = "ca-pub-2897720906666216"
-  articleSlot = "2668661755"
-  sidebarSlot = "4522753183"
-  footerSlot = "4281684534"
-  navSlot = "7966054610"
-  autoInject = true
-  every = 5
-  maxAds = 3
+  articleSlot = "2668661755"   # 文末广告单元
+  sidebarSlot = "4522753183"   # 侧栏广告单元（留空则不显示）
+  lazyLoad = true              # 滚动到附近才请求，首屏不加载广告
 
 # ---------- 其它 ----------
 [titleChange]

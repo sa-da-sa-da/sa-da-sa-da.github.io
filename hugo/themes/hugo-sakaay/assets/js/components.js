@@ -1412,6 +1412,147 @@ function initProductDetail() {
   });
 }
 
+// ------------------------------------------------------------------ AI 定制工作室（文创）
+
+function renderCustomStudio(box) {
+  fetchData('custom-products').then(function (cfg) {
+    const products = (cfg && cfg.products) || [];
+    const patterns = (cfg && cfg.patterns) || [];
+    if (!products.length) { box.innerHTML = ''; return; }
+
+    let pi = 0;                              // 当前产品下标
+    let si = 0;                              // 当前图案下标
+    const off = { x: 0, y: 0, s: 1 };        // 用户微调：偏移 + 缩放
+
+    box.innerHTML =
+      '<div class="cs">' +
+        '<div class="cs-tabs">' +
+          products.map(function (p, i) {
+            return '<button class="cs-tab' + (i === 0 ? ' is-active' : '') + '" data-i="' + i + '">' +
+              esc(p.name) + '</button>';
+          }).join('') +
+        '</div>' +
+        '<div class="cs-main">' +
+          '<div class="cs-stage" id="csStage">' +
+            '<img class="cs-base" id="csBase" alt="">' +
+            '<div class="cs-layer" id="csLayer"><img class="cs-pattern" id="csPattern" alt=""></div>' +
+            '<div class="cs-hint">拖动图案可调整位置</div>' +
+          '</div>' +
+          '<div class="cs-panel">' +
+            '<div class="cs-label">选择图案</div>' +
+            '<div class="cs-patterns">' +
+              (patterns.length ? patterns.map(function (s, i) {
+                return '<button class="cs-chip' + (i === 0 ? ' is-active' : '') + '" data-i="' + i + '">' +
+                  '<img src="' + esc(s.src) + '" alt="" loading="lazy">' +
+                  '<span>' + esc(s.name || ('图案' + (i + 1))) + '</span></button>';
+              }).join('') : '<div class="cs-empty">图案库准备中，稍后上线</div>') +
+            '</div>' +
+            '<div class="cs-label">图案大小</div>' +
+            '<input type="range" class="cs-range" id="csRange" min="20" max="220" value="100" step="1">' +
+            '<div class="cs-actions">' +
+              '<button class="cs-btn cs-btn-ghost" id="csReset">复位</button>' +
+              '<button class="cs-btn cs-btn-primary" id="csShop">🛒 去淘宝定制同款</button>' +
+            '</div>' +
+            '<div class="cs-note">选中喜欢的组合后，点上方按钮到淘宝下单并把这张效果图发给客服即可定制。</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    const base = box.querySelector('#csBase');
+    const layer = box.querySelector('#csLayer');
+    const pat = box.querySelector('#csPattern');
+    const stage = box.querySelector('#csStage');
+    const range = box.querySelector('#csRange');
+    const shopBtn = box.querySelector('#csShop');
+    const shopText = shopBtn.textContent;
+
+    if (base) {
+      base.addEventListener('error', function () { if (stage) stage.classList.add('is-missing'); });
+      base.addEventListener('load', function () { if (stage) stage.classList.remove('is-missing'); });
+    }
+
+    function apply() {
+      const p = products[pi];
+      const s = patterns[si];
+      base.src = p.base || '';
+      if (s && s.src) { pat.src = s.src; layer.style.display = ''; }
+      else { layer.style.display = 'none'; }
+
+      pat.style.mixBlendMode = p.blend || 'multiply';
+
+      const a = p.area || {};
+      const w = (a.w != null ? a.w : 40) * off.s;
+      const x = (a.x != null ? a.x : 50) + off.x;
+      const y = (a.y != null ? a.y : 50) + off.y;
+      layer.style.left = x + '%';
+      layer.style.top = y + '%';
+      layer.style.width = w + '%';
+    }
+
+    function resetOffset() { off.x = 0; off.y = 0; off.s = 1; if (range) range.value = 100; }
+
+    box.querySelectorAll('.cs-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        pi = +btn.dataset.i;
+        resetOffset();
+        box.querySelectorAll('.cs-tab').forEach(function (b) { b.classList.toggle('is-active', b === btn); });
+        apply();
+      });
+    });
+
+    box.querySelectorAll('.cs-chip').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        si = +btn.dataset.i;
+        box.querySelectorAll('.cs-chip').forEach(function (b) { b.classList.toggle('is-active', b === btn); });
+        apply();
+      });
+    });
+
+    if (range) {
+      range.addEventListener('input', function () { off.s = (+range.value || 100) / 100; apply(); });
+    }
+
+    const resetBtn = box.querySelector('#csReset');
+    if (resetBtn) resetBtn.addEventListener('click', function () { resetOffset(); apply(); });
+
+    // 拖动调整图案位置
+    let dragging = false, sx = 0, sy = 0;
+    function dragStart(cx, cy) { dragging = true; sx = cx; sy = cy; }
+    function dragMove(cx, cy) {
+      if (!dragging || !stage) return;
+      const r = stage.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      off.x += ((cx - sx) / r.width) * 100;
+      off.y += ((cy - sy) / r.height) * 100;
+      sx = cx; sy = cy;
+      apply();
+    }
+    layer.addEventListener('mousedown', function (e) { dragStart(e.clientX, e.clientY); e.preventDefault(); });
+    document.addEventListener('mousemove', function (e) { dragMove(e.clientX, e.clientY); });
+    document.addEventListener('mouseup', function () { dragging = false; });
+    layer.addEventListener('touchstart', function (e) {
+      const t = e.touches[0]; dragStart(t.clientX, t.clientY);
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (dragging) { const t = e.touches[0]; dragMove(t.clientX, t.clientY); }
+    }, { passive: true });
+    document.addEventListener('touchend', function () { dragging = false; });
+
+    shopBtn.addEventListener('click', function () {
+      const p = products[pi];
+      const url = ((p && p.shopUrl) || (cfg && cfg.shopUrl) || '').trim();
+      if (!url || url.indexOf('http') !== 0) {
+        shopBtn.textContent = '⏳ 店铺链接待配置';
+        setTimeout(function () { shopBtn.textContent = shopText; }, 1800);
+        return;
+      }
+      window.open(url, '_blank', 'noopener');
+    });
+
+    apply();
+  });
+}
+
 // ------------------------------------------------------------------ 导航页 / 登录
 
 function initNavFilter() {
@@ -1454,6 +1595,7 @@ export function initComponents() {
   document.querySelectorAll('.sk-pdf-reader').forEach(renderPdfReader);
   document.querySelectorAll('.sk-3d').forEach(render3D);
   document.querySelectorAll('.sk-products').forEach(renderProductGrid);
+  document.querySelectorAll('.sk-custom-studio').forEach(renderCustomStudio);
   document.querySelectorAll('.sk-about').forEach(renderAbout);
   document.querySelectorAll('.sk-thought-cards').forEach(renderThoughts);
   document.querySelectorAll('.sk-couple-album').forEach(renderAlbum);

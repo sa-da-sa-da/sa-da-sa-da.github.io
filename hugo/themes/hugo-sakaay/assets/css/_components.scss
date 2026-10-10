@@ -192,9 +192,6 @@
   tbody tr:last-child td { border-bottom: none; }
 }
 
-// ---------- 侧栏广告 ----------
-.sidebar-card.ad-block { min-height: 120px; }
-
 // ---------- 移动端 ----------
 @media (max-width: 768px) {
   .login-container { grid-template-columns: minmax(0, 1fr); }
