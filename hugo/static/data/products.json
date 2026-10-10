@@ -128,7 +128,7 @@
     "name": "校园风景马克杯",
     "price": 39.9,
     "description": "陶瓷材质，印有校园四季风景图案",
-    "images": [],
+    "images": ["/img/culture/mug.jpg"],
     "category": "daily",
     "details": [
       "材质：陶瓷",
