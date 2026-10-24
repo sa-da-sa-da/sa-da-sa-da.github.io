@@ -1,0 +1,8 @@
+fix(seo): 复查修复死链/重复URL/alias索引，并接入 Bing 提交能力
+
+- 修复 5 处站内死链（HTML href 嵌套 Markdown、区间写法被当链接、指向已删除页面与本地 PDF）
+- 删除 2 个与分区页共用同一 URL 的空目录页，消除 sitemap 重复条目（307→305）
+- 新增 layouts/alias.html：87 个别名跳转页补 noindex, follow，避免旧地址被当重复内容收录
+- 新增 scripts/site-check.mjs：死链/图片404/canonical/alias/标题描述长度与重复度全量体检
+- Bing：head 支持 [verification].bing 的 msvalidate.01；新增 IndexNow（data/indexnow.json + static/<key>.txt + scripts/indexnow.mjs）
+- 修复 dev 污染：hugo server 改为输出 public-dev，不再覆盖生产产物 public/

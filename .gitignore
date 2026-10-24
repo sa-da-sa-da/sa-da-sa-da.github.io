@@ -1,5 +1,7 @@
 # 构建产物
 /public/
+# 本地预览产物（hugo server 默认写盘，单独放，避免覆盖生产产物）
+/public-dev/
 /resources/
 .hugo_build.lock
 hugo_stats.json
@@ -18,3 +20,7 @@ Thumbs.db
 .playwright-cli/
 .codebuddy
 
+
+# Python 缓存
+__pycache__/
+*.pyc

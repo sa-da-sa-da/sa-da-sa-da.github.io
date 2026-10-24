@@ -20,6 +20,16 @@ windowTransition = true
 # 首页/文章日期格式
 dateFormat = "2006-01-02"
 
+# ---------- 搜索引擎站长验证 ----------
+[verification]
+  # 必应站长工具（Bing Webmaster Tools）→「添加网站」→ 选「HTML 元标记」，
+  # 把 content 的值（形如 0123456789ABCDEF...）填到这里，重新构建即可生效。
+  bing = ""
+  # 其它平台按需填写
+  google = ""
+  baidu = ""
+  # 360 / 神马等可自行扩展，head.html 里按同一模式输出
+
 # ---------- 博主卡片 ----------
 [blogger]
   name = "sakaay|飒龘"

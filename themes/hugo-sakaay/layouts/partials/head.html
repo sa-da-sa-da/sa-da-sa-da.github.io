@@ -28,6 +28,12 @@
 <meta name="author" content="{{ site.Params.author }}">
 <meta name="generator" content="Hugo {{ hugo.Version }}">
 <link rel="icon" href="{{ site.Params.favicon | default "/favicon.ico" }}">
+{{- /* 站长平台验证（值填在 config/_default/params.toml 的 [verification] 下） */ -}}
+{{- with site.Params.verification }}
+{{- with .bing }}<meta name="msvalidate.01" content="{{ . }}">{{ end }}
+{{- with .google }}<meta name="google-site-verification" content="{{ . }}">{{ end }}
+{{- with .baidu }}<meta name="baidu-site-verification" content="{{ . }}">{{ end }}
+{{- end }}
 
 <!-- Open Graph / Twitter -->
 <meta property="og:type" content="{{ if eq .Kind "page" }}article{{ else }}website{{ end }}">

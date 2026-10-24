@@ -5,10 +5,12 @@
   "description": "sakaay 站点（Hugo + 自建主题 hugo-sakaay）",
   "type": "module",
   "scripts": {
-    "dev": "hugo server --port 1313 --disableFastRender --cleanDestinationDir",
+    "dev": "hugo server --port 1313 --disableFastRender --destination public-dev",
     "build": "hugo --minify --cleanDestinationDir",
     "build:deploy": "hugo --minify --cleanDestinationDir && node scripts/prepare-deploy.mjs",
     "check:deploy": "node scripts/prepare-deploy.mjs",
+    "seo:check": "node scripts/site-check.mjs public",
+    "seo:indexnow": "node scripts/indexnow.mjs",
     "preview": "hugo server --port 1313 --disableFastRender --renderToDisk --cleanDestinationDir",
     "new": "hugo new content"
   },

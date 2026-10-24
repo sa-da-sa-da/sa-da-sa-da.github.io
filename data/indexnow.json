@@ -1,0 +1,5 @@
+{
+  "host": "www.sakaay.com",
+  "key": "b7f3c1e58d2a4f6b9c0e1d2a3b4c5d6e",
+  "_comment": "IndexNow 密钥。对应 public/<key>.txt 必须可访问：https://www.sakaay.com/<key>.txt"
+}

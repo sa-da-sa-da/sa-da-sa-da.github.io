@@ -126,6 +126,41 @@ node scripts/seo-fix-content.mjs --dry                     # 预览内容层批�
 
 > 内容层修正脚本会改写 `content/` 下的 frontmatter（目录页改名、重复标题消歧、缺 title 补全、第二个 h1 降级、`<img>` 补 alt），**幂等**，可重复执行。
 
+全站静态体检（死链 / 图片 404 / canonical / alias noindex / 标题与描述长度 / 重复度）：
+
+```bash
+pnpm build
+pnpm seo:check                       # 输出 JSON 报告
+```
+
+### 提交到 Bing 站长工具
+
+**第一次（验证 + 提交 sitemap，约 5 分钟）**
+
+1. 打开 <https://www.bing.com/webmasters>，用 Microsoft / Google 账号登录
+2. 「添加网站」→ 输入 `https://www.sakaay.com/`
+3. 验证方式选 **「HTML 元标记」**，复制它给的 `content` 值
+4. 填到 `config/_default/params.toml`：
+
+   ```toml
+   [verification]
+     bing = "这里粘贴 content 的值"
+   ```
+
+   然后 `pnpm build` + 部署，回到 Bing 点「验证」（模板已在 `head.html` 输出 `msvalidate.01`）
+5. 左侧「站点地图」→ 提交 `https://www.sakaay.com/sitemap.xml`
+6. 想省事可在 BWT 里「从 Google Search Console 导入」，站点与验证一次带过来
+
+**之后每次更新内容（几秒，无需登录后台）**
+
+```bash
+pnpm build:deploy          # 构建 + 部署
+pnpm seo:indexnow          # 把 sitemap 全部 URL 推给 Bing（IndexNow）
+pnpm seo:indexnow --limit 10   # 或只推最近更新的 10 条
+```
+
+IndexNow 协议由 Bing / Yandex / Seznam 共用，提交一次多站生效；密钥在 `data/indexnow.json`，对应校验文件 `static/<key>.txt` 必须能通过 `https://www.sakaay.com/<key>.txt` 访问（已随构建产出）。状态码：200 成功、202 已接收、403 密钥文件不可访问、422 域名不匹配、429 请求过多。
+
 ## 验证与排障
 
 ```bash

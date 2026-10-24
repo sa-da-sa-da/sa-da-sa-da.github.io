@@ -241,7 +241,7 @@ links:
 
 ## 4. 集成 Twikoo 评论系统
 
-在友链页面的评论区插槽中，默认集成了 Twikoo 评论组件。确保你已经按照 [Twikoo 集成教程](./twikoo-integration.md) 完成了 Twikoo 的配置。
+在友链页面的评论区插槽中，默认集成了 Twikoo 评论组件。确保你已经按照 [Twikoo 官方文档](https://twikoo.js.org/) 完成了 Twikoo 的配置。
 
 ## 5. 测试功能
 

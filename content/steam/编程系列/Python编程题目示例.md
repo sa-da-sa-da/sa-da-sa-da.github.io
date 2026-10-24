@@ -95,7 +95,7 @@ srcDir: steam/编程系列
 
 ## 更多资源
 
-- [Python在线编辑器示例](./Python在线编辑器示例.md)
+- [Python在线编辑器示例](/steam/gcezx/)
 - [Python官方文档](https://docs.python.org/zh-cn/)
 - [Python入门教程](https://www.runoob.com/python/python-tutorial.html)
 

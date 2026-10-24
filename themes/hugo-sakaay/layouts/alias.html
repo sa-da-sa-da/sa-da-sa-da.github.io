@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>{{ .Permalink }}</title>
+  {{/* 别名页只是跳转桩：必须 noindex，否则搜索引擎会把旧地址当重复内容收录 */}}
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="{{ .Permalink }}">
+  <meta http-equiv="refresh" content="0; url={{ .Permalink }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:2rem;color:#333}a{color:#3b82f6}</style>
+</head>
+<body>
+  <p>页面已迁移，正在跳转…</p>
+  <p>如果没有自动跳转，请点击 <a href="{{ .Permalink }}">{{ .Permalink }}</a></p>
+</body>
+</html>
