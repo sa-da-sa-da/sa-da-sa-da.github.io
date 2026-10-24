@@ -1,0 +1,13 @@
+{{- /* Markdown 图片渲染钩子：
+       1) 始终输出非空 alt（原来 381 处图片完全没有 alt，SEO 报错）
+          —— 注意 Hugo --minify 会把空值属性压成非法布尔属性（alt 而非 alt=""），
+             所以这里保证 alt 一定非空
+       2) 统一加 loading="lazy" decoding="async"，改善首屏性能
+       3) 保留 title 与图片自身的 class */ -}}
+{{- $alt := .Text -}}
+{{- if not $alt -}}
+  {{- $alt = printf "%s 配图" .Page.Title -}}
+{{- end -}}
+<img src="{{ .Destination | safeURL }}" alt="{{ $alt }}"
+  {{- with .Title }} title="{{ . }}"{{ end }}
+  loading="lazy" decoding="async">

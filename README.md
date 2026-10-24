@@ -48,6 +48,9 @@ pnpm new              # 新建内容
 │   └── data/*.json            # 组件运行时数据（工具/娱乐/播放器/相册/朋友圈…）
 ├── scripts/
 │   ├── prepare-deploy.mjs     # 部署前清理超限文件
+│   ├── seo-audit.mjs          # SEO 体检：扫产物里的 h1/标题/描述/重复度
+│   ├── seo-fix-content.mjs    # 内容层 SEO 批量修正（幂等）
+│   ├── seo-ld-check.mjs       # 校验全站 JSON-LD 是否可解析
 │   └── test-search.mjs        # 搜索索引自检
 └── themes/hugo-sakaay/
     ├── assets/css/            # 设计令牌 + 组件样式（SCSS）
@@ -98,6 +101,30 @@ pnpm new              # 新建内容
 | 海报墙（电影页） | `{{< movie-wall >}}` shortcode：同样数据格式渲染海报卡片墙，hover 浮起 + 播放键；**与同页 `{{< movie-player >}}` 页内联动**（`__mvApi`），点击海报直接在下方播放器选片 |
 | 隐藏页面 | 源 md frontmatter 加 `draft: true` 即不渲染（迁移脚本会透传该字段），不出现在侧栏/搜索/归档；已隐藏：`音乐播放器`、`电影播放器`（播放器均内嵌到对应内容页） |
 | Live2D 看板娘 | 原主题中本就未启用（注释状态），未迁移 |
+
+## SEO
+
+模板层已做下列处理（`themes/hugo-sakaay/layouts/partials/head.html` + `seo-description.html`）：
+
+| 项 | 做法 |
+|---|---|
+| title 唯一且不短 | `页面标题 ｜ 章节 ｜ 站点名`；分区页追加「共 N 篇内容」；首页用 `站点名 - 标语` |
+| meta description 每页唯一 | `partials/seo-description.html`：frontmatter → 正文纯文本摘要（150 字截断）→ 标题兜底；过短再补「章节 + 站点描述」语境 |
+| h1 唯一 | `single.html` / `list.html` 判定**整篇正文**是否已有 h1（只查前 800 字符会导致一页两个 h1），有则不再重复渲染 |
+| 图片 alt | 新增 `layouts/_default/_markup/render-image.html`：Markdown 图片一律输出非空 alt（原文 381 处无 alt），并加 `loading="lazy" decoding="async"`；模板里的菜单图标也补了 alt |
+| 结构化数据 | 首页 `WebSite`、文章 `Article`、列表/分类 `CollectionPage` + `ItemList`、面包屑 `BreadcrumbList`（全站 532 个 JSON-LD 块） |
+| 其它 | `canonical` / `og:*` / `twitter:*` 全量补齐并带 og:image 兜底；`robots.txt` 增加 `Sitemap:`；图片懒加载 |
+
+体检与修正：
+
+```bash
+pnpm build
+node scripts/seo-audit.mjs public sitemap seo-report.json   # 输出 h1/标题/描述/重复度报告
+node scripts/seo-ld-check.mjs                              # 校验 JSON-LD
+node scripts/seo-fix-content.mjs --dry                     # 预览内容层批量修正
+```
+
+> 内容层修正脚本会改写 `content/` 下的 frontmatter（目录页改名、重复标题消歧、缺 title 补全、第二个 h1 降级、`<img>` 补 alt），**幂等**，可重复执行。
 
 ## 验证与排障
 

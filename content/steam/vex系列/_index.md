@@ -1,4 +1,4 @@
 ---
-title: vex系列
+title: VEX 机器人
 sectionIndex: true
 ---

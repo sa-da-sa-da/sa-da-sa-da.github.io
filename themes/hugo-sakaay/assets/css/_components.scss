@@ -134,7 +134,7 @@
 .login-card { background: var(--card-bg); padding: 2.5rem 2rem; }
 .login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;
   img { width: 40px; height: 40px; border-radius: 8px; }
-  .login-name { font-size: 1.05rem; font-weight: 600; } }
+  .login-name { font-size: 1.05rem; font-weight: 600; margin: 0; line-height: 1.4; } }
 .login-submit { width: 100%; margin-top: 0.5rem; }
 .login-tip { margin-top: 0.75rem; font-size: 0.82rem; min-height: 1.2em; }
 .login-side { background: var(--gradient-cyber) center/cover no-repeat; min-height: 320px; }

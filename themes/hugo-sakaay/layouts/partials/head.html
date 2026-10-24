@@ -1,28 +1,102 @@
-{{ $title := .Title }}
-{{ if .IsHome }}{{ $title = site.Title }}{{ end }}
+{{- $siteName := site.Title -}}
+{{- $desc := partial "seo-description.html" . -}}
+{{- /* 标题：首页用 slogan，其余页面组合「页面标题 + 章节/数量 + 站点名」，保证唯一且长度足够 */ -}}
+{{- $title := .Title -}}
+{{- if .IsHome -}}
+  {{- $title = printf "%s - %s" $siteName (site.Params.tagline | default site.Params.description) -}}
+{{- else -}}
+  {{- $sec := "" -}}
+  {{- if eq .Kind "page" -}}
+    {{- with .FirstSection -}}
+      {{- if ne .Title $siteName -}}{{- $sec = .Title -}}{{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if and $sec (ne $sec $title) (not (strings.Contains $title $sec)) (lt (len $title) 26) -}}
+    {{- $title = printf "%s | %s" $title $sec -}}
+  {{- else if in (slice "section" "taxonomy" "term") .Kind -}}
+    {{- $title = printf "%s · 共 %d 篇内容" $title (len .Pages) -}}
+  {{- end -}}
+  {{- $title = printf "%s | %s" $title $siteName -}}
+{{- end -}}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="color-scheme" content="light dark">
-<title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ $title }} | {{ site.Title }}{{ end }}</title>
-<meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ site.Params.description }}{{ end }}">
+<title>{{ $title }}</title>
+<meta name="description" content="{{ $desc }}">
 <meta name="keywords" content="{{ with .Keywords }}{{ delimit . "," }}{{ else }}{{ delimit site.Params.keywords "," }}{{ end }}">
 <meta name="author" content="{{ site.Params.author }}">
+<meta name="generator" content="Hugo {{ hugo.Version }}">
 <link rel="icon" href="{{ site.Params.favicon | default "/favicon.ico" }}">
 
 <!-- Open Graph / Twitter -->
-<meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+<meta property="og:type" content="{{ if eq .Kind "page" }}article{{ else }}website{{ end }}">
+<meta property="og:site_name" content="{{ $siteName }}">
+<meta property="og:locale" content="zh_CN">
 <meta property="og:title" content="{{ $title }}">
-<meta property="og:description" content="{{ with .Description }}{{ . }}{{ else }}{{ site.Params.description }}{{ end }}">
+<meta property="og:description" content="{{ $desc }}">
 <meta property="og:url" content="{{ .Permalink }}">
-{{ with .Params.coverImg }}<meta property="og:image" content="{{ . }}">{{ end }}
+<meta property="og:image" content="{{ with .Params.coverImg }}{{ . }}{{ else }}{{ site.Params.logo | default "/img/logo.png" | absURL }}{{ end }}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{ $title }}">
-<meta name="twitter:description" content="{{ with .Description }}{{ . }}{{ else }}{{ site.Params.description }}{{ end }}">
+<meta name="twitter:description" content="{{ $desc }}">
 
 {{ hugo.Generator }}
 <link rel="canonical" href="{{ .Permalink }}">
 <link rel="alternate" type="application/rss+xml" href="{{ with .OutputFormats.Get "rss" }}{{ .RelPermalink }}{{ end }}">
+
+{{- /* 结构化数据：帮助搜索引擎理解站点结构并生成富媒体结果 */ -}}
+{{- if .IsHome -}}
+<script type="application/ld+json">{{ dict
+  "@context" "https://schema.org"
+  "@type" "WebSite"
+  "name" $siteName
+  "url" site.BaseURL
+  "description" site.Params.description
+  "inLanguage" "zh-CN"
+  "potentialAction" (dict "@type" "SearchAction" "target" (printf "%ssearch/?q={search_term_string}" site.BaseURL) "query-input" "required name=search_term_string")
+  | jsonify | safeJS }}</script>
+{{- else if eq .Kind "page" -}}
+{{- $cover := site.Params.logo | default "/img/logo.png" -}}
+{{- with .Params.coverImg }}{{ $cover = . }}{{ end -}}
+{{- $ld := dict
+  "@context" "https://schema.org"
+  "@type" "Article"
+  "headline" .Title
+  "name" .Title
+  "description" $desc
+  "url" .Permalink
+  "inLanguage" "zh-CN"
+  "image" ($cover | absURL)
+  "author" (dict "@type" "Person" "name" (site.Params.author | default $siteName))
+  "publisher" (dict "@type" "Person" "name" (site.Params.author | default $siteName))
+  "mainEntityOfPage" (dict "@type" "WebPage" "@id" .Permalink)
+-}}
+{{- if not .Date.IsZero -}}{{- $ld = merge $ld (dict "datePublished" (.Date.Format "2006-01-02T15:04:05Z07:00")) -}}{{- end -}}
+{{- if not .Lastmod.IsZero -}}{{- $ld = merge $ld (dict "dateModified" (.Lastmod.Format "2006-01-02T15:04:05Z07:00")) -}}{{- end -}}
+{{- with .Params.tags -}}{{- $ld = merge $ld (dict "keywords" (delimit . ", ")) -}}{{- end -}}
+<script type="application/ld+json">{{ $ld | jsonify | safeJS }}</script>
+{{- $crumbs := slice -}}
+{{- range .Ancestors.Reverse -}}{{- $crumbs = $crumbs | append (dict "@type" "ListItem" "position" (add (len $crumbs) 1) "name" .Title "item" .Permalink) -}}{{- end -}}
+{{- $crumbs = $crumbs | append (dict "@type" "ListItem" "position" (add (len $crumbs) 1) "name" .Title "item" .Permalink) -}}
+{{- if gt (len $crumbs) 1 -}}
+<script type="application/ld+json">{{ dict "@context" "https://schema.org" "@type" "BreadcrumbList" "itemListElement" $crumbs | jsonify | safeJS }}</script>
+{{- end -}}
+{{- else -}}
+{{- /* 列表 / 分类 / 标签页：声明为 CollectionPage + 条目列表 */ -}}
+{{- $items := slice -}}
+{{- range first 20 .Pages -}}{{- $items = $items | append (dict "@type" "ListItem" "position" (add (len $items) 1) "name" .Title "url" .Permalink) -}}{{- end -}}
+<script type="application/ld+json">{{ dict
+  "@context" "https://schema.org"
+  "@type" "CollectionPage"
+  "name" $title
+  "description" $desc
+  "url" .Permalink
+  "inLanguage" "zh-CN"
+  "isPartOf" (dict "@type" "WebSite" "name" $siteName "url" site.BaseURL)
+  "mainEntity" (dict "@type" "ItemList" "itemListElement" $items)
+  | jsonify | safeJS }}</script>
+{{- end -}}
 
 <!-- 预连接 -->
 <link rel="preconnect" href="https://unpkg.com" crossorigin>

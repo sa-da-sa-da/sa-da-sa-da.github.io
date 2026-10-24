@@ -3,8 +3,8 @@
   <div class="login-container">
     <div class="login-card">
       <div class="login-logo">
-        {{ with .Params.logo }}<img src="{{ . }}" alt="logo">{{ end }}
-        <span class="login-name">{{ .Params.name | default site.Title }}</span>
+        {{ with .Params.logo }}<img src="{{ . }}" alt="{{ $.Params.name | default site.Title }} 站点 logo">{{ end }}
+        <h1 class="login-name">{{ .Params.name | default site.Title }}</h1>
       </div>
       <div class="login-form">
         <label class="login-field">

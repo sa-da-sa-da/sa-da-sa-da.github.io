@@ -1,5 +1,5 @@
 ---
-title: 文章清单
+title: 全站文章清单
 date: '2025-08-16T07:37:25+08:00'
 url: /article-overview
 aliases:
@@ -8,4 +8,3 @@ sidebar: false
 article: false
 layout: article-overview
 ---
-

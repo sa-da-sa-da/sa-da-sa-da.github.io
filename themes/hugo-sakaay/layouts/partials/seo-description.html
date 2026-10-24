@@ -1,0 +1,40 @@
+{{- /*
+  生成当前页面的 meta description（每页唯一、长度适中）
+  优先级：
+    1) frontmatter 的 description
+    2) 正文纯文本摘要（截断 150 字，含页面自己的标题开头 → 天然唯一）
+    3) 标题 + 章节 + 站点描述 兜底
+  摘要过短时再补上「章节 + 站点描述」语境，保证既够长又唯一。
+*/ -}}
+{{- $siteDesc := site.Params.description -}}
+{{- $sec := "" -}}
+{{- with .FirstSection -}}
+  {{- if ne .Title site.Title -}}{{- $sec = .Title -}}{{- end -}}
+{{- end -}}
+{{- $desc := "" -}}
+{{- with .Description -}}
+  {{- $desc = . -}}
+{{- else -}}
+  {{- $plain := .Plain | default "" -}}
+  {{- $plain = replaceRE `\s+` " " $plain -}}
+  {{- $plain = trim $plain " " -}}
+  {{- if gt (countrunes $plain) 20 -}}
+    {{- if gt (countrunes $plain) 150 -}}
+      {{- $desc = printf "%s…" (substr $plain 0 150) -}}
+    {{- else -}}
+      {{- $desc = $plain -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if not $desc -}}
+  {{- $desc = .Title -}}
+{{- end -}}
+{{- /* 过短且尚未包含站点描述时，补齐语境 */ -}}
+{{- if and (lt (countrunes $desc) 60) (not (strings.Contains $desc $siteDesc)) -}}
+  {{- if $sec -}}
+    {{- $desc = printf "%s · %s板块 · %s" $desc $sec $siteDesc -}}
+  {{- else -}}
+    {{- $desc = printf "%s · %s · %s" $desc $siteDesc site.Title -}}
+  {{- end -}}
+{{- end -}}
+{{- $desc | plainify | htmlUnescape | replaceRE `"` "'" | chomp -}}

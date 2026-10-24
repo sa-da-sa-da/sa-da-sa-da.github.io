@@ -329,6 +329,23 @@
       ],
       "playUrl": "/ai-teaching-flow.html",
       "type": "tool"
+    },
+    {
+      "id": "qking-lan-quiz",
+      "title": "题王 QKing 局域网答题",
+      "subtitle": "课堂 · 实时答题系统",
+      "category": "工具",
+      "cover": "/img/qking/cover.png",
+      "desc": "单文件 exe 的局域网课堂答题系统：实时答题、整卷测验、Excel/WPS 操作题与编程题一体化，断网可跑，判分在浏览器端完成。",
+      "tags": [
+        "局域网答题",
+        "实时答题",
+        "整卷测验",
+        "断网可用"
+      ],
+      "playUrl": "https://dd.sakaay.com/",
+      "btnText": "查看文档",
+      "type": "tool"
     }
   ]
 }

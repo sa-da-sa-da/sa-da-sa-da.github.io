@@ -1,4 +1,4 @@
 ---
-title: 基础教程
+title: Python 基础教程
 sectionIndex: true
 ---

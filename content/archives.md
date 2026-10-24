@@ -1,9 +1,8 @@
 ---
-title: 归档
+title: 全站文章归档
 date: '2025-08-16T07:37:25+08:00'
 url: /archives
 sidebar: false
 article: false
 layout: archives
 ---
-

@@ -2,10 +2,10 @@
 {{ $showSidebar := and site.Params.sidebar (ne .Params.sidebar false) }}
 {{ $tocHTML := partial "toc-list.html" . }}
 {{ $hasToc := gt (len $tocHTML) 0 }}
-{{/* 正文自带 h1 时不再重复渲染标题（原 VitePress 内容多为「# 标题」开头） */}}
+{{/* 正文自带 h1 时不再重复渲染标题（原 VitePress 内容多为「# 标题」开头）。
+     判定必须覆盖整篇正文：只查前 800 字符会让「h1 出现在靠后位置」的页面出现两个 h1。 */}}
 {{ $content := .Content }}
-{{ $head := substr $content 0 800 }}
-{{ $hasOwnH1 := strings.Contains $head "<h1" }}
+{{ $hasOwnH1 := strings.Contains $content "<h1" }}
 <div class="VPDoc{{ if not $showSidebar }} no-sidebar{{ end }}{{ if not $hasToc }} no-aside{{ end }}">
   {{ if $showSidebar }}{{ partial "sidebar.html" . }}{{ end }}
 

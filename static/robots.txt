@@ -1,2 +1,5 @@
 User-agent: *
 Allow: /
+
+# 站点地图（帮助搜索引擎完整收录）
+Sitemap: https://www.sakaay.com/sitemap.xml
