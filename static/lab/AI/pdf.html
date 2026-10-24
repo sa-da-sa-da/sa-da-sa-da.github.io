@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>本地文档工具箱｜多格式转PDF & PDF页面提取</title>
+<style>
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto}
+body{max-width:720px;margin:40px auto;padding:0 20px;background:#f7f8fa;}
+h2{color:#1f2937;text-align:center;}
+.card{background:#fff;border:1px solid #e5e7eb;padding:24px;border-radius:12px;margin-bottom:20px;box-shadow:0 1px 3px #00000010;}
+h4{margin-top:0;margin-bottom:12px;color:#374151;}
+button{padding:9px 18px;background:#2563eb;color:#ffffff;border:none;border-radius:8px;cursor:pointer;font-size:14px;}
+button:disabled{background:#94a3b8;cursor:not-allowed;}
+input{padding:7px 10px;margin:8px 0;border:1px solid #d1d5db;border-radius:6px;font-size:14px;}
+.tip{color:#6b7280;font-size:13px;line-height:1.5;}
+.status{margin-top:10px;font-size:14px;}
+.info{color:#2563eb;}
+.error{color:#dc2626;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.4.21/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</head>
+<body>
+<h2>📄纯本地文档工具箱</h2>
+
+<div class="card">
+  <h4>1. 文件转PDF（支持 .docx / .html）</h4>
+  <input type="file" id="convertFile" accept=".docx,.html,.htm">
+  <br>
+  <button id="btnConvert">生成PDF（打印导出）</button>
+  <div id="convertStatus" class="status"></div>
+  <div class="tip">⚠️不支持doc/xls/ppt；老doc请先用LibreOffice预先转docx。转换通过浏览器打印引擎导出，弹出窗口后请在「目标打印机」选择「另存为 PDF / 保存为 PDF」，中文不乱码、自动分页。全部在浏览器处理，不上传网络</div>
+</div>
+
+<div class="card">
+  <h4>2. PDF提取指定页面</h4>
+  <input type="file" id="pdfFile" accept=".pdf">
+  <br>
+  <input type="text" id="pageRange" placeholder="页码示例：1-3,5">
+  <br>
+  <button id="btnExtract">提取页面下载PDF</button>
+  <div id="extractStatus" class="status"></div>
+  <div class="tip">⚠️加密、受保护PDF无法解析</div>
+</div>
+
+<script>
+const { jsPDF } = window.jspdf;
+const { PDFDocument } = window.PDFLib;
+
+// 状态辅助
+function setStatus(elId,text,isError=false){
+  const el=document.getElementById(elId);
+  el.textContent=text;
+  el.className="status "+(isError?"error":"info");
+}
+
+// ========== 多格式转PDF（交给浏览器打印引擎，中文不乱码、自动分页） ==========
+document.querySelector('#btnConvert').addEventListener('click',async ()=>{
+  const file=document.getElementById('convertFile').files[0];
+  const btn=document.querySelector('#btnConvert');
+  if(!file){
+    setStatus("convertStatus","请先选择文件",true);
+    return;
+  }
+  btn.disabled=true;
+  setStatus("convertStatus","正在准备打印预览…");
+  try{
+    let bodyHtml="";
+    const buf=await file.arrayBuffer();
+    const name=file.name.toLowerCase();
+
+    if(name.endsWith(".docx")){
+      const ret=await mammoth.convertToHtml({arrayBuffer:buf});
+      bodyHtml=ret.value;
+    }else if(name.endsWith(".html")||name.endsWith(".htm")){
+      bodyHtml=new TextDecoder("utf-8").decode(buf);
+    }else{
+      throw new Error("不支持该后缀，请使用docx / html");
+    }
+
+    // 构造带完整格式还原的打印页面
+    const fullHtml=`<!DOCTYPE html><html><head><meta charset="utf-8">`+
+      `<meta name="viewport" content="width=device-width,initial-scale=1"><style>`+
+      `@page{size:A4;margin:18mm;}`+
+      `*{box-sizing:border-box;}`+
+      `body{font-family:'Microsoft YaHei','PingFang SC','Hiragino Sans GB','SimSun',sans-serif;`+
+      `line-height:1.8;color:#222;font-size:14px;padding:0;}`+
+
+      /* ===== 标题层级 ===== */
+      `h1{font-size:22px;font-weight:bold;margin:20px 0 12px;color:#000;break-after:avoid;}`+
+      `h2{font-size:19px;font-weight:bold;margin:18px 0 10px;color:#111;break-after:avoid;}`+
+      `h3{font-size:16px;font-weight:600;margin:16px 0 8px;color:#222;break-after:avoid;}`+
+      `h4,h5,h6{font-size:15px;font-weight:600;margin:12px 0 6px;}`+
+
+      /* ===== 段落与文本 ===== */
+      `p{margin:6px 0;text-align:justify;text-indent:2em;}`+
+      `p:first-child{text-indent:0;}`+
+
+      /* ===== 表格（核心：还原Word表格外观）===== */
+      `table{border-collapse:collapse;width:100%;margin:10px 0;page-break-inside:auto;}`+
+      `tr{page-break-inside:avoid;}`+
+      `td,th{border:1px solid #444;padding:8px 10px;vertical-align:top;font-size:13.5px;line-height:1.7;text-align:left;}`+
+      `th{background:#f5f5f5;font-weight:600;}`+
+      `table p{margin:2px 0;text-indent:0;}`+
+
+      /* ===== 列表 ===== */
+      `ul,ol{margin:8px 0;padding-left:2em;}`+
+      `li{margin:3px 0;line-height:1.7;}`+
+
+      /* ===== 图片 ===== */
+      `img{max-width:100%;height:auto;display:block;margin:8px auto;}`+
+
+      /* ===== 预格式/代码 ===== */
+      `pre{white-space:pre-wrap;word-break:break-all;background:#fafafa;padding:10px;border-radius:4px;font-size:13px;}`+
+
+      /* ===== 分页控制 ===== */
+      `.page-break{page-break-before:always;}`+
+      `</style></head><body>${bodyHtml}</body></html>`;
+
+    const iframe=document.createElement('iframe');
+    iframe.setAttribute('style','position:fixed;right:0;bottom:0;width:0;height:0;border:0;');
+    document.body.appendChild(iframe);
+    const idoc=iframe.contentDocument;
+    idoc.open();idoc.write(fullHtml);idoc.close();
+
+    const doPrint=()=>{
+      try{
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setStatus("convertStatus","✅已弹出打印窗口，请选择「另存为 PDF」保存");
+      }catch(err){
+        setStatus("convertStatus","❌打印失败："+err.message,true);
+      }
+      setTimeout(()=>iframe.remove(),1500);
+      btn.disabled=false;
+    };
+    // 等待字体与内嵌图片加载稳定后再打印
+    if(iframe.contentWindow.document.readyState==='complete'){
+      setTimeout(doPrint,500);
+    }else{
+      iframe.onload=()=>setTimeout(doPrint,500);
+    }
+  }catch(e){
+    setStatus("convertStatus","❌失败："+e.message,true);
+    console.error(e);
+    btn.disabled=false;
+  }
+})
+
+// ========== PDF提取页面 ==========
+document.querySelector('#btnExtract').addEventListener('click',async ()=>{
+  const file=document.getElementById('pdfFile').files[0];
+  const rangeStr=document.getElementById('pageRange').value.trim();
+  const btn=document.querySelector('#btnExtract');
+  if(!file||!rangeStr){
+    setStatus("extractStatus","请选择PDF并填写页码范围",true);
+    return;
+  }
+  btn.disabled=true;
+  setStatus("extractStatus","正在提取页面…");
+  try{
+    const srcBuf=await file.arrayBuffer();
+    const srcPdf=await PDFDocument.load(srcBuf);
+    const dstPdf=await PDFDocument.create();
+    const maxPage=srcPdf.getPageCount();
+    const pages=parseRange(rangeStr,maxPage);
+    if(pages.length===0) throw new Error("有效页码为空");
+
+    for(const pIdx of pages){
+      const [copied]=await dstPdf.copyPages(srcPdf,[pIdx-1]);
+      dstPdf.addPage(copied);
+    }
+    const bytes=await dstPdf.save();
+    downloadBlob(new Blob([bytes],{type:"application/pdf"}),"extracted.pdf");
+    setStatus("extractStatus","✅提取完成，已触发下载");
+  }catch(e){
+    setStatus("extractStatus","❌失败："+e.message,true);
+    console.error(e);
+  }
+  btn.disabled=false;
+})
+
+// 解析页码范围 1‑3,5
+function parseRange(str,maxPage){
+  const out=[];
+  str.split(',').forEach(part=>{
+    part=part.trim();
+    if(part.includes('-')){
+      const [s,e]=part.split('-').map(Number);
+      for(let i=s;i<=e&&i<=maxPage;i++){
+        if(i>=1) out.push(i);
+      }
+    }else{
+      const n=Number(part);
+      if(n>=1&&n<=maxPage) out.push(n);
+    }
+  })
+  return [...new Set(out)];
+}
+
+function downloadBlob(blob,filename){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>

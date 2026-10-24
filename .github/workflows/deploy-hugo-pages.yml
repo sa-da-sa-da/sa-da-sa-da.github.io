@@ -1,12 +1,10 @@
 name: Deploy Hugo site to GitHub Pages (main)
 
 # 说明：
-#  - 这是主站流水线：推送到 main/master 即自动构建并发布 Hugo 站点。
-#  - VitePress 的旧流水线（deploy-gh-pages.yml）已改为仅手动触发，作为回退手段保留。
+#  - 推送到 main/master 即自动构建并发布 Hugo 站点（仓库根目录即 Hugo 工程根）。
 on:
   push:
     branches: [ main, master ]
-  # 仍支持手动触发
   workflow_dispatch:
 
 permissions:
@@ -21,9 +19,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: hugo
     env:
       HUGO_VERSION: 0.166.0
     steps:
@@ -39,22 +34,17 @@ jobs:
           tar -xzf hugo.tar.gz -C "$HOME/.local/bin" hugo
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
       - name: Build
         run: hugo --minify --cleanDestinationDir
+
+      - name: 部署前清理超限文件
+        run: node scripts/prepare-deploy.mjs
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: hugo/public
+          path: public
 
   deploy:
     needs: build
