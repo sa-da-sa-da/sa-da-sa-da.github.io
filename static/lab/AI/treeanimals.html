@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>班级宠物养成积分系统</title>
+<title>班级宠物养成积分系统 · 课堂音量守护与成长排行 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/treeanimals.html">
+<meta name="description" content="班级宠物养成与课堂音量守护：用宠物成长记录学生表现，实时检测教室分贝并触发安静提醒，含随机分组、成长排行榜与奖励系统。支持鼠标拖拽旋转与缩放，可直接投屏用于课堂演示，也适合学生自主探究与反复观察。">
 <style>
 * {
             margin: 0;
@@ -2878,7 +2880,7 @@ class QuietTreeGame {
                     <div style="font-size: 60px; margin-bottom: 10px;">${isNewPet ? '🥚' : '🎉'}</div>
                     <h2 style="color: #FFDE5E; font-size: 28px; margin-bottom: 10px;">${isNewPet ? '领养成功！' : '升级啦！'}</h2>
                     <div style="color: white; font-size: 20px; margin-bottom: 20px;">${student.name} 的伙伴</div>
-                    <img src="${petImg}" style="width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255,255,255,0.5)); animation: pulse 1s infinite;">
+                    <img src="${petImg}" alt="${student.name} 的宠物伙伴" style="width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255,255,255,0.5)); animation: pulse 1s infinite;">
                     <div style="color: #A7DB9A; font-size: 24px; font-weight: bold; margin-top: 15px;">Lv.${student.level} ${stageName}</div>
                 `;
                 

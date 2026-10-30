@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>浏览器本地抠图工具</title>
+  <title>本地 AI 抠图工具 · 一键去背景/换底色/不上传 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/koutu.html">
+<meta name="description" content="浏览器本地 AI 抠图工具：上传图片即可一键去除背景，提供快速与高清两种模型、透明或纯色底替换，全部运算在本地完成，图片不会上传到服务器。支持鼠标拖拽旋转与缩放，可直接投屏用于课堂演示，也适合学生自主探究与反复观察。">
   <style>
     * {box-sizing: border-box;font-family: system-ui, sans-serif;}
     body {max-width: 1100px;margin: 24px auto;padding: 0 16px;}
@@ -69,14 +71,14 @@
     <div class="log" id="logText">等待操作...</div>
     <div>
       <h4>原图预览</h4>
-      <img id="originImg" style="max-width:100%;max-height:320px;display:none;">
+      <img id="originImg" alt="上传的原图预览" style="max-width:100%;max-height:320px;display:none;">
     </div>
   </div>
 
   <div class="card">
     <h3>2.抠图结果（棋盘格=透明）</h3>
     <div class="checker">
-      <img id="previewImg">
+      <img id="previewImg" alt="抠图结果预览">
     </div>
     <div class="bg-opt">
       <h4>更换底色</h4>

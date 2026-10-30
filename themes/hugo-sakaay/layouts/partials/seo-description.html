@@ -2,9 +2,11 @@
   生成当前页面的 meta description（每页唯一、长度适中）
   优先级：
     1) frontmatter 的 description
-    2) 正文纯文本摘要（截断 150 字，含页面自己的标题开头 → 天然唯一）
-    3) 标题 + 章节 + 站点描述 兜底
-  摘要过短时再补上「章节 + 站点描述」语境，保证既够长又唯一。
+    2) 列表页（板块 / 分类总览 / 标签）：用该页下的条目名称拼串 —— 天然唯一且信息量足
+    3) 正文纯文本摘要（按「字符」截断 120 字；注意不能用 substr，它按字节截，
+       中文 150 字节只有 50 个汉字，会让大批页面被判「元描述太短」）
+    4) 标题兜底
+  收尾：文章页不足 90 字补「分类 / 标签」语境；仍不足 80 字补章节与站点描述。
 */ -}}
 {{- $siteDesc := site.Params.description -}}
 {{- $sec := "" -}}
@@ -15,26 +17,53 @@
 {{- with .Description -}}
   {{- $desc = . -}}
 {{- else -}}
-  {{- $plain := .Plain | default "" -}}
-  {{- $plain = replaceRE `\s+` " " $plain -}}
-  {{- $plain = trim $plain " " -}}
-  {{- if gt (countrunes $plain) 20 -}}
-    {{- if gt (countrunes $plain) 150 -}}
-      {{- $desc = printf "%s…" (substr $plain 0 150) -}}
+  {{- if in (slice "section" "taxonomy" "term") .Kind -}}
+    {{- $names := slice -}}
+    {{- if eq .Kind "taxonomy" -}}
+      {{- range first 8 .Pages -}}{{- $names = $names | append .Title -}}{{- end -}}
+      {{- if $names -}}
+        {{- $desc = printf "全站内容按%s整理，共 %d 个：%s。%s" .Title (len .Pages) (delimit $names "、") $siteDesc -}}
+      {{- end -}}
     {{- else -}}
-      {{- $desc = $plain -}}
+      {{- range first 5 .Pages -}}{{- $names = $names | append (printf "《%s》" .Title) -}}{{- end -}}
+      {{- if $names -}}
+        {{- $word := cond (eq .Kind "section") "板块" "标签下" -}}
+        {{- $desc = printf "「%s」%s共 %d 篇内容：%s。" .Title $word (len .Pages) (delimit $names "、") -}}
+      {{- end -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $plain := .Plain | default "" -}}
+    {{- $plain = replaceRE `\s+` " " $plain -}}
+    {{- $plain = trim $plain " " -}}
+    {{- if gt (countrunes $plain) 20 -}}
+      {{- $desc = truncate 120 $plain -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
 {{- if not $desc -}}
   {{- $desc = .Title -}}
 {{- end -}}
-{{- /* 过短且尚未包含站点描述时，补齐语境 */ -}}
-{{- if and (lt (countrunes $desc) 60) (not (strings.Contains $desc $siteDesc)) -}}
-  {{- if $sec -}}
-    {{- $desc = printf "%s · %s板块 · %s" $desc $sec $siteDesc -}}
+{{- /* 文章页偏短：补分类 / 标签（页面真实属性，不会造成跨页重复） */ -}}
+{{- if and (eq .Kind "page") (lt (countrunes $desc) 90) -}}
+  {{- $ctx := slice -}}
+  {{- with .Params.categories -}}{{- $ctx = $ctx | append (printf "分类：%s" (delimit . "、")) -}}{{- end -}}
+  {{- with .Params.tags -}}{{- $ctx = $ctx | append (printf "标签：%s" (delimit . "、")) -}}{{- end -}}
+  {{- if $ctx -}}{{- $desc = printf "%s（%s）" $desc (delimit $ctx "；") -}}{{- end -}}
+{{- end -}}
+{{- /* 仍然过短：补章节与站点语境（若已含站点描述则不重复拼接） */ -}}
+{{- if and (lt (countrunes $desc) 80) (not (strings.Contains $desc $siteDesc)) -}}
+  {{- if in (slice "section" "taxonomy" "term") .Kind -}}
+    {{- /* 列表页已有条目串，补站点描述把长度带够（末尾统一按 180 字上限收口） */ -}}
+    {{- $desc = printf "%s%s" $desc $siteDesc -}}
+  {{- else if $sec -}}
+    {{- $desc = printf "%s · %s板块 · %s，持续整理与更新。" $desc $sec $siteDesc -}}
   {{- else -}}
-    {{- $desc = printf "%s · %s · %s" $desc $siteDesc site.Title -}}
+    {{- $desc = printf "%s · %s，持续整理与更新。" $desc $siteDesc -}}
   {{- end -}}
 {{- end -}}
-{{- $desc | plainify | htmlUnescape | replaceRE `"` "'" | chomp -}}
+{{- /* 上限收口：列表页拼接多条标题时会超长。注意 truncate 会「保留完整单词」，
+       中文没有空格会被当成一个词而不裁，这里用 Go 正则按 rune 硬截断。 */ -}}
+{{- if gt (countrunes $desc) 180 -}}
+  {{- $desc = replaceRE `^([\s\S]{178})[\s\S]*$` "$1…" $desc -}}
+{{- end -}}
+{{- $desc | plainify | htmlUnescape | replaceRE `"` "”" | chomp -}}

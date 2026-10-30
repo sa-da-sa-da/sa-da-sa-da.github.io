@@ -1,0 +1,37 @@
+{{ printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | safeHTML }}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+{{- range .Pages }}
+{{- if .Permalink }}
+  <url>
+    <loc>{{ .Permalink }}</loc>
+    {{- if not .Lastmod.IsZero }}
+    <lastmod>{{ safeHTML (.Lastmod.Format "2006-01-02T15:04:05-07:00") }}</lastmod>
+    {{- end }}
+    {{- with .Sitemap.ChangeFreq }}
+    <changefreq>{{ . }}</changefreq>
+    {{- end }}
+    {{- if ge .Sitemap.Priority 0.0 }}
+    <priority>{{ .Sitemap.Priority }}</priority>
+    {{- end }}
+  </url>
+{{- end }}
+{{- end }}
+{{- /* static/ 下的手写页不在 Hugo 页面集合里，靠 data/static-pages.yaml 补进站点地图，
+       否则搜索引擎只能通过内链发现（tool 页收录很慢）。 */}}
+{{- range site.Data.static_pages }}
+{{- $file := .file }}
+{{- $priority := .priority | default 0.6 }}
+{{- $url := printf "/%s" $file }}
+{{- if strings.HasSuffix $file "index.html" }}
+  {{- $url = printf "/%s" (strings.TrimSuffix "index.html" $file) }}
+{{- end }}
+{{- with os.Stat (printf "static/%s" $file) }}
+  <url>
+    <loc>{{ $url | absURL }}</loc>
+    <lastmod>{{ .ModTime.Format "2006-01-02T15:04:05-07:00" }}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>{{ $priority }}</priority>
+  </url>
+{{- end }}
+{{- end }}
+</urlset>

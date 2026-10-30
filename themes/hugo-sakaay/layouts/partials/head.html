@@ -11,12 +11,23 @@
       {{- if ne .Title $siteName -}}{{- $sec = .Title -}}{{- end -}}
     {{- end -}}
   {{- end -}}
-  {{- if and $sec (ne $sec $title) (not (strings.Contains $title $sec)) (lt (len $title) 26) -}}
+  {{- if and $sec (ne $sec $title) (not (strings.Contains $title $sec)) (lt (countrunes $title) 26) -}}
     {{- $title = printf "%s | %s" $title $sec -}}
-  {{- else if in (slice "section" "taxonomy" "term") .Kind -}}
+  {{- else if eq .Kind "taxonomy" -}}
+    {{- $title = printf "%s总览 · 共 %d 个" $title (len .Pages) -}}
+  {{- else if eq .Kind "term" -}}
+    {{- /* 分类名 / 标签名常与同名板块页撞车，这里加限定词区分 */ -}}
+    {{- $word := cond (eq .Data.Singular "category") "分类" "标签" -}}
+    {{- $title = printf "%s（%s）· 共 %d 篇" $title $word (len .Pages) -}}
+  {{- else if eq .Kind "section" -}}
     {{- $title = printf "%s · 共 %d 篇内容" $title (len .Pages) -}}
   {{- end -}}
   {{- $title = printf "%s | %s" $title $siteName -}}
+  {{- /* 标题过短（不足 30 字符）时补站点定位语：Bing 会报「标题都太短了」 */ -}}
+  {{- $tagline := site.Params.tagline -}}
+  {{- if and $tagline (lt (countrunes $title) 30) -}}
+    {{- $title = printf "%s - %s" $title $tagline -}}
+  {{- end -}}
 {{- end -}}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

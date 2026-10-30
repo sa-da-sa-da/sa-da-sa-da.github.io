@@ -116,15 +116,17 @@ for (const f of htmls) {
   const canonTag = tags(head, 'link').find((t) => /rel\s*=\s*"?canonical"?/i.test(t));
   const canon = canonTag ? value(canonTag, 'href') : '';
   const lang = (html.match(/<html[^>]*lang\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i) || []);
-  const h1 = (html.match(/<h1[\s>]/gi) || []).length;
-
+  // <script>/<style> 里的字符串不算真实标签（laoban.html 导出 Word 的模板里含 <h1>，
+  // treeanimals.html 的宠物图 src 是 JS 模板字符串），与 seo-gate.mjs 保持一致
+  const body = html.replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ');
+  const h1 = (body.match(/<h1[\s>]/gi) || []).length;
   if (!(lang[1] ?? lang[2] ?? lang[3])) report.缺lang.push(url);
   if (h1 === 0) report.缺h1.push(url);
   if (h1 > 1) report.多h1.push([url, h1]);
-  if (title.length < 15) report.标题过短.push([url, title.length]);
-  if (title.length > 70) report.标题过长.push([url, title.length, title]);
-  if (!desc || desc.length < 50) report.描述过短.push([url, desc.length]);
-  if (desc.length > 170) report.描述过长.push([url, desc.length]);
+  if (title.length < 30) report.标题过短.push([url, title.length]);
+  if (title.length > 80) report.标题过长.push([url, title.length, title]);
+  if (!desc || desc.length < 80) report.描述过短.push([url, desc.length]);
+  if (desc.length > 200) report.描述过长.push([url, desc.length]);
   if (canon && canon.replace(/\/$/, '') !== ('https://www.sakaay.com' + url).replace(/\/$/, '')) {
     report.canonical不一致.push([url, canon]);
   }
@@ -141,7 +143,7 @@ for (const f of htmls) {
       report.站内死链.get(href).push(url);
     }
   }
-  for (const m of html.matchAll(/<img\b[^>]*>/gi)) {
+  for (const m of body.matchAll(/<img\b[^>]*>/gi)) {
     const src = value(m[0], 'src');
     if (!src || /^(https?:|data:)/i.test(src)) continue;
     if (!exists(src)) {
@@ -187,4 +189,24 @@ if (outFile) {
   console.log('written: ' + outFile);
 } else {
   console.log(text);
+}
+
+// 硬错误（死链、图片 404、canonical 不一致、sitemap 缺产物、h1/描述缺失、重复）→ 退出码 1
+// 长度类（标题/描述过短过长）只提示，不阻断发布
+const hardCount =
+  summary['sitemap 缺产物'] +
+  summary.站内死链 +
+  summary.图片404 +
+  summary.canonical不一致 +
+  summary['alias 缺 noindex'] +
+  summary.缺lang +
+  summary.缺h1 +
+  summary.多h1 +
+  summary.描述过短 +
+  summary.重复标题组 +
+  summary.重复描述组;
+
+if (hardCount) {
+  console.error(`[site-check] ✗ ${hardCount} 项硬错误需要处理`);
+  process.exit(1);
 }
