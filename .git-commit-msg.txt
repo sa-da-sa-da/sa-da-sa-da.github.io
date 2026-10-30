@@ -1,9 +1,0 @@
-feat(seo): 描述/标题长度达标，手写页进 sitemap，构建内置体检
-
-- 元描述按字符截断（原 substr 按字节，中文 150 字节只剩 50 字），349 页描述全部落在 80-200 字符且互不重复
-- 标题不足 30 字符补站点定位语；手写页重写 title；分类/标签页加「（分类）/（标签）」限定词，消除与同名板块页撞车
-- 36 个 static 手写页补齐 description / h1 / canonical / img alt，数据表抽到 scripts/seo-pages.json
-- 自定义 sitemap 合并手写页，站点地图收录 305 → 341 条
-- 分页页的描述与标题补「（第 N 页）」，消除与列表首页重复
-- 构建链内置 SEO：seo-static → hugo → seo-fix-paged → seo-gate → site-check → prepare-deploy，硬错误直接中断发布
-- site-check 排除 script/style 内的假 h1 与假 img，长度阈值对齐 Bing，并增加退出码
