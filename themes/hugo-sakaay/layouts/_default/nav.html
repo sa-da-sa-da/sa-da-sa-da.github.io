@@ -2,21 +2,48 @@
 <div class="full-page">
   <div class="nav-page-header">
     <h1>{{ .Title | default "网站导航" }}</h1>
-    <p class="search-page-desc">收录常用自建服务与外部资源，点击卡片直达。</p>
+    <p class="search-page-desc">常用站点与自建服务，数据与 nav.sakaay.com 保持同步，点击卡片直达。</p>
     <div class="search-bar">
       <input type="text" id="navSearch" placeholder="输入关键词过滤站点…" autocomplete="off">
     </div>
   </div>
 
-  {{ range hugo.Data.apps }}
-  <section class="nav-group">
-    <h2 class="nav-group-title">{{ .title }}</h2>
+  {{ $groups := hugo.Data.apps }}
+  {{ if gt (len $groups) 1 }}
+  <nav class="nav-jump" aria-label="分组跳转">
+    {{ range $i, $g := $groups }}
+    <a href="#nav-group-{{ add $i 1 }}">{{ $g.title }}</a>
+    {{ end }}
+  </nav>
+  {{ end }}
+
+  {{ range $i, $g := $groups }}
+  <section class="nav-group" id="nav-group-{{ add $i 1 }}">
+    <h2 class="nav-group-title">
+      {{ $g.title }}
+      <span class="nav-group-count">{{ len $g.items }}</span>
+    </h2>
     <div class="nav-grid">
-      {{ range .items }}
-      <a class="nav-card-item" href="{{ .url }}" target="_blank" rel="noopener"
-         data-name="{{ .name }}" data-desc="{{ .desc }}">
-        <span class="nav-card-icon">{{ with .icon }}{{ . }}{{ else }}🔗{{ end }}</span>
-        <span>
+      {{ range $g.items }}
+      {{- /* icon 三种形态：图片地址 / emoji / 文字（「上交」「上外」这类院校缩写） */ -}}
+      {{- $icon := .icon | default "" -}}
+      {{- $isImage := or (strings.Contains $icon "/") (strings.Contains $icon ".") -}}
+      {{- $isText := or (eq .iconType "text")
+            (gt (len (findRE `[\p{Han}]` $icon 1)) 0)
+            (gt (len (findRE `^[A-Za-z0-9][A-Za-z0-9 +&.'_-]{2,}$` $icon 1)) 0) -}}
+      <a class="nav-card-item" href="{{ .url | safeURL }}"
+         data-name="{{ .name }}" data-desc="{{ .desc }}"
+         {{- if hasPrefix (lower (printf "%v" .url)) "http" }} target="_blank" rel="noopener"{{ end }}>
+        <span class="nav-card-icon">
+          {{- if $isImage -}}
+          <img src="{{ $icon }}" alt="{{ .name }}" loading="lazy" decoding="async">
+          {{- else if $isText -}}
+          <span class="nav-icon-text">{{ $icon }}</span>
+          {{- else -}}
+          {{ $icon | default "🔗" }}
+          {{- end -}}
+        </span>
+        <span class="nav-card-body">
           <span class="nav-card-name">{{ .name }}</span>
           <span class="nav-card-desc">{{ .desc }}</span>
         </span>

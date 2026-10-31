@@ -1,7 +1,25 @@
 [
   {
-    "title": "自建服务",
+    "title": "常用",
     "items": [
+      {
+        "name": "主站",
+        "desc": "主站",
+        "icon": "🌐",
+        "url": "https://www.sakaay.com"
+      },
+      {
+        "name": "GitHub",
+        "desc": "我的代码仓库 · sa-da-sa-da",
+        "icon": "/assets/icon/Github.png",
+        "url": "https://github.com/sa-da-sa-da?tab=repositories"
+      },
+      {
+        "name": "Gitee",
+        "desc": "我的代码仓库 · sakay",
+        "icon": "/assets/icon/Gitee.png",
+        "url": "https://gitee.com/sakay/projects"
+      },
       {
         "name": "AI生图",
         "desc": "基于千问IMAGE模型的AI生图和图像编辑应用",
@@ -16,24 +34,452 @@
       },
       {
         "name": "AI知识库",
-        "desc": "谷歌翻译",
+        "desc": "基于千问大模型的个人 AI 知识库",
         "icon": "📚",
         "url": "https://xa.sakaay.com/welcome"
       },
       {
         "name": "Zfile网盘",
-        "desc": "基于千问大模型的AI知识库",
+        "desc": "在线文件管理与分享",
         "icon": "☁️",
         "url": "https://zf.sakaay.com"
+      },
+      {
+        "name": "考试时钟",
+        "desc": "考试倒计时大屏 · 考务数据",
+        "icon": "⏰",
+        "url": "https://time.sakaay.com/",
+        "flip": true
+      },
+      {
+        "name": "itab",
+        "desc": "自定义新标签页",
+        "icon": "☁️",
+        "url": "https://go.itab.link"
+      },
+      {
+        "name": "豆包",
+        "desc": "豆包",
+        "icon": "/assets/icon/logo-icon-white-bg.png",
+        "url": "https://www.doubao.com/"
+      },
+      {
+        "name": "千问",
+        "desc": "千问",
+        "icon": "❓",
+        "url": "https://www.qianwen.com/"
+      },
+      {
+        "name": "阿里云",
+        "desc": "阿里云",
+        "icon": "/assets/icon/aliyun.ico",
+        "url": "https://www.aliyun.com/"
+      },
+      {
+        "name": "哔哩哔哩",
+        "desc": "哔哩哔哩",
+        "icon": "/assets/icon/bilibili.png",
+        "url": "https://www.bilibili.com/"
+      },
+      {
+        "name": "抖音",
+        "desc": "抖音",
+        "icon": "/assets/icon/douyin.ico",
+        "url": "https://www.douyin.com/"
       }
     ]
   },
   {
-    "title": "工作事务",
+    "title": "AI 工具",
     "items": [
       {
-        "name": "郑州教育信息网",
-        "desc": "郑州教育信息网",
+        "name": "ChatGPT",
+        "desc": "OpenAI 对话",
+        "icon": "🤖",
+        "url": "https://chatgpt.com/"
+      },
+      {
+        "name": "OpenAI",
+        "desc": "OpenAI",
+        "icon": "🚀",
+        "url": "https://openai.com/"
+      },
+      {
+        "name": "从文本到ppt",
+        "desc": "www.chatba.com",
+        "icon": "chatba",
+        "iconType": "text",
+        "url": "https://www.chatba.com/"
+      },
+      {
+        "name": "DeepSeek",
+        "desc": "深度求索",
+        "icon": "/assets/icon/DeepSeek.png",
+        "url": "https://chat.deepseek.com"
+      }
+    ]
+  },
+  {
+    "title": "云服务与网盘",
+    "items": [
+      {
+        "name": "阿里云盘",
+        "desc": "阿里云网盘",
+        "icon": "📦",
+        "url": "https://www.alipan.com/"
+      },
+      {
+        "name": "谷歌云",
+        "desc": "谷歌云",
+        "icon": "☁️",
+        "url": "https://cloud.google.com/"
+      },
+      {
+        "name": "AirCode - Build inte",
+        "desc": "aircode.io",
+        "icon": "Air",
+        "iconType": "text",
+        "url": "https://aircode.io/"
+      },
+      {
+        "name": "函数计算",
+        "desc": "fcnext.console.aliyun.com/overview",
+        "icon": "阿里云",
+        "iconType": "text",
+        "url": "https://fcnext.console.aliyun.com/overview"
+      },
+      {
+        "name": "阿里云网站运维检测平台",
+        "desc": "boce.aliyun.com",
+        "icon": "拨测工具",
+        "iconType": "text",
+        "url": "https://boce.aliyun.com"
+      },
+      {
+        "name": "阿里云oss",
+        "desc": "oss.console.aliyun.com/bucket/oss-cn-beijing/timezk/object",
+        "icon": "https://files.itab.link/icons/aliyun.svg",
+        "url": "https://oss.console.aliyun.com/bucket/oss-cn-beijing/timezk/object"
+      },
+      {
+        "name": "查看分享 - 锐捷云盘",
+        "desc": "pan.ruijie.com.cn/share/0f46a897cbc29048943f6107e6",
+        "icon": "锐捷网盘",
+        "iconType": "text",
+        "url": "https://pan.ruijie.com.cn/share/0f46a897cbc29048943f6107e6?folder_id=275004077007"
+      },
+      {
+        "name": "Vercel",
+        "desc": "vercel.com/dashboard",
+        "icon": "https://files.itab.link/icons/2fa92d80ed838010.png",
+        "url": "https://vercel.com/dashboard"
+      },
+      {
+        "name": "Cloudflare",
+        "desc": "CDN与安全",
+        "icon": "/assets/icon/Cloudflare.png",
+        "url": "https://dash.cloudflare.com"
+      },
+      {
+        "name": "Edge One",
+        "desc": "腾讯 Pages 控制台",
+        "icon": "/assets/icon/EdgeOne.png",
+        "url": "https://console.cloud.tencent.com/edgeone"
+      },
+      {
+        "name": "Duck DNS",
+        "desc": "免费Duck域名",
+        "icon": "/assets/icon/DuckDNS.png",
+        "url": "https://www.duckdns.org/"
+      },
+      {
+        "name": "Dynv6",
+        "desc": "免费二级域名Dynv6",
+        "icon": "/assets/icon/Dynv6.png",
+        "url": "https://dynv6.com/"
+      },
+      {
+        "name": "us.kg",
+        "desc": "免费二级域名",
+        "icon": "/assets/icon/USKG.png",
+        "url": "https://domain.digitalplat.org/"
+      },
+      {
+        "name": "DNSHE",
+        "desc": "免费二级域名",
+        "icon": "/assets/icon/DNSHE.png",
+        "url": "https://my.dnshe.com/aff.php?aff=VY40B1C2B2"
+      },
+      {
+        "name": "IP",
+        "desc": "查询IP",
+        "icon": "/assets/icon/IP.png",
+        "url": "https://ip.skk.moe/"
+      },
+      {
+        "name": "猫饭",
+        "desc": "NAT类型在线检测",
+        "icon": "/assets/icon/mao.png",
+        "url": "https://mao.fan/mynat"
+      }
+    ]
+  },
+  {
+    "title": "效率办公",
+    "items": [
+      {
+        "name": "人人都是产品经理",
+        "desc": "www.woshipm.com",
+        "icon": "https://files.itab.link/icons/woshipm.svg",
+        "url": "http://www.woshipm.com/"
+      },
+      {
+        "name": "FlowUs",
+        "desc": "flowus.cn/product",
+        "icon": "https://files.itab.link/icons/flowus.svg",
+        "url": "https://flowus.cn/product?promotionChannel=GW_itab"
+      },
+      {
+        "name": "Notion",
+        "desc": "www.notion.so",
+        "icon": "https://files.itab.link/icons/notion.svg",
+        "url": "https://www.notion.so/"
+      },
+      {
+        "name": "uTools",
+        "desc": "u.tools",
+        "icon": "https://files.itab.link/icons/utools.svg",
+        "url": "https://u.tools/?from=itab"
+      },
+      {
+        "name": "滴答清单",
+        "desc": "www.dida365.com",
+        "icon": "https://files.itab.link/icons/dida365.svg",
+        "url": "https://www.dida365.com/"
+      },
+      {
+        "name": "BoardOS",
+        "desc": "boardos.online",
+        "icon": "https://files.itab.link/icons/boardos.svg",
+        "url": "https://boardos.online?from=itab.link"
+      },
+      {
+        "name": "石墨文档",
+        "desc": "shimo.im/desktop",
+        "icon": "https://files.itab.link/icons/shimo.svg",
+        "url": "https://shimo.im/desktop"
+      },
+      {
+        "name": "Teambition",
+        "desc": "www.teambition.com/projects",
+        "icon": "https://files.itab.link/icons/teambition.svg",
+        "url": "https://www.teambition.com/projects"
+      },
+      {
+        "name": "流程图思维导图",
+        "desc": "www.processon.com",
+        "icon": "https://files.itab.link/icons/processon.svg",
+        "url": "https://www.processon.com/?utm_source=itab"
+      },
+      {
+        "name": "知犀思维导图",
+        "desc": "www.zhixi.com",
+        "icon": "https://files.itab.link/icons/zhixi.svg",
+        "url": "https://www.zhixi.com/?utm_source=webaff&id=Zx7wbwin"
+      },
+      {
+        "name": "PMCAFF",
+        "desc": "www.pmcaff.com",
+        "icon": "https://files.itab.link/icons/pmcaff.svg",
+        "url": "http://www.pmcaff.com/"
+      },
+      {
+        "name": "芦笋在线录制",
+        "desc": "lusun.com",
+        "icon": "https://files.itab.link/icons/lusun.svg",
+        "url": "https://lusun.com/?utm_source=itab"
+      },
+      {
+        "name": "少数派",
+        "desc": "sspai.com",
+        "icon": "https://files.itab.link/icons/sspai.svg",
+        "url": "https://sspai.com/?utm_source=itab.ink"
+      },
+      {
+        "name": "扩展搜搜",
+        "desc": "www.crxsoso.com",
+        "icon": "https://files.itab.link/icons/crxsoso.com.svg",
+        "url": "https://www.crxsoso.com/?utm=itab"
+      },
+      {
+        "name": "iSlide PPT神器",
+        "desc": "www.islide.cc/ppt",
+        "icon": "https://files.itab.link/icons/islide.svg",
+        "url": "https://www.islide.cc/ppt?utm_source=itab&utm_medium=web&utm_campaign=1"
+      },
+      {
+        "name": "腾讯文档",
+        "desc": "腾讯文档",
+        "icon": "📄",
+        "url": "https://docs.qq.com/"
+      },
+      {
+        "name": "金山文档",
+        "desc": "www.kdocs.cn/latest",
+        "icon": "金山文档",
+        "iconType": "text",
+        "url": "https://www.kdocs.cn/latest"
+      },
+      {
+        "name": "飞书官网 - 在飞书，享高效",
+        "desc": "www.feishu.cn/hc/zh-CN/articles/852204656534-if-%E5%87%BD%E6%95%B0",
+        "icon": "https://files.itab.link/icons/feishu.svg",
+        "url": "https://www.feishu.cn/hc/zh-CN/articles/852204656534-if-%E5%87%BD%E6%95%B0"
+      },
+      {
+        "name": "语雀",
+        "desc": "www.yuque.com/zhangzhen-jkkhi/kmytgu/nshwp6",
+        "icon": "语雀",
+        "iconType": "text",
+        "url": "https://www.yuque.com/zhangzhen-jkkhi/kmytgu/nshwp6"
+      },
+      {
+        "name": "PPT之家",
+        "desc": "www.52ppt.com",
+        "icon": "https://files.itab.link/website/5e0420803c4366058063ca1a.png",
+        "url": "https://www.52ppt.com/"
+      },
+      {
+        "name": "BookStack",
+        "desc": "书架",
+        "icon": "🔧",
+        "url": "https://bookstack.cn"
+      }
+    ]
+  },
+  {
+    "title": "在线工具",
+    "items": [
+      {
+        "name": "谷歌翻译",
+        "desc": "谷歌翻译",
+        "icon": "🌐",
+        "url": "https://translate.google.com/"
+      },
+      {
+        "name": "即时工具",
+        "desc": "www.67tool.com",
+        "icon": "https://files.itab.link/icons/67tool.svg",
+        "url": "https://www.67tool.com/?from=itab.link"
+      },
+      {
+        "name": "果核剥壳",
+        "desc": "www.ghxi.com",
+        "icon": "https://files.itab.link/icons/ghxi.svg",
+        "url": "https://www.ghxi.com/"
+      },
+      {
+        "name": "百度",
+        "desc": "百度",
+        "icon": "🔍",
+        "url": "https://www.baidu.com/"
+      },
+      {
+        "name": "百度翻译",
+        "desc": "百度翻译",
+        "icon": "🌐",
+        "url": "https://fanyi.baidu.com"
+      },
+      {
+        "name": "Gmail",
+        "desc": "Gmail",
+        "icon": "📧",
+        "url": "https://mail.google.com/mail/u/0/#inbox"
+      },
+      {
+        "name": "海鸥",
+        "desc": "haioujiasu.cc",
+        "icon": "海鸥",
+        "iconType": "text",
+        "url": "https://haioujiasu.cc/#/dashboard"
+      },
+      {
+        "name": "资源库",
+        "desc": "www.xiaozhongjishu.com",
+        "icon": "https://files.itab.link/icons/xiaozhongjishu.com.png",
+        "url": "https://www.xiaozhongjishu.com/"
+      },
+      {
+        "name": "Google广告",
+        "desc": "www.google.com/adsense/new/u/0/pub-2897720906666216/onboarding",
+        "icon": "https://files.itab.link/website/google.svg",
+        "url": "https://www.google.com/adsense/new/u/0/pub-2897720906666216/onboarding"
+      },
+      {
+        "name": "xfltd",
+        "desc": "xfltd.cc",
+        "icon": "xfltd",
+        "iconType": "text",
+        "url": "https://xfltd.cc/#/dashboard"
+      },
+      {
+        "name": "微信网页版",
+        "desc": "wx.qq.com/index.php",
+        "icon": "https://files.itab.link/website/wechat.svg",
+        "url": "https://wx.qq.com/index.php"
+      },
+      {
+        "name": "TinyPNG",
+        "desc": "tinypng.com",
+        "icon": "https://files.itab.link/icons/60b9eba2ae5a9ba4024b3bfc.png",
+        "url": "https://tinypng.com/"
+      },
+      {
+        "name": "Google Analytics",
+        "desc": "analytics.google.com/analytics/web",
+        "icon": "https://files.itab.link/icons/60b9ebeaae5a9ba4024b3ce6.png",
+        "url": "https://analytics.google.com/analytics/web/?hl=zh-cn"
+      },
+      {
+        "name": "IP批量查询 - 站长工具",
+        "desc": "ip.tool.chinaz.com/ipbatch",
+        "icon": "IP批",
+        "iconType": "text",
+        "url": "https://ip.tool.chinaz.com/ipbatch"
+      },
+      {
+        "name": "Google",
+        "desc": "www.google.com",
+        "icon": "https://files.itab.link/website/google.svg",
+        "url": "https://www.google.com/"
+      },
+      {
+        "name": "站长工具",
+        "desc": "search.google.com/search-console",
+        "icon": "https://files.itab.link/icons/60b9ec5dae5a9ba4024b3e49.png",
+        "url": "https://search.google.com/search-console?hl=zh-CN&resource_id=sc-domain:sakaay.com"
+      },
+      {
+        "name": "365编辑器",
+        "desc": "www.365editor.com/toolsplatform",
+        "icon": "365",
+        "iconType": "text",
+        "url": "https://www.365editor.com/toolsplatform/?f=b&k=weixinshipintiqujihua=pc&bd_vid=10457010710042997831"
+      },
+      {
+        "name": "网易见外工作台",
+        "desc": "jianwai.youdao.com/index/1",
+        "icon": "https://files.itab.link/icons/60b9f2f1ae5a9ba4024b5387.png",
+        "url": "https://jianwai.youdao.com/index/1"
+      }
+    ]
+  },
+  {
+    "title": "教育事务",
+    "items": [
+      {
+        "name": "郑州教育信息",
+        "desc": "郑州教育信息",
         "icon": "🏫",
         "url": "https://www.zzedu.net.cn/"
       },
@@ -50,8 +496,8 @@
         "url": "https://basic.henan.smartedu.cn/"
       },
       {
-        "name": "国家智慧公共服务平台",
-        "desc": "国家智慧公共服务平台",
+        "name": "智慧中小学",
+        "desc": "智慧中小学",
         "icon": "🌐",
         "url": "https://www.smartedu.cn/"
       },
@@ -62,8 +508,8 @@
         "url": "https://www.hnzjgl.gov.cn/"
       },
       {
-        "name": "河南教师教育网",
-        "desc": "河南教师教育网",
+        "name": "河南教师教育",
+        "desc": "河南教师教育",
         "icon": "👩‍🏫",
         "url": "https://www.hateacher.cn/"
       },
@@ -81,45 +527,217 @@
       },
       {
         "name": "正确云",
-        "desc": "正确云",
+        "desc": "正确教育资源平台",
         "icon": "✅",
-        "url": "https://www.zhixue.com/login.html"
+        "url": "https://www.zqy.com/"
       },
       {
         "name": "全国教师管理系统",
-        "desc": "全国教师管理系统",
+        "desc": "教师信息维护与职称评审（河南入口）",
         "icon": "👨‍💼",
-        "url": "http://jiaoshi.jyt.henan.gov.cn/全国教师管理"
+        "url": "http://jiaoshi.jyt.henan.gov.cn/"
       },
       {
-        "name": "郑州市教育科研服务平台",
-        "desc": "郑州市教育科研服务平台",
+        "name": "郑州教科研",
+        "desc": "郑州教科研",
         "icon": "🔬",
         "url": "https://www.zzedu.net.cn/zzjyky/"
       },
       {
-        "name": "百度文库（内网）",
-        "desc": "百度文库（内网）",
+        "name": "百度文库",
+        "desc": "百度文库",
         "icon": "📄",
         "url": "https://wenku.baidu.com/"
       },
       {
-        "name": "知网（内网）",
-        "desc": "知网（内网）",
+        "name": "知网",
+        "desc": "知网",
         "icon": "📰",
         "url": "https://cfed.cnki.net/"
       },
       {
-        "name": "u空间(在家办公)",
-        "desc": "u空间(在家办公)",
+        "name": "u空间",
+        "desc": "u空间",
         "icon": "🏠",
         "url": "https://uws.ruijie.com.cn/#/Download"
+      },
+      {
+        "name": "郑州航天",
+        "desc": "syjy.zzedu.net.cn/htcxds/index.action",
+        "icon": "郑州航天",
+        "iconType": "text",
+        "url": "http://syjy.zzedu.net.cn/"
+      },
+      {
+        "name": "snnu",
+        "desc": "vpn.snnu.edu.cn",
+        "icon": "https://files.itab.link/icons/5a2a4981b8c00172a2e5b95e.png",
+        "url": "https://vpn.snnu.edu.cn"
+      },
+      {
+        "name": "华师培训",
+        "desc": "ecnu.edueva.org",
+        "icon": "华师培训",
+        "iconType": "text",
+        "url": "https://ecnu.edueva.org/"
       }
     ]
   },
   {
-    "title": "创客",
+    "title": "比赛竞赛",
     "items": [
+      {
+        "name": "劳技智能设计",
+        "desc": "劳技智能设计",
+        "icon": "🔧",
+        "url": "http://aild.org.cn/"
+      },
+      {
+        "name": "3D One",
+        "desc": "3D One",
+        "icon": "🎨",
+        "url": "https://www.i3done.com/"
+      },
+      {
+        "name": "世界机器人",
+        "desc": "世界机器人大会",
+        "icon": "🤖",
+        "url": "https://www.worldrobotconference.com/"
+      },
+      {
+        "name": "航天创新",
+        "desc": "全国青少年航天创新大赛",
+        "icon": "🚀",
+        "url": "https://nysic.declare.htgjjl.com/"
+      },
+      {
+        "name": "通信科技创新",
+        "desc": "通信科技创新",
+        "icon": "📡",
+        "url": "https://www.ict-edu.org.cn/"
+      },
+      {
+        "name": "信技创新",
+        "desc": "信技创新",
+        "icon": "💡",
+        "url": "http://s.noc.net.cn/"
+      },
+      {
+        "name": "信息素养",
+        "desc": "全国青少年信息素养大赛",
+        "icon": "🤖",
+        "url": "https://ceic.kpcb.org.cn/"
+      },
+      {
+        "name": "青科赛",
+        "desc": "青科赛",
+        "icon": "🔬",
+        "url": "https://qgqks.cngef.org.cn/"
+      },
+      {
+        "name": "NOI",
+        "desc": "NOI 全国青少年信息学奥林匹克竞赛",
+        "icon": "💻",
+        "url": "https://www.noi.cn/"
+      },
+      {
+        "name": "蓝桥杯",
+        "desc": "蓝桥杯",
+        "icon": "🏆",
+        "url": "https://dasai.lanqiao.cn/"
+      },
+      {
+        "name": "青科创赛",
+        "desc": "青科创赛",
+        "icon": "🌟",
+        "url": "https://cyscc.org/castic/#/home"
+      },
+      {
+        "name": "省机器人",
+        "desc": "省机器人",
+        "icon": "🤖",
+        "url": "https://www.harc.cc/"
+      },
+      {
+        "name": "洛谷",
+        "desc": "洛谷",
+        "icon": "📊",
+        "url": "https://www.luogu.com.cn/problem/list?keyword=noi%20online"
+      },
+      {
+        "name": "LeetCode",
+        "desc": "LeetCode",
+        "icon": "💻",
+        "url": "https://leetcode.com/"
+      },
+      {
+        "name": "全国青少年航天创新大赛",
+        "desc": "nysic.declare.htgjjl.com/index.aspx",
+        "icon": "全国青少年航",
+        "iconType": "text",
+        "url": "http://nysic.declare.htgjjl.com/index.aspx?"
+      },
+      {
+        "name": "激光建模软件",
+        "desc": "www.lasermaker.com.cn",
+        "icon": "激光建模软件",
+        "iconType": "text",
+        "url": "https://www.lasermaker.com.cn/"
+      },
+      {
+        "name": "VEX报名",
+        "desc": "www.robotevents.com",
+        "icon": "VEX报名",
+        "iconType": "text",
+        "url": "https://www.robotevents.com/"
+      },
+      {
+        "name": "VEX 论坛",
+        "desc": "www.vexforum.cn",
+        "icon": "VEX",
+        "iconType": "text",
+        "url": "https://www.vexforum.cn/"
+      },
+      {
+        "name": "发明大会",
+        "desc": "www.inventionconvention.cn",
+        "icon": "发明大会",
+        "iconType": "text",
+        "url": "http://www.inventionconvention.cn/"
+      },
+      {
+        "name": "创想3D",
+        "desc": "www.crealitycloud.cn",
+        "icon": "创想3D",
+        "iconType": "text",
+        "url": "https://www.crealitycloud.cn/"
+      },
+      {
+        "name": "SolidWorks自学",
+        "desc": "xifengboke.com",
+        "icon": "https://xifengboke.com/zb_users/upload/2019/11/201911141573664775139998.ico",
+        "url": "https://xifengboke.com/"
+      },
+      {
+        "name": "VEX销售",
+        "desc": "www.vexstore.cn",
+        "icon": "VEX",
+        "iconType": "text",
+        "url": "https://www.vexstore.cn/"
+      },
+      {
+        "name": "VEXcode V5",
+        "desc": "codev5.vex.com",
+        "icon": "https://codev5.vex.com/./static/img/icons/vexfavicon.ico",
+        "url": "https://codev5.vex.com"
+      },
+      {
+        "name": "Purdu",
+        "desc": "wiki.purduesigbots.com",
+        "icon": "Wel",
+        "iconType": "text",
+        "url": "https://wiki.purduesigbots.com/"
+      },
       {
         "name": "DFROBOT",
         "desc": "DFROBOT 创客社区",
@@ -133,171 +751,119 @@
         "url": "https://pros.cs.purdue.edu/"
       },
       {
-        "name": "世界机器人大赛",
-        "desc": "世界机器人大赛官网",
-        "icon": "🔧",
-        "url": "https://www.worldrobotconference.com/"
-      },
-      {
-        "name": "航天创新",
-        "desc": "青少年航天创新大赛",
-        "icon": "📚",
-        "url": "https://nysic.declare.htgjjl.com/index.aspx?"
+        "name": "makerworld",
+        "desc": "makerworld.com.cn/zh/3d-models",
+        "icon": "makerw",
+        "iconType": "text",
+        "url": "https://makerworld.com.cn/zh/3d-models"
       }
     ]
   },
   {
-    "title": "常用工具",
+    "title": "社区资讯",
     "items": [
       {
-        "name": "GitHub",
-        "desc": "代码托管",
-        "icon": "/assets/icon/Github.png",
-        "url": "https://github.com"
+        "name": "知乎",
+        "desc": "知乎",
+        "icon": "💭",
+        "url": "https://www.zhihu.com/"
       },
       {
-        "name": "Gitee",
-        "desc": "代码托管",
-        "icon": "/assets/icon/Gitee.png",
-        "url": "https://github.com"
+        "name": "36氪",
+        "desc": "36氪",
+        "icon": "💡",
+        "url": "https://36kr.com/"
       },
       {
-        "name": "Cloudflare",
-        "desc": "CDN与安全",
-        "icon": "/assets/icon/Cloudflare.png",
-        "url": "https://dash.cloudflare.com"
+        "name": "新浪微博",
+        "desc": "weibo.com",
+        "icon": "https://files.itab.link/icons/weibo.svg",
+        "url": "https://weibo.com/"
       },
       {
-        "name": "Edge One",
-        "desc": "腾讯 Pages",
-        "icon": "/assets/icon/EdgeOne.png",
-        "url": "https://cloud.tencent.com/login?s_url=https%3A%2F%2Fconsole.cloud.tencent.com%2Fedgeone"
+        "name": "脉脉",
+        "desc": "maimai.cn/feed_list",
+        "icon": "https://files.itab.link/icons/maimai.svg",
+        "url": "https://maimai.cn/feed_list"
       },
       {
-        "name": "Gmail",
-        "desc": "谷歌邮箱",
-        "icon": "/assets/icon/Gmail.png",
-        "url": "https://mail.google.com"
+        "name": "即刻网页版",
+        "desc": "web.okjike.com",
+        "icon": "https://files.itab.link/icons/okjike.svg",
+        "url": "https://web.okjike.com"
       },
-
       {
-        "name": "Translate",
-        "desc": "谷歌翻译",
-        "icon": "/assets/icon/Gmail翻译.png",
-        "url": "https://translate.google.com"
+        "name": "煎蛋",
+        "desc": "jandan.net",
+        "icon": "https://files.itab.link/icons/jandan.svg",
+        "url": "http://jandan.net/"
+      },
+      {
+        "name": "豆瓣",
+        "desc": "www.douban.com",
+        "icon": "https://files.itab.link/icons/douban.svg",
+        "url": "http://www.douban.com"
+      },
+      {
+        "name": "小鸡词典",
+        "desc": "jikipedia.com",
+        "icon": "https://files.itab.link/icons/60b9eb67ae5a9ba4024b3b40.png",
+        "url": "https://jikipedia.com/"
+      },
+      {
+        "name": "吾爱破解",
+        "desc": "吾爱破解",
+        "icon": "🔓",
+        "url": "https://www.52pojie.cn/"
+      },
+      {
+        "name": "谷歌新闻",
+        "desc": "news.google.com/topstories",
+        "icon": "https://files.itab.link/website/5f0c15897e261c1f0b4e6de4.png",
+        "url": "https://news.google.com/topstories?hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
       }
     ]
   },
   {
-    "title": "常用工具",
+    "title": "生活服务",
     "items": [
       {
-        "name": "CleverPDF",
-        "desc": "PDF 转换工具",
-        "icon": "https://www.cleverpdf.com/cn/favicon.ico",
-        "url": "https://www.cleverpdf.com/cn"
+        "name": "什么值得买",
+        "desc": "www.smzdm.com",
+        "icon": "https://files.itab.link/icons/smzdm.svg",
+        "url": "http://www.smzdm.com/?from=itab.link"
       },
       {
-        "name": "BookStack",
-        "desc": "书架",
-        "icon": "🔧",
-        "url": "https://bookstack.cn"
+        "name": "高德地图",
+        "desc": "高德地图",
+        "icon": "🗺️",
+        "url": "https://ditu.amap.com/"
       },
       {
-        "name": "DeepSeek",
-        "desc": "深度求索",
-        "icon": "/assets/icon/DeepSeek.png",
-        "url": "https://chat.deepseek.com"
-      }
-    ]
-  },
-
-  {
-    "title": "博客搭建",
-    "items": [
-      {
-        "name": "Asave",
-        "desc": "免费图床",
-        "icon": "/assets/icon/Asave.png",
-        "url": "https://asave.rutno.com/"
+        "name": "Binance",
+        "desc": "www.binance.com/zh-CN/trade/DOGE_USDT",
+        "icon": "https://files.itab.link/icons/www.binance.com_cn.svg",
+        "url": "https://www.binance.com/zh-CN/trade/DOGE_USDT?_from=markets&type=spot"
       },
       {
-        "name": "imgur",
-        "desc": "免费图床",
-        "icon": "/assets/icon/imgRL.png",
-        "url": "https://www.imgur.la/"
+        "name": "今日盈亏",
+        "desc": "www.binance.com/zh-CN/my/pnl/spot_account",
+        "icon": "https://files.itab.link/icons/www.binance.com_cn.svg",
+        "url": "https://www.binance.com/zh-CN/my/pnl/spot_account"
       },
       {
-        "name": "明月浩空",
-        "desc": "网站音乐播放器",
-        "icon": "/assets/icon/明月浩空播放器.png",
-        "url": "https://myhkw.cn/"
+        "name": "Arkham | Deanony",
+        "desc": "www.arkhamintelligence.com",
+        "icon": "Ark",
+        "iconType": "text",
+        "url": "https://www.arkhamintelligence.com/"
       },
       {
-        "name": "Iconify",
-        "desc": "免费的图标icon",
-        "icon": "/assets/icon/Iconify.png",
-        "url": "https://icon-sets.iconify.design/"
-      }
-    ]
-  },
-
-  {
-    "title": "域名 & 测速",
-    "items": [
-      {
-        "name": "Duck DNS",
-        "desc": "免费Duck域名",
-        "icon": "/assets/icon/DuckDNS.png",
-        "url": "https://www.duckdns.org/"
-      },
-      {
-        "name": "Dynv6",
-        "desc": "免费二级域名Dynv6",
-        "icon": "/assets/icon/Dynv6.png",
-        "url": "https://dynv6.com/"
-      },
-      {
-        "name": "Freemyip",
-        "desc": "免费二级域名",
-        "icon": "/assets/icon/Freemyip.png",
-        "url": "https://freemyip.com/"
-      },
-      {
-        "name": "us.kg",
-        "desc": "免费二级域名",
-        "icon": "/assets/icon/USKG.png",
-        "url": "https://domain.digitalplat.org/"
-      },
-      {
-        "name": "DNSHE",
-        "desc": "免费二级域名",
-        "icon": "/assets/icon/DNSHE.png",
-        "url": "https://my.dnshe.com/aff.php?aff=VY40B1C2B2"
-      },
-      {
-        "name": "ipw",
-        "desc": "IP查询",
-        "icon": "/assets/icon/ipw.png",
-        "url": "https://ipw.cn/"
-      },
-      {
-        "name": "IP",
-        "desc": "查询IP",
-        "icon": "/assets/icon/IP.png",
-        "url": "https://ip.skk.moe/"
-      },
-      {
-        "name": "cesu",
-        "desc": "测速网-免费在线ping检测",
-        "icon": "/assets/icon/cesu.png",
-        "url": "https://www.cesu.net/"
-      },
-      {
-        "name": "猫饭",
-        "desc": "NAT类型在线检测",
-        "icon": "/assets/icon/mao.png",
-        "url": "https://mao.fan/mynat"
+        "name": "基金交易登录 _ 天天基金网",
+        "desc": "login.1234567.com.cn",
+        "icon": "基金交",
+        "iconType": "text",
+        "url": "https://login.1234567.com.cn/?direct_url=https%3a%2f%2ftrade.1234567.com.cn%2fMyAssets%2fDefault"
       }
     ]
   }

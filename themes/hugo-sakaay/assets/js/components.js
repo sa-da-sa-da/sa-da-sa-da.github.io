@@ -1564,6 +1564,17 @@ function initNavFilter() {
       const text = ((card.dataset.name || '') + (card.dataset.desc || '')).toLowerCase();
       card.style.display = !q || text.indexOf(q) > -1 ? '' : 'none';
     });
+    // 组内没有可见卡片时整组隐藏，避免搜索后留下一排空标题
+    document.querySelectorAll('.nav-group').forEach(function (group) {
+      const visible = Array.prototype.some.call(
+        group.querySelectorAll('.nav-card-item'),
+        function (card) { return card.style.display !== 'none'; }
+      );
+      group.style.display = visible ? '' : 'none';
+    });
+    // 顶部跳转条在过滤状态下没有意义，一并收起
+    const jump = document.querySelector('.nav-jump');
+    if (jump) jump.style.display = q ? 'none' : '';
   });
 }
 
