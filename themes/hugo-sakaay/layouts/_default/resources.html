@@ -4,7 +4,12 @@
 <div class="full-page">
   <div class="nav-page-header">
     <h1>{{ .Title }}</h1>
-    <p class="search-page-desc">免费、可直接用的教学与创客资源 · 链接复核于 {{ $data.updated }}</p>
+    <p class="search-page-desc">
+      免费、可直接用的教学与创客资源 · 复核于 {{ $data.updated }}
+      {{- with site.Data.edu_link_status }}
+      · 链接巡检 {{ .checked }}：{{ .ok }} 正常 / {{ .warn }} 需留意 / {{ .fail }} 失效
+      {{- end }}
+    </p>
     <div class="search-bar">
       <input type="text" id="navSearch" placeholder="搜资源名 / 学段 / 用途 / 标签，例如：AI、高一、备课、micro:bit" autocomplete="off">
     </div>
@@ -60,7 +65,16 @@
          {{- if not $isLocal }} target="_blank" rel="noopener"{{ end }}>
         <span class="nav-card-icon">{{ .icon | default "🔗" }}</span>
         <span class="nav-card-body">
-          <span class="nav-card-name">{{ .name }}</span>
+          <span class="nav-card-name">
+            {{ .name }}
+            {{- $statusData := site.Data.edu_link_status -}}
+            {{- if $statusData -}}
+            {{- with index $statusData.items .url }}
+            <span class="resource-status resource-status--{{ .status }}"
+                  title="链接巡检 {{ $statusData.checked }} · HTTP {{ .code }}">{{ if eq .status "ok" }}✓{{ else if eq .status "warn" }}!{{ else }}✕{{ end }}</span>
+            {{- end }}
+            {{- end }}
+          </span>
           <span class="nav-card-desc">{{ .desc }}</span>
           <span class="resource-use">{{ .use }}</span>
           <span class="resource-meta">

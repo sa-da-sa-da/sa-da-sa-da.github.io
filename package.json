@@ -10,6 +10,7 @@
     "build:deploy": "node scripts/build-edu-kb.mjs && node scripts/seo-static.mjs && hugo --minify --cleanDestinationDir && node scripts/seo-fix-paged.mjs && node scripts/seo-gate.mjs && node scripts/site-check.mjs public && node scripts/prepare-deploy.mjs",
     "check:deploy": "node scripts/prepare-deploy.mjs",
     "edu:kb": "node scripts/build-edu-kb.mjs",
+    "edu:check": "node scripts/check-edu-links.mjs",
     "seo:static": "node scripts/seo-static.mjs",
     "seo:gate": "node scripts/seo-gate.mjs",
     "seo:check": "node scripts/site-check.mjs public",

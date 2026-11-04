@@ -8,6 +8,20 @@
     </div>
   </div>
 
+  {{ $edu := site.Data.edu_resources }}
+  {{ if $edu }}
+  {{- $n := 0 -}}
+  {{- range $edu.groups }}{{ $n = add $n (len .items) }}{{ end -}}
+  <a class="edu-entry" href="/teach/resources/">
+    <span class="edu-entry-icon">📚</span>
+    <span class="edu-entry-text">
+      <strong>教育教学资源库</strong>
+      <span>{{ $n }} 条免费资源 · {{ len $edu.paths }} 条学习路径 · {{ len $edu.prompts }} 张 WorkBuddy 提示词</span>
+    </span>
+    <span class="edu-entry-arrow">→</span>
+  </a>
+  {{ end }}
+
   {{ $groups := hugo.Data.apps }}
   {{ if gt (len $groups) 1 }}
   <nav class="nav-jump" aria-label="分组跳转">
