@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>教室大屏 · 计时器/随机点名/音量监测/加分 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/daping.html">
+<meta name="description" content="教室大屏课堂管理聚合工具：深色科技感界面适合投影，集成任务清单、课堂倒计时响铃、随机点名（不放回）、麦克风实时音量监测太吵提醒与红蓝小组加分区，数据自动保存在本机。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,'Microsoft YaHei','PingFang SC',sans-serif;color:#e8f4ff;height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none;
+  background:
+    radial-gradient(ellipse at 25% 15%, rgba(0,150,255,.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 75% 85%, rgba(0,210,210,.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(5,12,32,1) 0%, #020612 100%);
+  background-attachment:fixed;
+}
+/* 网格科技纹理背景 */
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,200,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,.05) 1px,transparent 1px);background-size:56px 56px;z-index:0;pointer-events:none}
+/* 到点响铃 / 太吵时全屏红色闪烁 */
+@keyframes flashRed{0%,100%{background:rgba(2,6,18,0)}50%{background:rgba(255,40,40,.22)}}
+body.alarm::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;animation:flashRed .55s ease-in-out infinite}
+
+/* ===== 顶部栏 ===== */
+.topbar{position:relative;z-index:2;height:58px;display:flex;align-items:center;gap:20px;padding:0 20px;background:rgba(8,18,42,.72);border-bottom:1px solid rgba(0,190,255,.22);backdrop-filter:blur(8px)}
+.logo{font-size:19px;font-weight:800;letter-spacing:2px;color:#7fdcff;text-shadow:0 0 14px rgba(0,200,255,.5);white-space:nowrap}
+.tabs{display:flex;gap:6px;background:rgba(255,255,255,.06);border-radius:24px;padding:4px}
+.tab{border:none;background:transparent;padding:8px 22px;border-radius:18px;font-size:15px;font-weight:600;color:rgba(210,235,255,.55);cursor:pointer;transition:all .25s;white-space:nowrap}
+.tab.active{background:rgba(0,190,255,.18);color:#7fdcff;box-shadow:0 0 12px rgba(0,190,255,.25)}
+.tip{margin-left:auto;font-size:12px;color:rgba(160,200,230,.4)}
+
+/* ===== 三栏布局 ===== */
+.layout{position:relative;z-index:2;flex:1;display:grid;grid-template-columns:300px 1fr 300px;gap:14px;padding:14px;min-height:0}
+@media(max-width:980px){.layout{grid-template-columns:1fr;overflow-y:auto}}
+.panel{background:rgba(10,24,50,.72);border:1px solid rgba(0,190,255,.22);border-radius:16px;padding:14px;display:flex;flex-direction:column;min-height:0;backdrop-filter:blur(6px);overflow:hidden}
+.panel-title{font-size:15px;font-weight:700;color:#7fdcff;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.spacer{flex:1}
+
+/* ===== 通用控件 ===== */
+.btn{border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;background:rgba(0,190,255,.14);color:#8fdcff;border:1px solid rgba(0,190,255,.35)}
+.btn:hover{background:rgba(0,190,255,.26);transform:translateY(-1px)}
+.btn.start{background:linear-gradient(135deg,#00c853,#00e676);color:#013;background:none;border:none;box-shadow:0 4px 16px rgba(0,200,83,.35)}
+.btn.warn{background:linear-gradient(135deg,#ff9100,#ffc400);color:#3a2200;border:none}
+.btn.reset{background:rgba(255,255,255,.08);color:rgba(220,240,255,.7);border:1px solid rgba(255,255,255,.18)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+input[type=text],textarea{background:rgba(0,20,45,.6);border:1px solid rgba(0,190,255,.3);border-radius:8px;color:#e8f4ff;outline:none;font-size:14px}
+input[type=text]:focus,textarea:focus{border-color:#00c8ff}
+select{background:rgba(0,20,45,.7);border:1px solid rgba(0,190,255,.35);color:#8fdcff;border-radius:8px;padding:3px 8px;font-size:13px;outline:none;cursor:pointer}
+
+/* ===== 左栏：任务清单 ===== */
+.add-row{display:flex;gap:6px;margin-bottom:10px}
+.add-row input{flex:1;padding:8px 10px}
+.add-row .btn{padding:8px 14px}
+.task-list{list-style:none;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:6px}
+.task{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);border:1px solid rgba(0,190,255,.14);border-radius:8px;padding:8px 10px;font-size:14px;transition:all .2s}
+.task input{width:16px;height:16px;accent-color:#00c8ff;cursor:pointer;flex-shrink:0}
+.task .txt{flex:1;word-break:break-all}
+.task.done{opacity:.38}
+.task.done .txt{text-decoration:line-through}
+.task .del{border:none;background:none;color:rgba(255,120,120,.75);font-size:16px;cursor:pointer;padding:0 4px}
+.task .del:hover{color:#ff6b6b}
+.task-meta{font-size:12px;color:rgba(160,200,230,.5);margin-top:8px}
+
+/* ===== 中央模块 ===== */
+.center{min-height:0}
+.mod{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:0}
+.mod[style*="display: none"],.mod[style*="display:none"]{display:none!important}
+
+/* 计时器 */
+.preset-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}
+.pre{border:1px solid rgba(0,190,255,.4);background:rgba(0,190,255,.1);color:#8fdcff;border-radius:18px;padding:6px 16px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.pre:hover{background:rgba(0,190,255,.24)}
+.pre.active{background:rgba(0,190,255,.3);color:#fff;box-shadow:0 0 10px rgba(0,190,255,.4)}
+.custom-box{display:flex;align-items:center;gap:6px;color:rgba(180,215,240,.7);font-size:13px}
+.custom-box input{width:52px;padding:5px;text-align:center;font-size:15px}
+.time-big{font-size:clamp(90px,16vw,220px);font-weight:900;line-height:1;color:#4fc3f7;font-variant-numeric:tabular-nums;text-shadow:0 0 60px rgba(79,195,247,.4),0 0 120px rgba(79,195,247,.2);transition:color .3s}
+.time-big.warning{color:#ffb300;text-shadow:0 0 60px rgba(255,179,0,.5)}
+.time-big.times-up{color:#ff1744;text-shadow:0 0 80px rgba(255,23,68,.7);animation:pulseNum .5s ease-in-out infinite}
+@keyframes pulseNum{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+.ctrl-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.cbtn{width:86px;height:86px;border-radius:50%;border:none;cursor:pointer;font-size:15px;font-weight:700;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .2s;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.cbtn .ic{font-size:24px;line-height:1}
+.cbtn:hover{transform:scale(1.06)}
+.cbtn:active{transform:scale(.95)}
+.cbtn.s-start{background:linear-gradient(135deg,#00c853,#69f0ae)}
+.cbtn.s-pause{background:linear-gradient(135deg,#ff9100,#ffc107)}
+.cbtn.s-reset{background:linear-gradient(135deg,#607d8b,#90a4ae)}
+
+/* 随机点名 */
+.import-box{width:min(560px,92%);background:rgba(0,20,45,.5);border:1px solid rgba(0,190,255,.2);border-radius:12px;padding:8px 12px;font-size:13px;color:rgba(180,215,240,.75)}
+.import-box summary{cursor:pointer;color:#7fdcff;font-weight:600}
+.import-box textarea{width:100%;min-height:90px;margin:8px 0;padding:8px;resize:vertical;font-size:13px;line-height:1.8}
+.roll-box{width:min(560px,92%);height:150px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:rgba(0,30,60,.55);border:1px solid rgba(0,190,255,.3);box-shadow:inset 0 0 30px rgba(0,120,255,.12);overflow:hidden}
+.roll-name{font-size:clamp(44px,7vw,72px);font-weight:900;letter-spacing:6px;color:#fff;text-shadow:0 0 24px rgba(0,200,255,.6);white-space:nowrap}
+.roll-meta{display:flex;align-items:center;gap:16px;font-size:14px;color:rgba(180,215,240,.8);flex-wrap:wrap;justify-content:center}
+.roll-meta label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.roll-meta input{width:16px;height:16px;accent-color:#00c8ff;cursor:pointer}
+.roll-meta b{color:#7fdcff;font-size:18px}
+
+/* 音量监测 */
+.vbar{width:min(620px,94%);height:44px;border-radius:22px;background:rgba(0,20,45,.7);border:1px solid rgba(0,190,255,.3);overflow:hidden;position:relative}
+.vfill{height:100%;width:0%;border-radius:22px;background:linear-gradient(90deg,#00e676 0%,#7fdcff 55%,#ffc400 80%,#ff5252 100%);transition:width .12s linear}
+.vfill.noisy{background:linear-gradient(90deg,#ff5252,#ff1744)!important;box-shadow:0 0 24px rgba(255,23,68,.7)}
+.thr-wrap{display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(180,215,240,.85)}
+.thr-wrap input[type=range]{width:150px;accent-color:#00c8ff;cursor:pointer}
+.vstatus{font-size:14px;color:rgba(160,200,230,.65);min-height:20px}
+.noisy-tip{font-size:clamp(30px,5vw,52px);font-weight:900;color:#ff5252;text-shadow:0 0 30px rgba(255,23,68,.7);display:none;animation:pulseNum .5s ease-in-out infinite}
+.noisy-tip.show{display:block}
+.voice-disable{font-size:15px;line-height:2;color:#ffb300;text-align:center;padding:20px}
+
+/* ===== 右栏：小组加分区 ===== */
+.step-row{display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(180,215,240,.8);margin-bottom:10px}
+.teams{flex:1;display:flex;flex-direction:column;gap:12px;justify-content:center;min-height:0}
+.team{flex:1;border-radius:14px;padding:12px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:4px;border:1px solid rgba(255,255,255,.14);min-height:0}
+.team.red{background:linear-gradient(160deg,rgba(255,60,60,.20),rgba(255,60,60,.06));border-color:rgba(255,90,90,.45)}
+.team.blue{background:linear-gradient(160deg,rgba(60,120,255,.20),rgba(60,120,255,.06));border-color:rgba(90,140,255,.45)}
+.team-name{font-size:16px;font-weight:700;letter-spacing:4px}
+.team.red .team-name{color:#ff8a8a}
+.team.blue .team-name{color:#8ab4ff}
+.team-score{font-size:clamp(56px,9vh,96px);font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.team.red .team-score{color:#ff5252;text-shadow:0 0 30px rgba(255,82,82,.55)}
+.team.blue .team-score{color:#5488ff;text-shadow:0 0 30px rgba(84,136,255,.55)}
+.team-btns{display:flex;gap:10px;justify-content:center}
+.team-btns button{width:52px;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.10);color:#fff;font-size:20px;font-weight:800;cursor:pointer;transition:all .15s}
+.team-btns button:hover{background:rgba(255,255,255,.22)}
+.team-btns button:active{transform:scale(.92)}
+.score-foot{margin-top:10px;display:flex;justify-content:center}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">教室大屏</h1>
+
+<!-- 顶部：标题 + 中央模块切换 -->
+<header class="topbar">
+  <div class="logo">🖥️ 教室大屏</div>
+  <nav class="tabs">
+    <button class="tab active" data-mod="timer" onclick="switchMod('timer',this)">⏱ 计时器</button>
+    <button class="tab" data-mod="roll" onclick="switchMod('roll',this)">🎲 随机点名</button>
+    <button class="tab" data-mod="voice" onclick="switchMod('voice',this)">🎙 音量监测</button>
+  </nav>
+  <span class="tip">左右两栏常驻 · 中央切换</span>
+</header>
+
+<div class="layout">
+  <!-- 左栏：任务清单（常驻） -->
+  <aside class="panel">
+    <div class="panel-title">✅ 任务清单</div>
+    <div class="add-row">
+      <input type="text" id="taskInput" placeholder="输入任务后回车…" maxlength="60" onkeydown="if(event.key==='Enter')addTask()">
+      <button class="btn" onclick="addTask()">＋</button>
+    </div>
+    <ul class="task-list" id="taskList"></ul>
+    <div class="task-meta" id="taskMeta">共 0 项 · 完成 0 项</div>
+  </aside>
+
+  <!-- 中央：三个可切换模块 -->
+  <section class="panel center">
+    <!-- 模块：计时器 -->
+    <div class="mod" id="mod-timer">
+      <div class="preset-row">
+        <button class="pre" data-sec="60" onclick="setPreset(60,this)">1分</button>
+        <button class="pre active" data-sec="180" onclick="setPreset(180,this)">3分</button>
+        <button class="pre" data-sec="300" onclick="setPreset(300,this)">5分</button>
+        <button class="pre" data-sec="600" onclick="setPreset(600,this)">10分</button>
+        <span class="custom-box">
+          <input type="text" id="tMin" placeholder="分" inputmode="numeric"> :
+          <input type="text" id="tSec" placeholder="秒" inputmode="numeric">
+          <button class="btn" onclick="setCustom()">设定</button>
+        </span>
+      </div>
+      <div class="time-big" id="timeBig">03:00</div>
+      <div class="ctrl-row">
+        <button class="cbtn s-start" id="tStartBtn" onclick="timerStart()"><span class="ic">▶</span>开始</button>
+        <button class="cbtn s-pause" onclick="timerPause()"><span class="ic">⏸</span>暂停</button>
+        <button class="cbtn s-reset" onclick="timerReset()"><span class="ic">↺</span>重置</button>
+      </div>
+    </div>
+
+    <!-- 模块：随机点名 -->
+    <div class="mod" id="mod-roll" style="display:none">
+      <details class="import-box">
+        <summary>📋 名单导入（点击展开）</summary>
+        <textarea id="rollNames" placeholder="每行一个姓名，也可用逗号、顿号、空格分隔"></textarea>
+        <button class="btn" onclick="applyRollNames()">✔ 应用名单</button>
+        <span style="margin-left:8px">应用后自动保存，更换名单会重置待抽池</span>
+      </details>
+      <div class="roll-box"><div class="roll-name" id="rollName">？</div></div>
+      <div class="ctrl-row">
+        <button class="cbtn s-start" id="rollBtn" onclick="rollStart()"><span class="ic">🎲</span>点名</button>
+        <button class="cbtn s-reset" onclick="rollResetPool()"><span class="ic">↺</span>重置池</button>
+      </div>
+      <div class="roll-meta">
+        <label><input type="checkbox" id="rollNoBack" onchange="rollToggleNoBack()"> 不放回（抽中即移出）</label>
+        <span>剩余待抽 <b id="rollCount">0</b> / <span id="rollTotal">0</span> 人</span>
+      </div>
+    </div>
+
+    <!-- 模块：音量监测 -->
+    <div class="mod" id="mod-voice">
+      <div class="voice-disable" id="voiceDisable" style="display:none"></div>
+      <div id="voiceBody" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%">
+        <div class="ctrl-row">
+          <button class="cbtn s-start" id="voiceBtn" onclick="voiceToggle()"><span class="ic">🎤</span>开启</button>
+          <span class="thr-wrap">太吵阈值
+            <input type="range" id="vThr" min="20" max="95" value="65" oninput="onThrChange()">
+            <b id="vThrVal">65%</b>
+          </span>
+        </div>
+        <div class="vbar"><div class="vfill" id="vFill"></div></div>
+        <div class="noisy-tip" id="noisyTip">🤫 太吵啦！安静一点～</div>
+        <div class="vstatus" id="vStatus">点击「开启」并允许麦克风权限后开始监测</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 右栏：小组加分区（常驻） -->
+  <aside class="panel">
+    <div class="panel-title">🏁 小组加分区</div>
+    <div class="step-row">加减步长
+      <select id="stepSel" onchange="onStepChange()">
+        <option value="1" selected>1 分</option>
+        <option value="2">2 分</option>
+        <option value="5">5 分</option>
+      </select>
+    </div>
+    <div class="teams">
+      <div class="team red">
+        <div class="team-name">红 队</div>
+        <div class="team-score" id="scoreRed">0</div>
+        <div class="team-btns">
+          <button onclick="addScore('red',-1)" title="减分">−</button>
+          <button onclick="addScore('red',1)" title="加分">＋</button>
+        </div>
+      </div>
+      <div class="team blue">
+        <div class="team-name">蓝 队</div>
+        <div class="team-score" id="scoreBlue">0</div>
+        <div class="team-btns">
+          <button onclick="addScore('blue',-1)" title="减分">−</button>
+          <button onclick="addScore('blue',1)" title="加分">＋</button>
+        </div>
+      </div>
+    </div>
+    <div class="score-foot"><button class="btn reset" onclick="resetScores()">↺ 重置比分</button></div>
+  </aside>
+</div>
+
+<script>
+// ===== 本地存储键名统一管理 =====
+var LS = {
+  tasks:'daping_tasks', scores:'daping_scores', step:'daping_step',
+  rollNames:'daping_rollNames', rollPool:'daping_rollPool', rollNoBack:'daping_rollNoBack',
+  thr:'daping_threshold'
+};
+
+// ===== 工具函数 =====
+// HTML 转义：名单/任务均为用户输入，注入前统一转义
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function lsGet(k,d){try{var v=localStorage.getItem(k);return v===null?d:JSON.parse(v);}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+// 解析名单：换行/逗号/顿号/分号/空格均可分隔，去空去重
+function parseNames(text){
+  var seen = {}, out = [];
+  String(text||'').split(/[\n\r,，、;；\t \u3000]+/).forEach(function(n){
+    n = n.trim();
+    if(n && !seen[n]){ seen[n] = 1; out.push(n); }
+  });
+  return out;
+}
+
+// ===== 中央模块切换 =====
+function switchMod(name, el){
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.toggle('active', t === el); });
+  ['timer','roll','voice'].forEach(function(m){
+    document.getElementById('mod-' + m).style.display = m === name ? 'flex' : 'none';
+  });
+}
+
+/* ==================================================
+   模块一：任务清单
+   ================================================== */
+var tasks = [];  // [{t:文本, done:是否完成}]
+function addTask(){
+  var input = document.getElementById('taskInput');
+  var txt = input.value.trim();
+  if(!txt) return;
+  tasks.push({t:txt, done:false});
+  input.value = '';
+  lsSet(LS.tasks, tasks);
+  renderTasks();
+}
+function toggleTask(i){
+  tasks[i].done = !tasks[i].done;
+  lsSet(LS.tasks, tasks);
+  renderTasks();
+}
+function delTask(i){
+  tasks.splice(i, 1);
+  lsSet(LS.tasks, tasks);
+  renderTasks();
+}
+function renderTasks(){
+  var ul = document.getElementById('taskList');
+  ul.innerHTML = tasks.map(function(task, i){
+    return '<li class="task' + (task.done ? ' done' : '') + '">' +
+      '<input type="checkbox" ' + (task.done ? 'checked' : '') + ' onchange="toggleTask(' + i + ')">' +
+      '<span class="txt">' + esc(task.t) + '</span>' +
+      '<button class="del" title="删除" onclick="delTask(' + i + ')">×</button></li>';
+  }).join('');
+  var done = tasks.filter(function(t){ return t.done; }).length;
+  document.getElementById('taskMeta').textContent = '共 ' + tasks.length + ' 项 · 完成 ' + done + ' 项';
+}
+
+/* ==================================================
+   模块二：计时器
+   ================================================== */
+var tTotal = 180, tRemain = 180, tRunning = false, tTimer = null, tTimesUp = false;
+var audioCtx = null;
+function getAudio(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+// 到点铃声：三段方波蜂鸣
+function playBell(){
+  try{
+    var ctx = getAudio(), now = ctx.currentTime;
+    for(var i = 0; i < 3; i++){
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'square';
+      var t = now + i * 0.5;
+      o.frequency.setValueAtTime(440, t);
+      o.frequency.setValueAtTime(660, t + 0.15);
+      g.gain.setValueAtTime(0.35, t);
+      g.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+      o.start(t); o.stop(t + 0.4);
+    }
+  }catch(e){}
+}
+function fmtTime(sec){
+  var m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+  return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+}
+function renderTime(){
+  var el = document.getElementById('timeBig');
+  el.textContent = fmtTime(Math.max(0, tRemain));
+  el.classList.toggle('warning', tRunning && tRemain > 0 && tRemain <= 10 && !tTimesUp);
+  el.classList.toggle('times-up', tTimesUp);
+}
+function setPreset(sec, el){
+  stopTick();
+  tTotal = sec; tRemain = sec; tTimesUp = false;
+  document.body.classList.remove('alarm');
+  document.querySelectorAll('.pre').forEach(function(b){ b.classList.toggle('active', b === el); });
+  document.getElementById('tMin').value = '';
+  document.getElementById('tSec').value = '';
+  renderTime();
+}
+function setCustom(){
+  var m = parseInt(document.getElementById('tMin').value) || 0;
+  var s = parseInt(document.getElementById('tSec').value) || 0;
+  if(m < 0) m = 0; if(s < 0) s = 0; if(s > 59) s = 59;
+  if(m === 0 && s === 0){ m = 0; s = 30; }  // 输入为空时默认 30 秒
+  stopTick();
+  tTotal = Math.min(m * 60 + s, 359940);
+  tRemain = tTotal; tTimesUp = false;
+  document.body.classList.remove('alarm');
+  document.querySelectorAll('.pre').forEach(function(b){ b.classList.remove('active'); });
+  renderTime();
+}
+function timerStart(){
+  try{ getAudio().resume(); }catch(e){}
+  if(tRunning || tRemain <= 0) return;
+  tTimesUp = false;
+  document.body.classList.remove('alarm');
+  tRunning = true;
+  tTimer = setInterval(function(){
+    tRemain--;
+    if(tRemain <= 0){
+      tRemain = 0;
+      stopTick();
+      tTimesUp = true;
+      playBell();
+      // 背景红色闪烁提醒，6 秒后自动停止闪烁
+      document.body.classList.add('alarm');
+      setTimeout(function(){ document.body.classList.remove('alarm'); }, 6000);
+    }
+    renderTime();
+  }, 1000);
+  renderTime();
+}
+function timerPause(){ stopTick(); renderTime(); }
+function timerReset(){
+  stopTick();
+  tRemain = tTotal; tTimesUp = false;
+  document.body.classList.remove('alarm');
+  renderTime();
+}
+function stopTick(){
+  if(tTimer){ clearInterval(tTimer); tTimer = null; }
+  tRunning = false;
+}
+
+/* ==================================================
+   模块三：随机点名
+   ================================================== */
+var rollList = [];        // 全量名单
+var rollPool = [];        // 待抽池（不放回模式会缩小）
+var rollNoBack = false;
+var rollRunning = false, rollRaf = 0;
+// 默认示例名单（首次使用时预填）
+var DEFAULT_ROLL = ['林一鸣','周芷晴','陈子昂','黄雨萱','高天佑','方文博','郑楚仪','罗志远','谢婉婷','胡凯文',
+  '冯启铭','曹雨欣','许博文','邓雅文','萧景睿','程亦凡','傅明浩','沈月华','卢俊杰','姜文轩',
+  '崔明玉','钟灵秀','谭志成','汪子涵'];
+
+function applyRollNames(){
+  rollList = parseNames(document.getElementById('rollNames').value);
+  if(rollList.length < 2){ alert('请至少填写 2 个有效姓名'); return; }
+  rollPool = rollList.slice();
+  lsSet(LS.rollNames, document.getElementById('rollNames').value);
+  lsSet(LS.rollPool, rollPool);
+  renderRollMeta();
+  document.getElementById('rollName').textContent = '？';
+}
+function rollToggleNoBack(){
+  rollNoBack = document.getElementById('rollNoBack').checked;
+  rollPool = rollList.slice();  // 切换模式时重置池
+  lsSet(LS.rollNoBack, rollNoBack);
+  lsSet(LS.rollPool, rollPool);
+  renderRollMeta();
+}
+function rollResetPool(){
+  rollPool = rollList.slice();
+  lsSet(LS.rollPool, rollPool);
+  renderRollMeta();
+  document.getElementById('rollName').textContent = '？';
+}
+function renderRollMeta(){
+  document.getElementById('rollCount').textContent = rollPool.length;
+  document.getElementById('rollTotal').textContent = rollList.length;
+  var btn = document.getElementById('rollBtn');
+  btn.disabled = rollPool.length === 0;
+}
+// 点名滚动动画：与抽签页同款「间隔平方递增」减速效果
+function rollStart(){
+  if(rollRunning || !rollPool.length) return;
+  try{ getAudio().resume(); }catch(e){}
+  var winner = rollPool[Math.floor(Math.random() * rollPool.length)];
+  rollRunning = true;
+  var btn = document.getElementById('rollBtn');
+  btn.disabled = true;
+  var el = document.getElementById('rollName');
+  var start = performance.now(), DUR = 2200, last = 0, lastTick = 0;
+
+  function frame(now){
+    var t = (now - start) / DUR;
+    if(t >= 1){
+      el.textContent = winner;
+      rollRunning = false;
+      renderRollMeta();
+      playBell();  // 复用铃声提示中签
+      if(rollNoBack){
+        var i = rollPool.indexOf(winner);
+        if(i >= 0) rollPool.splice(i, 1);
+        lsSet(LS.rollPool, rollPool);
+        renderRollMeta();
+      }
+      return;
+    }
+    var delay = 30 + t * t * 400;
+    if(now - last >= delay){
+      last = now;
+      el.textContent = (DUR - (now - start) < 480) ? winner : rollPool[Math.floor(Math.random() * rollPool.length)];
+      if(now - lastTick > 70){
+        lastTick = now;
+        // 滚动嘀嗒声（轻量，避免喧宾夺主）
+        try{
+          var ctx = getAudio(), o = ctx.createOscillator(), g = ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.type = 'square'; o.frequency.value = 700;
+          g.gain.setValueAtTime(0.04, ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 0.04);
+          o.start(); o.stop(ctx.currentTime + 0.04);
+        }catch(e){}
+      }
+    }
+    rollRaf = requestAnimationFrame(frame);
+  }
+  rollRaf = requestAnimationFrame(frame);
+}
+
+/* ==================================================
+   模块四：音量监测（getUserMedia + AnalyserNode）
+   ================================================== */
+var vStream = null, vCtx = null, vAnalyser = null, vBuf = null, vRaf = 0, vOn = false, vThr = 65;
+// 环境预检：非 HTTPS 或浏览器不支持麦克风时禁用模块
+function voicePreflight(){
+  var secure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  var supported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  if(!supported || !secure){
+    var box = document.getElementById('voiceDisable');
+    var body = document.getElementById('voiceBody');
+    box.style.display = '';
+    body.style.display = 'none';
+    box.innerHTML = supported
+      ? '⚠️ 音量监测需要 <b>HTTPS</b> 环境（或 localhost）才能使用麦克风。<br>请通过 https://www.sakaay.com 访问本页。'
+      : '⚠️ 当前浏览器不支持麦克风采集，无法使用音量监测。<br>建议使用最新版 Chrome / Edge 浏览器。';
+    return false;
+  }
+  return true;
+}
+function voiceToggle(){
+  if(vOn){ voiceStop(); return; }
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    vStream = stream;
+    vCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var src = vCtx.createMediaStreamSource(stream);
+    vAnalyser = vCtx.createAnalyser();
+    vAnalyser.fftSize = 512;
+    src.connect(vAnalyser);   // 只分析不回放，避免啸叫
+    vBuf = new Uint8Array(vAnalyser.fftSize);
+    vOn = true;
+    var btn = document.getElementById('voiceBtn');
+    btn.classList.remove('s-start'); btn.classList.add('s-pause');
+    btn.innerHTML = '<span class="ic">⏹</span>停止';
+    document.getElementById('vStatus').textContent = '监测中…';
+    vLoop();
+  }).catch(function(){
+    document.getElementById('vStatus').textContent = '无法获取麦克风：请检查浏览器权限设置后重试';
+  });
+}
+function voiceStop(){
+  vOn = false;
+  cancelAnimationFrame(vRaf);
+  if(vStream){ vStream.getTracks().forEach(function(t){ t.stop(); }); vStream = null; }
+  if(vCtx){ vCtx.close(); vCtx = null; }
+  document.getElementById('vFill').style.width = '0%';
+  document.getElementById('vFill').classList.remove('noisy');
+  document.getElementById('noisyTip').classList.remove('show');
+  document.getElementById('vStatus').textContent = '已停止监测';
+  var btn = document.getElementById('voiceBtn');
+  btn.classList.remove('s-pause'); btn.classList.add('s-start');
+  btn.innerHTML = '<span class="ic">🎤</span>开启';
+}
+// 每帧计算实时音量（时域 RMS），超阈值变红并提示
+function vLoop(){
+  if(!vOn) return;
+  vAnalyser.getByteTimeDomainData(vBuf);
+  var sum = 0;
+  for(var i = 0; i < vBuf.length; i++){
+    var d = (vBuf[i] - 128) / 128;
+    sum += d * d;
+  }
+  var rms = Math.sqrt(sum / vBuf.length);          // 0~1
+  var pct = Math.min(100, Math.round(rms * 320));  // 放大到百分比显示
+  var fill = document.getElementById('vFill');
+  var noisy = pct >= vThr;
+  fill.style.width = pct + '%';
+  fill.classList.toggle('noisy', noisy);
+  document.getElementById('noisyTip').classList.toggle('show', noisy);
+  document.getElementById('vStatus').textContent = '当前音量约 ' + pct + '%（阈值 ' + vThr + '%）';
+  vRaf = requestAnimationFrame(vLoop);
+}
+function onThrChange(){
+  vThr = parseInt(document.getElementById('vThr').value) || 65;
+  document.getElementById('vThrVal').textContent = vThr + '%';
+  lsSet(LS.thr, vThr);
+}
+
+/* ==================================================
+   模块五：小组加分区
+   ================================================== */
+var scores = {red:0, blue:0};
+function addScore(team, sign){
+  var step = parseInt(document.getElementById('stepSel').value) || 1;
+  scores[team] = Math.max(0, scores[team] + sign * step);  // 分数不为负
+  lsSet(LS.scores, scores);
+  document.getElementById(team === 'red' ? 'scoreRed' : 'scoreBlue').textContent = scores[team];
+}
+function resetScores(){
+  scores = {red:0, blue:0};
+  lsSet(LS.scores, scores);
+  document.getElementById('scoreRed').textContent = '0';
+  document.getElementById('scoreBlue').textContent = '0';
+}
+function onStepChange(){ lsSet(LS.step, parseInt(document.getElementById('stepSel').value) || 1); }
+
+/* ==================================================
+   初始化：恢复本地数据
+   ================================================== */
+function init(){
+  // 任务清单
+  tasks = lsGet(LS.tasks, []);
+  if(!Array.isArray(tasks)) tasks = [];
+  renderTasks();
+  // 小组加分区
+  var s = lsGet(LS.scores, null);
+  if(s && typeof s.red === 'number') scores = s;
+  document.getElementById('scoreRed').textContent = scores.red;
+  document.getElementById('scoreBlue').textContent = scores.blue;
+  var step = lsGet(LS.step, 1);
+  document.getElementById('stepSel').value = [1,2,5].indexOf(step) >= 0 ? step : 1;
+  // 随机点名
+  document.getElementById('rollNames').value = lsGet(LS.rollNames, DEFAULT_ROLL.join('\n'));
+  rollList = parseNames(document.getElementById('rollNames').value);
+  rollNoBack = !!lsGet(LS.rollNoBack, false);
+  document.getElementById('rollNoBack').checked = rollNoBack;
+  var savedPool = lsGet(LS.rollPool, null);
+  rollPool = (Array.isArray(savedPool) && savedPool.every(function(n){ return rollList.indexOf(n) >= 0; })) ? savedPool : rollList.slice();
+  renderRollMeta();
+  // 音量阈值 + 环境预检
+  vThr = lsGet(LS.thr, 65);
+  document.getElementById('vThr').value = vThr;
+  document.getElementById('vThrVal').textContent = vThr + '%';
+  voicePreflight();
+  // 计时器
+  renderTime();
+}
+init();
+</script>
+</body>
+</html>

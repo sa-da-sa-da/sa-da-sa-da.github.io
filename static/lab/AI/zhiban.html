@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>值日轮换表 · 班级值日自动排班表 A4 打印 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/zhiban.html">
+<meta name="description" content="班级值日轮换表生成器：粘贴学生名单与值日岗位，按周自动滚动排班，保证同周不重复，自动推算每周日期范围，点击单元格即可换人微调，A4 纵向直接打印。支持按周或按双周轮换、设置岗位人数与固定人员，可导出打印张贴，适合班级卫生、纪律检查与图书管理分工。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#20302c;--muted:#6b7a78;--line:#e3ebe8;
+  --brand:#2f7d6e;--brand-d:#26695b;--brand-l:#eaf4f1;
+  --bg:#f2f6f4;--card:#fff;
+}
+body{font-family:-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.app{display:flex;gap:18px;padding:18px;max-width:1400px;margin:0 auto;align-items:flex-start}
+
+/* ===== 左侧控制面板 ===== */
+.panel{width:340px;flex:0 0 340px;background:var(--card);border-radius:16px;padding:18px;box-shadow:0 6px 24px rgba(20,50,45,.08);position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto}
+.panel h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.panel .sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+.field{margin-bottom:14px}
+.field>label{display:block;font-size:13px;font-weight:600;color:#40514e;margin-bottom:7px}
+.field>label .count{font-weight:400;color:var(--muted);font-size:12px;margin-left:4px}
+.row2{display:flex;gap:10px}
+.row2 .field{flex:1;margin-bottom:14px}
+input[type=text],input[type=date],input[type=number],textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:14px;font-family:inherit;outline:none;color:var(--ink);background:#fbfdfc;transition:border-color .18s}
+input[type=text]:focus,input[type=date]:focus,input[type=number]:focus,textarea:focus{border-color:var(--brand)}
+textarea{min-height:170px;resize:vertical;line-height:1.75;font-size:14px}
+.pos-list{margin-bottom:8px}
+.pos-item{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.pos-idx{width:20px;flex:0 0 20px;height:20px;border-radius:50%;background:var(--brand-l);color:var(--brand-d);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.pos-input{padding:7px 9px;font-size:13px}
+.pos-del{width:24px;height:24px;flex:0 0 24px;border:1px solid #f0d3d3;background:#fff6f6;color:#c05a5a;border-radius:50%;cursor:pointer;font-size:14px;line-height:1;transition:all .18s}
+.pos-del:hover{background:#fde8e8;color:#a63d3d}
+.pos-add{display:flex;gap:6px}
+.pos-add input{flex:1}
+.btn{padding:11px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.btn.mini{padding:0 12px;font-size:13px;border-radius:9px;background:var(--brand-l);color:var(--brand-d);flex:0 0 auto}
+.btn.mini:hover{background:#dceee8}
+.actions{display:flex;gap:8px;margin-top:2px}
+.actions .btn{flex:1}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-d)}
+.btn.ghost{background:#f0f4f3;color:#5a6b68}
+.btn.ghost:hover{background:#e5ecea}
+.tip{margin-top:12px;font-size:12px;color:#4c615c;line-height:1.75;background:var(--brand-l);border-radius:9px;padding:9px 11px}
+.tip b{color:var(--brand-d)}
+
+/* ===== 右侧预览区 ===== */
+.preview{flex:1;min-width:0;overflow:auto;padding-bottom:40px}
+.papers{display:flex;flex-direction:column;align-items:center;gap:18px}
+.paper{width:210mm;min-height:297mm;background:#fff;padding:12mm 14mm 10mm;border-radius:2mm;box-shadow:0 10px 34px rgba(20,50,45,.16);display:flex;flex-direction:column}
+.sheet-head{border-bottom:.4mm solid #cfdbd7;padding-bottom:3mm;margin-bottom:4mm}
+.head-line{display:flex;justify-content:space-between;align-items:baseline;gap:6mm;font-size:3.2mm;color:#5c6b68}
+.head-line .cls{font-weight:700;color:#33433f}
+.head-line .meta{text-align:right;line-height:1.6}
+.sheet-head h1{font-size:7.2mm;letter-spacing:2mm;text-align:center;font-weight:700;margin-top:2.5mm;color:#1d2b27}
+.rt{width:100%;table-layout:fixed;border-collapse:collapse;font-size:3.2mm;flex:0 0 auto}
+.rt th,.rt td{border:.3mm solid #9aa9a5;text-align:center;padding:1.9mm .8mm;line-height:1.35}
+.rt thead th{background:#eef4f1;font-weight:700;color:#2b3d38}
+.rt tbody td{height:var(--rh,8mm)}
+.rt thead th:first-child,.rt tbody td:first-child{font-weight:700;background:#f7faf8}
+.rt .date-col{font-size:.92em;color:#4c5c58;letter-spacing:.1mm}
+.rt select{width:100%;border:none;background:transparent;font:inherit;color:inherit;text-align:center;padding:0;-webkit-appearance:none;appearance:none;cursor:pointer;outline:none}
+.rt select:hover{color:var(--brand-d)}
+.rt td.changed{background:#fffbf0}
+.rt td.changed select{color:#8a6a20;font-weight:700}
+.sheet-foot{margin-top:auto;padding-top:3mm;font-size:2.8mm;color:#6d7d79;line-height:1.7;border-top:.3mm dashed #d8e2de}
+.empty{width:210mm;min-height:120mm;background:#fff;border-radius:14px;box-shadow:0 6px 24px rgba(20,50,45,.1);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;text-align:center;line-height:2;padding:20mm}
+
+/* ===== 移动端 ===== */
+@media (max-width:900px){
+  .app{flex-direction:column;padding:12px;gap:12px}
+  .panel{width:100%;flex:none;position:static;max-height:none}
+  .preview{width:100%;overflow-x:auto}
+  .empty{width:100%}
+}
+
+/* ===== 打印 ===== */
+@media print{
+  @page{size:A4 portrait;margin:10mm}
+  html,body{background:#fff}
+  .app{display:block;padding:0;margin:0;max-width:none}
+  .panel,.empty{display:none!important}
+  .preview{display:block;padding:0;overflow:visible}
+  .papers{display:block;gap:0}
+  .paper{width:auto;min-height:274mm;padding:0;margin:0;box-shadow:none;border-radius:0}
+  .rt select{outline:none}
+  .rt tr,.rt td,.rt th{page-break-inside:avoid}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">值日轮换表 · 班级值日自动排班</h1>
+<div class="app">
+  <aside class="panel">
+    <h2>值日轮换表</h2>
+    <p class="sub">粘贴名单与岗位，按周自动滚动排班，直接 A4 打印。所有内容只存在你的浏览器里。</p>
+
+    <div class="field">
+      <label for="className">班级名称</label>
+      <input type="text" id="className" placeholder="如：三年级二班">
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label for="startDate">开学日期（可选）</label>
+        <input type="date" id="startDate">
+      </div>
+      <div class="field">
+        <label for="weeks">轮换周数</label>
+        <input type="number" id="weeks" min="10" max="22" step="1">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>值日岗位<span class="count" id="posCount"></span></label>
+      <div class="pos-list" id="posList"></div>
+      <div class="pos-add">
+        <input type="text" id="newPos" placeholder="新增岗位，如：擦窗" maxlength="10">
+        <button class="btn mini" id="btnAddPos" type="button">添加</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="students">学生名单<span class="count" id="stuCount"></span></label>
+      <textarea id="students" spellcheck="false" placeholder="每行一个姓名，也可用逗号分隔"></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btnGenerate" type="button">生成轮换表</button>
+      <button class="btn ghost" id="btnPrint" type="button">打印 A4</button>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" id="btnReset" type="button">恢复默认设置</button>
+    </div>
+
+    <div class="tip">
+      轮换规则：第 w 周第 p 个岗位 = 名单第 <b>(w × 岗位数 + p)</b> 位（循环计数），因此同一周内不会重复，相邻两周也尽量错开。<br>
+      表格里的姓名可直接点选替换，微调结果会一起保存。
+    </div>
+  </aside>
+
+  <main class="preview">
+    <div class="papers" id="papers"></div>
+  </main>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ===== 常量与默认数据 ===== */
+var KEY = 'zhiban.v1';
+var DEFAULT_NAMES = [
+  '王小明','李思远','张雨萱','刘浩然','陈嘉怡',
+  '杨子轩','赵梓涵','黄俊杰','周诗琪','吴宇航',
+  '徐欣怡','孙明轩','马若曦','朱天佑','胡佳琪',
+  '郭泽宇','何雨桐','高子豪','林可欣','罗一鸣',
+  '郑欣妍','谢文博','韩嘉琪','曹子涵','许浩然',
+  '邓雅雯','冯俊熙','曾诗涵','彭子墨','蒋雨欣'
+];
+var DEFAULT_POSITIONS = ['扫地','拖地','擦黑板','倒垃圾','关灯锁门'];
+
+/* ===== 工具函数 ===== */
+function $(id){ return document.getElementById(id); }
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+/* 日期 -> 3月2日 */
+function fmtDate(d){
+  return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+}
+
+/* 日期加减天数，返回新对象 */
+function addDays(d, n){
+  var x = new Date(d.getTime());
+  x.setDate(x.getDate() + n);
+  return x;
+}
+
+/* ===== 元素引用 ===== */
+var els = {
+  className: $('className'),
+  startDate: $('startDate'),
+  weeks: $('weeks'),
+  posList: $('posList'),
+  newPos: $('newPos'),
+  btnAddPos: $('btnAddPos'),
+  posCount: $('posCount'),
+  students: $('students'),
+  stuCount: $('stuCount'),
+  btnGenerate: $('btnGenerate'),
+  btnPrint: $('btnPrint'),
+  btnReset: $('btnReset'),
+  papers: $('papers')
+};
+
+/* ===== 本地状态 ===== */
+var state = loadState();
+
+function loadState(){
+  var base = {
+    className: '三年级二班',
+    startDate: '',
+    weeks: 16,
+    studentsText: DEFAULT_NAMES.join('\n'),
+    positions: DEFAULT_POSITIONS.slice(),
+    overrides: {}
+  };
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(raw){
+      var o = JSON.parse(raw);
+      if(typeof o.className === 'string') base.className = o.className;
+      if(typeof o.startDate === 'string') base.startDate = o.startDate;
+      if(typeof o.weeks === 'number') base.weeks = o.weeks;
+      if(typeof o.studentsText === 'string') base.studentsText = o.studentsText;
+      if(Array.isArray(o.positions)){
+        var pos = o.positions.filter(function(p){ return typeof p === 'string'; });
+        if(pos.length) base.positions = pos.slice(0, 12);
+      }
+      if(o.overrides && typeof o.overrides === 'object') base.overrides = o.overrides;
+    }
+  }catch(e){
+    /* 本地数据损坏或不可用：回退到默认值 */
+    console.warn('读取本地设置失败：', e);
+  }
+  return base;
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(KEY, JSON.stringify({
+      className: state.className,
+      startDate: state.startDate,
+      weeks: state.weeks,
+      studentsText: state.studentsText,
+      positions: state.positions,
+      overrides: state.overrides
+    }));
+  }catch(e){
+    /* 隐私模式下写入可能失败，忽略即可 */
+  }
+}
+
+/* 防抖，避免每次按键都重排整张表 */
+var debounceTimer = null;
+function debounce(fn, ms){
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(fn, ms || 320);
+}
+
+/* 名单解析：按换行、逗号、顿号、分号切分 */
+function parseNames(){
+  return state.studentsText
+    .split(/[\n\r,，、;；]+/)
+    .map(function(s){ return s.trim(); })
+    .filter(function(s){ return s.length > 0; });
+}
+
+/* 有效岗位（去掉空名称） */
+function parsePositions(){
+  return state.positions
+    .map(function(p){ return p.trim(); })
+    .filter(function(p){ return p.length > 0; });
+}
+
+/* ===== 岗位编辑区渲染 ===== */
+function renderPositions(){
+  els.posList.innerHTML = state.positions.map(function(p, i){
+    return '<div class="pos-item">' +
+      '<span class="pos-idx">' + (i + 1) + '</span>' +
+      '<input type="text" class="pos-input" data-index="' + i + '" value="' + esc(p) + '" maxlength="10" aria-label="岗位名称">' +
+      '<button type="button" class="pos-del" data-index="' + i + '" aria-label="删除岗位">×</button>' +
+    '</div>';
+  }).join('');
+  var n = parsePositions().length;
+  els.posCount.textContent = n + ' 个';
+}
+
+/* ===== 表格渲染 ===== */
+function renderTable(){
+  var names = parseNames();
+  var positions = parsePositions();
+  var weeks = state.weeks;
+  var showDate = !!state.startDate && !isNaN(new Date(state.startDate + 'T00:00:00').getTime());
+
+  /* 数据不足时给出提示 */
+  if(!names.length || !positions.length){
+    els.papers.innerHTML = '<div class="empty">' +
+      (!names.length ? '请先在左侧填写学生名单' : '请至少保留一个值日岗位') + '</div>';
+    return;
+  }
+  if(names.length < positions.length){
+    els.papers.innerHTML = '<div class="empty">学生人数（' + names.length + ' 人）少于岗位数（' +
+      positions.length + ' 个），<br>同一周会出现重复值日，请补充名单或减少岗位。</div>';
+    return;
+  }
+
+  /* 字号与行内边距根据周数、岗位数自适应 */
+  var fs = 3.5, pad = 2.0;
+  if(weeks > 14){ fs = 3.2; pad = 1.7; }
+  if(weeks > 18){ fs = 3.0; pad = 1.4; }
+  if(positions.length > 8){ fs -= 0.4; pad -= 0.3; }
+  if(positions.length > 11){ fs -= 0.3; pad -= 0.2; }
+
+  var start = showDate ? new Date(state.startDate + 'T00:00:00') : null;
+  var totalEnd = start ? addDays(start, weeks * 7 - 1) : null;
+
+  /* 列宽：周次 12%，日期 18%，其余平分 */
+  var restWidth = (100 - 12 - (showDate ? 18 : 0)) / positions.length;
+
+  /* 行高按周数均分纸面高度，行少时留出更大格子，行多时自动压缩 */
+  var rowH = Math.min(14, Math.max(7, Math.floor(195 / weeks)));
+
+  var cols = '<col style="width:12%">' +
+    (showDate ? '<col style="width:18%">' : '') +
+    positions.map(function(){ return '<col style="width:' + restWidth.toFixed(2) + '%">'; }).join('');
+
+  var headCells = '<th>周次</th>' + (showDate ? '<th>日期</th>' : '') +
+    positions.map(function(p){ return '<th>' + esc(p) + '</th>'; }).join('');
+
+  var body = '';
+  for(var w = 0; w < weeks; w++){
+    var row;
+    if(showDate){
+      var ws = addDays(start, w * 7);
+      var we = addDays(start, w * 7 + 6);
+      row = '<td class="date-col">' + fmtDate(ws) + '–' + fmtDate(we) + '</td>';
+    }else{
+      row = '';
+    }
+    for(var p = 0; p < positions.length; p++){
+      /* 自动轮换：第 w 周第 p 岗 = 名单[(w × 岗位数 + p) % 人数] */
+      var autoName = names[(w * positions.length + p) % names.length];
+      var key = w + '-' + p;
+      var override = state.overrides[key];
+      var value = (typeof override === 'string' && names.indexOf(override) > -1) ? override : autoName;
+      var changed = value !== autoName;
+      row += '<td class="' + (changed ? 'changed' : '') + '">' + buildSelect(names, value, w, p) + '</td>';
+    }
+    body += '<tr><td>' + '第 ' + (w + 1) + ' 周' + '</td>' + row + '</tr>';
+  }
+
+  var meta = '共 ' + weeks + ' 周 · ' + names.length + ' 人 · ' + positions.length + ' 个岗位';
+  if(showDate){
+    meta = fmtDate(start) + ' — ' + fmtDate(totalEnd) + '<br>' + meta;
+  }
+
+  var clsText = state.className.trim();
+
+  els.papers.innerHTML =
+    '<div class="paper">' +
+      '<div class="sheet-head">' +
+        '<div class="head-line">' +
+          '<span class="cls">' + (clsText ? esc(clsText) : '') + '</span>' +
+          '<span class="meta">' + meta + '</span>' +
+        '</div>' +
+        '<h1>值 日 轮 换 表</h1>' +
+      '</div>' +
+      '<table class="rt" style="font-size:' + fs.toFixed(2) + 'mm;--rh:' + rowH + 'mm">' +
+        '<colgroup>' + cols + '</colgroup>' +
+        '<thead><tr>' + headCells + '</tr></thead>' +
+        '<tbody>' + body + '</tbody>' +
+      '</table>' +
+      '<div class="sheet-foot">' +
+        '轮换规则：按名单顺序逐周滚动，同一周内不重复；点击表中姓名可单独换人微调。' +
+        '<br>制表日期：' + fmtDate(new Date()) + '　　班主任签字：____________' +
+      '</div>' +
+    '</div>';
+
+  /* 行内边距通过内联样式注入，保证打印与屏幕一致 */
+  var table = els.papers.querySelector('.rt');
+  if(table){ table.style.setProperty('--cellpad', pad.toFixed(2) + 'mm'); }
+  var cells = els.papers.querySelectorAll('.rt th, .rt td');
+  for(var i = 0; i < cells.length; i++){
+    cells[i].style.paddingTop = pad.toFixed(2) + 'mm';
+    cells[i].style.paddingBottom = pad.toFixed(2) + 'mm';
+  }
+}
+
+/* 生成单元格下拉框（下拉即微调） */
+function buildSelect(names, value, w, p){
+  var opts = names.map(function(n){
+    return '<option value="' + esc(n) + '"' + (n === value ? ' selected' : '') + '>' + esc(n) + '</option>';
+  }).join('');
+  return '<select class="pick" data-w="' + w + '" data-p="' + p + '">' + opts + '</select>';
+}
+
+/* ===== 交互事件 ===== */
+/* 班级名 */
+els.className.addEventListener('input', function(){
+  state.className = els.className.value;
+  saveState();
+  debounce(renderTable);
+});
+
+/* 开学日期 */
+els.startDate.addEventListener('change', function(){
+  state.startDate = els.startDate.value;
+  saveState();
+  renderTable();
+});
+
+/* 周数（10~22） */
+els.weeks.addEventListener('change', function(){
+  var v = parseInt(els.weeks.value, 10);
+  if(isNaN(v)) v = 16;
+  v = Math.max(10, Math.min(22, v));
+  els.weeks.value = v;
+  state.weeks = v;
+  saveState();
+  renderTable();
+});
+
+/* 名单 */
+els.students.addEventListener('input', function(){
+  state.studentsText = els.students.value;
+  els.stuCount.textContent = parseNames().length + ' 人';
+  saveState();
+  debounce(renderTable);
+});
+
+/* 岗位改名 */
+els.posList.addEventListener('input', function(e){
+  var t = e.target;
+  if(!t.classList || !t.classList.contains('pos-input')) return;
+  var idx = parseInt(t.dataset.index, 10);
+  if(isNaN(idx)) return;
+  state.positions[idx] = t.value;
+  els.posCount.textContent = parsePositions().length + ' 个';
+  saveState();
+  debounce(renderTable);
+});
+
+/* 岗位删除（至少保留一个） */
+els.posList.addEventListener('click', function(e){
+  var btn = e.target.closest ? e.target.closest('.pos-del') : null;
+  if(!btn) return;
+  var idx = parseInt(btn.dataset.index, 10);
+  if(isNaN(idx)) return;
+  if(state.positions.length <= 1){
+    alert('至少要保留一个值日岗位。');
+    return;
+  }
+  state.positions.splice(idx, 1);
+  state.overrides = {}; /* 岗位顺序变化后，旧的手动调整已失效 */
+  saveState();
+  renderPositions();
+  renderTable();
+});
+
+/* 新增岗位 */
+els.btnAddPos.addEventListener('click', addPosition);
+els.newPos.addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){ e.preventDefault(); addPosition(); }
+});
+
+function addPosition(){
+  var v = els.newPos.value.trim();
+  if(!v) return;
+  if(state.positions.length >= 12){
+    alert('岗位最多 12 个，再精简一下吧。');
+    return;
+  }
+  state.positions.push(v);
+  els.newPos.value = '';
+  state.overrides = {};
+  saveState();
+  renderPositions();
+  renderTable();
+}
+
+/* 单元格换人 */
+els.papers.addEventListener('change', function(e){
+  var sel = e.target;
+  if(!sel.classList || !sel.classList.contains('pick')) return;
+  var w = parseInt(sel.dataset.w, 10);
+  var p = parseInt(sel.dataset.p, 10);
+  if(isNaN(w) || isNaN(p)) return;
+  state.overrides[w + '-' + p] = sel.value;
+  saveState();
+  /* 仅更新该单元格样式，不整表重排，保持操作手感 */
+  var td = sel.parentNode;
+  if(td) td.classList.add('changed');
+});
+
+/* 生成（清空手动微调，回到标准轮换） */
+els.btnGenerate.addEventListener('click', function(){
+  state.overrides = {};
+  saveState();
+  renderTable();
+});
+
+/* 打印 */
+els.btnPrint.addEventListener('click', function(){
+  window.print();
+});
+
+/* 恢复默认 */
+els.btnReset.addEventListener('click', function(){
+  if(!confirm('确定恢复默认名单、岗位与周数？当前手动调整会丢失。')) return;
+  state = {
+    className: '三年级二班',
+    startDate: '',
+    weeks: 16,
+    studentsText: DEFAULT_NAMES.join('\n'),
+    positions: DEFAULT_POSITIONS.slice(),
+    overrides: {}
+  };
+  saveState();
+  syncInputs();
+  renderPositions();
+  renderTable();
+});
+
+/* ===== 初始化 ===== */
+function syncInputs(){
+  els.className.value = state.className;
+  els.startDate.value = state.startDate;
+  els.weeks.value = state.weeks;
+  els.students.value = state.studentsText;
+  els.stuCount.textContent = parseNames().length + ' 人';
+}
+
+syncInputs();
+renderPositions();
+renderTable();
+
+})();
+</script>
+</body>
+</html>

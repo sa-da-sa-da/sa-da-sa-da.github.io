@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>奖状喜报生成器 · 荣誉证书批量打印/期末颁奖 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/jiangzhuang.html">
+<meta name="description" content="奖状 / 喜报 / 表扬信生成器：内置烫金红、宝蓝、墨绿三套配色与 CSS 花边版式，支持自定义奖项与 {姓名} 变量正文模板，粘贴名单即可批量逐张预览，一键按 A4 横向每张一页打印。支持奖状类型切换与批量导出 PDF，适合期末表彰、竞赛颁奖与班级活动。">
+<style>
+/* ===== 基础样式 ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --g-deep:#004737;
+  --card:#fff;
+  --radius:12px;
+  --shadow:0 2px 10px rgba(0,60,30,.08);
+  --line:#e4ede4;
+}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#f3ecd9 0%,#eef4e6 55%,#e3eee6 100%);min-height:100vh;color:#333}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+h1{font-size:22px;color:var(--g-deep)}
+
+/* ===== 卡片 ===== */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.card h2{font-size:15px;color:var(--g-deep);margin-bottom:12px}
+.card h2 .mini-tip{font-size:12px;font-weight:400;color:#999}
+.layout{display:grid;grid-template-columns:400px 1fr;gap:16px;align-items:start}
+
+/* ===== 表单控件 ===== */
+.field{margin-bottom:12px}
+.field-label{font-size:13px;color:#666;margin-bottom:6px;display:block}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg label{cursor:pointer}
+.seg input{display:none}
+.seg .pill{display:inline-block;padding:6px 14px;border-radius:18px;background:#f1f5f1;border:1px solid var(--line);font-size:13px;color:#555;transition:all .2s;user-select:none}
+.seg input:checked+.pill{background:var(--g-deep);border-color:var(--g-deep);color:#fff}
+/* 配色圆点样式 */
+.pill .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.txt{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;outline:none;font-family:inherit}
+.txt:focus{border-color:#2E7D32}
+textarea.txt{min-height:96px;line-height:1.7;resize:vertical}
+select.txt{cursor:pointer}
+.inline-row{display:flex;gap:8px}
+.inline-row .txt{flex:1}
+
+/* ===== 按钮 ===== */
+.btn{border:none;border-radius:8px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--g-deep);color:#fff}
+.btn-primary:hover{background:#016143}
+.btn-ghost{background:#eef5ee;color:var(--g-deep)}
+.btn-ghost:hover{background:#dff0dc}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ===== 预览区 ===== */
+.preview-nav{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:14px}
+.preview-nav .idx{font-size:14px;color:var(--g-deep);font-weight:600;min-width:88px;text-align:center}
+.stage{display:flex;justify-content:center}
+
+/* ===== 奖状纸面 ===== */
+/* 主题变量：三套配色 */
+.theme-red{--frame:#B8352C;--inner:#D8B04C;--title:#8C1F18;--paper:#FDF8EE;--hl:#B8352C}
+.theme-blue{--frame:#1E4B9E;--inner:#9DBBDD;--title:#173F85;--paper:#F7FAFF;--hl:#1E4B9E}
+.theme-green{--frame:#1F5C46;--inner:#B9CFA6;--title:#14483A;--paper:#F7FBF4;--hl:#1F5C46}
+
+.paper{width:100%;max-width:640px;aspect-ratio:297/210;background:var(--paper);border:8px solid var(--frame);padding:8px;box-shadow:0 6px 24px rgba(0,0,0,.14);position:relative}
+.paper-inner{width:100%;height:100%;border:2px solid var(--inner);position:relative;padding:3.5% 6%;display:flex;flex-direction:column;align-items:center;overflow:hidden}
+/* 四角装饰（SVG 角花，随主题变色） */
+.corner{position:absolute;width:52px;height:52px;color:var(--inner)}
+.corner.tl{top:5px;left:5px}
+.corner.tr{top:5px;right:5px;transform:rotate(90deg)}
+.corner.br{bottom:5px;right:5px;transform:rotate(180deg)}
+.corner.bl{bottom:5px;left:5px;transform:rotate(270deg)}
+
+.p-title{font-family:'STKaiti','KaiTi','FZKai-Z03S','SimSun',serif;font-size:clamp(28px,6vw,44px);font-weight:700;letter-spacing:.25em;color:var(--title);margin:1.5% 0 2%;text-indent:.25em}
+.p-body{font-family:'STKaiti','KaiTi','SimSun',serif;font-size:clamp(14px,2.6vw,20px);line-height:2.05;color:#3a3a3a;width:100%;flex:1;text-indent:2em;overflow:hidden}
+.p-body .hl{color:var(--hl);font-weight:700}
+.p-sign{align-self:flex-end;text-align:right;font-family:'STKaiti','KaiTi','SimSun',serif;font-size:clamp(12px,2.2vw,17px);line-height:1.9;color:#3a3a3a;padding-bottom:2.5%}
+.p-empty{color:#aaa;font-size:14px;text-align:center;padding:60px 0}
+
+/* ===== 打印区（屏幕隐藏，打印显示全部卡片） ===== */
+#printArea{display:none}
+
+/* ===== 打印样式：A4 横向，每张一页 ===== */
+@page{size:A4 landscape;margin:10mm}
+@media print{
+  body{background:#fff}
+  .no-print{display:none!important}
+  .wrap{max-width:none;padding:0}
+  #printArea{display:block!important}
+  #printArea .paper{max-width:none;width:100%;height:185mm;aspect-ratio:auto;box-shadow:none;border-width:10px;page-break-after:always;break-after:page}
+  #printArea .paper:last-child{page-break-after:auto;break-after:auto}
+}
+
+/* 提示气泡与移动端 */
+#toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(20px);background:rgba(0,71,55,.92);color:#fff;padding:9px 22px;border-radius:22px;font-size:14px;opacity:0;pointer-events:none;transition:all .3s;z-index:99}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-width:860px){ .layout{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="no-print"><h1>🏅 奖状 / 喜报生成器</h1></header>
+
+  <div class="layout">
+    <!-- 左栏：配置 -->
+    <div class="card no-print">
+      <h2>⚙️ 内容配置</h2>
+
+      <div class="field">
+        <label class="field-label">模板类型</label>
+        <div class="seg" id="typeSeg">
+          <label><input type="radio" name="tplType" value="jz" checked><span class="pill">奖状</span></label>
+          <label><input type="radio" name="tplType" value="xb"><span class="pill">喜报</span></label>
+          <label><input type="radio" name="tplType" value="byx"><span class="pill">表扬信</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">配色</label>
+        <div class="seg" id="themeSeg">
+          <label><input type="radio" name="theme" value="theme-red" checked><span class="pill"><span class="dot" style="background:#B8352C"></span>烫金红</span></label>
+          <label><input type="radio" name="theme" value="theme-blue"><span class="pill"><span class="dot" style="background:#1E4B9E"></span>宝蓝</span></label>
+          <label><input type="radio" name="theme" value="theme-green"><span class="pill"><span class="dot" style="background:#1F5C46"></span>墨绿</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">纸张标题</label>
+        <input type="text" id="titleInput" class="txt" placeholder="如：奖 状">
+      </div>
+
+      <div class="field">
+        <label class="field-label">奖项名称</label>
+        <select id="awardSelect" class="txt">
+          <option>三好学生</option>
+          <option>进步之星</option>
+          <option>作业之星</option>
+          <option>阅读之星</option>
+          <option>文明之星</option>
+          <option>劳动之星</option>
+          <option>体育之星</option>
+          <option>优秀班干部</option>
+          <option value="custom">✏️ 自定义…</option>
+        </select>
+        <div class="inline-row" id="customAwardRow" style="display:none;margin-top:6px">
+          <input type="text" id="customAward" class="txt" placeholder="输入自定义奖项名称">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">正文模板（支持 {姓名} {奖项} 变量）</label>
+        <textarea id="tplInput" class="txt"></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label">落款</label>
+        <div class="inline-row" style="margin-bottom:6px">
+          <input type="text" id="schoolInput" class="txt" placeholder="学校名称">
+          <input type="text" id="clsInput" class="txt" placeholder="班级">
+        </div>
+        <input type="date" id="dateInput" class="txt">
+      </div>
+
+      <div class="field">
+        <label class="field-label">批量名单（每行一人：姓名 或 姓名,奖项）</label>
+        <textarea id="rosterArea" class="txt" style="min-height:80px" placeholder="张三&#10;李四,进步之星&#10;王五,作业之星"></textarea>
+        <div class="btn-row">
+          <button class="btn btn-ghost btn-sm" id="btnDemo">📋 填入示例名单</button>
+          <button class="btn btn-ghost btn-sm" id="btnClearRoster">🗑️ 清空名单</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右栏：预览 -->
+    <div class="no-print" style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <h2>👀 逐张预览 <span class="mini-tip">打印时每张自动独占一页 A4 横向</span></h2>
+        <div class="preview-nav">
+          <button class="btn btn-ghost btn-sm" id="btnPrev">← 上一张</button>
+          <span class="idx" id="pageIdx">第 0 / 0 张</span>
+          <button class="btn btn-ghost btn-sm" id="btnNext">下一张 →</button>
+          <button class="btn btn-primary btn-sm" id="btnPrint">🖨️ 打印全部</button>
+        </div>
+        <div class="stage" id="stage"><div class="p-empty">在左侧粘贴名单后，这里会逐张显示奖状</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 打印专用容器：全量渲染所有卡片 -->
+<div id="printArea"></div>
+
+<div id="toast" class="no-print"></div>
+
+<script>
+/* ================= 三种模板的默认标题与正文 ================= */
+const TPL = {
+  jz: {
+    title: '奖 状',
+    text: '兹有 {姓名} 同学，在本学期表现突出，被评为“{奖项}”，特发此状，以资鼓励。'
+  },
+  xb: {
+    title: '喜 报',
+    text: '尊敬的家长：您好！{姓名}同学在本学期勤奋努力、表现优异，荣获“{奖项}”。特此报喜，感谢您的悉心培育。愿我们家校携手，共育英才！'
+  },
+  byx: {
+    title: '表扬信',
+    text: '{姓名}同学：你在本学期学习认真、团结同学、表现突出，荣获“{奖项}”。希望你不要骄傲，再接再厉，争取更大的进步！'
+  }
+};
+const TPL_NAME = { jz:'奖状', xb:'喜报', byx:'表扬信' };
+
+/* ================= 全局状态 ================= */
+let cfg = {
+  type: 'jz',
+  theme: 'theme-red',
+  titles: { jz:'奖 状', xb:'喜 报', byx:'表扬信' },   // 每种模板独立记忆标题
+  texts:  { jz:TPL.jz.text, xb:TPL.xb.text, byx:TPL.byx.text }, // 每种模板独立记忆正文
+  award: '三好学生',
+  school: '',
+  cls: '',
+  date: ''          // YYYY-MM-DD
+};
+let cards = [];       // 解析后的名单 [{name, award}]
+let curIdx = 0;       // 当前预览索引
+
+/* ================= 工具函数 ================= */
+const $ = id => document.getElementById(id);
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+/* HTML 转义，防止名单内容破坏结构 */
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+/* YYYY-MM-DD 转中文日期，如 2026年11月3日 */
+function cnDate(iso){
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return '';
+  return `${y}年${m}月${d}日`;
+}
+/* 当前生效的奖项名称 */
+function currentAward(){
+  return $('awardSelect').value === 'custom'
+    ? $('customAward').value.trim() || '（奖项）'
+    : $('awardSelect').value;
+}
+
+/* ================= localStorage ================= */
+const KEY_CFG = 'jz_config', KEY_ROSTER = 'jz_roster';
+function saveStore(){
+  localStorage.setItem(KEY_CFG, JSON.stringify(cfg));
+  localStorage.setItem(KEY_ROSTER, $('rosterArea').value);
+}
+function loadStore(){
+  try{ Object.assign(cfg, JSON.parse(localStorage.getItem(KEY_CFG)) || {}); }catch(e){}
+}
+
+/* ================= 卡片渲染 ================= */
+/* 生成单张纸面 HTML；正文先转义再替换变量并高亮 */
+function cardHTML(p){
+  let body = escapeHtml(cfg.texts[cfg.type])
+    .replaceAll('{姓名}', `<b class="hl">${escapeHtml(p.name)}</b>`)
+    .replaceAll('{奖项}', `<b class="hl">${escapeHtml(p.award)}</b>`);
+  /* 落款：学校 + 班级一行，日期一行 */
+  const org = [cfg.school, cfg.cls].filter(Boolean).join('');
+  const sign = `${escapeHtml(org) ? escapeHtml(org) : '&nbsp;'}<br>${cnDate(cfg.date) || '&nbsp;'}`;
+  /* 四角 SVG 角花：双弧线 + 圆点装饰，同一图形旋转出四个角 */
+  const cornerSvg = `<svg class="corner {POS}" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2 58 V16 Q2 2 16 2 H58" stroke="currentColor" stroke-width="3"/>
+    <path d="M10 58 V22 Q10 10 22 10 H58" stroke="currentColor" stroke-width="1.4"/>
+    <circle cx="15" cy="15" r="3" fill="currentColor"/>
+  </svg>`;
+  const corners = ['tl', 'tr', 'br', 'bl'].map(p => cornerSvg.replace('{POS}', p)).join('');
+  return `<div class="paper ${cfg.theme}">
+    <div class="paper-inner">
+      ${corners}
+      <h1 class="p-title">${escapeHtml(cfg.titles[cfg.type])}</h1>
+      <div class="p-body">${body}</div>
+      <div class="p-sign">${sign}</div>
+    </div>
+  </div>`;
+}
+/* 解析名单文本 → cards；行格式「姓名」或「姓名,奖项」 */
+function rebuildCards(){
+  const text = $('rosterArea').value;
+  const list = [];
+  text.split('\n').forEach(line => {
+    line = line.trim();
+    if (!line) return;
+    const parts = line.split(/[,，]/);
+    const name = parts[0].trim();
+    if (!name) return;
+    list.push({ name, award: (parts[1] || '').trim() || currentAward() });
+  });
+  cards = list;
+  if (curIdx >= cards.length) curIdx = Math.max(0, cards.length - 1);
+  renderPreview();
+}
+/* 渲染预览区与打印区 */
+function renderPreview(){
+  const stage = $('stage');
+  if (!cards.length){
+    stage.innerHTML = '<div class="p-empty">在左侧粘贴名单后，这里会逐张显示奖状</div>';
+    $('printArea').innerHTML = '';
+    $('pageIdx').textContent = '第 0 / 0 张';
+    $('btnPrev').disabled = $('btnNext').disabled = $('btnPrint').disabled = true;
+    return;
+  }
+  stage.innerHTML = cardHTML(cards[curIdx]);
+  $('pageIdx').textContent = `第 ${curIdx + 1} / ${cards.length} 张`;
+  $('btnPrev').disabled = curIdx === 0;
+  $('btnNext').disabled = curIdx === cards.length - 1;
+  $('btnPrint').disabled = false;
+  $('printArea').innerHTML = cards.map(cardHTML).join('');
+}
+
+/* ================= 表单与状态同步 ================= */
+/* 把 cfg 应用到控件 */
+function fillForm(){
+  document.querySelector(`input[name="tplType"][value="${cfg.type}"]`).checked = true;
+  document.querySelector(`input[name="theme"][value="${cfg.theme}"]`).checked = true;
+  $('titleInput').value = cfg.titles[cfg.type];
+  $('tplInput').value = cfg.texts[cfg.type];
+  /* 奖项回显：预设列表匹配则选中，否则进入自定义 */
+  const sel = $('awardSelect');
+  const opts = [...sel.options].map(o => o.value !== 'custom' ? o.text : o.value);
+  if (opts.includes(cfg.award)){ sel.value = cfg.award; $('customAwardRow').style.display = 'none'; }
+  else { sel.value = 'custom'; $('customAwardRow').style.display = ''; $('customAward').value = cfg.award; }
+  $('schoolInput').value = cfg.school;
+  $('clsInput').value = cfg.cls;
+  $('dateInput').value = cfg.date;
+}
+/* 从控件收集配置到 cfg */
+function collectForm(){
+  cfg.type = document.querySelector('input[name="tplType"]:checked').value;
+  cfg.theme = document.querySelector('input[name="theme"]:checked').value;
+  cfg.titles[cfg.type] = $('titleInput').value;
+  cfg.texts[cfg.type] = $('tplInput').value;
+  cfg.award = currentAward();
+  cfg.school = $('schoolInput').value.trim();
+  cfg.cls = $('clsInput').value.trim();
+  cfg.date = $('dateInput').value;
+}
+
+/* ================= 事件绑定 ================= */
+function bindEvents(){
+  /* 任意配置变化 → 收集 + 保存 + 重建预览 */
+  const onChange = () => { collectForm(); saveStore(); rebuildCards(); };
+  $('typeSeg').addEventListener('change', () => {
+    collectForm();
+    /* 切换模板类型：载入该类型独立记忆的标题与正文 */
+    $('titleInput').value = cfg.titles[cfg.type];
+    $('tplInput').value = cfg.texts[cfg.type];
+    saveStore(); rebuildCards();
+    toast(`已切换为「${TPL_NAME[cfg.type]}」版式`);
+  });
+  $('themeSeg').addEventListener('change', onChange);
+  $('titleInput').addEventListener('input', onChange);
+  $('tplInput').addEventListener('input', onChange);
+  $('awardSelect').addEventListener('change', () => {
+    $('customAwardRow').style.display = $('awardSelect').value === 'custom' ? '' : 'none';
+    onChange();
+  });
+  $('customAward').addEventListener('input', onChange);
+  $('schoolInput').addEventListener('input', onChange);
+  $('clsInput').addEventListener('input', onChange);
+  $('dateInput').addEventListener('change', onChange);
+  /* 名单变化：自动解析重建 */
+  $('rosterArea').addEventListener('input', () => { saveStore(); rebuildCards(); });
+  /* 示例名单 */
+  $('btnDemo').addEventListener('click', () => {
+    $('rosterArea').value = '张三,三好学生\n李四,进步之星\n王五,作业之星\n赵六,阅读之星';
+    onChange();
+    toast('已填入示例名单');
+  });
+  /* 清空名单 */
+  $('btnClearRoster').addEventListener('click', () => {
+    $('rosterArea').value = '';
+    onChange();
+    toast('已清空名单');
+  });
+  /* 预览翻页 */
+  $('btnPrev').addEventListener('click', () => { if (curIdx > 0){ curIdx--; renderPreview(); } });
+  $('btnNext').addEventListener('click', () => { if (curIdx < cards.length - 1){ curIdx++; renderPreview(); } });
+  /* 打印全部 */
+  $('btnPrint').addEventListener('click', () => {
+    if (!cards.length){ toast('请先粘贴名单'); return; }
+    window.print();
+  });
+}
+
+/* ================= 初始化 ================= */
+loadStore();
+/* 日期默认今天（未存储过时） */
+if (!cfg.date){
+  const n = new Date();
+  cfg.date = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
+fillForm();
+/* 回显保存过的名单 */
+const savedRoster = localStorage.getItem(KEY_ROSTER);
+if (savedRoster) $('rosterArea').value = savedRoster;
+bindEvents();
+rebuildCards();
+</script>
+</body>
+</html>

@@ -1,28 +1,40 @@
 {{- /*
-  生成当前页面的 meta description（每页唯一、长度适中）
+  生成当前页面的 meta description（每页唯一、150–160 字）
   优先级：
     1) frontmatter 的 description
     2) 列表页（板块 / 分类总览 / 标签）：用该页下的条目名称拼串 —— 天然唯一且信息量足
-    3) 正文纯文本摘要（按「字符」截断 120 字；注意不能用 substr，它按字节截，
+    3) 正文纯文本摘要（按「字符」截断 150 字；注意不能用 substr，它按字节截，
        中文 150 字节只有 50 个汉字，会让大批页面被判「元描述太短」）
     4) 标题兜底
-  收尾：文章页不足 90 字补「分类 / 标签」语境；仍不足 80 字补章节与站点描述。
+  收尾：
+    - 不足 150 字：文章页依次补「分类 / 标签」「所属板块」「站点描述」，直到够长
+    - 超过 160 字：按 rune 硬截断（Bing 建议 150–160，过长会被判「元描述过长」）
+    - 分页页（/page/2/、/page/3/）：末尾追加「（第 N 页）」，避免与第 1 页描述重复
 */ -}}
+{{- $siteName := site.Title -}}
 {{- $siteDesc := site.Params.description -}}
+{{- $tagline := site.Params.tagline | default "" -}}
 {{- $sec := "" -}}
 {{- with .FirstSection -}}
-  {{- if ne .Title site.Title -}}{{- $sec = .Title -}}{{- end -}}
+  {{- if ne .Title $siteName -}}{{- $sec = .Title -}}{{- end -}}
+{{- end -}}
+{{- /* 分页页码：.RelPermalink 在分页页上仍是第 1 页地址，只能用 .Paginator 取页码 */ -}}
+{{- $pageNo := 1 -}}
+{{- if in (slice "home" "section" "taxonomy" "term") .Kind -}}
+  {{- with .Paginator -}}{{- $pageNo = .PageNumber -}}{{- end -}}
 {{- end -}}
 {{- $desc := "" -}}
+{{- $custom := false -}}
 {{- with .Description -}}
   {{- $desc = . -}}
+  {{- $custom = true -}}
 {{- else -}}
   {{- if in (slice "section" "taxonomy" "term") .Kind -}}
     {{- $names := slice -}}
     {{- if eq .Kind "taxonomy" -}}
       {{- range first 8 .Pages -}}{{- $names = $names | append .Title -}}{{- end -}}
       {{- if $names -}}
-        {{- $desc = printf "全站内容按%s整理，共 %d 个：%s。%s" .Title (len .Pages) (delimit $names "、") $siteDesc -}}
+        {{- $desc = printf "全站内容按%s整理，共 %d 个：%s。涵盖信息技术教学、会考刷题、图解网络与创客实践。" .Title (len .Pages) (delimit $names "、") -}}
       {{- end -}}
     {{- else -}}
       {{- range first 5 .Pages -}}{{- $names = $names | append (printf "《%s》" .Title) -}}{{- end -}}
@@ -33,37 +45,53 @@
     {{- end -}}
   {{- else -}}
     {{- $plain := .Plain | default "" -}}
+    {{- /* 先反转义，避免正文里的 &gt; / &#34; 被二次转义成 &amp;gt; 这类乱码 */ -}}
+    {{- $plain = htmlUnescape $plain -}}
     {{- $plain = replaceRE `\s+` " " $plain -}}
     {{- $plain = trim $plain " " -}}
-    {{- if gt (countrunes $plain) 20 -}}
-      {{- $desc = truncate 120 $plain -}}
+    {{- if gt (strings.RuneCount $plain) 20 -}}
+      {{- /* truncate 按字符截断；截断时会自带「 …」，总长控制在 150 左右 */ -}}
+      {{- $desc = truncate 150 $plain -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
 {{- if not $desc -}}
   {{- $desc = .Title -}}
 {{- end -}}
-{{- /* 文章页偏短：补分类 / 标签（页面真实属性，不会造成跨页重复） */ -}}
-{{- if and (eq .Kind "page") (lt (countrunes $desc) 90) -}}
+{{- /* 统一反转义后再量长度：否则 &gt; / &#34; 会按 4–5 个字符计算，导致实际偏短 */ -}}
+{{- $desc = htmlUnescape $desc -}}
+{{- /* 自动摘要不足 150 字时补页面属性；手写 description 已表达完整语义，不再追加套话 */ -}}
+{{- if and (lt (strings.RuneCount $desc) 150) (or (not $custom) (lt (strings.RuneCount $desc) 120)) -}}
   {{- $ctx := slice -}}
   {{- with .Params.categories -}}{{- $ctx = $ctx | append (printf "分类：%s" (delimit . "、")) -}}{{- end -}}
   {{- with .Params.tags -}}{{- $ctx = $ctx | append (printf "标签：%s" (delimit . "、")) -}}{{- end -}}
   {{- if $ctx -}}{{- $desc = printf "%s（%s）" $desc (delimit $ctx "；") -}}{{- end -}}
-{{- end -}}
-{{- /* 仍然过短：补章节与站点语境（若已含站点描述则不重复拼接） */ -}}
-{{- if and (lt (countrunes $desc) 80) (not (strings.Contains $desc $siteDesc)) -}}
-  {{- if in (slice "section" "taxonomy" "term") .Kind -}}
-    {{- /* 列表页已有条目串，补站点描述把长度带够（末尾统一按 180 字上限收口） */ -}}
-    {{- $desc = printf "%s%s" $desc $siteDesc -}}
-  {{- else if $sec -}}
-    {{- $desc = printf "%s · %s板块 · %s，持续整理与更新。" $desc $sec $siteDesc -}}
-  {{- else -}}
-    {{- $desc = printf "%s · %s，持续整理与更新。" $desc $siteDesc -}}
+  {{- if lt (strings.RuneCount $desc) 150 -}}
+    {{- /* 只有文章页才补「所属板块」，分类/标签页补了会变成「属于分类板块」 */ -}}
+    {{- if and $sec (eq $.Kind "page") -}}{{- $desc = printf "%s，属于「%s」板块，持续整理与更新。" $desc $sec -}}{{- end -}}
+  {{- end -}}
+  {{- if lt (strings.RuneCount $desc) 150 -}}
+    {{- /* 只有页面本身还没有站点语境时才补，避免首页/重点页把站点描述写两遍 */ -}}
+    {{- if not (or (strings.Contains $desc $siteDesc) (strings.Contains $siteDesc $desc)) -}}
+      {{- $desc = printf "%s。%s" $desc $siteDesc -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if lt (strings.RuneCount $desc) 150 -}}
+    {{- with $tagline -}}{{- $desc = printf "%s · %s" $desc . -}}{{- end -}}
   {{- end -}}
 {{- end -}}
-{{- /* 上限收口：列表页拼接多条标题时会超长。注意 truncate 会「保留完整单词」，
-       中文没有空格会被当成一个词而不裁，这里用 Go 正则按 rune 硬截断。 */ -}}
-{{- if gt (countrunes $desc) 180 -}}
-  {{- $desc = replaceRE `^([\s\S]{178})[\s\S]*$` "$1…" $desc -}}
+{{- /* 上限 160 字：分页页要给「（第 N 页）」留出位置 */ -}}
+{{- $cap := 160 -}}
+{{- if gt $pageNo 1 -}}{{- $cap = 150 -}}{{- end -}}
+{{- if gt (strings.RuneCount $desc) $cap -}}
+  {{- $desc = truncate (sub $cap 2) $desc -}}
 {{- end -}}
+{{- if gt $pageNo 1 -}}
+  {{- $desc = printf "%s（第 %d 页）" $desc $pageNo -}}
+{{- end -}}
+{{- /* 清理拼接产生的重复标点 */ -}}
+{{- $desc = replaceRE `。，` "，" $desc -}}
+{{- $desc = replaceRE `，。` "。" $desc -}}
+{{- $desc = replaceRE `，，` "，" $desc -}}
+{{- $desc = replaceRE `。。` "。" $desc -}}
 {{- $desc | plainify | htmlUnescape | replaceRE `"` "”" | chomp -}}

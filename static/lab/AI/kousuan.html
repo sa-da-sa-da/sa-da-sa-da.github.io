@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>口算练习纸生成器 · 小学口算题卡打印/含答案页 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/kousuan.html">
+<meta name="description" content="在线口算练习纸生成器：按一至四年级选择加减乘除与两步混合题型，自动生成不重复口算题卡并附答案页，减法不出负数、除法保证整除，一键打印 A4 练习纸。支持按年级与运算类型组合出题，可设置题量、数字范围与是否显示答案，适合每日口算训练与课堂限时练习。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#e9efe9;color:#333;height:100vh;display:flex;overflow:hidden}
+
+/* ===== 左侧配置面板 ===== */
+.sidebar{width:300px;flex-shrink:0;background:#fff;box-shadow:2px 0 14px rgba(0,0,0,.07);padding:16px;overflow-y:auto;z-index:5}
+.logo{font-size:18px;font-weight:700;color:#2e6e4e;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.sec{margin-bottom:14px;padding:12px;background:#f5faf5;border:1px solid #e2ede2;border-radius:12px}
+.sec-title{font-size:13px;font-weight:700;color:#2e6e4e;margin-bottom:8px}
+.sec select{width:100%;padding:8px 10px;border:1.5px solid #cfe0cf;border-radius:8px;font-size:14px;background:#fff;color:#333}
+.range-hint{font-size:12px;color:#8a9a8a;margin-top:6px}
+/* 题型勾选 */
+.ops-grid{display:flex;flex-wrap:wrap;gap:6px}
+.op-chip{display:flex;align-items:center;gap:5px;padding:6px 10px;border:1.5px solid #d5e3d5;border-radius:18px;cursor:pointer;font-size:13px;background:#fff;user-select:none;transition:all .15s}
+.op-chip:has(input:checked){background:#2e6e4e;border-color:#2e6e4e;color:#fff}
+.op-chip input{display:none}
+/* 分段选择 */
+.seg{display:flex;gap:6px}
+.seg label{flex:1;text-align:center;padding:7px 0;border:1.5px solid #d5e3d5;border-radius:8px;cursor:pointer;font-size:13px;background:#fff;transition:all .15s}
+.seg label:has(input:checked){background:#2e6e4e;border-color:#2e6e4e;color:#fff;font-weight:600}
+.seg input{display:none}
+/* 答案页开关 */
+.switch-row{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:#444}
+.switch-row .hint{font-size:11px;color:#999;margin-top:2px}
+/* 按钮 */
+.btn{width:100%;padding:11px 0;border:none;border-radius:22px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-bottom:8px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.btn-main{background:linear-gradient(135deg,#2e6e4e,#3f9468);color:#fff}
+.btn-print{background:#fff;color:#2e6e4e;border:2px solid #2e6e4e}
+.save-hint{font-size:11px;color:#aaa;text-align:center;margin-top:4px}
+
+/* ===== 右侧预览区 ===== */
+.preview-area{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;align-items:center}
+.slot{margin-bottom:22px}
+.paper{width:210mm;min-height:297mm;background:#fff;padding:12mm 14mm;box-shadow:0 4px 26px rgba(0,0,0,.16);transform-origin:top left}
+.p-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid #2e6e4e;padding-bottom:6px}
+.p-title{font-size:26px;font-weight:800;color:#2e6e4e;letter-spacing:5px}
+.p-meta{font-size:14px;color:#333}
+.fill{display:inline-block;width:76px;border-bottom:1.5px solid #555;margin:0 12px 0 4px}
+.p-sub{font-size:12px;color:#999;margin:6px 0 14px}
+.q-grid{display:grid;grid-template-columns:repeat(var(--cols,2),1fr);column-gap:9mm}
+.q{font-size:var(--qfs,17px);line-height:1.35;margin-bottom:13px;break-inside:avoid;white-space:nowrap;color:#222}
+.q .qn{color:#2e6e4e;font-weight:600;margin-right:3px}
+.q .blank{color:#555}
+
+/* 提示条 */
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(10px);background:#2e6e4e;color:#fff;padding:10px 22px;border-radius:22px;font-size:14px;opacity:0;transition:all .3s;pointer-events:none;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== 打印样式：只输出纸面内容 ===== */
+@media print{
+  @page{size:A4;margin:12mm}
+  body{display:block;height:auto;overflow:visible;background:#fff}
+  .sidebar,.toast{display:none!important}
+  .preview-area{overflow:visible;display:block;padding:0}
+  .slot{width:auto!important;height:auto!important;margin:0}
+  .paper{transform:none!important;box-shadow:none;width:auto;min-height:0;padding:0;margin:0}
+  .answer-paper{page-break-before:always}
+}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">口算练习纸生成器</h1>
+
+<!-- 左侧配置面板 -->
+<aside class="sidebar">
+  <div class="logo">🧮 口算练习纸生成器</div>
+
+  <!-- 年级 -->
+  <div class="sec">
+    <div class="sec-title">📚 年级</div>
+    <select id="gradeSel">
+      <option value="1">一年级</option>
+      <option value="2">二年级</option>
+      <option value="3">三年级</option>
+      <option value="4">四年级</option>
+    </select>
+    <div class="range-hint" id="rangeHint"></div>
+  </div>
+
+  <!-- 题型 -->
+  <div class="sec">
+    <div class="sec-title">✏️ 题型（可多选）</div>
+    <div class="ops-grid">
+      <label class="op-chip"><input type="checkbox" id="op_add"><span>加法</span></label>
+      <label class="op-chip"><input type="checkbox" id="op_sub"><span>减法</span></label>
+      <label class="op-chip"><input type="checkbox" id="op_mul"><span>乘法</span></label>
+      <label class="op-chip"><input type="checkbox" id="op_div"><span>除法</span></label>
+      <label class="op-chip"><input type="checkbox" id="op_two"><span>混合两步</span></label>
+    </div>
+    <div class="range-hint">混合两步运算仅四年级数值范围内生效</div>
+  </div>
+
+  <!-- 题量与栏数 -->
+  <div class="sec">
+    <div class="sec-title">🔢 每页题量</div>
+    <div class="seg" id="countSeg">
+      <label><input type="radio" name="count" value="20"><span>20</span></label>
+      <label><input type="radio" name="count" value="40"><span>40</span></label>
+      <label><input type="radio" name="count" value="60"><span>60</span></label>
+      <label><input type="radio" name="count" value="80"><span>80</span></label>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-title">📐 排版栏数</div>
+    <div class="seg" id="colsSeg">
+      <label><input type="radio" name="cols" value="2"><span>两栏</span></label>
+      <label><input type="radio" name="cols" value="3"><span>三栏</span></label>
+    </div>
+  </div>
+
+  <!-- 答案页 -->
+  <div class="sec">
+    <div class="switch-row">
+      <div>
+        <label style="cursor:pointer;display:flex;align-items:center;gap:6px"><input type="checkbox" id="answerChk"> 附参考答案页</label>
+        <div class="hint">答案单独一页，仅在打印时出现</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 操作按钮 -->
+  <button class="btn btn-main" id="regenBtn">🔄 重新出题</button>
+  <button class="btn btn-print" id="printBtn">🖨️ 打印</button>
+  <div class="save-hint">配置自动保存到本机浏览器</div>
+</aside>
+
+<!-- 右侧 A4 预览 -->
+<main class="preview-area" id="previewArea">
+  <div class="slot"><div class="paper" id="paperMain"></div></div>
+  <div class="slot" id="answerSlot"><div class="paper answer-paper" id="paperAns"></div></div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+var CONF_KEY='kousuan_cfg_v1';
+
+/* 年级说明与各年级默认题型 */
+var GRADE_HINT={1:'范围：20以内加减法',2:'范围：100以内加减法 · 表内乘法',3:'范围：乘除法（含整十数）· 100以内加减',4:'范围：两步混合运算（带括号）'};
+var GRADE_DEFAULTS={1:['add','sub'],2:['add','sub','mul'],3:['mul','div'],4:['mul','div','two']};
+var OP_NAME={add:'加法',sub:'减法',mul:'乘法',div:'除法',two:'两步混合'};
+
+/* 各年级支持的题型 */
+function supportedOps(g){
+  if(g===1)return['add','sub'];
+  if(g===2)return['add','sub','mul'];
+  if(g===3)return['add','sub','mul','div'];
+  return['add','sub','mul','div','two'];
+}
+
+/* 配置（存 localStorage） */
+var config={grade:1,ops:{add:true,sub:true,mul:false,div:false,two:false},count:40,cols:2,answer:true};
+var questions=[];
+
+function $(id){return document.getElementById(id)}
+/* 闭区间随机整数 */
+function ri(a,b){return a+Math.floor(Math.random()*(b-a+1))}
+
+function saveConfig(){try{localStorage.setItem(CONF_KEY,JSON.stringify(config))}catch(e){}}
+function loadConfig(){
+  try{
+    var raw=localStorage.getItem(CONF_KEY);
+    if(raw){var c=JSON.parse(raw);if(c&&c.ops){Object.assign(config,c);}}
+  }catch(e){}
+}
+
+/* ===== 出题生成器：保证不超范围、减法不出负数、除法整除 ===== */
+function genAdd(g){
+  if(g===1){
+    var a=ri(0,20),b=ri(0,20);
+    if(a+b>20||a+b===0)return null;
+    return{t:a+' + '+b,a:a+b};
+  }
+  var x=ri(1,99),y=ri(1,99);
+  if(x+y>100)return null;
+  return{t:x+' + '+y,a:x+y};
+}
+function genSub(g){
+  if(g===1){
+    var a=ri(1,20),b=ri(0,a);
+    return{t:a+' − '+b,a:a-b};
+  }
+  var x=ri(2,100),y=ri(1,x-1);
+  return{t:x+' − '+y,a:x-y};
+}
+function genMul(g){
+  /* 三年级及以上混入整十数 × 一位数 */
+  if(g>=3&&Math.random()<0.5){
+    var t=ri(1,9)*10,b=ri(2,9);
+    return{t:t+' × '+b,a:t*b};
+  }
+  var a=ri(1,9),c=ri(2,9);
+  return{t:a+' × '+c,a:a*c};
+}
+function genDiv(g){
+  /* 三年级及以上混入整十数 ÷ 一位数（构造商保证整除） */
+  if(g>=3&&Math.random()<0.5){
+    var b=ri(2,9),q=ri(1,9)*10;
+    return{t:(b*q)+' ÷ '+b,a:q};
+  }
+  var d=ri(2,9),q2=ri(2,9);
+  return{t:(d*q2)+' ÷ '+d,a:q2};
+}
+/* 四年级两步运算（带括号），中间过程与结果均为非负整数 */
+function genTwo(){
+  var f=ri(1,6),a,b,c,s,q;
+  if(f===1){c=ri(2,9);s=ri(3,30);a=ri(1,s-1);b=s-a;return{t:'('+a+' + '+b+') × '+c,a:s*c};}
+  if(f===2){a=ri(10,40);b=ri(1,a-1);c=ri(2,9);s=a-b;return{t:'('+a+' − '+b+') × '+c,a:s*c};}
+  if(f===3){c=ri(2,9);q=ri(2,20);s=c*q;a=ri(1,s-1);b=s-a;return{t:'('+a+' + '+b+') ÷ '+c,a:q};}
+  if(f===4){c=ri(2,9);q=ri(2,20);s=c*q;b=ri(1,30);a=s+b;return{t:'('+a+' − '+b+') ÷ '+c,a:q};}
+  if(f===5){a=ri(2,9);s=ri(3,20);b=ri(1,s-1);c=s-b;return{t:a+' × ('+b+' + '+c+')',a:a*s};}
+  a=ri(2,9);b=ri(5,30);c=ri(1,b-1);s=b-c;
+  return{t:a+' × ('+b+' − '+c+')',a:a*s};
+}
+
+function makeOne(types){
+  var k=types[ri(0,types.length-1)];
+  if(k==='add')return genAdd(config.grade);
+  if(k==='sub')return genSub(config.grade);
+  if(k==='mul')return genMul(config.grade);
+  if(k==='div')return genDiv(config.grade);
+  return genTwo();
+}
+
+/* ===== 生成一组不重复题目 ===== */
+function generate(){
+  var types=supportedOps(config.grade).filter(function(k){return config.ops[k];});
+  if(!types.length){showToast('请至少勾选一个当前年级支持的题型');return;}
+  var used=new Set();
+  questions=[];
+  var guard=config.count*80; /* 防死循环：给足尝试次数 */
+  while(questions.length<config.count&&guard-->0){
+    var q=makeOne(types);
+    if(!q||used.has(q.t))continue;
+    used.add(q.t);
+    questions.push(q);
+  }
+  if(questions.length<config.count)showToast('该范围题量有限，本次共生成 '+questions.length+' 题');
+  renderPaper();
+}
+
+/* ===== 渲染 A4 纸面 ===== */
+function subText(){
+  var gname=['','一年级','二年级','三年级','四年级'][config.grade];
+  var ts=supportedOps(config.grade).filter(function(k){return config.ops[k];}).map(function(k){return OP_NAME[k];}).join('、');
+  return gname+' · '+ts+' · 共 '+questions.length+' 题';
+}
+function renderPaper(){
+  var cols=config.cols;
+  /* 依据栏数与题量调整字号，保证 A4 单页容量 */
+  var qfs=cols===2?17:(config.count>60?13.5:15);
+  var head='<div class="p-head"><div class="p-title">口算练习</div>'+
+    '<div class="p-meta">姓名<span class="fill"></span>日期<span class="fill"></span>得分<span class="fill"></span></div></div>'+
+    '<div class="p-sub">'+subText()+'</div>';
+  var qHtml='';
+  questions.forEach(function(q,i){
+    qHtml+='<div class="q"><span class="qn">'+(i+1)+'.</span>'+q.t+' = <span class="blank">____</span></div>';
+  });
+  var pMain=$('paperMain');
+  pMain.innerHTML=head+'<div class="q-grid">'+qHtml+'</div>';
+  pMain.style.setProperty('--cols',cols);
+  pMain.style.setProperty('--qfs',qfs+'px');
+
+  /* 答案页：同样版式，只显示答案 */
+  var aHtml='';
+  questions.forEach(function(q,i){
+    aHtml+='<div class="q"><span class="qn">'+(i+1)+'.</span>'+q.a+'</div>';
+  });
+  var pAns=$('paperAns');
+  pAns.innerHTML='<div class="p-head"><div class="p-title">参考答案</div>'+
+    '<div class="p-meta">'+subText()+'</div></div>'+
+    '<div class="q-grid">'+aHtml+'</div>';
+  pAns.style.setProperty('--cols',cols);
+  pAns.style.setProperty('--qfs',qfs+'px');
+  $('answerSlot').style.display=config.answer?'':'none';
+  fitPreview();
+}
+
+/* 预览缩放：让 A4 纸适配可视宽度，打印时由 print 样式还原真实尺寸 */
+function fitPreview(){
+  var area=$('previewArea');
+  var avail=area.clientWidth-44;
+  document.querySelectorAll('.paper').forEach(function(p){
+    if(!p.offsetParent){return;}
+    p.style.transform='none';
+    var pw=p.offsetWidth,ph=p.offsetHeight;
+    if(!pw)return;
+    var sc=Math.min(1,avail/pw);
+    p.style.transform='scale('+sc+')';
+    var slot=p.parentNode;
+    slot.style.width=(pw*sc)+'px';
+    slot.style.height=(ph*sc)+'px';
+  });
+}
+
+/* ===== 控件与配置同步 ===== */
+function applyConfigToUI(){
+  $('gradeSel').value=config.grade;
+  ['add','sub','mul','div','two'].forEach(function(k){
+    $('op_'+k).checked=!!config.ops[k];
+  });
+  document.querySelectorAll('input[name=count]').forEach(function(r){r.checked=(+r.value===config.count);});
+  document.querySelectorAll('input[name=cols]').forEach(function(r){r.checked=(+r.value===config.cols);});
+  $('answerChk').checked=config.answer;
+  $('rangeHint').textContent=GRADE_HINT[config.grade];
+}
+function readOpsFromUI(){
+  ['add','sub','mul','div','two'].forEach(function(k){
+    config.ops[k]=$('op_'+k).checked;
+  });
+}
+
+function bindEvents(){
+  /* 年级变化：切换范围说明并恢复该年级默认题型 */
+  $('gradeSel').addEventListener('change',function(){
+    config.grade=+this.value;
+    GRADE_DEFAULTS[config.grade].forEach(function(k){config.ops[k]=true;});
+    supportedOps(config.grade).forEach(function(k){
+      if(GRADE_DEFAULTS[config.grade].indexOf(k)<0)config.ops[k]=false;
+    });
+    applyConfigToUI();
+    saveConfig();
+    generate();
+  });
+  /* 题型勾选 */
+  ['add','sub','mul','div','two'].forEach(function(k){
+    $('op_'+k).addEventListener('change',function(){
+      readOpsFromUI();saveConfig();generate();
+    });
+  });
+  /* 题量 */
+  document.querySelectorAll('input[name=count]').forEach(function(r){
+    r.addEventListener('change',function(){config.count=+this.value;saveConfig();generate();});
+  });
+  /* 栏数 */
+  document.querySelectorAll('input[name=cols]').forEach(function(r){
+    r.addEventListener('change',function(){config.cols=+this.value;saveConfig();renderPaper();});
+  });
+  /* 答案页开关 */
+  $('answerChk').addEventListener('change',function(){
+    config.answer=this.checked;saveConfig();renderPaper();
+  });
+  /* 重新出题 / 打印 */
+  $('regenBtn').addEventListener('click',generate);
+  $('printBtn').addEventListener('click',function(){window.print();});
+  window.addEventListener('resize',fitPreview);
+}
+
+function showToast(msg){
+  var t=$('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm=setTimeout(function(){t.classList.remove('show')},2400);
+}
+
+/* ===== 启动 ===== */
+loadConfig();
+applyConfigToUI();
+bindEvents();
+generate();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>课程表值日表生成器 · 班级排表/打印/导出图片 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/kechengbiao.html">
+<meta name="description" content="课程表/值日表生成器：两种制表模式一键切换，课程表支持周一至周六与下午节次可调、科目同名同色自动配色，值日表任务列可增删、名单下拉选人，纸面化表格可直接按 A4 横向打印或导出 PNG 图片，数据自动保存在本地浏览器，班主任排表贴墙的实用工具。">
+<style>
+/* ===== 基础样式 ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --g-deep:#004737;
+  --g-mid:#2E7D32;
+  --card:#fff;
+  --radius:12px;
+  --shadow:0 2px 10px rgba(0,60,30,.08);
+  --line:#dbe7db;
+}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#d7efd2 0%,#eaf6e8 55%,#dceee6 100%);min-height:100vh;color:#333}
+.wrap{max-width:1150px;margin:0 auto;padding:20px 16px 48px}
+
+/* ===== 头部与选项卡 ===== */
+header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+h1{font-size:22px;color:var(--g-deep)}
+.view-tabs{display:flex;background:#dfe9df;border-radius:20px;padding:3px}
+.view-tabs button{border:none;padding:8px 22px;border-radius:18px;background:transparent;font-size:14px;font-weight:600;color:#667;cursor:pointer;transition:all .2s}
+.view-tabs button.active{background:var(--g-deep);color:#fff}
+
+/* ===== 布局 ===== */
+.view{display:none}
+.view.active{display:block}
+.two-col{display:grid;grid-template-columns:330px 1fr;gap:16px;align-items:start}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.card h2{font-size:15px;color:var(--g-deep);margin-bottom:12px}
+.card h2 .mini-tip{font-size:12px;font-weight:400;color:#999}
+
+/* ===== 控件 ===== */
+.field{margin-bottom:14px}
+.field-label{font-size:13px;color:#666;margin-bottom:6px;display:block}
+.txt{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;outline:none;font-family:inherit}
+.txt:focus{border-color:var(--g-mid)}
+textarea.txt{min-height:90px;line-height:1.7;resize:vertical}
+.check-line{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;color:#444}
+.check-line input{accent-color:var(--g-mid);width:16px;height:16px;cursor:pointer}
+.btn{border:none;border-radius:8px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--g-deep);color:#fff}
+.btn-primary:hover{background:#016143}
+.btn-ghost{background:#eef5ee;color:var(--g-deep)}
+.btn-ghost:hover{background:#dff0dc}
+.btn-warn{background:#fff0f0;color:#c62828}
+.btn-warn:hover{background:#ffe3e3}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:6px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+/* 任务列管理 chips */
+.task-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.task-chip{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:14px;background:#f1f5f1;border:1px solid var(--line);font-size:13px;color:#444}
+.task-chip .x{cursor:pointer;color:#c62828;font-weight:700;padding:0 2px;user-select:none}
+.task-chip .x:hover{color:#e53935}
+.add-task-row{display:flex;gap:6px;margin-top:8px}
+.add-task-row .txt{flex:1}
+
+/* ===== 纸面表格卡片 ===== */
+.paper-card{background:#fffdf8;border:1px solid #e8e2d2;border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px}
+.paper-title{text-align:center;font-size:26px;color:#333;letter-spacing:.15em;margin-bottom:16px;font-family:'STKaiti','KaiTi','SimHei',serif}
+.timetable{border-collapse:collapse;width:100%;table-layout:fixed}
+.timetable th,.timetable td{border:1.5px solid #7fa97f;padding:10px 6px;text-align:center;font-size:15px;word-break:break-all}
+.timetable thead th{background:#eaf6e8;color:var(--g-deep);font-weight:700;padding:12px 6px}
+.timetable tbody th{background:#f4faf2;color:var(--g-deep);font-weight:700;width:64px}
+.timetable td{min-height:52px;height:52px;background:#fff;cursor:text;transition:background .15s}
+.timetable td:focus{outline:2px solid var(--g-mid);outline-offset:-2px}
+.timetable td input{width:100%;border:none;background:transparent;text-align:center;font-size:15px;font-family:inherit;outline:none;color:#333}
+
+/* ===== 打印样式：A4 横向，隐藏全部控件 ===== */
+@page{size:A4 landscape;margin:12mm}
+@media print{
+  body{background:#fff}
+  .no-print{display:none!important}
+  .wrap{max-width:none;padding:0}
+  .view{display:none!important}
+  .view.active{display:block!important}
+  .paper-card{box-shadow:none;border:none;border-radius:0;padding:0;background:#fff}
+  .timetable th,.timetable td{padding:9px 4px}
+  .timetable td{height:58px}
+}
+
+/* 提示气泡与移动端 */
+#toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(20px);background:rgba(0,71,55,.92);color:#fff;padding:9px 22px;border-radius:22px;font-size:14px;opacity:0;pointer-events:none;transition:all .3s;z-index:99}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-width:900px){ .two-col{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📅 课程表 / 值日表生成器</h1>
+    <div class="view-tabs">
+      <button id="tabKB" class="active">课程表</button>
+      <button id="tabZB">值日表</button>
+    </div>
+  </header>
+
+  <!-- ============ 课程表视图 ============ -->
+  <div class="view active" id="kbView">
+    <div class="two-col">
+      <!-- 控制面板 -->
+      <div class="card no-print">
+        <h2>⚙️ 课程表设置</h2>
+        <div class="field">
+          <label class="field-label">表格标题</label>
+          <input type="text" id="kbTitle" class="txt" placeholder="如：三年二班课程表">
+        </div>
+        <div class="field">
+          <label class="field-label">节次安排</label>
+          <label class="check-line" style="margin-bottom:8px">
+            <input type="checkbox" id="kbSat"> 包含周六
+          </label>
+          <label class="field-label" style="margin-top:4px">下午节数</label>
+          <select id="kbPm" class="txt">
+            <option value="2">下午 2 节</option>
+            <option value="3" selected>下午 3 节</option>
+            <option value="4">下午 4 节</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost btn-sm" id="kbDemo">📋 预填示例表</button>
+          <button class="btn btn-warn btn-sm" id="kbClear">🗑️ 清空表格</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-sm" id="kbImg">🖼️ 导出图片 PNG</button>
+          <button class="btn btn-primary btn-sm" id="kbPrint">🖨️ 打印（A4 横向）</button>
+        </div>
+        <div class="field" style="margin-top:14px">
+          <label class="field-label">💡 提示：直接点击表格单元格输入科目名，同名科目自动同色。</label>
+        </div>
+      </div>
+      <!-- 纸面表格 -->
+      <div class="paper-card" id="kbTableWrap"><!-- JS 渲染 --></div>
+    </div>
+  </div>
+
+  <!-- ============ 值日表视图 ============ -->
+  <div class="view" id="zbView">
+    <div class="two-col">
+      <!-- 控制面板 -->
+      <div class="card no-print">
+        <h2>⚙️ 值日表设置</h2>
+        <div class="field">
+          <label class="field-label">表格标题</label>
+          <input type="text" id="zbTitle" class="txt" placeholder="如：三年二班值日表">
+        </div>
+        <div class="field">
+          <label class="field-label">任务列（可增删）</label>
+          <div class="task-chips" id="taskChips"><!-- JS 渲染 --></div>
+          <div class="add-task-row">
+            <input type="text" id="taskInput" class="txt" placeholder="新任务名称，如：擦窗户">
+            <button class="btn btn-ghost btn-sm" id="btnAddTask">➕ 添加</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">学生名单（每行一个，单元格内可下拉选择或手填）</label>
+          <textarea id="namesArea" class="txt" placeholder="张三&#10;李四&#10;王五"></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-warn btn-sm" id="zbClear">🗑️ 清空表格</button>
+          <button class="btn btn-primary btn-sm" id="zbImg">🖼️ 导出图片 PNG</button>
+          <button class="btn btn-primary btn-sm" id="zbPrint">🖨️ 打印（A4 横向）</button>
+        </div>
+      </div>
+      <!-- 纸面表格 -->
+      <div class="paper-card" id="zbTableWrap"><!-- JS 渲染 --></div>
+    </div>
+  </div>
+</div>
+
+<!-- 值日表单元格下拉选项 -->
+<datalist id="stuDl"></datalist>
+<div id="toast"></div>
+
+<script>
+/* ================= 常量 ================= */
+/* 10 组科目配色循环：[背景色, 文字色]，同名科目按名称哈希取同一组 */
+const COLORS = [
+  ['#E3F2FD','#1565C0'], ['#FFEBEE','#C62828'], ['#E8F5E9','#2E7D32'], ['#FFF3E0','#E65100'],
+  ['#F3E5F5','#6A1B9A'], ['#E0F7FA','#00838F'], ['#FFF8E1','#F57F17'], ['#FCE4EC','#AD1457'],
+  ['#EDE7F6','#4527A0'], ['#E8EAF6','#283593']
+];
+const DAYS5 = ['周一','周二','周三','周四','周五'];
+const DAYS6 = ['周一','周二','周三','周四','周五','周六'];
+/* 课程表示例数据（7 列：上午4 + 下午3，第 7 列供周六行使用） */
+const KB_DEMO = [
+  ['语文','数学','英语','体育','音乐','美术','班会'],
+  ['数学','语文','科学','美术','体育','语文',''],
+  ['英语','体育','数学','语文','科学','数学',''],
+  ['科学','英语','体育','数学','语文','体育',''],
+  ['体育','科学','语文','音乐','数学','英语',''],
+  ['班会','美术','音乐','科学','英语','体育','']
+];
+/* 值日表默认任务列 */
+const ZB_TASKS_DEFAULT = ['扫地','拖地','擦黑板','倒垃圾','关灯锁门'];
+
+/* ================= 全局状态 ================= */
+let tab = 'kb'; // 当前视图：kb 课程表 | zb 值日表
+let kb = { title:'三年二班课程表', sat:true, pm:3, grid:{} };   // grid 键「周-节」
+let zb = { title:'三年二班值日表', tasks:[...ZB_TASKS_DEFAULT], names:[], grid:{} }; // grid 键「天-任务」
+
+/* ================= 工具函数 ================= */
+const $ = id => document.getElementById(id);
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+/* 按科目名哈希取固定配色，保证同名同色 */
+function colorOf(name){
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+  return COLORS[h % COLORS.length];
+}
+
+/* ================= localStorage ================= */
+const KEY_KB = 'kb_data', KEY_ZB = 'zb_data';
+function saveStore(){
+  localStorage.setItem(KEY_KB, JSON.stringify(kb));
+  localStorage.setItem(KEY_ZB, JSON.stringify(zb));
+}
+function loadStore(){
+  try{ Object.assign(kb, JSON.parse(localStorage.getItem(KEY_KB)) || {}); }catch(e){}
+  try{ Object.assign(zb, JSON.parse(localStorage.getItem(KEY_ZB)) || {}); }catch(e){}
+}
+
+/* ================= 课程表渲染 ================= */
+function renderKB(){
+  /* 列头：上午 4 节 + 下午 N 节 */
+  const heads = [];
+  for (let s = 0; s < 4; s++) heads.push(`上午·${s+1}`);
+  for (let s = 0; s < kb.pm; s++) heads.push(`下午·${s+1}`);
+  const days = kb.sat ? DAYS6 : DAYS5;
+  let html = `<h2 class="paper-title">${escapeHtml(kb.title)}</h2>
+    <table class="timetable"><thead><tr><th style="width:64px">星期</th>
+    ${heads.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`;
+  days.forEach((d, w) => {
+    html += `<tr><th>${d}</th>`;
+    for (let s = 0; s < heads.length; s++){
+      const k = `${w}-${s}`;
+      html += `<td contenteditable="true" data-k="${k}" data-t="kb">${escapeHtml(kb.grid[k] || '')}</td>`;
+    }
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  $('kbTableWrap').innerHTML = html;
+  $('kbTableWrap').querySelectorAll('td[data-k]').forEach(applyCellColor);
+}
+/* 给课程格按科目名上色（空内容清除颜色） */
+function applyCellColor(td){
+  const text = td.textContent.trim();
+  if (!text){ td.style.background = ''; td.style.color = ''; return; }
+  const [bg, fg] = colorOf(text);
+  td.style.background = bg;
+  td.style.color = fg;
+}
+/* 填充示例课程表 */
+function fillKBDemo(){
+  kb.sat = true; kb.pm = 3;
+  $('kbSat').checked = true; $('kbPm').value = '3';
+  kb.grid = {};
+  KB_DEMO.forEach((row, w) => row.forEach((sub, s) => { if (sub) kb.grid[`${w}-${s}`] = sub; }));
+  $('kbTitle').value = kb.title;
+  saveStore(); renderKB();
+  toast('已预填示例课程表，可直接修改');
+}
+
+/* ================= 值日表渲染 ================= */
+function renderZB(){
+  let html = `<h2 class="paper-title">${escapeHtml(zb.title)}</h2>
+    <table class="timetable"><thead><tr><th style="width:64px">星期</th>
+    ${zb.tasks.map(t => `<th>${escapeHtml(t)}</th>`).join('')}</tr></thead><tbody>`;
+  DAYS5.forEach((d, w) => {
+    html += `<tr><th>${d}</th>`;
+    zb.tasks.forEach((t, i) => {
+      const k = `${w}-${i}`;
+      html += `<td><input type="text" list="stuDl" data-k="${k}" data-t="zb" value="${escapeHtml(zb.grid[k] || '')}" placeholder="点击选择/填写"></td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  $('zbTableWrap').innerHTML = html;
+}
+/* 渲染任务列 chips */
+function renderTaskChips(){
+  $('taskChips').innerHTML = zb.tasks.map((t, i) =>
+    `<span class="task-chip">${escapeHtml(t)}<span class="x" data-i="${i}" title="删除该任务列">×</span></span>`
+  ).join('');
+}
+/* 更新值日表下拉选项 */
+function updateDatalist(){
+  $('stuDl').innerHTML = zb.names.map(n => `<option value="${escapeHtml(n)}">`).join('');
+}
+/* 添加任务列 */
+function addTask(){
+  const name = $('taskInput').value.trim();
+  if (!name){ toast('请输入任务名称'); return; }
+  if (zb.tasks.includes(name)){ toast('该任务已存在'); return; }
+  if (zb.tasks.length >= 8){ toast('任务列最多 8 个'); return; }
+  zb.tasks.push(name);
+  $('taskInput').value = '';
+  saveStore(); renderTaskChips(); renderZB();
+  toast(`已添加任务「${name}」`);
+}
+/* 删除任务列（同时清除该列内容并左移后续数据） */
+function delTask(i){
+  if (zb.tasks.length <= 1){ toast('至少保留一个任务列'); return; }
+  if (!confirm(`删除任务「${zb.tasks[i]}」及其整列内容？`)) return;
+  zb.tasks.splice(i, 1);
+  const g = {};
+  Object.entries(zb.grid).forEach(([k, v]) => {
+    let [d, t] = k.split('-').map(Number);
+    if (t === i) return;          // 被删除列的数据直接丢弃
+    if (t > i) t--;               // 右侧列左移
+    g[`${d}-${t}`] = v;
+  });
+  zb.grid = g;
+  saveStore(); renderTaskChips(); renderZB();
+}
+
+/* ================= 导出图片（canvas 重绘） ================= */
+/* 通用表格绘制：title 标题 / colHeads 列头（含首列头）/ rowData 行数据 */
+function drawTablePNG(title, colHeads, rowData, filename){
+  const DPR = 2;
+  const HW = 100, CW = 118, HEAD_H = 56, ROW_H = 62, TITLE_H = 96, PAD = 24;
+  const dataCols = colHeads.length - 1;
+  const W = PAD * 2 + HW + dataCols * CW;
+  const H = TITLE_H + HEAD_H + rowData.length * ROW_H + PAD;
+  const cv = document.createElement('canvas');
+  cv.width = W * DPR; cv.height = H * DPR;
+  const ctx = cv.getContext('2d');
+  ctx.scale(DPR, DPR);
+  const FONT = '"PingFang SC","Microsoft YaHei",sans-serif';
+  /* 白色底 */
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+  /* 标题 */
+  ctx.fillStyle = '#333333';
+  ctx.font = `bold 38px ${FONT}`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(title, W / 2, TITLE_H * 0.55);
+  /* 表头与行头底色 */
+  ctx.fillStyle = '#EAF6E8';
+  ctx.fillRect(PAD, TITLE_H, HW + dataCols * CW, HEAD_H);
+  ctx.fillStyle = '#F4FAF2';
+  ctx.fillRect(PAD, TITLE_H + HEAD_H, HW, rowData.length * ROW_H);
+  /* 网格线 */
+  const colX = i => PAD + (i === 0 ? 0 : HW + (i - 1) * CW);   // i: 0..dataCols+1
+  const rowY = j => TITLE_H + (j === 0 ? 0 : HEAD_H + (j - 1) * ROW_H); // j: 0..行数+1
+  ctx.strokeStyle = '#7FA97F'; ctx.lineWidth = 1.5;
+  for (let c = 0; c <= dataCols + 1; c++){
+    ctx.beginPath(); ctx.moveTo(colX(c), rowY(0)); ctx.lineTo(colX(c), rowY(rowData.length + 1)); ctx.stroke();
+  }
+  for (let r = 0; r <= rowData.length + 1; r++){
+    ctx.beginPath(); ctx.moveTo(colX(0), rowY(r)); ctx.lineTo(colX(dataCols + 1), rowY(r)); ctx.stroke();
+  }
+  /* 外框加粗 */
+  ctx.strokeStyle = '#4E7D4E'; ctx.lineWidth = 3;
+  ctx.strokeRect(colX(0), rowY(0), HW + dataCols * CW, HEAD_H + rowData.length * ROW_H);
+  /* 列头文字 */
+  ctx.fillStyle = '#004737'; ctx.font = `bold 21px ${FONT}`;
+  colHeads.forEach((h, c) => {
+    ctx.fillText(h, colX(c) + (c === 0 ? HW : CW) / 2, rowY(0) + HEAD_H / 2);
+  });
+  /* 数据单元格 */
+  rowData.forEach((row, j) => {
+    ctx.fillStyle = '#004737'; ctx.font = `bold 23px ${FONT}`;
+    ctx.fillText(row.day, colX(0) + HW / 2, rowY(j + 1) + ROW_H / 2);
+    row.cells.forEach((cell, c) => {
+      const x = colX(c + 1), y = rowY(j + 1);
+      if (cell.bg){
+        ctx.fillStyle = cell.bg;
+        ctx.fillRect(x + 2, y + 2, CW - 4, ROW_H - 4);
+      }
+      const text = cell.text || '';
+      if (!text) return;
+      /* 依据字数缩小字号避免溢出 */
+      const fs = text.length > 7 ? 14 : (text.length > 4 ? 17 : 22);
+      ctx.fillStyle = cell.fg || '#333333';
+      ctx.font = `${fs}px ${FONT}`;
+      ctx.fillText(text, x + CW / 2, y + ROW_H / 2);
+    });
+  });
+  /* 下载 PNG */
+  const a = document.createElement('a');
+  a.href = cv.toDataURL('image/png');
+  a.download = filename;
+  a.click();
+  toast('图片已导出');
+}
+/* 汇总课程表数据并导出 */
+function exportKBImg(){
+  if (!Object.keys(kb.grid).length){ toast('课程表还是空的'); return; }
+  const heads = ['星期'];
+  for (let s = 0; s < 4; s++) heads.push(`上午${s+1}`);
+  for (let s = 0; s < kb.pm; s++) heads.push(`下午${s+1}`);
+  const days = kb.sat ? DAYS6 : DAYS5;
+  const rowData = days.map((d, w) => ({
+    day: d,
+    cells: heads.slice(1).map((_, s) => {
+      const t = kb.grid[`${w}-${s}`] || '';
+      const [bg, fg] = t ? colorOf(t) : [null, null];
+      return { text: t, bg, fg };
+    })
+  }));
+  drawTablePNG(kb.title, heads, rowData, `${kb.title}.png`);
+}
+/* 汇总值日表数据并导出 */
+function exportZBImg(){
+  const hasData = Object.values(zb.grid).some(v => v);
+  if (!hasData){ toast('值日表还是空的'); return; }
+  const heads = ['星期', ...zb.tasks];
+  const rowData = DAYS5.map((d, w) => ({
+    day: d,
+    cells: zb.tasks.map((_, i) => ({ text: zb.grid[`${w}-${i}`] || '' }))
+  }));
+  drawTablePNG(zb.title, heads, rowData, `${zb.title}.png`);
+}
+
+/* ================= 视图切换与事件绑定 ================= */
+function switchTab(t){
+  tab = t;
+  $('tabKB').classList.toggle('active', t === 'kb');
+  $('tabZB').classList.toggle('active', t === 'zb');
+  $('kbView').classList.toggle('active', t === 'kb');
+  $('zbView').classList.toggle('active', t === 'zb');
+}
+function bindEvents(){
+  /* 选项卡切换 */
+  $('tabKB').addEventListener('click', () => switchTab('kb'));
+  $('tabZB').addEventListener('click', () => switchTab('zb'));
+
+  /* ---- 课程表 ---- */
+  $('kbTitle').addEventListener('input', () => {
+    kb.title = $('kbTitle').value.trim() || '课程表';
+    const h = $('kbTableWrap').querySelector('.paper-title');
+    if (h) h.textContent = kb.title;
+    saveStore();
+  });
+  $('kbSat').addEventListener('change', () => {
+    kb.sat = $('kbSat').checked;
+    saveStore(); renderKB();
+  });
+  $('kbPm').addEventListener('change', () => {
+    kb.pm = Number($('kbPm').value);
+    saveStore(); renderKB();
+  });
+  $('kbDemo').addEventListener('click', fillKBDemo);
+  $('kbClear').addEventListener('click', () => {
+    kb.grid = {};
+    saveStore(); renderKB();
+    toast('已清空课程表');
+  });
+  $('kbImg').addEventListener('click', exportKBImg);
+  $('kbPrint').addEventListener('click', () => { switchTab('kb'); window.print(); });
+  /* 课程格输入：更新数据 + 上色（事件委托） */
+  $('kbTableWrap').addEventListener('input', e => {
+    const td = e.target.closest('td[data-t="kb"]');
+    if (!td) return;
+    kb.grid[td.dataset.k] = td.textContent.trim();
+    applyCellColor(td);
+    saveStore();
+  });
+  /* 粘贴时只插入纯文本，防止富文本破坏单元格 */
+  $('kbTableWrap').addEventListener('paste', e => {
+    const td = e.target.closest('td[data-t="kb"]');
+    if (!td) return;
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    document.execCommand('insertText', false, text);
+  });
+
+  /* ---- 值日表 ---- */
+  $('zbTitle').addEventListener('input', () => {
+    zb.title = $('zbTitle').value.trim() || '值日表';
+    const h = $('zbTableWrap').querySelector('.paper-title');
+    if (h) h.textContent = zb.title;
+    saveStore();
+  });
+  $('btnAddTask').addEventListener('click', addTask);
+  $('taskInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+  /* 任务 chip 删除（事件委托） */
+  $('taskChips').addEventListener('click', e => {
+    const x = e.target.closest('.x');
+    if (x) delTask(Number(x.dataset.i));
+  });
+  /* 名单 textarea：更新下拉选项 */
+  $('namesArea').addEventListener('input', () => {
+    zb.names = $('namesArea').value.split('\n').map(s => s.trim()).filter(Boolean);
+    updateDatalist();
+    saveStore();
+  });
+  /* 值日格输入（事件委托） */
+  $('zbTableWrap').addEventListener('input', e => {
+    const inp = e.target.closest('input[data-t="zb"]');
+    if (!inp) return;
+    zb.grid[inp.dataset.k] = inp.value.trim();
+    saveStore();
+  });
+  $('zbClear').addEventListener('click', () => {
+    zb.grid = {};
+    saveStore(); renderZB();
+    toast('已清空值日表');
+  });
+  $('zbImg').addEventListener('click', exportZBImg);
+  $('zbPrint').addEventListener('click', () => { switchTab('zb'); window.print(); });
+}
+
+/* ================= 初始化 ================= */
+loadStore();
+$('kbTitle').value = kb.title;
+$('kbSat').checked = !!kb.sat;
+$('kbPm').value = String(kb.pm);
+$('zbTitle').value = zb.title;
+if (zb.names.length) $('namesArea').value = zb.names.join('\n');
+renderKB();
+renderZB();
+renderTaskChips();
+updateDatalist();
+bindEvents();
+</script>
+</body>
+</html>

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>云朵字板贴生成器 · 教室云朵字板贴 A4 打印 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/yunduo.html">
+<meta name="description" content="云朵字板贴生成器：输入文字即可生成带白色粗描边与柔和投影的云朵字板贴，支持按字或按词切分、字号与配色自定义，自动分页排版并 A4 直接打印。支持字体、描边粗细、字间距与每页字数调整，可导入整句标语自动分页，适合教室布置、班牌、欢迎标语与走廊文化墙。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#20312f;--muted:#6b7a78;--line:#e2e9e7;
+  --brand:#2f7d6e;--brand-l:#e9f4f1;--bg:#f3f6f5;--card:#fff;
+  --s:1;
+}
+body{font-family:-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+/* ===== 整体布局：左控制面板 + 右 A4 预览 ===== */
+.app{display:flex;gap:18px;padding:18px;max-width:1360px;margin:0 auto;align-items:flex-start}
+
+/* ===== 左侧控制面板 ===== */
+.panel{width:330px;flex:0 0 330px;background:var(--card);border-radius:14px;padding:18px;box-shadow:0 4px 20px rgba(20,50,45,.07);position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto}
+.panel h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.panel .sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+.field{margin-bottom:16px}
+.field>label{display:block;font-size:13px;font-weight:600;color:#40514e;margin-bottom:7px}
+textarea{width:100%;min-height:82px;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;line-height:1.7;font-family:inherit;outline:none;color:var(--ink);background:#fbfdfc;transition:border-color .2s}
+textarea:focus{border-color:var(--brand)}
+.hint{font-size:11px;color:#93a29f;margin-top:5px;line-height:1.5}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:60px;padding:8px 6px;border:1px solid var(--line);background:#fbfdfc;border-radius:9px;font-size:13px;color:#5a6b68;cursor:pointer;transition:all .18s;font-family:inherit}
+.seg button:hover{border-color:#bcd6d0}
+.seg button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.swatches{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.swatch{width:32px;height:32px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #dde6e3,0 2px 6px rgba(0,0,0,.08);cursor:pointer;transition:transform .15s}
+.swatch:hover{transform:scale(1.1)}
+.swatch.on{box-shadow:0 0 0 2px var(--brand),0 3px 8px rgba(0,0,0,.12);transform:scale(1.05)}
+.color-row{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:#5a6b68}
+input[type=color]{width:44px;height:30px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;padding:2px}
+.actions{display:flex;gap:8px;margin-top:4px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.primary:hover{background:#276a5d}
+.btn.ghost{background:#f0f4f3;color:#5a6b68}
+.btn.ghost:hover{background:#e5ecea}
+.tip{margin-top:12px;font-size:12px;color:#5a6b68;line-height:1.7;background:var(--brand-l);border-radius:9px;padding:9px 11px}
+.tip.warn{background:#fff4e6;color:#9a6420}
+
+/* ===== 右侧预览 ===== */
+.preview{flex:1;min-width:0;padding:0 4px 40px;display:flex;flex-direction:column;align-items:stretch}
+.preview-note{font-size:12px;color:#8fa09d;text-align:center;margin-bottom:10px}
+.pages{display:flex;flex-direction:column;align-items:center}
+
+/* ===== A4 纸面 ===== */
+.page-shell{width:100%;height:calc(297mm * var(--s));display:flex;justify-content:center;margin-bottom:18px}
+.paper{
+  width:210mm;height:297mm;background:#fff;padding:12mm;
+  box-shadow:0 8px 30px rgba(20,50,45,.16);border-radius:1mm;
+  transform:scale(var(--s));transform-origin:top center;
+  flex:0 0 auto;
+}
+.page-body{
+  width:100%;height:273mm;
+  display:grid;gap:5mm;
+}
+.tile{
+  position:relative;border:1.5px dashed #e7b3c4;border-radius:6mm;
+  display:flex;align-items:center;justify-content:center;
+  padding:3mm;overflow:hidden;
+}
+.tile svg{width:100%;height:100%;display:block;overflow:visible}
+.deco{position:absolute;line-height:1;font-size:7mm;user-select:none}
+.deco.a{left:3mm;top:2.5mm;transform:rotate(-12deg)}
+.deco.b{right:3mm;bottom:2.5mm;transform:rotate(14deg)}
+.empty-hint{grid-column:1/-1;grid-row:1/-1;display:flex;align-items:center;justify-content:center;color:#b6c4c1;font-size:4mm;letter-spacing:1mm;border:1.5px dashed #e2e9e7;border-radius:6mm}
+
+/* ===== 打印：只输出板贴页 ===== */
+@media print{
+  @page{size:A4;margin:0}
+  html,body{background:#fff}
+  .panel,.preview-note{display:none !important}
+  .app{display:block;padding:0;margin:0;max-width:none}
+  .preview{padding:0;display:block}
+  .pages{display:block}
+  .page-shell{display:block;height:auto !important;margin:0;page-break-after:always;break-after:page}
+  .page-shell:last-child{page-break-after:auto;break-after:auto}
+  .paper{transform:none !important;box-shadow:none;border-radius:0;margin:0;overflow:hidden;page-break-inside:avoid;height:295mm;padding:11mm 12mm}
+}
+
+/* ===== 窄屏 ===== */
+@media (max-width:980px){
+  .app{flex-direction:column;padding:12px}
+  .panel{width:100%;flex:none;position:static;max-height:none}
+  .preview{width:100%}
+}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">云朵字板贴生成器 · 教室标语 A4 打印</h1>
+<div class="app">
+  <aside class="panel">
+    <h2>云朵字板贴生成器</h2>
+    <p class="sub">输入标语，一键生成圆润膨胀的云朵字板贴，A4 打印后沿虚线剪下即可贴到墙上。</p>
+
+    <div class="field">
+      <label>板贴文字</label>
+      <textarea id="txt" placeholder="例如：欢迎新同学">欢迎新同学</textarea>
+      <div class="hint">按空格可分组，例如「欢迎 新同学 返校」</div>
+    </div>
+
+    <div class="field">
+      <label>切分方式</label>
+      <div class="seg" id="segSplit">
+        <button data-v="char">按字切分</button>
+        <button data-v="word">按空格分组</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>字号</label>
+      <div class="seg" id="segSize">
+        <button data-v="s">小</button>
+        <button data-v="m">中</button>
+        <button data-v="l">大</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>填充色</label>
+      <div class="swatches" id="swatches"></div>
+      <div class="color-row">自定义颜色 <input type="color" id="fillCustom" value="#FF7AA8"></div>
+    </div>
+
+    <div class="field">
+      <label>描边色</label>
+      <div class="seg" id="segStroke">
+        <button data-v="#FFFFFF">白色</button>
+        <button data-v="#FFF3C4">浅黄</button>
+        <button data-v="#D6E8FF">浅蓝</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>角落装饰</label>
+      <div class="seg" id="segDeco">
+        <button data-v="none">无</button>
+        <button data-v="star">⭐ 星星</button>
+        <button data-v="heart">💖 爱心</button>
+        <button data-v="smile">😊 笑脸</button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btnPrint">打印板贴</button>
+      <button class="btn ghost" id="btnReset">恢复示例</button>
+    </div>
+
+    <div class="tip" id="tip">共 5 个板贴 · 每页 6 个 · 共 1 页</div>
+  </aside>
+
+  <main class="preview">
+    <div class="preview-note" id="previewNote">A4 纸面预览（虚线为裁剪线）</div>
+    <div class="pages" id="pages"></div>
+  </main>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var KEY = 'yunduo_state_v1';
+  var DEF = {
+    text: '欢迎新同学',
+    split: 'char',
+    size: 'm',
+    fill: '#FF7AA8',
+    stroke: '#FFFFFF',
+    deco: 'star'
+  };
+  // 6 色预设 + 3 种描边色
+  var PRESETS = ['#FF7AA8', '#FF9F43', '#FFD93D', '#4ECDC4', '#4A9EFF', '#A66BFF'];
+  var DECOS = { none: '', star: '⭐', heart: '💖', smile: '😊' };
+  // 不同字号对应的网格（每页 4~6 个）与基准字号（mm）
+  var GRID = { s: { cols: 3, rows: 2 }, m: { cols: 2, rows: 3 }, l: { cols: 2, rows: 2 } };
+  var BASE_FONT = { s: 19, m: 27, l: 36 };
+
+  var state = Object.assign({}, DEF);
+  try {
+    var saved = localStorage.getItem(KEY);
+    if (saved) state = Object.assign(state, JSON.parse(saved));
+  } catch (e) { /* 隐私模式下忽略存储异常 */ }
+
+  var pagesEl = document.getElementById('pages');
+  var previewNote = document.getElementById('previewNote');
+  var txt = document.getElementById('txt');
+  var swatches = document.getElementById('swatches');
+  var fillCustom = document.getElementById('fillCustom');
+  var tip = document.getElementById('tip');
+
+  // ===== 颜色工具：把十六进制转成带透明度的 rgba =====
+  function rgba(hex, a) {
+    var h = String(hex || '#FFFFFF').replace('#', '');
+    if (h.length === 3) h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
+    var r = parseInt(h.substr(0, 2), 16) || 0;
+    var g = parseInt(h.substr(2, 2), 16) || 0;
+    var b = parseInt(h.substr(4, 2), 16) || 0;
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // 用画布测量文字相对宽度（以字号 1mm 为基准），让长词自动缩小以适配格子
+  var mctx = document.createElement('canvas').getContext('2d');
+  function textRatio(str) {
+    mctx.font = '700 100px "Arial Rounded MT Bold","Yuanti SC","YouYuan","PingFang SC","Microsoft YaHei",sans-serif';
+    return mctx.measureText(str).width / 100;
+  }
+
+  // ===== 把输入文字切成板贴单元 =====
+  function getUnits() {
+    var t = String(state.text || '').replace(/\s+/g, ' ').trim();
+    if (!t) return [];
+    if (state.split === 'word') {
+      return t.split(' ').filter(function (w) { return w.length > 0; });
+    }
+    // 按字切分时忽略空格
+    return Array.from(t.replace(/ /g, ''));
+  }
+
+  // ===== 单块板贴的 SVG =====
+  function tileHTML(unit, cellW, cellH) {
+    var pad = 3;
+    var cw = Math.max(10, cellW - pad * 2); // SVG 内容区宽（mm）
+    var ch = Math.max(10, cellH - pad * 2); // SVG 内容区高（mm）
+    var ratio = textRatio(unit);
+    // 同时受宽、高限制，确定实际字号
+    var f = Math.min(BASE_FONT[state.size], cw / (ratio + 0.22), ch / 1.35);
+    f = Math.max(7, f);
+
+    var strokeW = f * 0.18; // 描边约为字号的 18%
+    var shadow = 'drop-shadow(0 ' + (f * 0.05).toFixed(2) + 'mm ' + (f * 0.07).toFixed(2) + 'mm rgba(0,0,0,.18))';
+    var deco = DECOS[state.deco] || '';
+    var decoHTML = deco
+      ? '<span class="deco a" style="font-size:' + Math.min(8, f * 0.36).toFixed(1) + 'mm">' + deco + '</span>' +
+        '<span class="deco b" style="font-size:' + Math.min(8, f * 0.36).toFixed(1) + 'mm">' + deco + '</span>'
+      : '';
+
+    return '<div class="tile" style="border-color:' + rgba(state.fill, .55) + ';background:' + rgba(state.fill, .10) + '">' +
+      '<svg viewBox="0 0 ' + cw + ' ' + ch + '" preserveAspectRatio="xMidYMid meet">' +
+        '<text x="' + (cw / 2) + '" y="' + (ch / 2) + '" text-anchor="middle" dominant-baseline="central" ' +
+          'font-family="\'Arial Rounded MT Bold\',\'Yuanti SC\',\'YouYuan\',\'PingFang SC\',\'Microsoft YaHei\',sans-serif" ' +
+          'font-weight="800" font-size="' + f + '" fill="' + state.fill + '" stroke="' + state.stroke + '" ' +
+          'stroke-width="' + strokeW + '" stroke-linejoin="round" paint-order="stroke fill" ' +
+          'style="filter:' + shadow + '">' + esc(unit) + '</text>' +
+      '</svg>' + decoHTML +
+    '</div>';
+  }
+
+  // ===== 渲染全部页面 =====
+  function render() {
+    var units = getUnits();
+    var g = GRID[state.size] || GRID.m;
+    var cap = g.cols * g.rows; // 每页板贴数量
+    var cellW = (186 - 5 * (g.cols - 1)) / g.cols;
+    var cellH = (273 - 5 * (g.rows - 1)) / g.rows;
+    var pageCount = Math.max(1, Math.ceil(units.length / cap));
+    var html = '';
+
+    for (var p = 0; p < pageCount; p++) {
+      var slice = units.slice(p * cap, (p + 1) * cap);
+      var body = '';
+      if (!slice.length) {
+        body = '<div class="empty-hint">输入板贴文字后自动生成</div>';
+      } else {
+        body = slice.map(function (u) { return tileHTML(u, cellW, cellH); }).join('');
+      }
+      html += '<div class="page-shell"><div class="paper">' +
+        '<div class="page-body" style="grid-template-columns:repeat(' + g.cols + ',1fr);grid-template-rows:repeat(' + g.rows + ',1fr)">' +
+          body +
+        '</div></div></div>';
+    }
+    pagesEl.innerHTML = html;
+
+    var perPageText = '每页 ' + cap + ' 个';
+    tip.className = 'tip';
+    tip.textContent = '共 ' + units.length + ' 个板贴 · ' + perPageText + ' · 共 ' + pageCount + ' 页' +
+      (state.split === 'char' ? ' · 当前按字切分' : ' · 当前按空格分组');
+    previewNote.textContent = 'A4 纸面预览（虚线为裁剪线） · 共 ' + pageCount + ' 页';
+
+    fitScale();
+  }
+
+  // ===== 预览等比缩放 =====
+  function fitScale() {
+    var wrapW = document.querySelector('.preview').clientWidth - 8;
+    var s = Math.min(1, wrapW / (210 * 96 / 25.4));
+    document.documentElement.style.setProperty('--s', s > 0 ? s : 1);
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* 忽略 */ }
+  }
+
+  // ===== 同步控件显示状态 =====
+  function bindActive(id, val) {
+    Array.prototype.forEach.call(document.querySelectorAll('#' + id + ' button'), function (b) {
+      b.classList.toggle('on', b.dataset.v === val);
+    });
+  }
+
+  function paintSwatches() {
+    Array.prototype.forEach.call(swatches.children, function (b) {
+      b.classList.toggle('on', b.dataset.color.toLowerCase() === state.fill.toLowerCase());
+    });
+  }
+
+  function syncUI() {
+    txt.value = state.text;
+    fillCustom.value = state.fill;
+    bindActive('segSplit', state.split);
+    bindActive('segSize', state.size);
+    bindActive('segStroke', state.stroke);
+    bindActive('segDeco', state.deco);
+    paintSwatches();
+  }
+
+  // ===== 事件绑定 =====
+  PRESETS.forEach(function (color) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'swatch';
+    b.dataset.color = color;
+    b.style.background = color;
+    b.title = color;
+    swatches.appendChild(b);
+  });
+
+  swatches.addEventListener('click', function (e) {
+    var b = e.target.closest('.swatch');
+    if (!b) return;
+    state.fill = b.dataset.color;
+    fillCustom.value = state.fill;
+    paintSwatches();
+    save();
+    render();
+  });
+
+  fillCustom.addEventListener('input', function () {
+    state.fill = fillCustom.value.toUpperCase();
+    paintSwatches();
+    save();
+    render();
+  });
+
+  var timer = null;
+  txt.addEventListener('input', function () {
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      state.text = txt.value;
+      save();
+      render();
+    }, 200);
+  });
+
+  function bindSeg(id, key) {
+    document.getElementById(id).addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b) return;
+      state[key] = b.dataset.v;
+      bindActive(id, b.dataset.v);
+      save();
+      render();
+    });
+  }
+  bindSeg('segSplit', 'split');
+  bindSeg('segSize', 'size');
+  bindSeg('segStroke', 'stroke');
+  bindSeg('segDeco', 'deco');
+
+  document.getElementById('btnPrint').addEventListener('click', function () {
+    window.print();
+  });
+
+  document.getElementById('btnReset').addEventListener('click', function () {
+    state = Object.assign({}, DEF);
+    save();
+    syncUI();
+    render();
+  });
+
+  window.addEventListener('resize', fitScale);
+
+  syncUI();
+  save();
+  render();
+})();
+</script>
+</body>
+</html>

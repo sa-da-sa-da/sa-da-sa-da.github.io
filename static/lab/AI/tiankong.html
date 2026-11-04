@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>古诗填空练习纸 · 默写挖空+答案页 A4 打印 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/tiankong.html">
+<meta name="description" content="古诗填空练习纸生成器：粘贴古诗或课文，按句尾挖空、随机比例挖空或指定字词挖空，自动生成练习页与答案页，支持标题、注释与 A4 打印设置。支持按句、按段或按比例挖空，可设置空格长度与是否保留标点，适合古诗文默写、课文背诵与单元复习。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#2a2320;--muted:#8a7a72;--line:#eee2da;
+  --brand:#9c4221;--brand-l:#fbeee8;--bg:#fbf6f2;--card:#fff;
+}
+body{font-family:-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.app{display:flex;gap:18px;padding:18px;max-width:1360px;margin:0 auto;align-items:flex-start}
+/* ===== 控制面板 ===== */
+.panel{width:330px;flex:0 0 330px;background:var(--card);border-radius:14px;padding:18px;box-shadow:0 4px 20px rgba(90,55,35,.08);position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto}
+.panel h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.panel .sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:13px;font-weight:600;color:#5a4a42;margin-bottom:7px}
+textarea{width:100%;min-height:96px;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;line-height:1.8;font-family:inherit;outline:none;color:var(--ink);background:#fffdfb;transition:border-color .2s}
+textarea:focus{border-color:var(--brand)}
+input[type=text]{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:14px;font-family:inherit;outline:none;color:var(--ink);background:#fffdfb}
+input[type=text]:focus{border-color:var(--brand)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:60px;padding:8px 6px;border:1px solid var(--line);background:#fffdfb;border-radius:9px;font-size:13px;color:#6b5a51;cursor:pointer;transition:all .18s;font-family:inherit}
+.seg button:hover{border-color:#e2cdbf}
+.seg button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.check{display:flex;align-items:center;gap:8px;font-size:13px;color:#5a4a42;cursor:pointer;padding:5px 0}
+.check input{width:16px;height:16px;accent-color:var(--brand);cursor:pointer}
+input[type=range]{width:100%;accent-color:var(--brand)}
+.actions{display:flex;gap:8px;margin-top:4px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.primary:hover{background:#84361a}
+.btn.ghost{background:#f5eee8;color:#6b5a51}
+.tip{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.7;background:var(--brand-l);border-radius:9px;padding:9px 11px}
+/* ===== A4 预览 ===== */
+.preview{flex:1;min-width:0;display:flex;justify-content:center;overflow:auto;padding-bottom:36px}
+.stage{width:210mm;transform-origin:top center}
+.paper{width:210mm;min-height:297mm;background:#fff;padding:15mm 16mm;box-shadow:0 8px 30px rgba(90,55,35,.15);border-radius:1mm}
+.sheet + .sheet{margin-top:10mm}
+.sheet-head{text-align:center;margin-bottom:8mm}
+.sheet-head .t{font-size:6.5mm;font-weight:700;letter-spacing:.5mm;color:#1f1a17}
+.sheet-head .meta{margin-top:4mm;display:flex;justify-content:space-between;font-size:3.6mm;color:#444;border-bottom:.3mm solid #cbc0b8;padding-bottom:2mm}
+.poem-line{font-family:"KaiTi","STKaiti","楷体",serif;font-size:5.6mm;line-height:1;margin-bottom:9mm;letter-spacing:.4mm;color:#1a1a1a;white-space:normal;word-break:break-all}
+.poem-line .blank{display:inline-block;border-bottom:.4mm solid #333;margin:0 .6mm;vertical-align:-.6mm}
+.ans-tag{display:inline-block;font-size:3.2mm;color:#9c4221;background:#fbeee8;border-radius:1mm;padding:.6mm 1.6mm;margin-left:2mm;font-family:inherit;vertical-align:1mm}
+.foot-note{margin-top:6mm;font-size:3.2mm;color:#8a7a72;text-align:center}
+/* ===== 打印 ===== */
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .panel{display:none !important}
+  .app{display:block;padding:0;margin:0;max-width:none}
+  .preview{display:block;padding:0;overflow:visible}
+  .stage{width:auto;transform:none !important;margin:0 !important}
+  .paper{box-shadow:none;border-radius:0;margin:0;padding:15mm 16mm;min-height:0}
+  .sheet{page-break-after:always}
+  .sheet:last-child{page-break-after:auto}
+  .sheet + .sheet{margin-top:0}
+}
+@media (max-width:900px){
+  .app{flex-direction:column;padding:12px}
+  .panel{width:100%;flex:none;position:static;max-height:none}
+  .preview{width:100%}
+}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">古诗填空练习纸 · 挖空与答案页</h1>
+<div class="app">
+  <aside class="panel">
+    <h2>古诗填空练习纸</h2>
+    <p class="sub">粘贴古诗或课文，按规则挖空，自动生成练习页和答案页。</p>
+
+    <div class="field">
+      <label>篇名 / 标题</label>
+      <input type="text" id="txtTitle" placeholder="如：静夜思">
+    </div>
+
+    <div class="field">
+      <label>正文（每行一句）</label>
+      <textarea id="txt" placeholder="例：&#10;床前明月光，疑是地上霜。&#10;举头望明月，低头思故乡。"></textarea>
+    </div>
+
+    <div class="field">
+      <label>挖空方式</label>
+      <div class="seg" id="segMode">
+        <button data-v="tail">句尾挖空</button>
+        <button data-v="ratio">随机比例</button>
+        <button data-v="pick">指定字词</button>
+      </div>
+    </div>
+
+    <div class="field" id="fldTail">
+      <label>每句挖去末尾几字</label>
+      <div class="seg" id="segTail">
+        <button data-v="1">1 字</button>
+        <button data-v="2">2 字</button>
+        <button data-v="3">3 字</button>
+      </div>
+    </div>
+
+    <div class="field" id="fldRatio" style="display:none">
+      <label>挖空比例：<span id="ratioVal">30%</span></label>
+      <input type="range" id="rngRatio" min="10" max="60" step="5" value="30">
+    </div>
+
+    <div class="field" id="fldPick" style="display:none">
+      <label>要挖掉的字（空格分隔）</label>
+      <input type="text" id="txtPick" placeholder="如：月 光 故 乡">
+    </div>
+
+    <div class="field">
+      <label class="check"><input type="checkbox" id="chkAnswer" checked> 附答案页（单独一页）</label>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btnPrint">打印练习纸</button>
+      <button class="btn ghost" id="btnReset">恢复示例</button>
+    </div>
+
+    <div class="tip" id="tip">句尾挖空适合低年级默写，随机比例适合复习自测，指定字词可专门练易错字。</div>
+  </aside>
+
+  <main class="preview">
+    <div class="stage" id="stage">
+      <div class="paper" id="paper"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var KEY = 'tk_state_v1';
+  var DEF = {
+    title: '静夜思',
+    text: '床前明月光，疑是地上霜。\n举头望明月，低头思故乡。',
+    mode: 'tail',
+    tail: 2,
+    ratio: 30,
+    pick: '月 光 故 乡',
+    answer: true
+  };
+  var state = Object.assign({}, DEF);
+  try {
+    var s = localStorage.getItem(KEY);
+    if (s) state = Object.assign(state, JSON.parse(s));
+  } catch (e) {}
+
+  var paper = document.getElementById('paper');
+  var stage = document.getElementById('stage');
+  var elTitle = document.getElementById('txtTitle');
+  var elText = document.getElementById('txt');
+  var elPick = document.getElementById('txtPick');
+  var rngRatio = document.getElementById('rngRatio');
+  var ratioVal = document.getElementById('ratioVal');
+  var chkAnswer = document.getElementById('chkAnswer');
+  var tip = document.getElementById('tip');
+  var MM = 96 / 25.4;
+
+  // 中文标点不算可挖的字
+  var PUNC = /[，。、；：？！""''《》（）…—·　,.;:?!"'()\[\]]/;
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  // 找出每一行里可挖空的字符位置（跳过标点和空格）
+  function charPositions(line){
+    var arr = [];
+    for (var i = 0; i < line.length; i++){
+      if (!PUNC.test(line[i]) && line[i] !== ' ') arr.push(i);
+    }
+    return arr;
+  }
+
+  // 计算需要挖掉的位置集合
+  function blankPositions(lines){
+    var set = {};  // key: "行号-字符位置"
+    if (state.mode === 'tail'){
+      lines.forEach(function(line, li){
+        var pos = charPositions(line);
+        var n = Math.min(state.tail, pos.length);
+        for (var k = 0; k < n; k++){
+          set[li + '-' + pos[pos.length - 1 - k]] = true;
+        }
+      });
+    } else if (state.mode === 'ratio'){
+      var all = [];
+      lines.forEach(function(line, li){
+        charPositions(line).forEach(function(p){ all.push(li + '-' + p); });
+      });
+      var need = Math.round(all.length * state.ratio / 100);
+      // Fisher-Yates 洗牌后取前 need 个
+      for (var i = all.length - 1; i > 0; i--){
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = all[i]; all[i] = all[j]; all[j] = t;
+      }
+      all.slice(0, need).forEach(function(k){ set[k] = true; });
+    } else {
+      var pickSet = {};
+      (state.pick || '').replace(/\s+/g, '').split('').forEach(function(ch){ pickSet[ch] = true; });
+      lines.forEach(function(line, li){
+        for (var i = 0; i < line.length; i++){
+          if (pickSet[line[i]]) set[li + '-' + i] = true;
+        }
+      });
+    }
+    return set;
+  }
+
+  function lineHTML(line, li, set){
+    var out = '';
+    for (var i = 0; i < line.length; i++){
+      var ch = line[i];
+      if (ch === ' '){ out += '&nbsp;'; continue; }
+      if (set[li + '-' + i]){
+        // 每个空位宽度约一个字，用 inline-block + 下划线
+        out += '<span class="blank" style="width:5.2mm"></span>';
+      } else {
+        out += esc(ch);
+      }
+    }
+    return out;
+  }
+
+  function render(){
+    var lines = (state.text || '').split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+    if (!lines.length){
+      paper.innerHTML = '<div class="sheet"><div class="sheet-head"><div class="t">' + esc(state.title || '') + '</div></div><div class="foot-note">请在左侧填写正文</div></div>';
+      fitScale();
+      return;
+    }
+
+    var set = blankPositions(lines);
+    var head =
+      '<div class="sheet-head">' +
+        '<div class="t">' + esc(state.title || '') + '　填空练习</div>' +
+        '<div class="meta"><span>姓名：________________</span><span>班级：________________</span><span>日期：________________</span></div>' +
+      '</div>';
+
+    var exercise = '<div class="sheet">' + head +
+      lines.map(function(line, li){
+        return '<div class="poem-line">' + lineHTML(line, li, set) + '</div>';
+      }).join('') +
+      '<div class="foot-note">共挖空 ' + Object.keys(set).length + ' 处，请根据记忆补齐空缺。</div>' +
+      '</div>';
+
+    var answer = '';
+    if (state.answer){
+      var ansSet = {};  // 答案页不挖空，完整显示原文
+      answer = '<div class="sheet">' +
+        '<div class="sheet-head">' +
+          '<div class="t">' + esc(state.title || '') + '　参考答案</div>' +
+          '<div class="meta"><span>原文对照，用后请勿下发</span></div>' +
+        '</div>' +
+        lines.map(function(line){ return '<div class="poem-line">' + esc(line) + '</div>'; }).join('') +
+        '<div class="foot-note">共 ' + lines.length + ' 句</div>' +
+        '</div>';
+    }
+
+    paper.innerHTML = exercise + answer;
+
+    tip.textContent = '已挖空 ' + Object.keys(set).length + ' 处。' +
+      (state.mode === 'ratio' ? '重新打印会重新随机，建议确认后再点打印。' : '');
+    fitScale();
+  }
+
+  function fitScale(){
+    var w = document.querySelector('.preview').clientWidth - 8;
+    var paperW = 210 * MM;
+    var s = Math.min(1, w / paperW);
+    stage.style.transform = 'scale(' + s + ')';
+    var h = paper.getBoundingClientRect().height / s * s;
+    // 用缩放后高度抵消底部留白
+    stage.style.marginBottom = '0px';
+    document.querySelector('.preview').style.minHeight = Math.ceil(paper.offsetHeight * s + 40) + 'px';
+  }
+
+  function save(){
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function bindActive(id, val){
+    Array.prototype.forEach.call(document.querySelectorAll('#' + id + ' button'), function(b){
+      b.classList.toggle('on', b.dataset.v === String(val));
+    });
+  }
+
+  function syncUI(){
+    elTitle.value = state.title;
+    elText.value = state.text;
+    elPick.value = state.pick;
+    rngRatio.value = state.ratio;
+    ratioVal.textContent = state.ratio + '%';
+    chkAnswer.checked = state.answer;
+    bindActive('segMode', state.mode);
+    bindActive('segTail', state.tail);
+    toggleFields();
+  }
+
+  function toggleFields(){
+    document.getElementById('fldTail').style.display = state.mode === 'tail' ? 'block' : 'none';
+    document.getElementById('fldRatio').style.display = state.mode === 'ratio' ? 'block' : 'none';
+    document.getElementById('fldPick').style.display = state.mode === 'pick' ? 'block' : 'none';
+  }
+
+  var timer = null;
+  elTitle.addEventListener('input', function(){
+    state.title = elTitle.value; save();
+    clearTimeout(timer); timer = setTimeout(render, 220);
+  });
+  elText.addEventListener('input', function(){
+    state.text = elText.value; save();
+    clearTimeout(timer); timer = setTimeout(render, 220);
+  });
+  elPick.addEventListener('input', function(){
+    state.pick = elPick.value; save();
+    clearTimeout(timer); timer = setTimeout(render, 220);
+  });
+  rngRatio.addEventListener('input', function(){
+    state.ratio = Number(rngRatio.value);
+    ratioVal.textContent = state.ratio + '%';
+    save(); render();
+  });
+  chkAnswer.addEventListener('change', function(){
+    state.answer = chkAnswer.checked; save(); render();
+  });
+
+  document.getElementById('segMode').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    state.mode = b.dataset.v; bindActive('segMode', state.mode); toggleFields(); save(); render();
+  });
+  document.getElementById('segTail').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    state.tail = Number(b.dataset.v); bindActive('segTail', state.tail); save(); render();
+  });
+
+  document.getElementById('btnPrint').addEventListener('click', function(){ window.print(); });
+  document.getElementById('btnReset').addEventListener('click', function(){
+    state = Object.assign({}, DEF); save(); syncUI(); render();
+  });
+
+  window.addEventListener('resize', fitScale);
+
+  syncUI();
+  render();
+})();
+</script>
+</body>
+</html>

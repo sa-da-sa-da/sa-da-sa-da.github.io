@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF 试卷拼版 · A3 二合一/四合一打印 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/shijuan.html">
+<meta name="description" content="PDF 试卷拼版工具：把单页 A4 试卷拼成 A3 横向二合一、A4 纵向二合一或 A3 横向四合一，等比缩放居中排版，浏览器本地生成新 PDF 直接下载。支持页面顺序调整、留白边距与缩放比例设置，可批量处理多个 PDF，适合打印试卷、讲义与练习册，文件不上传服务器。">
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#1f2d2b;--muted:#6b7a78;--line:#e2e9e7;
+  --brand:#2f7d6e;--brand-d:#276a5d;--brand-l:#e9f4f1;--bg:#f3f6f5;--card:#fff;
+}
+body{font-family:-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.app{display:flex;gap:18px;padding:18px;max-width:1360px;margin:0 auto;align-items:flex-start}
+
+/* ===== 左侧控制面板 ===== */
+.panel{width:330px;flex:0 0 330px;background:var(--card);border-radius:14px;padding:18px;box-shadow:0 4px 20px rgba(20,50,45,.07);position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto}
+.panel h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.panel .sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.65}
+.field{margin-bottom:16px}
+.field .lbl{display:block;font-size:13px;font-weight:600;color:#40514e;margin-bottom:7px}
+
+/* 文件投放区 */
+.drop{position:relative;border:1.5px dashed #c3d6d1;border-radius:12px;background:#fbfdfc;padding:18px 12px;text-align:center;cursor:pointer;transition:all .2s}
+.drop:hover,.drop.hover{border-color:var(--brand);background:#f2fbf9}
+.drop .ico{font-size:24px;line-height:1.2}
+.drop .dtxt{font-size:13px;color:#4d5f5c;margin-top:4px;font-weight:600}
+.drop .dhint{font-size:11px;color:#95a5a2;margin-top:3px}
+.drop input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.filecard{display:none;margin-top:10px;padding:9px 12px;border-radius:10px;background:var(--brand-l);font-size:12.5px;color:var(--brand-d);line-height:1.6;word-break:break-all}
+.filecard.show{display:block}
+.filecard b{font-weight:700}
+
+/* 拼版方式 */
+.seg{display:flex;flex-direction:column;gap:8px}
+.mode-btn{width:100%;text-align:left;border:1px solid var(--line);background:#fbfdfc;border-radius:10px;padding:9px 12px;cursor:pointer;font-family:inherit;transition:all .18s;color:#5a6b68}
+.mode-btn strong{display:block;font-size:13px;color:#40514e;font-weight:700;line-height:1.5}
+.mode-btn span{display:block;font-size:11px;color:#95a5a2;line-height:1.5}
+.mode-btn:hover{border-color:#bcd6d0}
+.mode-btn.on{background:var(--brand);border-color:var(--brand);box-shadow:0 3px 10px rgba(47,125,110,.25)}
+.mode-btn.on strong,.mode-btn.on span{color:#fff}
+.mode-btn.on span{opacity:.85}
+
+/* 统计卡 */
+.stats{background:var(--brand-l);border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.stat{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:#40514e}
+.stat b{color:var(--brand-d);font-weight:700;font-size:13px}
+
+/* 按钮 */
+.actions{display:flex;gap:8px}
+.btn{flex:1;padding:11px 0;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.primary:hover:not(:disabled){background:var(--brand-d)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{flex:0 0 88px;background:#f0f4f3;color:#5a6b68}
+.btn.ghost:hover{background:#e5ecea}
+
+/* 进度 */
+.progress{display:none;margin-top:12px}
+.progress.show{display:block}
+.bar{height:8px;background:#e6eeec;border-radius:5px;overflow:hidden;margin-bottom:6px}
+.bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#2f7d6e,#63b7a3);transition:width .25s ease}
+.ptxt{font-size:12px;color:#5a6b68}
+
+.status{margin-top:11px;font-size:12.5px;line-height:1.7;color:#5a6b68;min-height:18px}
+.status.err{color:#c0392b;background:#fdf0ee;border-radius:8px;padding:8px 10px}
+.status.ok{color:var(--brand-d);background:var(--brand-l);border-radius:8px;padding:8px 10px}
+.tip{margin-top:12px;font-size:12px;color:#8a6420;line-height:1.7;background:#fff7e6;border-radius:9px;padding:9px 11px}
+
+/* ===== 右侧预览 ===== */
+.preview{flex:1;min-width:0;padding-bottom:36px}
+.canvas{background:var(--card);border-radius:14px;padding:22px;box-shadow:0 4px 20px rgba(20,50,45,.07)}
+.canvas-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;font-size:13px;color:#40514e}
+.canvas-hd b{font-weight:700}
+.badge{font-size:11px;color:var(--brand-d);background:var(--brand-l);border-radius:12px;padding:3px 10px}
+.sheet{position:relative;margin:0 auto;background:#fff;border:1px solid #dfe8e6;border-radius:4px;display:grid;box-shadow:inset 0 0 0 1px #f4f8f7;transition:width .25s ease,height .25s ease}
+.slot{border:1.5px dashed #b9d3cd;border-radius:4px;background:#fbfdfc;display:flex;align-items:center;justify-content:center;color:#a9c2bc;font-size:12px;letter-spacing:.5px}
+.slot.filled{background:#eff7f5;color:#7fa39c}
+.cap{text-align:center;font-size:12px;color:var(--muted);margin-top:14px;line-height:1.7}
+.cap b{color:var(--brand-d)}
+.legend{display:flex;justify-content:center;gap:16px;margin-top:12px;font-size:11.5px;color:#95a5a2;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:5px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--brand);display:inline-block}
+
+@media (max-width:900px){
+  .app{flex-direction:column;padding:12px}
+  .panel{width:100%;flex:none;position:static;max-height:none}
+  .preview{width:100%}
+}
+/* ===== 打印：只输出纸面示意，隐藏控件 ===== */
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff}
+  .panel{display:none !important}
+  .app{display:block;padding:0;margin:0;max-width:none}
+  .canvas{box-shadow:none;padding:0;border-radius:0}
+  .canvas-hd,.cap,.legend{display:none}
+  .sheet{border:0;box-shadow:none}
+}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">PDF 试卷拼版 · A3 二合一 / 四合一</h1>
+<div class="app">
+  <aside class="panel">
+    <h2>PDF 试卷拼版</h2>
+    <p class="sub">把单页 A4 试卷排成 A3 二合一、A4 二合一或 A3 四合一，浏览器内生成新 PDF，文件只在本机处理。</p>
+
+    <div class="field">
+      <label class="lbl">① 选择 PDF 文件</label>
+      <div class="drop" id="drop">
+        <div class="ico">📄</div>
+        <div class="dtxt">点击选择或拖入 PDF</div>
+        <div class="dhint">全程本地处理，不上传服务器</div>
+        <input type="file" id="fileInput" accept=".pdf,application/pdf">
+      </div>
+      <div class="filecard" id="fileCard"></div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">② 拼版方式</label>
+      <div class="seg" id="modeSeg">
+        <button class="mode-btn" data-v="a3-2" type="button"><strong>A3 横向 2 合 1</strong><span>每 2 页并排放进一张 A3</span></button>
+        <button class="mode-btn" data-v="a4-2" type="button"><strong>A4 纵向 2 合 1</strong><span>每 2 页上下叠放，缩放为半页高</span></button>
+        <button class="mode-btn" data-v="a3-4" type="button"><strong>A3 横向 4 合 1</strong><span>每 4 页按 2×2 拼成一张 A3</span></button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span>原文件页数</span><b id="statSrc">—</b></div>
+      <div class="stat"><span>预计输出页数</span><b id="statOut">—</b></div>
+      <div class="stat"><span>输出纸张</span><b id="statPaper">—</b></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btnRun" type="button" disabled>生成并下载</button>
+      <button class="btn ghost" id="btnClear" type="button">清空</button>
+    </div>
+
+    <div class="progress" id="progressWrap">
+      <div class="bar"><i id="progressFill"></i></div>
+      <div class="ptxt" id="progressText">准备中…</div>
+    </div>
+
+    <div class="status" id="status">选择 PDF 后即可生成拼版文件。</div>
+    <div class="tip">加密或受权限保护的 PDF 无法处理；页面按等比缩放居中摆放，不裁切内容，每格之间留 8pt 间隙。</div>
+  </aside>
+
+  <main class="preview">
+    <div class="canvas" id="canvas">
+      <div class="canvas-hd">
+        <span>输出纸面预览 · <b id="hdTitle">A3 横向 2 合 1</b></span>
+        <span class="badge" id="hdBadge">1190.55 × 841.89 pt</span>
+      </div>
+      <div id="sheetWrap"></div>
+      <div class="cap" id="cap">选择左侧 PDF 后开始拼版</div>
+      <div class="legend">
+        <span><i class="dot"></i>每格 = 原始 PDF 的一页</span>
+        <span>等比缩放 · 居中 · 8pt 间隙</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ===== 拼版参数（单位 pt）=====
+  var MODES = {
+    'a3-2': { w: 1190.55, h: 841.89, cols: 2, rows: 1, title: 'A3 横向 2 合 1', per: 2 },
+    'a4-2': { w: 595.28, h: 841.89, cols: 1, rows: 2, title: 'A4 纵向 2 合 1', per: 2 },
+    'a3-4': { w: 1190.55, h: 841.89, cols: 2, rows: 2, title: 'A3 横向 4 合 1', per: 4 }
+  };
+  var PAD = 8;   // 页边距
+  var GAP = 8;   // 格间距
+  var KEY = 'sj_pinban_v1';
+
+  var state = { mode: 'a3-2' };
+  try {
+    var saved = localStorage.getItem(KEY);
+    if (saved) state = Object.assign(state, JSON.parse(saved));
+  } catch (e) { /* 隐私模式下忽略 */ }
+
+  var srcDoc = null;
+  var srcName = '';
+
+  var elDrop = document.getElementById('drop');
+  var elFile = document.getElementById('fileInput');
+  var elFileCard = document.getElementById('fileCard');
+  var elModeSeg = document.getElementById('modeSeg');
+  var statSrc = document.getElementById('statSrc');
+  var statOut = document.getElementById('statOut');
+  var statPaper = document.getElementById('statPaper');
+  var btnRun = document.getElementById('btnRun');
+  var btnClear = document.getElementById('btnClear');
+  var progWrap = document.getElementById('progressWrap');
+  var progFill = document.getElementById('progressFill');
+  var progText = document.getElementById('progressText');
+  var elStatus = document.getElementById('status');
+  var sheetWrap = document.getElementById('sheetWrap');
+  var cap = document.getElementById('cap');
+  var hdTitle = document.getElementById('hdTitle');
+  var hdBadge = document.getElementById('hdBadge');
+  var elCanvas = document.getElementById('canvas');
+
+  // ===== 通用工具 =====
+  function setStatus(kind, msg) {
+    elStatus.className = 'status' + (kind ? ' ' + kind : '');
+    elStatus.textContent = msg;
+  }
+
+  function setProgress(pct, text) {
+    progWrap.classList.add('show');
+    progFill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+    progText.textContent = text;
+  }
+
+  function hideProgress() {
+    progWrap.classList.remove('show');
+    progFill.style.width = '0%';
+  }
+
+  function tick() {
+    return new Promise(function (r) { setTimeout(r, 0); });
+  }
+
+  // 用 FileReader 读取本地文件为 ArrayBuffer（不经过网络）
+  function readArrayBuffer(file) {
+    return new Promise(function (resolve, reject) {
+      var fr = new FileReader();
+      fr.onload = function () { resolve(fr.result); };
+      fr.onerror = function () { reject(new Error('读取本地文件失败，请重试')); };
+      fr.readAsArrayBuffer(file);
+    });
+  }
+
+  function downloadBlob(blob, filename) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  }
+
+  // 把底层异常翻译成中文提示
+  function friendlyError(e) {
+    var m = ((e && e.message) || String(e) || '').toLowerCase();
+    if (m.indexOf('encrypt') >= 0 || m.indexOf('encrypted') >= 0) {
+      return '该 PDF 已加密或带权限保护，无法拼版。请先用 PDF 阅读器解除密码后再试。';
+    }
+    if (m.indexOf('invalid pdf') >= 0 || m.indexOf('parse') >= 0 || m.indexOf('cannot parse') >= 0) {
+      return 'PDF 解析失败，文件可能已损坏或不是标准 PDF 文件。';
+    }
+    if (m.indexOf('memory') >= 0 || m.indexOf('allocation') >= 0) {
+      return '文件过大，浏览器内存不足。建议先拆分 PDF 再拼版。';
+    }
+    return '处理失败：' + ((e && e.message) || '未知错误');
+  }
+
+  // ===== 纸面预览（示意图）=====
+  function renderPreview() {
+    var cfg = MODES[state.mode];
+    hdTitle.textContent = cfg.title;
+    hdBadge.textContent = cfg.w.toFixed(2) + ' × ' + cfg.h.toFixed(2) + ' pt';
+
+    var boxW = Math.min(Math.max(elCanvas.clientWidth - 44, 240), 820);
+    var sw = boxW;
+    var sh = sw * cfg.h / cfg.w;
+    // A4 纵向时限制高度，避免滚动太远
+    if (sh > 600) { sh = 600; sw = sh * cfg.w / cfg.h; }
+
+    var html = '<div class="sheet" id="sheet" style="width:' + Math.round(sw) + 'px;height:' + Math.round(sh) +
+               'px;grid-template-columns:repeat(' + cfg.cols + ',1fr);grid-template-rows:repeat(' + cfg.rows +
+               ',1fr);gap:' + GAP + 'px;padding:' + PAD + 'px">';
+    for (var i = 0; i < cfg.per; i++) {
+      var filled = srcDoc && i === 0;
+      html += '<div class="slot' + (filled ? ' filled' : '') + '">第 ' + (i + 1) + ' 格</div>';
+    }
+    html += '</div>';
+    sheetWrap.innerHTML = html;
+
+    var total = srcDoc ? srcDoc.getPageCount() : 0;
+    statSrc.textContent = total ? total + ' 页' : '—';
+    statOut.textContent = total ? Math.ceil(total / cfg.per) + ' 页' : '—';
+    statPaper.textContent = cfg.title;
+
+    cap.innerHTML = total
+      ? '当前文件 <b>' + total + '</b> 页，将输出 <b>' + Math.ceil(total / cfg.per) + '</b> 张 ' +
+        (cfg.w > cfg.h ? 'A3 横向' : 'A4 纵向') + '纸（每张 ' + cfg.per + ' 页）'
+      : '选择左侧 PDF 后开始拼版';
+  }
+
+  function syncModeUI() {
+    var btns = elModeSeg.querySelectorAll('button');
+    Array.prototype.forEach.call(btns, function (b) {
+      b.classList.toggle('on', b.dataset.v === state.mode);
+    });
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  // ===== 读取 PDF =====
+  function handleFile(file) {
+    if (!file) return;
+    if (!/\.pdf$/i.test(file.name) && file.type !== 'application/pdf') {
+      setStatus('err', '请选择 .pdf 格式的文件');
+      return;
+    }
+    if (typeof PDFLib === 'undefined') {
+      setStatus('err', '网络异常，请刷新重试');
+      return;
+    }
+    srcDoc = null;
+    btnRun.disabled = true;
+    setStatus('', '正在读取 PDF…');
+    readArrayBuffer(file).then(function (buf) {
+      return PDFLib.PDFDocument.load(buf).then(function (doc) {
+        srcDoc = doc;
+        srcName = file.name;
+        var sizeMB = (file.size / 1048576).toFixed(2);
+        elFileCard.className = 'filecard show';
+        elFileCard.innerHTML = '<b>' + escapeHtml(file.name) + '</b><br>大小 ' + sizeMB + ' MB · 共 ' +
+          doc.getPageCount() + ' 页';
+        btnRun.disabled = false;
+        setStatus('ok', '读取成功，可以生成拼版文件。');
+        renderPreview();
+      });
+    }).catch(function (e) {
+      srcDoc = null;
+      btnRun.disabled = true;
+      elFileCard.className = 'filecard';
+      setStatus('err', friendlyError(e));
+      renderPreview();
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // ===== 生成拼版 PDF =====
+  function run() {
+    if (!srcDoc) { setStatus('err', '请先选择 PDF 文件'); return; }
+    if (typeof PDFLib === 'undefined') { setStatus('err', '网络异常，请刷新重试'); return; }
+
+    var cfg = MODES[state.mode];
+    var total = srcDoc.getPageCount();
+    var outCount = Math.ceil(total / cfg.per);
+
+    btnRun.disabled = true;
+    setStatus('', '正在生成拼版…');
+    setProgress(2, '正在新建文档…');
+
+    try {
+      // 修正：pdf-lib 的 PDFDocument.create() 是同步方法，直接返回文档对象，不能接 .then
+      var outDoc = PDFLib.PDFDocument.create();
+      // 一次性批量嵌入全部源页，避免重复解析
+      var indices = [];
+      for (var i = 0; i < total; i++) indices.push(i);
+      Promise.resolve(outDoc.embedPdf(srcDoc, indices))
+        .then(function (pages) {
+          return loopPages(outDoc, pages, cfg, total, outCount);
+        })
+        .then(function (out) {
+          setProgress(99, '正在写入 PDF 文件…');
+          return out.save();
+        })
+        .then(function (bytes) {
+          var blob = new Blob([bytes], { type: 'application/pdf' });
+          var base = srcName.replace(/\.pdf$/i, '') || '试卷';
+          var filename = base + '_拼版.pdf';
+          downloadBlob(blob, filename);
+          setProgress(100, '完成，共 ' + outCount + ' 页，已触发下载');
+          setStatus('ok', '已生成 ' + outCount + ' 页拼版文件：' + filename);
+          btnRun.disabled = false;
+        })
+        .catch(function (e) {
+          console.error(e);
+          setStatus('err', friendlyError(e));
+          setProgress(0, '生成中断');
+          btnRun.disabled = false;
+        });
+    } catch (e) {
+      console.error(e);
+      setStatus('err', friendlyError(e));
+      btnRun.disabled = false;
+    }
+  }
+
+  // 逐页拼装，中间让出主线程以便刷新进度条
+  function loopPages(outDoc, embedded, cfg, total, outCount) {
+    var pad = PAD, gap = GAP;
+    var availW = cfg.w - pad * 2 - gap * (cfg.cols - 1);
+    var availH = cfg.h - pad * 2 - gap * (cfg.rows - 1);
+    var cw = availW / cfg.cols;
+    var ch = availH / cfg.rows;
+
+    function step(p) {
+      if (p >= outCount) return Promise.resolve(outDoc);
+      var page = outDoc.addPage([cfg.w, cfg.h]);
+      for (var k = 0; k < cfg.per; k++) {
+        var idx = p * cfg.per + k;
+        if (idx >= total) break;
+        var ep = embedded[idx];
+        // 等比缩放，保证整页完整放下
+        var s = Math.min(cw / ep.width, ch / ep.height);
+        var dw = ep.width * s;
+        var dh = ep.height * s;
+        var col = k % cfg.cols;
+        var row = Math.floor(k / cfg.cols);
+        var cellX = pad + col * (cw + gap);
+        var cellTop = cfg.h - pad - row * (ch + gap);
+        page.drawPage(ep, {
+          x: cellX + (cw - dw) / 2,
+          y: cellTop - ch + (ch - dh) / 2,
+          width: dw,
+          height: dh
+        });
+      }
+      setProgress(Math.round((p + 1) / outCount * 95), '正在拼第 ' + (p + 1) + ' / ' + outCount + ' 页');
+      return tick().then(function () { return step(p + 1); });
+    }
+    return step(0);
+  }
+
+  // ===== 事件绑定 =====
+  elFile.addEventListener('change', function () {
+    if (elFile.files && elFile.files.length) handleFile(elFile.files[0]);
+  });
+
+  elDrop.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    elDrop.classList.add('hover');
+  });
+  elDrop.addEventListener('dragleave', function () {
+    elDrop.classList.remove('hover');
+  });
+  elDrop.addEventListener('drop', function (e) {
+    e.preventDefault();
+    elDrop.classList.remove('hover');
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+
+  elModeSeg.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.mode = b.dataset.v;
+    save();
+    syncModeUI();
+    renderPreview();
+  });
+
+  btnRun.addEventListener('click', run);
+
+  btnClear.addEventListener('click', function () {
+    srcDoc = null;
+    srcName = '';
+    elFile.value = '';
+    elFileCard.className = 'filecard';
+    elFileCard.innerHTML = '';
+    btnRun.disabled = true;
+    hideProgress();
+    setStatus('', '选择 PDF 后即可生成拼版文件。');
+    renderPreview();
+  });
+
+  window.addEventListener('resize', renderPreview);
+
+  // ===== 初始化 =====
+  syncModeUI();
+  renderPreview();
+  if (typeof PDFLib === 'undefined') {
+    setStatus('err', '网络异常，请刷新重试');
+  }
+})();
+</script>
+</body>
+</html>

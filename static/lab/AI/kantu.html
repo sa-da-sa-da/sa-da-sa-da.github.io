@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>看图写话练习纸 · 图片+横线稿纸 A4 打印 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/kantu.html">
+<meta name="description" content="看图写话练习纸生成器：上传一张图片，自动排成 A4 写话纸，可设置横线行数、提示词与页头信息，图片与文字只在本地处理，免注册、不上传服务器。支持一次上传多张图片分别生成，可加标题、词语提示与评分栏，适合低年级看图写话、作文起步训练与家庭作业打印。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#2b2a26;--muted:#7f7c72;--line:#eee9dd;
+  --brand:#5c7c3a;--brand-l:#eef4e6;--bg:#f7f5ee;--card:#fff;
+}
+body{font-family:-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.app{display:flex;gap:18px;padding:18px;max-width:1360px;margin:0 auto;align-items:flex-start}
+/* ===== 面板 ===== */
+.panel{width:320px;flex:0 0 320px;background:var(--card);border-radius:14px;padding:18px;box-shadow:0 4px 20px rgba(70,70,40,.08);position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto}
+.panel h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.panel .sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:13px;font-weight:600;color:#4d4c40;margin-bottom:7px}
+input[type=text]{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:14px;font-family:inherit;outline:none;color:var(--ink);background:#fffefb}
+input[type=text]:focus{border-color:var(--brand)}
+textarea{width:100%;min-height:60px;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;line-height:1.7;font-family:inherit;outline:none;color:var(--ink);background:#fffefb}
+textarea:focus{border-color:var(--brand)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:58px;padding:8px 6px;border:1px solid var(--line);background:#fffefb;border-radius:9px;font-size:13px;color:#5c5b4d;cursor:pointer;transition:all .18s;font-family:inherit}
+.seg button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.check{display:flex;align-items:center;gap:8px;font-size:13px;color:#4d4c40;cursor:pointer;padding:5px 0}
+.check input{width:16px;height:16px;accent-color:var(--brand);cursor:pointer}
+.upload{border:2px dashed #d9d9cb;border-radius:12px;padding:22px 10px;text-align:center;cursor:pointer;transition:all .2s;background:#fcfbf7}
+.upload:hover{border-color:var(--brand);background:var(--brand-l)}
+.upload .ico{font-size:30px;display:block;margin-bottom:6px}
+.upload .tx{font-size:13px;color:#6d6c5f}
+.upload input{display:none}
+.thumb{margin-top:10px;display:none}
+.thumb img{width:100%;border-radius:10px;border:1px solid var(--line)}
+.thumb.show{display:block}
+.actions{display:flex;gap:8px;margin-top:4px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.primary:hover{background:#4b6a2f}
+.btn.ghost{background:#f0eee6;color:#5c5b4d}
+.tip{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.7;background:var(--brand-l);border-radius:9px;padding:9px 11px}
+/* ===== 纸面 ===== */
+.preview{flex:1;min-width:0;display:flex;justify-content:center;overflow:auto;padding-bottom:36px}
+.stage{width:210mm;transform-origin:top center}
+.paper{width:210mm;min-height:297mm;background:#fff;padding:14mm 16mm;box-shadow:0 8px 30px rgba(70,70,40,.14);border-radius:1mm;display:flex;flex-direction:column}
+.p-head{text-align:center;margin-bottom:6mm}
+.p-head .t{font-size:7mm;font-weight:700;letter-spacing:1.5mm;color:#22211c}
+.p-meta{display:flex;justify-content:space-between;font-size:3.6mm;color:#444;border-bottom:.3mm solid #cfcec2;padding-bottom:2mm;margin-bottom:5mm}
+.img-wrap{display:flex;justify-content:center;margin-bottom:4mm}
+.img-wrap img{max-width:100%;max-height:88mm;border:.4mm solid #b9b8ad;border-radius:1.5mm;object-fit:contain}
+.img-ph{width:120mm;height:72mm;border:.4mm dashed #c9c8bc;border-radius:2mm;display:flex;align-items:center;justify-content:center;color:#a5a49a;font-size:4mm;background:#fcfcfa}
+.hint-line{font-size:3.4mm;color:#6b6a5e;margin-bottom:3mm;line-height:1.7}
+.hint-line b{color:#5c7c3a}
+.lines{flex:1;display:flex;flex-direction:column;justify-content:flex-start}
+.wline{height:10mm;border-bottom:.35mm solid #c4c3b7}
+.wline.first{border-top:.35mm solid #c4c3b7}
+.p-foot{margin-top:4mm;font-size:3mm;color:#a5a49a;text-align:center}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .panel{display:none !important}
+  .app{display:block;padding:0;margin:0;max-width:none}
+  .preview{display:block;padding:0;overflow:visible}
+  .stage{width:auto;transform:none !important;margin:0 !important}
+  .paper{box-shadow:none;border-radius:0;margin:0;min-height:295mm}
+  .lines{page-break-inside:avoid}
+}
+@media (max-width:900px){
+  .app{flex-direction:column;padding:12px}
+  .panel{width:100%;flex:none;position:static;max-height:none}
+  .preview{width:100%}
+}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">看图写话练习纸 · 图片与横线稿纸</h1>
+<div class="app">
+  <aside class="panel">
+    <h2>看图写话练习纸</h2>
+    <p class="sub">上传一张图，自动排成 A4 写话纸。图片只在你的浏览器里处理，不会上传。</p>
+
+    <div class="field">
+      <label>图片</label>
+      <label class="upload" for="fileImg">
+        <span class="ico">🖼</span>
+        <span class="tx">点击选择图片（JPG / PNG）</span>
+        <input type="file" id="fileImg" accept="image/*">
+      </label>
+      <div class="thumb" id="thumb"><img id="thumbImg" alt="已选图片"></div>
+    </div>
+
+    <div class="field">
+      <label>标题</label>
+      <input type="text" id="txtTitle" placeholder="如：看图写话">
+    </div>
+
+    <div class="field">
+      <label>书写行数</label>
+      <div class="seg" id="segLines">
+        <button data-v="8">8 行</button>
+        <button data-v="10">10 行</button>
+        <button data-v="12">12 行</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>提示词（可留空）</label>
+      <textarea id="txtHint" placeholder="如：什么时候？谁？在哪里？做什么？"></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btnPrint">打印练习纸</button>
+      <button class="btn ghost" id="btnClearImg">清除图片</button>
+    </div>
+
+    <div class="tip">图片较大时会自动压缩到适合打印的尺寸。如果提示未保存到本地，刷新后重新上传即可。</div>
+  </aside>
+
+  <main class="preview">
+    <div class="stage" id="stage">
+      <div class="paper" id="paper"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var KEY = 'kt_state_v1';
+  var DEF = {
+    title: '看图写话',
+    lines: 10,
+    hint: '什么时候？谁？在哪里？做什么？',
+    img: ''
+  };
+  var state = Object.assign({}, DEF);
+  var savedOK = true;
+  try {
+    var s = localStorage.getItem(KEY);
+    if (s) state = Object.assign(state, JSON.parse(s));
+  } catch (e) {}
+
+  var paper = document.getElementById('paper');
+  var stage = document.getElementById('stage');
+  var elTitle = document.getElementById('txtTitle');
+  var elHint = document.getElementById('txtHint');
+  var fileImg = document.getElementById('fileImg');
+  var thumb = document.getElementById('thumb');
+  var thumbImg = document.getElementById('thumbImg');
+  var MM = 96 / 25.4;
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function save(){
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+      savedOK = true;
+    } catch (e) {
+      // 图片过大超出配额：去掉图片再存一次设置
+      savedOK = false;
+      try {
+        var copy = Object.assign({}, state);
+        copy.img = '';
+        localStorage.setItem(KEY, JSON.stringify(copy));
+      } catch (e2) {}
+    }
+  }
+
+  function render(){
+    var linesHTML = '';
+    for (var i = 0; i < state.lines; i++){
+      linesHTML += '<div class="wline' + (i === 0 ? ' first' : '') + '"></div>';
+    }
+
+    var imgHTML = state.img
+      ? '<div class="img-wrap"><img src="' + state.img + '" alt="写话图片"></div>'
+      : '<div class="img-wrap"><div class="img-ph">在左侧上传一张图片</div></div>';
+
+    var hintHTML = (state.hint || '').trim()
+      ? '<div class="hint-line"><b>提示：</b>' + esc(state.hint) + '</div>'
+      : '';
+
+    paper.innerHTML =
+      '<div class="p-head"><div class="t">' + esc(state.title || '看图写话') + '</div></div>' +
+      '<div class="p-meta"><span>姓名：____________</span><span>班级：____________</span><span>日期：____________</span></div>' +
+      imgHTML + hintHTML +
+      '<div class="lines">' + linesHTML + '</div>' +
+      '<div class="p-foot">' + (savedOK ? '' : '图片较大，本次未保存到本地，刷新后需重新上传') + '</div>';
+
+    if (state.img) {
+      thumbImg.src = state.img;
+      thumb.classList.add('show');
+    } else {
+      thumb.classList.remove('show');
+      thumbImg.removeAttribute('src');
+    }
+
+    fitScale();
+  }
+
+  function fitScale(){
+    var w = document.querySelector('.preview').clientWidth - 8;
+    var s = Math.min(1, w / (210 * MM));
+    stage.style.transform = 'scale(' + s + ')';
+    document.querySelector('.preview').style.minHeight = Math.ceil(paper.offsetHeight * s + 40) + 'px';
+  }
+
+  // 图片压缩：最长边不超过 1400px，转 JPEG 降低体积
+  function compress(file, cb){
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function(){
+      var maxSide = 1400;
+      var w = img.naturalWidth, h = img.naturalHeight;
+      var scale = Math.min(1, maxSide / Math.max(w, h));
+      var cw = Math.round(w * scale), ch = Math.round(h * scale);
+      var cv = document.createElement('canvas');
+      cv.width = cw; cv.height = ch;
+      var ctx = cv.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.drawImage(img, 0, 0, cw, ch);
+      var data;
+      try { data = cv.toDataURL('image/jpeg', 0.82); }
+      catch (e) { data = ''; }
+      URL.revokeObjectURL(url);
+      cb(data);
+    };
+    img.onerror = function(){
+      URL.revokeObjectURL(url);
+      cb('');
+    };
+    img.src = url;
+  }
+
+  function bindActive(id, val){
+    Array.prototype.forEach.call(document.querySelectorAll('#' + id + ' button'), function(b){
+      b.classList.toggle('on', b.dataset.v === String(val));
+    });
+  }
+
+  // ===== 事件 =====
+  fileImg.addEventListener('change', function(){
+    var f = fileImg.files && fileImg.files[0];
+    if (!f) return;
+    if (!/^image\//.test(f.type)){
+      alert('请选择图片文件');
+      return;
+    }
+    compress(f, function(data){
+      state.img = data;
+      save();
+      render();
+      fileImg.value = '';
+    });
+  });
+
+  elTitle.addEventListener('input', function(){
+    state.title = elTitle.value;
+    save();
+    render();
+  });
+
+  elHint.addEventListener('input', function(){
+    state.hint = elHint.value;
+    save();
+    render();
+  });
+
+  document.getElementById('segLines').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    state.lines = Number(b.dataset.v);
+    bindActive('segLines', state.lines);
+    save();
+    render();
+  });
+
+  document.getElementById('btnClearImg').addEventListener('click', function(){
+    state.img = '';
+    save();
+    render();
+  });
+
+  document.getElementById('btnPrint').addEventListener('click', function(){ window.print(); });
+
+  window.addEventListener('resize', fitScale);
+
+  // 初始化
+  elTitle.value = state.title;
+  elHint.value = state.hint;
+  bindActive('segLines', state.lines);
+  render();
+})();
+</script>
+</body>
+</html>

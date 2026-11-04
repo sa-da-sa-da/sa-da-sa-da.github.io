@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>期末评语生成器 · 学生评语一键生成/批量导出 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/pingyu.html">
+<meta name="description" content="期末评语生成器：按性别、表现维度与整体基调一键生成三段式学生期末评语，内置同义句库随机组合避免雷同，支持全班名单批量配置、单条复制与 TXT 导出，数据保存在本地浏览器，是班主任期末写评语的省时帮手。">
+<style>
+/* ===== 基础样式 ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --g-deep:#004737;      /* 主深绿 */
+  --g-mid:#2E7D32;       /* 强调绿 */
+  --g-bg:#EAF6E8;        /* 浅绿背景 */
+  --card:#ffffff;        /* 卡片底色 */
+  --radius:12px;
+  --shadow:0 2px 10px rgba(0,60,30,.08);
+  --line:#e4ede4;
+}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#d7efd2 0%,#eaf6e8 55%,#dceee6 100%);min-height:100vh;color:#333}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px}
+
+/* ===== 头部 ===== */
+header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+h1{font-size:22px;color:var(--g-deep);display:flex;align-items:center;gap:8px}
+.mode-tabs{display:flex;background:#dfe9df;border-radius:20px;padding:3px}
+.mode-tabs button{border:none;padding:7px 20px;border-radius:18px;background:transparent;font-size:14px;font-weight:600;color:#667;cursor:pointer;transition:all .2s}
+.mode-tabs button.active{background:var(--g-deep);color:#fff}
+
+/* ===== 布局与卡片 ===== */
+.layout{display:grid;grid-template-columns:410px 1fr;gap:16px;align-items:start}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.card h2{font-size:15px;color:var(--g-deep);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.card h2 .mini-tip{font-size:12px;font-weight:400;color:#999}
+
+/* ===== 配置区控件 ===== */
+.field{margin-bottom:14px}
+.field-label{font-size:13px;color:#666;margin-bottom:6px;display:block}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg label{cursor:pointer}
+.seg input{display:none}
+.seg .pill{display:inline-block;padding:6px 16px;border-radius:18px;background:#f1f5f1;border:1px solid var(--line);font-size:13px;color:#555;transition:all .2s;user-select:none}
+.seg input:checked+.pill{background:var(--g-deep);border-color:var(--g-deep);color:#fff}
+.name-input{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;outline:none}
+.name-input:focus{border-color:var(--g-mid)}
+
+/* 维度行 */
+.dim-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#fafcf9}
+.dim-check{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;color:#444;cursor:pointer;flex-shrink:0}
+.dim-check input{accent-color:var(--g-mid);width:15px;height:15px;cursor:pointer}
+.lv-group{display:flex;gap:4px}
+.lv-group label{cursor:pointer}
+.lv-group input{display:none}
+.lv-group .lv{display:inline-block;padding:4px 10px;border-radius:12px;font-size:12px;background:#f1f5f1;color:#667;border:1px solid transparent;transition:all .15s;user-select:none}
+.lv-group input:checked+.lv{background:#dff0dc;color:var(--g-deep);border-color:#bcdcb6;font-weight:600}
+.dim-row.off .lv-group{opacity:.35;pointer-events:none}
+
+/* 按钮 */
+.btn{border:none;border-radius:8px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--g-deep);color:#fff}
+.btn-primary:hover{background:#016143}
+.btn-ghost{background:#eef5ee;color:var(--g-deep)}
+.btn-ghost:hover{background:#dff0dc}
+.btn-warn{background:#fff0f0;color:#c62828}
+.btn-warn:hover{background:#ffe3e3}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* ===== 结果区 ===== */
+.result-text{width:100%;min-height:230px;padding:12px;border:1px solid var(--line);border-radius:10px;font-size:15px;line-height:1.9;resize:vertical;outline:none;background:#fffdf5}
+.result-text:focus{border-color:var(--g-mid)}
+.count-line{font-size:12px;color:#999;text-align:right;margin-top:4px}
+
+/* ===== 批量模式 ===== */
+#batchPanel{display:none}
+.roster-area{width:100%;min-height:110px;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:13px;line-height:1.7;resize:vertical;outline:none;font-family:inherit}
+.roster-area:focus{border-color:var(--g-mid)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;max-height:150px;overflow-y:auto}
+.chip{padding:4px 12px;border-radius:14px;background:#f1f5f1;border:1px solid var(--line);font-size:13px;cursor:pointer;transition:all .15s;user-select:none}
+.chip:hover{background:#e8f2e6}
+.chip.active{background:var(--g-deep);color:#fff;border-color:var(--g-deep)}
+.chip .g{font-size:11px;opacity:.75;margin-left:2px}
+.chip.done::after{content:' ✓';color:#43a047;font-weight:700}
+.chip.active.done::after{color:#c8f5c4}
+.batch-cur{font-size:13px;color:var(--g-deep);background:#eef7ec;border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+/* 已评列表 */
+.rec-list{max-height:520px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.rec-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fafcf9}
+.rec-item.editing{border-color:var(--g-mid);background:#f3faf1}
+.rec-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.rec-head b{font-size:14px;color:var(--g-deep)}
+.tag{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
+.tag.good{background:#e8f5e9;color:#2e7d32}
+.tag.fine{background:#e3f2fd;color:#1565c0}
+.tag.todo{background:#fff3e0;color:#e65100}
+.rec-time{font-size:11px;color:#aaa;margin-left:auto}
+.rec-btns{display:flex;gap:6px}
+.rec-btns .btn{padding:3px 9px;font-size:12px;border-radius:6px}
+.rec-text{font-size:13px;line-height:1.8;color:#555}
+.rec-empty{color:#aaa;font-size:13px;text-align:center;padding:24px 0}
+
+/* 提示气泡 */
+#toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(20px);background:rgba(0,71,55,.92);color:#fff;padding:9px 22px;border-radius:22px;font-size:14px;opacity:0;pointer-events:none;transition:all .3s;z-index:99}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* 移动端适配 */
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📝 期末评语生成器</h1>
+    <div class="mode-tabs">
+      <button id="tabSingle" class="active">单个学生</button>
+      <button id="tabBatch">全班批量</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- 左栏：配置面板（单/批共用） -->
+    <div class="card">
+      <h2>⚙️ 学生表现配置 <span class="mini-tip" id="cfgTargetTip">填写姓名后生成</span></h2>
+
+      <div class="field" id="nameField">
+        <label class="field-label">学生姓名</label>
+        <input type="text" id="stuName" class="name-input" placeholder="请输入学生姓名" value="">
+      </div>
+
+      <div class="field">
+        <label class="field-label">性别（影响评语中的「他 / 她」）</label>
+        <div class="seg" id="genderSeg">
+          <label><input type="radio" name="gender" value="male" checked><span class="pill">男 · 他</span></label>
+          <label><input type="radio" name="gender" value="female"><span class="pill">女 · 她</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">表现维度（勾选纳入评语，并选择程度档位）</label>
+        <div id="dimList"><!-- 由 JS 渲染七个维度 --></div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">整体基调</label>
+        <div class="seg" id="toneSeg">
+          <label><input type="radio" name="tone" value="good"><span class="pill">优秀</span></label>
+          <label><input type="radio" name="tone" value="fine" checked><span class="pill">良好</span></label>
+          <label><input type="radio" name="tone" value="todo"><span class="pill">待进步</span></label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnGen">✨ 生成评语</button>
+        <button class="btn btn-ghost" id="btnAgain">🔄 换一句</button>
+        <button class="btn btn-ghost" id="btnSave" style="display:none">💾 保存该生评语</button>
+      </div>
+    </div>
+
+    <!-- 右栏 -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <!-- 单个模式：结果卡 -->
+      <div class="card" id="singlePanel">
+        <h2>📄 评语结果 <span class="mini-tip">生成后可直接在此微调文字</span></h2>
+        <textarea id="resultText" class="result-text" placeholder="点击左侧「生成评语」按钮，这里会出现三段式评语：开头总评 → 具体表现 → 期望结尾。"></textarea>
+        <div class="count-line"><span id="charCount">0</span> 字</div>
+        <div class="btn-row">
+          <button class="btn btn-ghost btn-sm" id="btnCopy">📋 复制评语</button>
+        </div>
+      </div>
+
+      <!-- 批量模式 -->
+      <div id="batchPanel" style="display:flex;flex-direction:column;gap:16px">
+        <!-- 名单管理卡 -->
+        <div class="card">
+          <h2>👥 班级名单 <span class="mini-tip">每行一人，可写「姓名,性别」如：李四,女</span></h2>
+          <textarea id="rosterArea" class="roster-area" placeholder="张三&#10;李四,女&#10;王五,男"></textarea>
+          <div class="btn-row">
+            <button class="btn btn-primary btn-sm" id="btnSaveRoster">📥 解析并保存名单</button>
+            <button class="btn btn-warn btn-sm" id="btnClearRecords">🗑️ 清空已评记录</button>
+            <button class="btn btn-ghost btn-sm" id="btnExport">📤 导出全部评语 TXT</button>
+          </div>
+          <div class="chips" id="rosterChips"></div>
+        </div>
+
+        <!-- 已评列表卡 -->
+        <div class="card">
+          <h2>✅ 已生成评语 <span class="mini-tip" id="recCountTip"></span></h2>
+          <div class="rec-list" id="recList"><div class="rec-empty">还没有评语记录，点击名单中的学生开始配置吧</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ================= 句库 ================= */
+/* 开头总评（按基调，每基调 4 个变体，{姓名} 为占位符） */
+const BANK = {
+  open: {
+    good: [
+      '{姓名}同学，你是老师心目中当之无愧的好学生。',
+      '{姓名}同学，这一学期你的出色表现，老师和同学们都有目共睹。',
+      '{姓名}同学，你用勤奋和智慧，书写了充实而精彩的一学期。',
+      '{姓名}同学，你就像班级里一颗闪亮的小星星，总能带给大家惊喜。'
+    ],
+    fine: [
+      '{姓名}同学，你是一个懂事上进的孩子，各方面表现都比较稳定。',
+      '{姓名}同学，本学期你的表现整体令人满意，若能更进一步就更完美了。',
+      '{姓名}同学，你性格温和、待人诚恳，学习上也在不断努力。',
+      '{姓名}同学，你这学期的表现可圈可点，老师看到了你的努力。'
+    ],
+    todo: [
+      '{姓名}同学，你聪明活泼，身上藏着许多有待发掘的潜力。',
+      '{姓名}同学，老师知道你其实很想进步，只是还需要一些方法和坚持。',
+      '{姓名}同学，你是个善良直率的孩子，本学期还有很大的提升空间。',
+      '{姓名}同学，你机灵可爱，如果能把更多心思放在学习上，一定会让大家刮目相看。'
+    ]
+  },
+  /* 未勾选任何维度时使用的通用中段 */
+  mid: {
+    good: ['课堂上、活动中都表现出色，各方面均衡发展，{姓名}同学用行动诠释了什么叫全面发展。'],
+    fine: ['本学期你稳步前行，各科学习按部就班，集体活动也能积极参与，整体状态平稳向好。'],
+    todo: ['这学期{他她}有用心的时候，也有松懈的时候，状态还有些起伏不定。']
+  },
+  /* 结尾期望（按基调） */
+  end: {
+    good: [
+      '愿你继续保持这份优秀，向着更高的目标展翅飞翔！',
+      '老师期待你在新的学期里百尺竿头，更进一步！',
+      '希望你戒骄戒躁，用勤奋书写更多精彩！',
+      '愿你像一颗恒星，持续发光发热，照亮自己也温暖他人！'
+    ],
+    fine: [
+      '如果你能在课堂上更大胆地展示自己，下学期一定会更上一层楼！',
+      '愿你扬长避短，早日成为那颗最耀眼的星！',
+      '老师相信，只要你再专注一些、再勤奋一些，惊喜就在前方等你！',
+      '希望你保持这份稳扎稳打，让优秀成为一种习惯！'
+    ],
+    todo: [
+      '请记住：勤能补拙，老师期待你新学期的华丽转身！',
+      '希望你早日改掉小毛病，让爸爸妈妈和老师看到一个全新的你！',
+      '老师相信你不是不优秀，只是还没开始发力，加油！',
+      '愿你把心思多放在学习上，用行动证明自己，老师永远为你鼓劲！'
+    ]
+  },
+  /* 各维度句库：levels 内每档至少 4 个同义变体，{他她} 为性别占位符 */
+  dims: {
+    attitude: { A: [
+        '课堂上总是全神贯注，眼睛里闪烁着求知的目光',
+        '对待学习一丝不苟，遇到难题总能主动钻研',
+        '求知欲强，课前预习、课后复习都已养成好习惯',
+        '学习劲头十足，是同学们学习的好榜样'
+      ], B: [
+        '学习态度比较端正，能按时完成各项学习任务',
+        '课堂上大部分时间都能认真听讲，跟着老师的思路走',
+        '对学习有兴趣，只是偶尔还需要老师提醒才能集中注意力',
+        '学习还算踏实，若能更专注一些，收获会更大'
+      ], C: [
+        '学习上还缺乏主动性，需要老师和家长的督促',
+        '上课时注意力容易分散，作业也时常拖延',
+        '对学习的热情还不够，坐不住、静不下心是{他她}最大的拦路虎',
+        '基础有些薄弱，又缺少迎头赶上的决心'
+      ] },
+    discipline: { A: [
+        '严格遵守班级纪律，从不让老师操心',
+        '课堂上坐姿端正、发言积极，是名副其实的纪律标兵',
+        '无论自习还是集会，都能自觉遵守秩序',
+        '律己修身，用行动为班级树立了好榜样'
+      ], B: [
+        '基本能遵守课堂纪律，偶尔会管不住自己的小嘴巴',
+        '纪律表现总体良好，只是上课偶尔会走神',
+        '多数时候能约束自己，还需要学会管住小动作',
+        '能听从老师提醒，遵守纪律的意识正在慢慢增强'
+      ], C: [
+        '课堂上经常管不住自己，小动作比较多',
+        '纪律意识还比较淡薄，时常影响周围同学听讲',
+        '自习课上总是静不下来，需要老师多次提醒',
+        '还没有养成良好的课堂习惯，随意讲话的情况时有发生'
+      ] },
+    homework: { A: [
+        '作业书写工整漂亮，每次都按时高质量完成',
+        '作业本干净整洁、正确率高，常被老师当作范本展示',
+        '对待作业精益求精，从不敷衍了事',
+        '作业完成得又快又好，让老师赏心悦目'
+      ], B: [
+        '作业基本能按时完成，书写还需更加工整',
+        '作业质量时好时坏，认真起来写得非常棒',
+        '能完成作业，但有时质量不高，还有提升的空间',
+        '作业完成情况尚可，粗心大意是丢分的主要原因'
+      ], C: [
+        '作业经常拖欠，书写潦草让人头疼',
+        '对待作业有些应付，偶尔还会缺交或少做',
+        '作业质量较差，错题也没有及时订正',
+        '作业上的偷懒让知识漏洞越积越多'
+      ] },
+    relation: { A: [
+        '与同学相处融洽，热心帮助他人，人缘极好',
+        '待人真诚友善，是大家信任的好伙伴',
+        '乐于助人，同学有困难{他她}总是第一个伸出援手',
+        '性格开朗大方，集体中处处能看到{他她}的热心身影'
+      ], B: [
+        '与同学相处和睦，虽然话不多，但心地善良',
+        '待人温和有礼，能和小伙伴友好相处',
+        '性格偏内向安静，但同学们都很喜欢这样的{他她}',
+        '能融入集体，只是还需要更主动地与同学交流'
+      ] },
+    arts: { A: [
+        '运动场上总能看到{他她}矫健的身影，文艺活动中也毫不怯场',
+        '体育课上活力四射，艺术节上大放异彩',
+        '文体兼修、全面发展，为班级赢得了不少荣誉',
+        '体育文艺样样在行，是班级活动的积极分子'
+      ], B: [
+        '体育文艺活动中表现平稳，也愿意为班级出力',
+        '能积极参加各项活动，只是还缺少一点主动性',
+        '活动课上能看到{他她}参与的身影，虽不抢眼但很认真',
+        '身体素质不错，若能在文体活动中更大胆一些就更好了'
+      ] },
+    labor: { A: [
+        '值日工作认真负责，劳动时从不挑肥拣瘦',
+        '热爱劳动，教室里总能看到{他她}忙碌的身影',
+        '卫生习惯极好，书包、桌面始终整理得井井有条',
+        '是老师的得力小助手，每次大扫除都冲在最前面'
+      ], B: [
+        '能完成分内的值日任务，劳动态度尚可',
+        '基本能做好个人卫生，还需增强集体劳动意识',
+        '劳动时偶有偷懒，但总体能完成任务',
+        '卫生保持方面还需提醒，值日表现时好时坏'
+      ] },
+    progress: { A: [
+        '与开学相比，{他她}的进步是全方位的，老师为你骄傲',
+        '这个学期{他她}像换了个人似的，进步有目共睹',
+        '一步一个脚印，{他她}用自己的努力证明了自己',
+        '成绩和习惯双双提升，{他她}的成长曲线令人欣喜'
+      ], B: [
+        '相比之前，{他她}正在一点一滴地进步着',
+        '虽然进步的速度不算快，但{他她}一直在努力',
+        '能看到{他她}悄悄的改变，稳定的节奏也是一种力量',
+        '细心的老师发现，{他她}的课堂表现正在慢慢变好'
+      ] }
+  }
+};
+
+/* 维度元信息：渲染与生成顺序一致 */
+const DIM_META = [
+  { key:'attitude',   name:'学习态度', levels:[['A','优'],['B','良'],['C','待进步']] },
+  { key:'discipline', name:'课堂纪律', levels:[['A','优'],['B','良'],['C','待进步']] },
+  { key:'homework',   name:'作业质量', levels:[['A','优'],['B','良'],['C','待进步']] },
+  { key:'relation',   name:'同学关系', levels:[['A','友善合群'],['B','温和内向']] },
+  { key:'arts',       name:'体育文艺', levels:[['A','积极活跃'],['B','表现平稳']] },
+  { key:'labor',      name:'劳动卫生', levels:[['A','认真负责'],['B','基本尽责']] },
+  { key:'progress',   name:'进步幅度', levels:[['A','进步明显'],['B','稳步前进']] }
+];
+const DEFAULT_DIMS = ['attitude','discipline','homework','progress']; // 默认勾选的维度
+const TONE_NAME = { good:'优秀', fine:'良好', todo:'待进步' };
+
+/* ================= 全局状态 ================= */
+let mode = 'single';      // single | batch
+let roster = [];          // 批量名单 [{name, gender:'male'|'female'}]
+let records = [];         // 已评记录 [{name,gender,tone,dims,text,time}]
+let curIdx = -1;          // 批量模式当前选中的学生索引
+let editIdx = -1;         // 正在编辑的已评记录索引（-1 表示新增）
+let lastPick = {};        // 记录上次抽取的句索引，避免「换一句」出现原句
+
+/* ================= 常用工具 ================= */
+const $ = id => document.getElementById(id);
+/* 简易提示气泡 */
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+/* 复制文本到剪贴板（含旧浏览器降级方案） */
+function copyText(text){
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>toast('已复制到剪贴板')).catch(()=>fallbackCopy(text));
+  } else { fallbackCopy(text); }
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast('已复制到剪贴板'); }catch(e){ toast('复制失败，请手动复制'); }
+  document.body.removeChild(ta);
+}
+
+/* ================= localStorage ================= */
+const KEY_ROSTER = 'py_roster', KEY_RECORDS = 'py_records';
+function saveStore(){
+  localStorage.setItem(KEY_ROSTER, JSON.stringify(roster));
+  localStorage.setItem(KEY_RECORDS, JSON.stringify(records));
+}
+function loadStore(){
+  try{ roster = JSON.parse(localStorage.getItem(KEY_ROSTER)) || []; }catch(e){ roster = []; }
+  try{ records = JSON.parse(localStorage.getItem(KEY_RECORDS)) || []; }catch(e){ records = []; }
+}
+
+/* ================= 句子抽取 ================= */
+/* 从句库数组随机取一句；带 key 记忆上次索引，重抽时避免与上次相同 */
+function pickFrom(arr, key){
+  if (arr.length === 1) return arr[0];
+  let idx;
+  do { idx = Math.floor(Math.random() * arr.length); }
+  while (key in lastPick && lastPick[key] === idx);
+  lastPick[key] = idx;
+  return arr[idx];
+}
+
+/* ================= 评语组装 ================= */
+/* 三段式：开头总评 → 勾选维度串联 → 期望结尾 */
+function composeText(name, gender, tone, dims){
+  const pron = gender === 'female' ? '她' : '他';
+  const open = pickFrom(BANK.open[tone], 'open').replaceAll('{姓名}', name);
+  const keys = DIM_META.map(d => d.key).filter(k => dims[k]);
+  let mid;
+  if (keys.length){
+    mid = keys.map(k => pickFrom(BANK.dims[k][dims[k]], k)
+      .replaceAll('{他她}', pron)).join('；') + '。';
+  } else {
+    mid = pickFrom(BANK.mid[tone], 'mid').replaceAll('{他她}', pron).replaceAll('{姓名}', name);
+  }
+  const end = pickFrom(BANK.end[tone], 'end');
+  return open + mid + end;
+}
+
+/* ================= 配置面板渲染与读取 ================= */
+/* 渲染七个维度行（复选框 + 程度档位） */
+function renderDims(){
+  const wrap = $('dimList');
+  wrap.innerHTML = DIM_META.map(d => {
+    const lvHtml = d.levels.map(([v, label], i) =>
+      `<label><input type="radio" name="lv-${d.key}" value="${v}" ${i===1?'checked':''}><span class="lv">${label}</span></label>`
+    ).join('');
+    return `<div class="dim-row" data-dim="${d.key}">
+      <label class="dim-check"><input type="checkbox" ${DEFAULT_DIMS.includes(d.key)?'checked':''}>${d.name}</label>
+      <div class="lv-group">${lvHtml}</div>
+    </div>`;
+  }).join('');
+  /* 勾选状态切换档位可用性 */
+  wrap.querySelectorAll('.dim-row').forEach(row => {
+    const cb = row.querySelector('.dim-check input');
+    row.classList.toggle('off', !cb.checked);
+    cb.addEventListener('change', () => row.classList.toggle('off', !cb.checked));
+  });
+}
+/* 读取当前面板配置：性别 / 基调 / 已勾选维度的档位 */
+function collectConfig(){
+  const gender = document.querySelector('input[name="gender"]:checked').value;
+  const tone = document.querySelector('input[name="tone"]:checked').value;
+  const dims = {};
+  document.querySelectorAll('#dimList .dim-row').forEach(row => {
+    const cb = row.querySelector('.dim-check input');
+    if (cb.checked){
+      dims[row.dataset.dim] = row.querySelector('input[type="radio"]:checked').value;
+    }
+  });
+  return { gender, tone, dims };
+}
+/* 将配置回填到面板 */
+function applyConfig(cfg){
+  if (cfg.gender) document.querySelector(`input[name="gender"][value="${cfg.gender}"]`).checked = true;
+  if (cfg.tone) document.querySelector(`input[name="tone"][value="${cfg.tone}"]`).checked = true;
+  document.querySelectorAll('#dimList .dim-row').forEach(row => {
+    const cb = row.querySelector('.dim-check input');
+    const lv = cfg.dims && cfg.dims[row.dataset.dim];
+    cb.checked = !!lv;
+    row.classList.toggle('off', !cb.checked);
+    if (lv) row.querySelector(`input[value="${lv}"]`).checked = true;
+  });
+}
+/* 恢复默认配置 */
+function resetConfig(){
+  applyConfig({ gender:'male', tone:'fine', dims:{} });
+  DEFAULT_DIMS.forEach(k => {
+    const row = document.querySelector(`.dim-row[data-dim="${k}"]`);
+    row.querySelector('.dim-check input').checked = true;
+    row.classList.remove('off');
+  });
+  lastPick = {};
+}
+
+/* ================= 结果区 ================= */
+function setResult(text){
+  $('resultText').value = text;
+  updateCount();
+}
+function updateCount(){
+  $('charCount').textContent = $('resultText').value.replace(/\s/g,'').length;
+}
+
+/* ================= 单个模式 ================= */
+function genSingle(){
+  const name = $('stuName').value.trim() || '该生';
+  const cfg = collectConfig();
+  setResult(composeText(name, cfg.gender, cfg.tone, cfg.dims));
+}
+
+/* ================= 批量模式 ================= */
+/* 解析名单文本：每行「姓名」或「姓名,性别」 */
+function parseRosterText(text){
+  const list = [];
+  text.split('\n').forEach(line => {
+    line = line.trim();
+    if (!line) return;
+    const parts = line.split(/[,，]/);
+    const name = parts[0].trim();
+    if (!name) return;
+    const gender = (parts[1] && parts[1].includes('女')) ? 'female' : 'male';
+    list.push({ name, gender });
+  });
+  return list;
+}
+function saveRoster(){
+  const list = parseRosterText($('rosterArea').value);
+  if (!list.length){ toast('请先在文本框中粘贴名单'); return; }
+  roster = list;
+  curIdx = -1; editIdx = -1;
+  saveStore();
+  renderChips();
+  toast(`已保存 ${list.length} 位学生的名单`);
+}
+/* 渲染名单 chips */
+function renderChips(){
+  const wrap = $('rosterChips');
+  if (!roster.length){
+    wrap.innerHTML = '<span style="font-size:12px;color:#aaa">尚未保存名单</span>';
+    return;
+  }
+  wrap.innerHTML = roster.map((s, i) => {
+    const done = records.some(r => r.name === s.name);
+    return `<span class="chip ${i===curIdx?'active':''} ${done?'done':''}" data-i="${i}">
+      ${s.name}<span class="g">${s.gender==='female'?'女':'男'}</span></span>`;
+  }).join('');
+}
+/* 选中某位学生：有记录则回填编辑，否则恢复默认 */
+function selectStudent(i){
+  curIdx = i;
+  const stu = roster[i];
+  const recIdx = records.findIndex(r => r.name === stu.name);
+  editIdx = recIdx;
+  $('stuName').value = stu.name;
+  if (recIdx >= 0){
+    const r = records[recIdx];
+    applyConfig({ gender:r.gender, tone:r.tone, dims:r.dims });
+    setResult(r.text);
+    toast(`已载入「${stu.name}」的评语，可直接修改后保存`);
+  } else {
+    resetConfig();
+    applyConfig({ gender:stu.gender });
+    setResult('');
+  }
+  renderChips();
+  renderBatchTip();
+  renderRecords();
+}
+/* 批量模式顶部提示条 */
+function renderBatchTip(){
+  const tip = $('cfgTargetTip');
+  if (mode === 'batch' && curIdx >= 0){
+    const stu = roster[curIdx];
+    tip.textContent = `当前正在评：${stu.name}`;
+  } else if (mode === 'batch'){
+    tip.textContent = '请先点击下方名单选择学生';
+  } else {
+    tip.textContent = '填写姓名后生成';
+  }
+}
+/* 渲染已评列表 */
+function renderRecords(){
+  const wrap = $('recList');
+  $('recCountTip').textContent = records.length ? `共 ${records.length} 条` : '';
+  if (!records.length){
+    wrap.innerHTML = '<div class="rec-empty">还没有评语记录，点击名单中的学生开始配置吧</div>';
+    return;
+  }
+  wrap.innerHTML = records.map((r, i) => `
+    <div class="rec-item ${i===editIdx?'editing':''}">
+      <div class="rec-head">
+        <b>${r.name}</b>
+        <span class="tag ${r.tone}">${TONE_NAME[r.tone]}</span>
+        <span class="rec-time">${r.time || ''}</span>
+        <div class="rec-btns">
+          <button class="btn btn-ghost" data-act="copy" data-i="${i}">复制</button>
+          <button class="btn btn-ghost" data-act="edit" data-i="${i}">编辑</button>
+          <button class="btn btn-warn" data-act="del" data-i="${i}">删除</button>
+        </div>
+      </div>
+      <p class="rec-text">${r.text}</p>
+    </div>`).join('');
+}
+/* 批量生成并保存当前学生评语 */
+function saveBatch(){
+  if (editIdx < 0 && curIdx < 0){ toast('请先点击名单选择一位学生'); return; }
+  const name = $('stuName').value.trim();
+  if (!name){ toast('缺少学生姓名'); return; }
+  const cfg = collectConfig();
+  const text = composeText(name, cfg.gender, cfg.tone, cfg.dims);
+  setResult(text);
+  /* 时间戳格式：如 11-03 14:20 */
+  const now = new Date();
+  const time = `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const rec = { name, gender:cfg.gender, tone:cfg.tone, dims:cfg.dims, text, time };
+  if (editIdx >= 0){
+    records[editIdx] = rec;
+    toast(`已更新「${name}」的评语`);
+  } else {
+    records.push(rec);
+    toast(`已保存「${name}」的评语`);
+  }
+  editIdx = -1;
+  saveStore();
+  renderRecords();
+  renderChips();
+  /* 自动跳到下一位未评学生，提高连续录入效率 */
+  const next = roster.findIndex(s => !records.some(r => r.name === s.name));
+  if (next >= 0){ selectStudent(next); }
+  else { renderBatchTip(); }
+}
+/* 导出全部评语为 TXT */
+function exportTxt(){
+  if (!records.length){ toast('暂无评语可导出'); return; }
+  const body = records.map((r, i) =>
+    `${i+1}. ${r.name}（${TONE_NAME[r.tone]}）\n${r.text}`).join('\n\n');
+  const blob = new Blob(['期末学生评语\n\n' + body + '\n'], { type:'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '期末学生评语.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('已导出 TXT 文件');
+}
+
+/* ================= 模式切换 ================= */
+function switchMode(m){
+  mode = m;
+  $('tabSingle').classList.toggle('active', m === 'single');
+  $('tabBatch').classList.toggle('active', m === 'batch');
+  $('singlePanel').style.display = m === 'single' ? '' : 'none';
+  $('batchPanel').style.display = m === 'batch' ? 'flex' : 'none';
+  $('btnSave').style.display = m === 'batch' ? '' : 'none';
+  $('nameField').style.display = m === 'batch' ? 'none' : '';
+  renderBatchTip();
+  if (m === 'batch'){ renderChips(); renderRecords(); }
+}
+
+/* ================= 事件绑定 ================= */
+function bindEvents(){
+  /* 模式切换 */
+  $('tabSingle').addEventListener('click', () => switchMode('single'));
+  $('tabBatch').addEventListener('click', () => switchMode('batch'));
+  /* 单个模式 */
+  $('btnGen').addEventListener('click', () => {
+    if (mode === 'batch') saveBatch(); else genSingle();
+  });
+  $('btnAgain').addEventListener('click', () => {
+    if (mode === 'batch'){ saveBatch(); }
+    else { genSingle(); toast('已重新生成'); }
+  });
+  $('btnSave').addEventListener('click', saveBatch);
+  $('btnCopy').addEventListener('click', () => {
+    const t = $('resultText').value.trim();
+    if (!t){ toast('暂无评语可复制'); return; }
+    copyText(t);
+  });
+  $('resultText').addEventListener('input', updateCount);
+  /* 批量模式 */
+  $('btnSaveRoster').addEventListener('click', saveRoster);
+  $('btnExport').addEventListener('click', exportTxt);
+  $('btnClearRecords').addEventListener('click', () => {
+    if (!records.length){ toast('暂无记录'); return; }
+    if (confirm('确定清空全部已评记录吗？此操作不可恢复。')){
+      records = []; editIdx = -1;
+      saveStore(); renderRecords(); renderChips();
+      toast('已清空记录');
+    }
+  });
+  /* 名单 chip 点击（事件委托） */
+  $('rosterChips').addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (chip) selectStudent(Number(chip.dataset.i));
+  });
+  /* 已评列表按钮（事件委托） */
+  $('recList').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const i = Number(btn.dataset.i);
+    const act = btn.dataset.act;
+    if (act === 'copy'){ copyText(records[i].text); }
+    else if (act === 'edit'){
+      const name = records[i].name;
+      const idx = roster.findIndex(s => s.name === name);
+      if (idx >= 0){ selectStudent(idx); }
+      else {
+        /* 名单中没有该生时直接回填面板 */
+        curIdx = -1; editIdx = i;
+        $('stuName').value = name;
+        applyConfig({ gender:records[i].gender, tone:records[i].tone, dims:records[i].dims });
+        setResult(records[i].text);
+        renderRecords(); renderBatchTip();
+      }
+    }
+    else if (act === 'del'){
+      records.splice(i, 1);
+      if (editIdx === i) editIdx = -1;
+      saveStore(); renderRecords(); renderChips();
+      toast('已删除该条评语');
+    }
+  });
+  /* 批量模式下修改性别要同步回名单 */
+  $('genderSeg').addEventListener('change', () => {
+    if (mode === 'batch' && curIdx >= 0 && editIdx < 0){
+      roster[curIdx].gender = document.querySelector('input[name="gender"]:checked').value;
+      saveStore(); renderChips();
+    }
+  });
+}
+
+/* ================= 初始化 ================= */
+loadStore();
+renderDims();
+resetConfig();
+renderChips();
+renderRecords();
+bindEvents();
+/* 批量名单回显到文本框，便于二次编辑 */
+if (roster.length){
+  $('rosterArea').value = roster.map(s => s.gender === 'female' ? `${s.name},女` : s.name).join('\n');
+}
+</script>
+</body>
+</html>

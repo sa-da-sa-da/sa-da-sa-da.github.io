@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>单位换算练习纸 · 长度质量面积时间换算题打印 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/huansuan.html">
+<meta name="description" content="在线单位换算练习纸生成器：勾选长度、质量、面积、时间、人民币、容积等类别，自动生成单步换算、比较大小与两步换算题目，支持整数或带小数难度，A4 两栏排版并附答案页，一键打印小学单位换算练习。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --main:#2b5f8a;
+  --main-light:#4a86b4;
+  --panel:#f6f9fc;
+  --edge:#e2ecf5;
+  --text:#333;
+  --mute:#8a9aa8;
+}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#eef2f6;color:var(--text);height:100vh;display:flex;overflow:hidden}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* ===== 左侧配置面板 ===== */
+.sidebar{width:312px;flex-shrink:0;background:#fff;box-shadow:2px 0 14px rgba(0,0,0,.07);padding:16px;overflow-y:auto;z-index:5}
+.logo{font-size:18px;font-weight:700;color:var(--main);display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.sec{margin-bottom:12px;padding:12px;background:var(--panel);border:1px solid var(--edge);border-radius:12px}
+.sec-title{font-size:13px;font-weight:700;color:var(--main);margin-bottom:8px}
+.hint{font-size:12px;color:var(--mute);margin-top:8px;line-height:1.6}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.op-chip{display:flex;align-items:center;gap:5px;padding:6px 11px;border:1.5px solid #d8e5f0;border-radius:18px;cursor:pointer;font-size:13px;background:#fff;user-select:none;transition:all .15s}
+.op-chip:has(input:checked){background:var(--main);border-color:var(--main);color:#fff}
+.op-chip input{display:none}
+.seg{display:flex;gap:6px}
+.seg label{flex:1;text-align:center;padding:7px 0;border:1.5px solid #d8e5f0;border-radius:8px;cursor:pointer;font-size:13px;background:#fff;transition:all .15s}
+.seg label:has(input:checked){background:var(--main);border-color:var(--main);color:#fff;font-weight:600}
+.seg input{display:none}
+.switch-row{display:flex;align-items:center;gap:8px;font-size:13px;color:#444;cursor:pointer;margin-bottom:6px}
+.btn{width:100%;padding:11px 0;border:none;border-radius:22px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-bottom:8px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.btn-main{background:linear-gradient(135deg,#2b5f8a,#4a86b4);color:#fff}
+.btn-print{background:#fff;color:var(--main);border:2px solid var(--main)}
+.save-hint{font-size:11px;color:#aaa;text-align:center;margin-top:4px}
+
+/* ===== 右侧 A4 预览 ===== */
+.preview-area{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;align-items:center}
+.slot{margin-bottom:22px}
+.paper{width:210mm;min-height:297mm;background:#fff;padding:14mm 16mm;box-shadow:0 4px 26px rgba(0,0,0,.16);transform-origin:top left}
+.p-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid var(--main);padding-bottom:6px}
+.p-title{font-size:25px;font-weight:800;color:var(--main);letter-spacing:3px}
+.p-meta{font-size:14px;color:#333}
+.fill{display:inline-block;width:64px;border-bottom:1.5px solid #555;margin:0 10px 0 4px}
+.p-sub{font-size:12px;color:#999;margin:6px 0 8mm}
+
+/* ===== 题目列表 ===== */
+.qgrid{display:grid;grid-template-columns:repeat(2,1fr);column-gap:10mm;row-gap:var(--gap,8mm);align-items:start}
+.q{display:flex;gap:4px;align-items:baseline;break-inside:avoid;line-height:1.7}
+.qn{font-size:var(--qfs,14px);font-weight:700;color:var(--main);min-width:22px;flex:0 0 auto}
+.qt{font-size:var(--qfs,14px);color:#222;white-space:nowrap}
+.blk{display:inline-block;width:46px;border-bottom:1.5px solid #555;margin:0 4px}
+.blk.sm{width:26px}
+.ans{color:var(--main);font-weight:700}
+
+/* ===== 提示条 ===== */
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--main);color:#fff;padding:10px 22px;border-radius:22px;font-size:14px;opacity:0;transition:all .3s;pointer-events:none;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== 移动端：上下堆叠 ===== */
+@media (max-width:900px){
+  body{display:block;height:auto;overflow:auto}
+  .sidebar{width:100%;box-shadow:0 2px 10px rgba(0,0,0,.06);border-bottom:1px solid #e6e6e6}
+  .preview-area{height:auto;padding:12px 8px}
+}
+
+/* ===== 打印样式：只打印纸面 ===== */
+@media print{
+  @page{size:A4;margin:12mm}
+  body{display:block;height:auto;overflow:visible;background:#fff}
+  .sidebar,.toast,.save-hint{display:none!important}
+  .preview-area{overflow:visible;display:block;padding:0}
+  .slot{width:auto!important;height:auto!important;margin:0}
+  .paper{transform:none!important;box-shadow:none;width:auto;min-height:0;padding:0;margin:0}
+  .answer-paper{page-break-before:always}
+}
+</style>
+</head>
+<body>
+<h1 class="sr-only">单位换算练习纸生成器</h1>
+
+<!-- 左侧配置面板 -->
+<aside class="sidebar">
+  <div class="logo">📐 单位换算练习纸</div>
+
+  <!-- 类别 -->
+  <div class="sec">
+    <div class="sec-title">📚 类别（可多选）</div>
+    <div class="chips">
+      <label class="op-chip"><input type="checkbox" id="cat_length"><span>长度</span></label>
+      <label class="op-chip"><input type="checkbox" id="cat_mass"><span>质量</span></label>
+      <label class="op-chip"><input type="checkbox" id="cat_area"><span>面积</span></label>
+      <label class="op-chip"><input type="checkbox" id="cat_time"><span>时间</span></label>
+      <label class="op-chip"><input type="checkbox" id="cat_money"><span>人民币</span></label>
+      <label class="op-chip"><input type="checkbox" id="cat_volume"><span>容积</span></label>
+    </div>
+    <div class="hint">长度 km/m/dm/cm/mm；质量 t/kg/g；面积 公顷/m²/dm²/cm²；时间 时/分/秒；人民币 元/角/分；容积 L/mL。</div>
+  </div>
+
+  <!-- 题型 -->
+  <div class="sec">
+    <div class="sec-title">📝 题型（可多选）</div>
+    <div class="chips">
+      <label class="op-chip"><input type="checkbox" id="tp_conv"><span>单步换算</span></label>
+      <label class="op-chip"><input type="checkbox" id="tp_cmp"><span>比较大小</span></label>
+      <label class="op-chip"><input type="checkbox" id="tp_two"><span>两步换算</span></label>
+    </div>
+  </div>
+
+  <!-- 难度 -->
+  <div class="sec">
+    <div class="sec-title">🎚️ 难度</div>
+    <label class="switch-row"><input type="checkbox" id="diff_int"><span>整数换算</span></label>
+    <label class="switch-row" style="margin-bottom:0"><input type="checkbox" id="diff_dec"><span>带小数换算</span></label>
+  </div>
+
+  <!-- 题量 -->
+  <div class="sec">
+    <div class="sec-title">🔢 每页题数</div>
+    <div class="seg">
+      <label><input type="radio" name="count" value="20"><span>20 题</span></label>
+      <label><input type="radio" name="count" value="30"><span>30 题</span></label>
+      <label><input type="radio" name="count" value="40"><span>40 题</span></label>
+    </div>
+  </div>
+
+  <!-- 答案页 -->
+  <div class="sec">
+    <label class="switch-row" style="margin-bottom:0"><input type="checkbox" id="answerChk"><span>附参考答案页（另起一页）</span></label>
+  </div>
+
+  <button class="btn btn-main" id="regenBtn">🔄 重新出题</button>
+  <button class="btn btn-print" id="printBtn">🖨️ 打印</button>
+  <div class="save-hint">配置自动保存在本机浏览器</div>
+</aside>
+
+<!-- 右侧 A4 预览 -->
+<main class="preview-area" id="previewArea">
+  <div class="slot"><div class="paper" id="paperMain"></div></div>
+  <div class="slot" id="slotAns"><div class="paper answer-paper" id="paperAns"></div></div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+var KEY='huansuan_cfg_v1';
+
+/* 默认配置：长度+时间、单步换算、整数、30 题、附答案 */
+var cfg={
+  cats:{length:true,mass:false,area:false,time:true,money:false,volume:false},
+  tp:{conv:true,cmp:false,two:false},
+  diff:{int:true,dec:false},
+  count:30,
+  answer:true
+};
+
+/* ===== 单位定义：f 为换算到基本单位的系数（基准：米/千克/平方米/分/元/升） ===== */
+var CATS={
+  length:{name:'长度',units:[{n:'千米',f:1000},{n:'米',f:1},{n:'分米',f:0.1},{n:'厘米',f:0.01},{n:'毫米',f:0.001}]},
+  mass:{name:'质量',units:[{n:'吨',f:1000},{n:'千克',f:1},{n:'克',f:0.001}]},
+  area:{name:'面积',units:[{n:'公顷',f:10000},{n:'平方米',f:1},{n:'平方分米',f:0.01},{n:'平方厘米',f:0.0001}]},
+  time:{name:'时间',units:[{n:'时',f:60},{n:'分',f:1},{n:'秒',f:1/60}]},
+  money:{name:'人民币',units:[{n:'元',f:1},{n:'角',f:0.1},{n:'分',f:0.01}]},
+  volume:{name:'容积',units:[{n:'升',f:1},{n:'毫升',f:0.001}]}
+};
+
+/* ===== 两步换算（复名数 → 单名数）模板 ===== */
+var TWO=[
+  {cat:'length',u1:'米',u2:'厘米'},
+  {cat:'length',u1:'千米',u2:'米'},
+  {cat:'length',u1:'分米',u2:'厘米'},
+  {cat:'length',u1:'米',u2:'毫米'},
+  {cat:'mass',u1:'千克',u2:'克'},
+  {cat:'mass',u1:'吨',u2:'千克'},
+  {cat:'area',u1:'平方米',u2:'平方分米'},
+  {cat:'time',u1:'时',u2:'分'},
+  {cat:'time',u1:'分',u2:'秒'},
+  {cat:'money',u1:'元',u2:'角'},
+  {cat:'money',u1:'元',u2:'分'},
+  {cat:'money',u1:'角',u2:'分'},
+  {cat:'volume',u1:'升',u2:'毫升'}
+];
+
+/* 预先构建每类的换算对（大单位 → 小单位，倍率为 10 ~ 10000 的整数） */
+var PAIRS={};
+Object.keys(CATS).forEach(function(k){
+  var u=CATS[k].units,arr=[];
+  for(var i=0;i<u.length;i++){
+    for(var j=i+1;j<u.length;j++){
+      var r=Math.round(u[i].f/u[j].f);
+      if(r>=10&&r<=10000)arr.push({from:u[i].n,to:u[j].n,r:r});
+    }
+  }
+  PAIRS[k]=arr;
+});
+
+var questions=[];
+
+function $(id){return document.getElementById(id);}
+/* 闭区间随机整数 */
+function ri(a,b){return a+Math.floor(Math.random()*(b-a+1));}
+function pick(arr){return arr[ri(0,arr.length-1)];}
+
+/* 数字格式化：最多保留 3 位小数，去掉多余的 0 */
+function fmt(n){
+  var r=Math.round(n*1000)/1000;
+  return String(r);
+}
+
+function saveCfg(){try{localStorage.setItem(KEY,JSON.stringify(cfg));}catch(e){}}
+function loadCfg(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(!raw)return;
+    var o=JSON.parse(raw);
+    if(!o)return;
+    if(o.cats&&typeof o.cats==='object'){
+      Object.keys(cfg.cats).forEach(function(k){
+        if(typeof o.cats[k]==='boolean')cfg.cats[k]=o.cats[k];
+      });
+    }
+    if(o.tp&&typeof o.tp==='object'){
+      Object.keys(cfg.tp).forEach(function(k){
+        if(typeof o.tp[k]==='boolean')cfg.tp[k]=o.tp[k];
+      });
+    }
+    if(o.diff&&typeof o.diff==='object'){
+      Object.keys(cfg.diff).forEach(function(k){
+        if(typeof o.diff[k]==='boolean')cfg.diff[k]=o.diff[k];
+      });
+    }
+    if([20,30,40].indexOf(o.count)>=0)cfg.count=o.count;
+    if(typeof o.answer==='boolean')cfg.answer=o.answer;
+  }catch(e){}
+}
+
+function enabledCats(){
+  return Object.keys(CATS).filter(function(k){return cfg.cats[k];});
+}
+
+/* ===== 单步换算 ===== */
+function genConv(){
+  var cats=enabledCats();
+  var cat=pick(cats);
+  var pair=pick(PAIRS[cat]);
+  /* 整数/小数：只勾带小数则全用小数，两个都勾则交替出现 */
+  var useDec=cfg.diff.dec&&(!cfg.diff.int||Math.random()<0.5);
+  if(useDec){
+    if(Math.random()<0.5){
+      /* 大单位 → 小单位，数值带一位小数 */
+      var dv=ri(5,99)/10;
+      var res=dv*pair.r;
+      return {t:'conv',cat:cat,from:pair.from,to:pair.to,v:dv,res:res};
+    }
+    /* 小单位 → 大单位，结果为小数（最多 3 位） */
+    var iv=ri(2,99);
+    var res2=iv/pair.r;
+    if(Math.abs(Math.round(res2*1000)/1000-res2)>1e-9)return null;
+    if(res2>=1)return null;                       /* 只做“小数结果”的题 */
+    return {t:'conv',cat:cat,from:pair.to,to:pair.from,v:iv,res:res2};
+  }
+  var cap=Math.floor(100000/pair.r);
+  if(cap<1)return null;
+  var v=ri(1,Math.min(100,cap));
+  return {t:'conv',cat:cat,from:pair.from,to:pair.to,v:v,res:v*pair.r};
+}
+
+/* ===== 比较大小 ===== */
+function genCmp(){
+  var cats=enabledCats();
+  var cat=pick(cats);
+  var pair=pick(PAIRS[cat]);
+  var capA=Math.max(1,Math.min(50,Math.floor(50000/pair.r)));
+  var aVal=ri(1,capA);
+  var bVal;
+  if(Math.random()<0.45){
+    bVal=aVal*pair.r;                               /* 相等 */
+  }else{
+    var d=ri(1,Math.max(1,Math.round(pair.r/20)));
+    bVal=aVal*pair.r+(Math.random()<0.5?d:-d);
+    if(bVal<=0)bVal=aVal*pair.r;
+  }
+  var left={v:aVal,u:pair.from},right={v:bVal,u:pair.to};
+  if(Math.random()<0.35){                           /* 偶尔左右交换 */
+    var tmp=left;left=right;right=tmp;
+  }
+  var fa=unitF(cat,left.u),fb=unitF(cat,right.u);
+  var va=left.v*fa,vb=right.v*fb;
+  var op=Math.abs(va-vb)<1e-9?'=':(va>vb?'>':'<');
+  return {t:'cmp',cat:cat,left:left,right:right,op:op};
+}
+
+function unitF(cat,name){
+  var u=CATS[cat].units;
+  for(var i=0;i<u.length;i++)if(u[i].n===name)return u[i].f;
+  return 1;
+}
+
+/* ===== 两步换算：复名数 → 单名数 ===== */
+function genTwo(){
+  var cats=enabledCats();
+  var list=TWO.filter(function(o){return cfg.cats[o.cat];});
+  if(!list.length)return null;
+  var tpl=pick(list);
+  var r=Math.round(unitF(tpl.cat,tpl.u1)/unitF(tpl.cat,tpl.u2));
+  var x=ri(1,9);
+  var y=ri(1,Math.min(r-1,99));
+  return {t:'two',cat:tpl.cat,u1:tpl.u1,u2:tpl.u2,x:x,y:y,res:x*r+y};
+}
+
+function makeOne(type){
+  if(type==='conv')return genConv();
+  if(type==='cmp')return genCmp();
+  return genTwo();
+}
+
+/* 题目唯一化用的字符串 */
+function keyOf(q){
+  if(q.t==='conv')return 'c|'+q.from+q.v+q.to;
+  if(q.t==='cmp')return 'm|'+q.left.v+q.left.u+q.right.v+q.right.u;
+  return 't|'+q.u1+q.x+q.u2+q.y;
+}
+
+/* ===== 生成整页题目 ===== */
+function generate(){
+  var cats=enabledCats();
+  var types=['conv','cmp','two'].filter(function(k){return cfg.tp[k];});
+  if(!cats.length){showToast('请至少勾选一个类别');return;}
+  if(!types.length){showToast('请至少勾选一种题型');return;}
+  if(types.indexOf('two')>=0&&!TWO.some(function(o){return cfg.cats[o.cat];})){
+    types=types.filter(function(k){return k!=='two';});
+    if(!types.length){showToast('当前类别暂无两步换算模板，已切换为单步换算');types=['conv'];cfg.tp.conv=true;}
+  }
+  var used={},list=[],guard=cfg.count*120;
+  while(list.length<cfg.count&&guard-->0){
+    var q=makeOne(pick(types));
+    if(!q)continue;
+    var k=keyOf(q);
+    if(used[k])continue;
+    used[k]=1;
+    list.push(q);
+  }
+  questions=list;
+  if(list.length<cfg.count)showToast('该范围题量有限，本次共生成 '+list.length+' 题');
+  render();
+}
+
+/* ===== 题面 ===== */
+function blank(cls){
+  return '<span class="blk'+(cls?' '+cls:'')+'"></span>';
+}
+function qHTML(q,idx,ans){
+  var body='';
+  if(q.t==='conv'){
+    body=fmt(q.v)+q.from+' = '+(ans?'<span class="ans">'+fmt(q.res)+'</span>':blank())+' '+q.to;
+  }else if(q.t==='cmp'){
+    /* 比较符号必须转义，避免“<”被浏览器当作标签起始而丢失 */
+    var opHtml=q.op==='>'?'&gt;':(q.op==='<'?'&lt;':q.op);
+    body=fmt(q.left.v)+q.left.u+' '+(ans?'<span class="ans">'+opHtml+'</span>':blank('sm'))+' '+fmt(q.right.v)+q.right.u;
+  }else{
+    body=q.x+q.u1+q.y+q.u2+' = '+(ans?'<span class="ans">'+q.res+'</span>':blank())+' '+q.u2;
+  }
+  return '<div class="q"><span class="qn">'+(idx+1)+'.</span><span class="qt">'+body+'</span></div>';
+}
+
+function subText(){
+  var cn=enabledCats().map(function(k){return CATS[k].name;}).join('、');
+  var tn=[];
+  if(cfg.tp.conv)tn.push('单步换算');
+  if(cfg.tp.cmp)tn.push('比较大小');
+  if(cfg.tp.two)tn.push('两步换算');
+  var dn=cfg.diff.dec?(cfg.diff.int?'整数/小数':'带小数'):'整数';
+  return cn+' · '+tn.join('、')+' · '+dn+' · 共 '+questions.length+' 题';
+}
+
+function headHTML(title){
+  return '<div class="p-head"><div class="p-title">'+title+'</div>'+
+    '<div class="p-meta">姓名<span class="fill"></span>日期<span class="fill"></span>得分<span class="fill"></span></div></div>'+
+    '<div class="p-sub">'+subText()+'</div>';
+}
+
+/* ===== 渲染 ===== */
+function render(){
+  /* 按题量调整字号与行距，保证一页装得下 */
+  var fs=14,gap=8;
+  if(cfg.count===20){fs=16;gap=12;}
+  else if(cfg.count===30){fs=15;gap=8;}
+  else {fs=13;gap=5;}
+
+  var p=$('paperMain');
+  p.style.setProperty('--qfs',fs+'px');
+  p.style.setProperty('--gap',gap+'mm');
+  p.innerHTML=headHTML('单位换算练习')+'<div class="qgrid">'+
+    questions.map(function(q,i){return qHTML(q,i,false);}).join('')+'</div>';
+
+  var pa=$('paperAns');
+  var fs2=Math.min(fs,13);
+  pa.style.setProperty('--qfs',fs2+'px');
+  pa.style.setProperty('--gap','5mm');
+  pa.innerHTML=headHTML('参考答案')+'<div class="qgrid">'+
+    questions.map(function(q,i){return qHTML(q,i,true);}).join('')+'</div>';
+
+  $('slotAns').style.display=cfg.answer?'':'none';
+  fitPreview();
+}
+
+/* 预览缩放：A4 适配可视宽度 */
+function fitPreview(){
+  var area=$('previewArea');
+  if(!area)return;
+  var avail=area.clientWidth-44;
+  var papers=document.querySelectorAll('.paper');
+  for(var i=0;i<papers.length;i++){
+    var p=papers[i];
+    if(!p.offsetParent)continue;
+    p.style.transform='none';
+    var pw=p.offsetWidth,ph=p.offsetHeight;
+    if(!pw)continue;
+    var sc=Math.min(1,avail/pw);
+    p.style.transform='scale('+sc+')';
+    p.parentNode.style.width=(pw*sc)+'px';
+    p.parentNode.style.height=(ph*sc)+'px';
+  }
+}
+
+function applyUI(){
+  Object.keys(CATS).forEach(function(k){$('cat_'+k).checked=!!cfg.cats[k];});
+  ['conv','cmp','two'].forEach(function(k){$('tp_'+k).checked=!!cfg.tp[k];});
+  $('diff_int').checked=cfg.diff.int;
+  $('diff_dec').checked=cfg.diff.dec;
+  document.querySelectorAll('input[name=count]').forEach(function(r){r.checked=(+r.value===cfg.count);});
+  $('answerChk').checked=cfg.answer;
+}
+
+function bindEvents(){
+  Object.keys(CATS).forEach(function(k){
+    $('cat_'+k).addEventListener('change',function(){cfg.cats[k]=this.checked;saveCfg();generate();});
+  });
+  ['conv','cmp','two'].forEach(function(k){
+    $('tp_'+k).addEventListener('change',function(){cfg.tp[k]=this.checked;saveCfg();generate();});
+  });
+  $('diff_int').addEventListener('change',function(){cfg.diff.int=this.checked;saveCfg();generate();});
+  $('diff_dec').addEventListener('change',function(){cfg.diff.dec=this.checked;saveCfg();generate();});
+  document.querySelectorAll('input[name=count]').forEach(function(r){
+    r.addEventListener('change',function(){cfg.count=+this.value;saveCfg();generate();});
+  });
+  $('answerChk').addEventListener('change',function(){cfg.answer=this.checked;saveCfg();render();});
+  $('regenBtn').addEventListener('click',generate);
+  $('printBtn').addEventListener('click',function(){window.print();});
+  window.addEventListener('resize',fitPreview);
+}
+
+function showToast(msg){
+  var t=$('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm=setTimeout(function(){t.classList.remove('show');},2400);
+}
+
+/* ===== 启动 ===== */
+loadCfg();
+applyUI();
+bindEvents();
+generate();
+})();
+</script>
+</body>
+</html>

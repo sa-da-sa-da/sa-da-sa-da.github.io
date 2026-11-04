@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>考试倒计时挂件 · 中考高考倒计时/全屏投屏 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/kaoshi.html">
+<meta name="description" content="教室考试倒计时挂件：最多同时挂 3 个倒计时，如期末考试、中考、高考，大字显示剩余天数与时分秒，每秒刷新，到点变红提示已开始，支持三套配色与全屏投影，适合教室大屏与备考自习使用。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --c:#38bdf8;
+  --c-weak:rgba(56,189,248,.55);
+  --c-glow:rgba(56,189,248,.35);
+  --c-radial:rgba(56,189,248,.14);
+}
+html,body{min-height:100%}
+body{
+  font-family:'PingFang SC','Microsoft YaHei',sans-serif;
+  color:#e6f1ff;
+  min-height:100vh;
+  background:
+    radial-gradient(ellipse at 25% 15%,rgba(0,110,255,.16) 0%,transparent 55%),
+    radial-gradient(ellipse at 75% 85%,rgba(0,200,180,.10) 0%,transparent 55%),
+    radial-gradient(ellipse at 50% 50%,#061024 0%,#02060f 100%);
+  background-attachment:fixed;
+}
+/* 背景科技网格 */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(0,200,255,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,200,255,.045) 1px,transparent 1px);
+  background-size:64px 64px;
+}
+.stage{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;gap:18px;padding:20px 22px 26px;max-width:1560px;margin:0 auto}
+
+/* ===== 顶部 ===== */
+.head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.head h1{font-size:clamp(20px,2.4vw,30px);font-weight:700;letter-spacing:3px;color:#fff;text-shadow:0 0 24px rgba(0,200,255,.45)}
+.head-sub{font-size:13px;color:#7d8ba3;margin-top:4px;letter-spacing:1px}
+.head-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{padding:9px 18px;border-radius:22px;border:1px solid rgba(0,200,255,.5);background:rgba(0,200,255,.12);color:#8ee9ff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:transform .18s,box-shadow .18s,opacity .18s}
+.btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 0 18px rgba(0,200,255,.35)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn-full{border-color:rgba(251,191,36,.55);background:rgba(251,191,36,.12);color:#ffd873}
+.btn-full:hover:not(:disabled){box-shadow:0 0 18px rgba(251,191,36,.3)}
+
+/* ===== 卡片区 ===== */
+.cards{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:stretch}
+.cd-card{
+  --c:#38bdf8;
+  --c-weak:rgba(56,189,248,.55);
+  --c-glow:rgba(56,189,248,.35);
+  --c-radial:rgba(56,189,248,.14);
+  position:relative;display:flex;flex-direction:column;gap:14px;
+  border:1px solid var(--c-weak);
+  border-radius:20px;padding:20px 20px 16px;
+  background:
+    radial-gradient(ellipse at 50% 0%,var(--c-radial) 0%,transparent 65%),
+    linear-gradient(160deg,rgba(16,28,50,.94),rgba(6,12,24,.96));
+  box-shadow:0 0 28px var(--c-glow),inset 0 0 40px rgba(0,0,0,.35);
+  transition:border-color .3s,box-shadow .3s;
+}
+/* 三套配色预设 */
+.cd-card.theme-cyan{--c:#38bdf8;--c-weak:rgba(56,189,248,.55);--c-glow:rgba(56,189,248,.35);--c-radial:rgba(56,189,248,.14)}
+.cd-card.theme-violet{--c:#a78bfa;--c-weak:rgba(167,139,250,.55);--c-glow:rgba(167,139,250,.35);--c-radial:rgba(167,139,250,.15)}
+.cd-card.theme-amber{--c:#fbbf24;--c-weak:rgba(251,191,36,.55);--c-glow:rgba(251,191,36,.32);--c-radial:rgba(251,191,36,.13)}
+/* 到点状态统一变红 */
+.cd-card.over{
+  --c:#ef4444;
+  --c-weak:rgba(239,68,68,.85);
+  --c-glow:rgba(239,68,68,.4);
+  --c-radial:rgba(239,68,68,.18);
+  border-color:var(--c-weak);
+  box-shadow:0 0 34px var(--c-glow),inset 0 0 40px rgba(80,0,0,.35);
+}
+
+.cd-head{display:flex;align-items:center;gap:10px}
+.name-input{
+  flex:1;min-width:0;background:transparent;border:none;border-bottom:1px dashed transparent;
+  color:#eaf4ff;font-size:clamp(17px,1.5vw,22px);font-weight:700;letter-spacing:2px;
+  font-family:inherit;padding:2px 0;outline:none;
+}
+.name-input:hover{border-bottom-color:var(--c-weak)}
+.name-input:focus{border-bottom-color:var(--c)}
+.del-btn{
+  width:32px;height:32px;flex-shrink:0;border-radius:50%;cursor:pointer;
+  border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.1);color:#ff9a9a;
+  font-size:15px;font-family:inherit;transition:all .18s;
+}
+.del-btn:hover{background:rgba(239,68,68,.28);transform:rotate(90deg)}
+
+.cd-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 0 6px;text-align:center}
+.cd-label{font-size:14px;letter-spacing:4px;color:#8fa3bd}
+.cd-main{display:flex;align-items:baseline;justify-content:center;gap:8px;line-height:1}
+.cd-num{
+  font-size:clamp(56px,7.2vw,124px);font-weight:800;letter-spacing:2px;color:#fff;
+  font-variant-numeric:tabular-nums;
+  text-shadow:0 0 18px var(--c-glow),0 0 46px var(--c-glow);
+}
+.cd-unit{font-size:clamp(20px,2vw,30px);font-weight:700;color:var(--c)}
+.cd-sub{font-size:clamp(17px,1.9vw,28px);letter-spacing:4px;color:#cfdcf0;font-variant-numeric:tabular-nums;text-shadow:0 0 14px var(--c-glow)}
+/* 不足一天时以时分秒为主 */
+.cd-main.time-mode .cd-num{font-size:clamp(38px,5vw,88px)}
+/* 已开始 */
+.cd-num.over-text{color:#ff6b6b;text-shadow:0 0 22px rgba(239,68,68,.85),0 0 52px rgba(239,68,68,.5);font-size:clamp(40px,5vw,86px);letter-spacing:6px}
+
+.cd-foot{display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.09);padding-top:12px}
+.field{flex:1;min-width:96px;display:flex;flex-direction:column;gap:4px}
+.field span{font-size:11px;letter-spacing:1px;color:#7d8ba3}
+.field input,.field select{
+  width:100%;padding:6px 8px;border-radius:8px;border:1px solid rgba(120,170,255,.22);
+  background:rgba(6,14,28,.9);color:#cfdcf0;font-size:13px;font-family:inherit;
+  color-scheme:dark;outline:none;
+}
+.field input:focus,.field select:focus{border-color:var(--c)}
+.field select{cursor:pointer}
+
+.foot-hint{text-align:center;font-size:12.5px;line-height:1.8;color:#6d7c94}
+.foot-hint b{color:#9fb2cc;font-weight:600}
+
+/* 全屏时放大字号、收紧间距（全屏元素为 html，故用 :fullscreen 匹配） */
+:fullscreen .stage{padding:28px 34px;max-width:none}
+:fullscreen .cd-num{font-size:clamp(80px,10vw,200px)}
+:fullscreen .cd-sub{font-size:clamp(20px,2.4vw,36px)}
+:fullscreen .foot-hint{display:none}
+
+@media (max-width:900px){
+  .cards{grid-template-columns:1fr}
+  .stage{padding:16px}
+}
+</style>
+</head>
+<body>
+<div class="stage">
+  <header class="head">
+    <div>
+      <h1>考试倒计时</h1>
+      <p class="head-sub">目标时刻一到自动变红提示「已开始」，可全屏投屏到教室大屏</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn" id="btnAdd" type="button">＋ 添加倒计时</button>
+      <button class="btn btn-full" id="btnFull" type="button">⛶ 全屏</button>
+    </div>
+  </header>
+
+  <section class="cards" id="cards"></section>
+
+  <p class="foot-hint">
+    最多可挂 <b>3</b> 个倒计时 · 点击名称、日期、时间可直接修改，改动会自动保存到本机 · 修改配色可切换三套预设
+  </p>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var STORAGE_KEY = 'kaoshi_countdown_v1';
+  var MAX_CARDS = 3;
+  var THEMES = ['cyan', 'violet', 'amber'];
+  var THEME_LABELS = ['深海蓝', '星云紫', '暖阳金'];
+
+  var events = [];   // {id, name, date:'YYYY-MM-DD', time:'HH:MM', color}
+
+  function pad2(n){ return n < 10 ? '0' + n : String(n); }
+  function fmtDate(d){ return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  var idSeq = 0;
+  function newId(){
+    // 自增序号保证同一毫秒内生成的 id 也不重复
+    idSeq += 1;
+    return 'k' + Date.now().toString(36) + '_' + idSeq;
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  // 默认三个倒计时，日期按当前时间取未来最近的合理日期
+  function buildDefaults(){
+    var now = new Date();
+    var y = now.getFullYear();
+
+    var finalExam = new Date(y, 11, 20, 9, 0, 0);
+    if(finalExam.getTime() < now.getTime()) finalExam = new Date(y + 1, 0, 15, 9, 0, 0);
+
+    var zhongkao = new Date(y, 5, 24, 8, 30, 0);
+    if(zhongkao.getTime() < now.getTime()) zhongkao = new Date(y + 1, 5, 24, 8, 30, 0);
+
+    var gaokao = new Date(y, 5, 7, 9, 0, 0);
+    if(gaokao.getTime() < now.getTime()) gaokao = new Date(y + 1, 5, 7, 9, 0, 0);
+
+    return [
+      {id:newId(), name:'期末考试', date:fmtDate(finalExam), time:'09:00', color:'cyan'},
+      {id:newId(), name:'中考', date:fmtDate(zhongkao), time:'08:30', color:'violet'},
+      {id:newId(), name:'高考', date:fmtDate(gaokao), time:'09:00', color:'amber'}
+    ];
+  }
+
+  // ===== 存储 =====
+  function loadData(){
+    var raw = null;
+    try{ raw = localStorage.getItem(STORAGE_KEY); }catch(e){ raw = null; }
+    if(raw){
+      try{
+        var data = JSON.parse(raw);
+        // 允许空数组：用户删光全部卡片后，刷新仍保持为空
+        if(data && Array.isArray(data.events)){
+          events = data.events.slice(0, MAX_CARDS).map(function(ev){
+            return {
+              id: ev.id || newId(),
+              name: String(ev.name || '倒计时'),
+              date: String(ev.date || fmtDate(new Date())),
+              time: String(ev.time || '09:00'),
+              color: THEMES.indexOf(ev.color) >= 0 ? ev.color : 'cyan'
+            };
+          });
+          return;
+        }
+      }catch(e){ /* 数据损坏则重建默认值 */ }
+    }
+    events = buildDefaults();
+    saveData();
+  }
+
+  function saveData(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({events:events}));
+    }catch(e){ console.warn('本地存储写入失败', e); }
+  }
+
+  // ===== 时间计算 =====
+  function parseTarget(dateStr, timeStr){
+    if(!dateStr) return null;
+    var dp = String(dateStr).split('-');
+    var tp = String(timeStr || '00:00').split(':');
+    if(dp.length < 3) return null;
+    var d = new Date(Number(dp[0]), Number(dp[1]) - 1, Number(dp[2]),
+                     Number(tp[0]) || 0, Number(tp[1]) || 0, 0);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function findEvent(id){
+    for(var i = 0; i < events.length; i++){
+      if(events[i].id === id) return events[i];
+    }
+    return null;
+  }
+
+  // ===== 渲染卡片 =====
+  function render(){
+    var wrap = document.getElementById('cards');
+    if(!wrap) return;
+
+    wrap.innerHTML = events.map(function(ev){
+      var colorOptions = THEMES.map(function(t, i){
+        return '<option value="' + t + '"' + (ev.color === t ? ' selected' : '') + '>' + THEME_LABELS[i] + '</option>';
+      }).join('');
+
+      return '' +
+      '<article class="cd-card theme-' + ev.color + '" id="card-' + ev.id + '">' +
+        '<div class="cd-head">' +
+          '<input class="name-input" type="text" maxlength="14" value="' + escapeHtml(ev.name) + '" aria-label="倒计时名称">' +
+          '<button class="del-btn" type="button" title="删除这个倒计时">✕</button>' +
+        '</div>' +
+        '<div class="cd-body">' +
+          '<div class="cd-label">还剩</div>' +
+          '<div class="cd-main"><span class="cd-num">0</span><span class="cd-unit">天</span></div>' +
+          '<div class="cd-sub">00:00:00</div>' +
+        '</div>' +
+        '<div class="cd-foot">' +
+          '<label class="field"><span>目标日期</span><input class="date-input" type="date" value="' + ev.date + '"></label>' +
+          '<label class="field"><span>目标时间</span><input class="time-input" type="time" value="' + ev.time + '"></label>' +
+          '<label class="field"><span>配色</span><select class="color-select">' + colorOptions + '</select></label>' +
+        '</div>' +
+      '</article>';
+    }).join('');
+
+    var btnAdd = document.getElementById('btnAdd');
+    if(btnAdd) btnAdd.disabled = events.length >= MAX_CARDS;
+
+    tick();
+  }
+
+  // ===== 每秒刷新数字 =====
+  function updateCard(cardEl, ev){
+    var labelEl = cardEl.querySelector('.cd-label');
+    var mainEl = cardEl.querySelector('.cd-main');
+    var subEl = cardEl.querySelector('.cd-sub');
+    if(!labelEl || !mainEl || !subEl) return;
+
+    var target = parseTarget(ev.date, ev.time);
+    if(!target){
+      cardEl.classList.remove('over');
+      labelEl.textContent = '待设置';
+      mainEl.className = 'cd-main';
+      mainEl.innerHTML = '<span class="cd-num">--</span>';
+      subEl.textContent = '请选择目标日期';
+      return;
+    }
+
+    var diff = target.getTime() - Date.now();
+    cardEl.classList.toggle('over', diff <= 0);
+
+    // 已到目标时间
+    if(diff <= 0){
+      labelEl.textContent = '状态';
+      mainEl.className = 'cd-main';
+      mainEl.innerHTML = '<span class="cd-num over-text">已开始</span>';
+      subEl.textContent = '目标时间已到，全力以赴！';
+      return;
+    }
+
+    var totalSec = Math.floor(diff / 1000);
+    var days = Math.floor(totalSec / 86400);
+    var hh = Math.floor((totalSec % 86400) / 3600);
+    var mm = Math.floor((totalSec % 3600) / 60);
+    var ss = totalSec % 60;
+    var hms = pad2(hh) + ':' + pad2(mm) + ':' + pad2(ss);
+    var mainHtml = '<span class="cd-num">' + days + '</span><span class="cd-unit">天</span>';
+
+    if(days > 100){
+      // 天数很大时以天为主数字，时分秒作辅助
+      labelEl.textContent = '距离目标';
+      mainEl.className = 'cd-main';
+      mainEl.innerHTML = mainHtml;
+      subEl.textContent = hms;
+    }else if(days >= 1){
+      labelEl.textContent = '还剩';
+      mainEl.className = 'cd-main';
+      mainEl.innerHTML = mainHtml;
+      subEl.textContent = hms;
+    }else{
+      // 不足一天时以时分秒为主
+      labelEl.textContent = '不到 1 天';
+      mainEl.className = 'cd-main time-mode';
+      mainEl.innerHTML = '<span class="cd-num">' + hms + '</span>';
+      subEl.textContent = '争分夺秒，稳住心态';
+    }
+  }
+
+  function tick(){
+    events.forEach(function(ev){
+      var cardEl = document.getElementById('card-' + ev.id);
+      if(cardEl) updateCard(cardEl, ev);
+    });
+  }
+
+  // ===== 增删改 =====
+  function addCard(){
+    if(events.length >= MAX_CARDS){
+      window.alert('最多只能挂 ' + MAX_CARDS + ' 个倒计时，请先删除一个');
+      return;
+    }
+    var now = new Date();
+    var target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 30, 8, 0, 0);
+    var used = events.map(function(ev){ return ev.color; });
+    var color = THEMES.filter(function(t){ return used.indexOf(t) === -1; })[0] || 'cyan';
+
+    events.push({
+      id: newId(),
+      name: '新的倒计时',
+      date: fmtDate(target),
+      time: '08:00',
+      color: color
+    });
+    saveData();
+    render();
+  }
+
+  function deleteCard(id){
+    var ev = findEvent(id);
+    if(!ev) return;
+    if(!window.confirm('确定删除「' + ev.name + '」这个倒计时吗？')) return;
+    events = events.filter(function(item){ return item.id !== id; });
+    saveData();
+    render();
+  }
+
+  // ===== 事件绑定 =====
+  function bindEvents(){
+    var wrap = document.getElementById('cards');
+    if(wrap){
+      // 名称输入：实时保存，不重绘以免丢失焦点
+      wrap.addEventListener('input', function(e){
+        if(!e.target.classList.contains('name-input')) return;
+        var card = e.target.closest('.cd-card');
+        var ev = card ? findEvent(card.id.replace('card-', '')) : null;
+        if(ev) ev.name = e.target.value;
+        saveData();
+      });
+
+      // 日期 / 时间 / 配色修改：保存并即时刷新
+      wrap.addEventListener('change', function(e){
+        var card = e.target.closest('.cd-card');
+        if(!card) return;
+        var ev = findEvent(card.id.replace('card-', ''));
+        if(!ev) return;
+
+        if(e.target.classList.contains('date-input')){ ev.date = e.target.value; }
+        else if(e.target.classList.contains('time-input')){ ev.time = e.target.value; }
+        else if(e.target.classList.contains('color-select')){
+          ev.color = e.target.value;
+          card.className = 'cd-card theme-' + ev.color + (card.classList.contains('over') ? ' over' : '');
+        }
+        saveData();
+        tick();
+      });
+
+      // 删除
+      wrap.addEventListener('click', function(e){
+        var del = e.target.closest('.del-btn');
+        if(!del) return;
+        var card = del.closest('.cd-card');
+        if(card) deleteCard(card.id.replace('card-', ''));
+      });
+    }
+
+    var btnAdd = document.getElementById('btnAdd');
+    if(btnAdd) btnAdd.addEventListener('click', addCard);
+
+    var btnFull = document.getElementById('btnFull');
+    if(btnFull){
+      btnFull.addEventListener('click', function(){
+        if(!document.fullscreenElement){
+          var p = document.documentElement.requestFullscreen();
+          if(p && p.catch) p.catch(function(err){ console.warn('全屏失败', err); });
+        }else{
+          document.exitFullscreen();
+        }
+      });
+    }
+
+    document.addEventListener('fullscreenchange', function(){
+      if(btnFull) btnFull.textContent = document.fullscreenElement ? '⛶ 退出全屏' : '⛶ 全屏';
+    });
+  }
+
+  loadData();
+  bindEvents();
+  render();
+  setInterval(tick, 1000);   // 每秒刷新
+})();
+</script>
+</body>
+</html>

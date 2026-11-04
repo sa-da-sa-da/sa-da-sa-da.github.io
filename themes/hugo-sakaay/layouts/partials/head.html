@@ -1,9 +1,15 @@
 {{- $siteName := site.Title -}}
 {{- $desc := partial "seo-description.html" . -}}
+{{- /* 分页页码：/page/2/、/page/3/ 的标题与描述都要带页码，否则会和第 1 页判重 */ -}}
+{{- $pageNo := 1 -}}
+{{- if in (slice "home" "section" "taxonomy" "term") .Kind -}}
+  {{- with .Paginator -}}{{- $pageNo = .PageNumber -}}{{- end -}}
+{{- end -}}
 {{- /* 标题：首页用 slogan，其余页面组合「页面标题 + 章节/数量 + 站点名」，保证唯一且长度足够 */ -}}
 {{- $title := .Title -}}
 {{- if .IsHome -}}
   {{- $title = printf "%s - %s" $siteName (site.Params.tagline | default site.Params.description) -}}
+  {{- if gt $pageNo 1 -}}{{- $title = printf "%s（第 %d 页）" $title $pageNo -}}{{- end -}}
 {{- else -}}
   {{- $sec := "" -}}
   {{- if eq .Kind "page" -}}
@@ -22,7 +28,12 @@
   {{- else if eq .Kind "section" -}}
     {{- $title = printf "%s · 共 %d 篇内容" $title (len .Pages) -}}
   {{- end -}}
-  {{- $title = printf "%s | %s" $title $siteName -}}
+  {{- if gt $pageNo 1 -}}
+    {{- /* 列表分页：标题带页码，和第一页区分开 */ -}}
+    {{- $title = printf "%s（第 %d 页）| %s" $title $pageNo $siteName -}}
+  {{- else -}}
+    {{- $title = printf "%s | %s" $title $siteName -}}
+  {{- end -}}
   {{- /* 标题过短（不足 30 字符）时补站点定位语：Bing 会报「标题都太短了」 */ -}}
   {{- $tagline := site.Params.tagline -}}
   {{- if and $tagline (lt (countrunes $title) 30) -}}

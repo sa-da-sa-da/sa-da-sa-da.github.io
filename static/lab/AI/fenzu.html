@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>随机分组器 · 课堂分组/防同组/桌牌打印 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/fenzu.html">
+<meta name="description" content="教师课堂随机分组工具：粘贴学生名单即可按组数或每组人数自动均匀分组，支持防同组黑名单约束、多种组名风格、手动微调换组与大字号桌牌 A4 打印，适合班会活动、小组讨论与合作学习分组。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#dfe9f3 0%,#e9d8f2 100%);min-height:100vh;color:#333;padding:24px 16px}
+.wrap{max-width:1080px;margin:0 auto}
+.hero{text-align:center;margin-bottom:20px}
+.hero h1{font-size:30px;font-weight:800;color:#4a3f78;letter-spacing:2px}
+.hero p{font-size:14px;color:#8b84a8;margin-top:6px}
+
+/* ===== 面板通用 ===== */
+.panel{background:rgba(255,255,255,.92);border-radius:14px;padding:16px 18px;box-shadow:0 4px 16px rgba(74,63,120,.10);margin-bottom:16px}
+.panel-title{font-size:16px;font-weight:700;color:#4a3f78;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.count{font-size:12px;font-weight:600;color:#fff;background:#8b7fc7;border-radius:10px;padding:2px 10px}
+.spacer{flex:1}
+.hint{font-size:12px;color:#999;line-height:1.7}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+
+/* ===== 按钮 ===== */
+.btn{border:none;border-radius:18px;padding:8px 18px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;background:#edeafb;color:#5b4fa8}
+.btn:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(74,63,120,.18)}
+.btn.primary{background:linear-gradient(135deg,#8b7fc7,#6a5fb5);color:#fff}
+.btn.ghost{background:#fff;border:1px solid #d8d2ee;color:#8b84a8}
+.btn.warn{background:#fff2e8;color:#e07b39}
+.btn.big{padding:12px 30px;font-size:16px;border-radius:24px}
+.btn.small{padding:5px 14px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* ===== 名单 ===== */
+textarea{width:100%;min-height:130px;padding:10px 12px;border:1.5px solid #dcd6f0;border-radius:10px;font-size:14px;line-height:1.9;resize:vertical;outline:none;margin-bottom:10px}
+textarea:focus{border-color:#8b7fc7}
+
+/* ===== 设置 ===== */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:600;color:#666;margin-bottom:6px}
+.seg{display:inline-flex;background:#ece8f8;border-radius:20px;padding:3px}
+.seg-btn{border:none;background:transparent;padding:6px 18px;border-radius:16px;font-size:13px;font-weight:600;color:#8b84a8;cursor:pointer;transition:all .2s}
+.seg-btn.active{background:#6a5fb5;color:#fff}
+input[type=number],select{padding:7px 10px;border:1.5px solid #dcd6f0;border-radius:8px;font-size:14px;outline:none}
+input[type=number]{width:90px}
+select{min-width:150px}
+.field input:focus,.field select:focus{border-color:#8b7fc7}
+
+/* ===== 黑名单 ===== */
+.pair-list{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.pair-item{display:flex;align-items:center;gap:8px;background:#faf8ff;border:1px solid #e8e3f7;border-radius:8px;padding:6px 10px;font-size:13px}
+.pair-item b{color:#5b4fa8}
+.pair-x{margin-left:auto;border:none;background:#ffecec;color:#e05c5c;width:22px;height:22px;border-radius:50%;cursor:pointer;font-weight:700;line-height:1}
+.empty-tip{font-size:12px;color:#bbb;padding:6px 2px}
+
+/* ===== 分组结果 ===== */
+.groups-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:10px}
+.group-card{border-radius:12px;padding:12px;box-shadow:0 2px 8px rgba(74,63,120,.10);border-top:4px solid #8b7fc7;background:#fff}
+.group-head{font-size:16px;font-weight:800;margin-bottom:8px;color:#4a3f78;display:flex;justify-content:space-between;align-items:center}
+.group-head .gcount{font-size:11px;color:#fff;background:#b3aadf;border-radius:8px;padding:1px 8px}
+.stu{display:inline-flex;align-items:center;background:#f3f0fc;border-radius:16px;margin:3px 3px 0 0;padding:2px 4px 2px 10px;font-size:13px;font-weight:600;transition:all .2s}
+.stu b{margin:0 4px;color:#43397a}
+.stu .mv{border:none;background:#fff;color:#8b7fc7;width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:12px;font-weight:700;line-height:1;transition:all .15s}
+.stu .mv:hover{background:#8b7fc7;color:#fff}
+.stu.viol{background:#ffe9e9}
+.stu.viol b{color:#d33}
+.viol-legend{font-size:12px;color:#d33}
+
+/* ===== 桌牌打印区（仅打印可见） ===== */
+.print-area{display:none}
+@media print{
+  @page{size:A4;margin:14mm}
+  body{background:#fff;padding:0}
+  .wrap,.toast{display:none!important}
+  .print-area{display:block}
+  .desk-page{page-break-after:always;display:flex;flex-direction:column;align-items:center;padding-top:34px}
+  .desk-page:last-child{page-break-after:auto}
+  .desk-group{font-size:54pt;font-weight:900;border:4px solid #222;border-radius:18px;padding:10px 56px;margin-bottom:30px}
+  .desk-names{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
+  .desk-name{font-size:30pt;font-weight:700;border:2.5px solid #222;border-radius:14px;padding:14px 30px;min-width:46mm;text-align:center}
+}
+
+/* ===== 提示 ===== */
+.toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-80px);padding:10px 26px;border-radius:22px;font-size:14px;font-weight:600;z-index:99;transition:all .3s;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{background:#4caf50;color:#fff}
+.toast.warn{background:#ff9800;color:#fff}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- 顶部标题 -->
+  <header class="hero">
+    <h1>🎲 随机分组器</h1>
+    <p>粘贴名单 · 一键均匀分组 · 桌牌 A4 打印</p>
+  </header>
+
+  <!-- 名单输入 -->
+  <div class="panel">
+    <div class="panel-title">📋 学生名单 <span class="count" id="nameCount">0 人</span></div>
+    <textarea id="namesInput" placeholder="每行一个姓名，也可用逗号、顿号、空格分隔"></textarea>
+    <div class="row">
+      <button class="btn primary" onclick="applyNames()">✔ 应用名单</button>
+      <button class="btn ghost" onclick="resetNames()">恢复示例名单</button>
+      <span class="hint">应用后自动保存到本机（localStorage）</span>
+    </div>
+  </div>
+
+  <!-- 设置 + 黑名单 -->
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-title">⚙️ 分组设置</div>
+      <div class="field">
+        <label>分组方式</label>
+        <div class="seg" id="modeSeg">
+          <button class="seg-btn active" data-mode="count" onclick="setMode('count')">按组数</button>
+          <button class="seg-btn" data-mode="size" onclick="setMode('size')">按每组人数</button>
+        </div>
+      </div>
+      <div class="field" id="fieldCount">
+        <label>组数（2 ~ 12）</label>
+        <input type="number" id="groupNum" min="2" max="12" value="6" onchange="saveSetting()">
+      </div>
+      <div class="field" id="fieldSize" style="display:none">
+        <label>每组人数（2 ~ 10）</label>
+        <input type="number" id="groupSize" min="2" max="10" value="5" onchange="saveSetting()">
+      </div>
+      <div class="field">
+        <label>组名风格</label>
+        <select id="styleSel" onchange="onStyleChange()">
+          <option value="num">第1组 / 第2组 / 第3组 …</option>
+          <option value="beast">龙组 / 虎组 / 朱雀组 …</option>
+          <option value="star">金星组 / 木星组 / 火星组 …</option>
+          <option value="color">赤组 / 橙组 / 黄组 …</option>
+        </select>
+      </div>
+      <button class="btn primary big" onclick="doGroup()">🎲 开始分组</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">🚫 防同组黑名单</div>
+      <p class="hint">添加「某些同学不能分到同一组」的约束，分组算法会自动避开（最多重试 50 次，仍无法满足时会标红提示）。</p>
+      <div class="row" style="margin-top:10px">
+        <select id="pairA"></select>
+        <span style="color:#999;font-weight:700">⛔</span>
+        <select id="pairB"></select>
+        <button class="btn" onclick="addPair()">＋ 添加</button>
+      </div>
+      <div id="pairList" class="pair-list"></div>
+    </div>
+  </div>
+
+  <!-- 分组结果 -->
+  <div class="panel" id="resultPanel" style="display:none">
+    <div class="panel-title">👥 分组结果 <span class="count" id="resultInfo"></span>
+      <span class="spacer"></span>
+      <button class="btn small ghost" onclick="doGroup()">🔄 重新分组</button>
+      <button class="btn small warn" onclick="printDesk()">🖨 打印桌牌</button>
+    </div>
+    <div id="groupsGrid" class="groups-grid"></div>
+    <p class="hint">点击名字牌两侧的 ‹ › 箭头，可把同学移动到相邻小组手动微调；桌牌为每组一页大字号，可直接 A4 打印折立。</p>
+  </div>
+</div>
+
+<!-- 桌牌打印区：屏幕上隐藏，打印时逐组一页 -->
+<div id="deskCards" class="print-area"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 常量与示例数据 =====
+// 默认示例名单（30 个中文名，供演示，可整体替换）
+var DEFAULT_NAMES = ['沈知行','林晚棠','江叙白','陆听澜','宋南絮','孟青梧','程一诺','方既明','罗衣寒','韩栖迟',
+  '苏合欢','顾北辰','叶疏影','谢扶摇','秦观澜','白鹿鸣','夏木荫','姜若初','柳闻莺','于清窈',
+  '段惊鸿','邹采薇','傅明灿','温故知','祝星野','纪安歌','贺新凉','岑雨眠','时予乔','阮清商'];
+// 各组名风格词库（超出词库数量时自动回退为「第N组」）
+var NAME_POOLS = {
+  beast: ['龙','虎','朱雀','玄武','麒麟','凤凰','蛟龙','天马','灵鹿','雄狮','猎鹰','金鹏'],
+  star:  ['金星','木星','水星','火星','土星','地球','月球','天王星','海王星','冥王星','比邻星','天狼星'],
+  color: ['赤','橙','黄','绿','青','蓝','紫','粉','棕','银','金','墨']
+};
+// localStorage 键名统一管理
+var LS = {names:'fenzu_namesText', pairs:'fenzu_pairs', mode:'fenzu_mode', num:'fenzu_groupNum',
+          size:'fenzu_groupSize', style:'fenzu_style', groups:'fenzu_groups'};
+
+// ===== 全局状态 =====
+var pairs = [];        // 黑名单约束对，如 [['张三','李四']]
+var groups = [];       // 当前分组结果
+var violMap = {};      // 最近一次分组中违反约束的名字集合
+
+// ===== 工具函数 =====
+// HTML 转义，防止名单中的特殊字符破坏页面（用户输入安全处理）
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+// localStorage 安全读写
+function lsGet(k,d){try{var v=localStorage.getItem(k);return v===null?d:JSON.parse(v);}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+// 解析名单：支持换行/逗号/顿号/分号/空格分隔，去空去重
+function parseNames(text){
+  var seen = {}, out = [];
+  String(text||'').split(/[\n\r,，、;；\t \u3000]+/).forEach(function(n){
+    n = n.trim();
+    if(n && !seen[n]){ seen[n] = 1; out.push(n); }
+  });
+  return out;
+}
+// Fisher-Yates 洗牌
+function shuffle(arr){
+  for(var i = arr.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+  return arr;
+}
+function toast(msg, type){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || 'ok');
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+}
+function clamp(v, min, max){ v = parseInt(v) || min; return Math.max(min, Math.min(max, v)); }
+
+// ===== 名单管理 =====
+function getNames(){ return parseNames(document.getElementById('namesInput').value); }
+function updateNameCount(){ document.getElementById('nameCount').textContent = getNames().length + ' 人'; }
+
+function applyNames(){
+  var names = getNames();
+  if(names.length < 2){ toast('请至少填写 2 个有效姓名', 'warn'); return; }
+  lsSet(LS.names, document.getElementById('namesInput').value);
+  // 名单变化后，旧分组与约束里的失效项不再可靠，清空结果
+  groups = []; violMap = {};
+  lsSet(LS.groups, groups);
+  document.getElementById('resultPanel').style.display = 'none';
+  refreshPairSelects();
+  updateNameCount();
+  toast('名单已应用，共 ' + names.length + ' 人');
+}
+function resetNames(){
+  document.getElementById('namesInput').value = DEFAULT_NAMES.join('\n');
+  applyNames();
+}
+
+// ===== 黑名单 =====
+function refreshPairSelects(){
+  var names = getNames();
+  var opts = '<option value="">— 选择 —</option>' + names.map(function(n){ return '<option value="' + esc(n) + '">' + esc(n) + '</option>'; }).join('');
+  document.getElementById('pairA').innerHTML = opts;
+  document.getElementById('pairB').innerHTML = opts;
+  renderPairs();
+}
+function addPair(){
+  var a = document.getElementById('pairA').value;
+  var b = document.getElementById('pairB').value;
+  if(!a || !b){ toast('请先选择两位同学', 'warn'); return; }
+  if(a === b){ toast('不能选择同一个人', 'warn'); return; }
+  var dup = pairs.some(function(p){ return (p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a); });
+  if(dup){ toast('该约束已存在', 'warn'); return; }
+  pairs.push([a, b]);
+  lsSet(LS.pairs, pairs);
+  renderPairs();
+  toast('已添加约束：' + a + ' 与 ' + b + ' 不同组');
+}
+function removePair(i){ pairs.splice(i, 1); lsSet(LS.pairs, pairs); renderPairs(); }
+function renderPairs(){
+  var box = document.getElementById('pairList');
+  if(!pairs.length){ box.innerHTML = '<div class="empty-tip">暂无约束，添加后分组时自动生效。</div>'; return; }
+  box.innerHTML = pairs.map(function(p, i){
+    return '<div class="pair-item"><b>' + esc(p[0]) + '</b> ⛔ <b>' + esc(p[1]) + '</b>' +
+           '<button class="pair-x" title="删除该约束" onclick="removePair(' + i + ')">×</button></div>';
+  }).join('');
+}
+
+// ===== 分组设置 =====
+function setMode(m){
+  document.querySelectorAll('#modeSeg .seg-btn').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-mode') === m);
+  });
+  document.getElementById('fieldCount').style.display = m === 'count' ? '' : 'none';
+  document.getElementById('fieldSize').style.display = m === 'size' ? '' : 'none';
+  lsSet(LS.mode, m);
+}
+function saveSetting(){
+  var num = document.getElementById('groupNum');
+  var size = document.getElementById('groupSize');
+  num.value = clamp(num.value, 2, 12);
+  size.value = clamp(size.value, 2, 10);
+  lsSet(LS.num, parseInt(num.value));
+  lsSet(LS.size, parseInt(size.value));
+}
+function onStyleChange(){ lsSet(LS.style, document.getElementById('styleSel').value); renderGroups(); }
+// 根据名单长度与设置计算实际组数（按人数模式自动折算，组数不超过人数）
+function computeGroupCount(n){
+  var mode = lsGet(LS.mode, 'count');
+  if(mode === 'size'){
+    var size = clamp(lsGet(LS.size, 5), 2, 10);
+    return Math.max(1, Math.min(n, Math.ceil(n / size)));
+  }
+  return Math.min(n, clamp(lsGet(LS.num, 6), 2, 12));
+}
+// 第 i 组的显示名（词库不够时回退为第N组）
+function groupLabel(i){
+  var style = lsGet(LS.style, 'num');
+  var pool = NAME_POOLS[style];
+  if(pool && i < pool.length) return pool[i] + '组';
+  return '第' + (i + 1) + '组';
+}
+
+// ===== 分组核心算法 =====
+// 洗牌后轮流发牌（round-robin），保证各组人数差不超过 1
+function deal(names, n){
+  var arr = shuffle(names.slice());
+  var g = [];
+  for(var i = 0; i < n; i++) g.push([]);
+  for(var j = 0; j < arr.length; j++) g[j % n].push(arr[j]);
+  return g;
+}
+// 校验黑名单约束，返回违反约束涉及的名字列表
+function checkViolations(g){
+  var idx = {};
+  g.forEach(function(group, gi){ group.forEach(function(nm){ idx[nm] = gi; }); });
+  var bad = [];
+  pairs.forEach(function(p){
+    if(idx[p[0]] !== undefined && idx[p[0]] === idx[p[1]]){
+      if(bad.indexOf(p[0]) < 0) bad.push(p[0]);
+      if(bad.indexOf(p[1]) < 0) bad.push(p[1]);
+    }
+  });
+  return bad;
+}
+function doGroup(){
+  var names = getNames();
+  if(names.length < 2){ toast('请先在上方应用至少 2 人的名单', 'warn'); return; }
+  var n = computeGroupCount(names.length);
+  var result = null, viol = [];
+  // 最多重试 50 次，找到完全满足约束的方案即停
+  for(var t = 0; t < 50; t++){
+    var g = deal(names, n);
+    var v = checkViolations(g);
+    result = g; viol = v;
+    if(v.length === 0) break;
+  }
+  groups = result;
+  violMap = {};
+  viol.forEach(function(nm){ violMap[nm] = 1; });
+  lsSet(LS.groups, groups);
+  renderGroups();
+  if(viol.length){
+    toast('已尝试 50 次仍有约束无法满足（已标红），可手动微调', 'warn');
+  }else{
+    toast('分组完成，共 ' + n + ' 组');
+  }
+}
+
+// ===== 结果渲染与手动微调 =====
+function renderGroups(){
+  var panel = document.getElementById('resultPanel');
+  if(!groups.length){ panel.style.display = 'none'; return; }
+  panel.style.display = '';
+  var total = groups.reduce(function(sum, g){ return sum + g.length; }, 0);
+  document.getElementById('resultInfo').textContent = groups.length + ' 组 · ' + total + ' 人';
+  var grid = document.getElementById('groupsGrid');
+  var html = '';
+  groups.forEach(function(g, gi){
+    var members = g.map(function(nm, mi){
+      var viol = violMap[nm] ? ' viol' : '';
+      return '<span class="stu' + viol + '">' +
+             '<button class="mv" title="移到上一组" onclick="moveStu(' + gi + ',' + mi + ',-1)">‹</button>' +
+             '<b>' + esc(nm) + '</b>' +
+             '<button class="mv" title="移到下一组" onclick="moveStu(' + gi + ',' + mi + ',1)">›</button>' +
+             '</span>';
+    }).join('');
+    html += '<div class="group-card"><div class="group-head">' + esc(groupLabel(gi)) +
+            '<span class="gcount">' + g.length + '人</span></div>' + members + '</div>';
+  });
+  grid.innerHTML = html;
+  if(Object.keys(violMap).length){
+    grid.insertAdjacentHTML('beforeend', '<div class="viol-legend" style="grid-column:1/-1">🔴 红色为违反黑名单约束的同学，请手动微调或重新分组。</div>');
+  }
+}
+// 把某组的第 mi 个同学移到相邻小组（dir：-1 上一组 / 1 下一组）
+function moveStu(gi, mi, dir){
+  var t = gi + dir;
+  if(t < 0 || t >= groups.length) return;
+  var nm = groups[gi].splice(mi, 1)[0];
+  groups[t].push(nm);
+  violMap = {}; // 手动调整后清除旧的标红状态
+  lsSet(LS.groups, groups);
+  renderGroups();
+}
+
+// ===== 桌牌打印 =====
+function printDesk(){
+  if(!groups.length){ toast('请先完成分组', 'warn'); return; }
+  // 逐组生成一页桌牌：组名大字 + 组员名牌
+  var html = groups.map(function(g, gi){
+    var names = g.map(function(nm){ return '<span class="desk-name">' + esc(nm) + '</span>'; }).join('');
+    return '<div class="desk-page"><div class="desk-group">' + esc(groupLabel(gi)) + '</div>' +
+           '<div class="desk-names">' + names + '</div></div>';
+  }).join('');
+  document.getElementById('deskCards').innerHTML = html;
+  window.print();
+}
+
+// ===== 初始化：恢复本地数据 =====
+function init(){
+  document.getElementById('namesInput').value = lsGet(LS.names, DEFAULT_NAMES.join('\n'));
+  pairs = lsGet(LS.pairs, []);
+  document.getElementById('groupNum').value = clamp(lsGet(LS.num, 6), 2, 12);
+  document.getElementById('groupSize').value = clamp(lsGet(LS.size, 5), 2, 10);
+  document.getElementById('styleSel').value = lsGet(LS.style, 'num');
+  setMode(lsGet(LS.mode, 'count'));
+  refreshPairSelects();
+  updateNameCount();
+  groups = lsGet(LS.groups, []);
+  renderGroups();
+  // 名单内容变化时实时更新人数统计
+  document.getElementById('namesInput').addEventListener('input', updateNameCount);
+}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>汉字笔顺演示 · 逐笔动画/田字格描红打印 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/bishun.html">
+<meta name="description" content="汉字笔顺演示工具：输入生字即可播放标准笔顺动画，支持逐笔查看、速度调节、田字格背景与全屏投屏，一键打印 A4 描红页。支持生字批量输入与逐笔回看，可按课堂节奏调节演示速度，适合课前示范、学生跟写与课后巩固，描红页还能自定义字格大小与每页字数。">
+<script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5.0/dist/hanzi-writer.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#1f2d2b;--muted:#6b7a78;--line:#e3ebe8;
+  --brand:#2f7d6e;--brand-l:#eaf5f2;--bg:#f2f6f5;--card:#fff;--radius:14px;
+}
+body{font-family:-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+/* ===== 页面骨架 ===== */
+.wrap{max-width:1080px;margin:0 auto;padding:22px 18px 48px}
+.head{margin-bottom:16px}
+.head h2{font-size:22px;font-weight:800;letter-spacing:.4px;display:flex;align-items:center;gap:8px}
+.head h2 em{font-style:normal;font-size:26px}
+.head p{font-size:13px;color:var(--muted);margin-top:7px;line-height:1.75}
+.card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 4px 20px rgba(20,50,45,.07);margin-bottom:16px}
+.card-title{font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.card-title .hint{font-size:12px;font-weight:400;color:var(--muted)}
+
+/* ===== 输入区 ===== */
+.input-row{display:flex;gap:8px;flex-wrap:wrap}
+.input-row input[type=text]{flex:1;min-width:180px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;font-family:inherit;outline:none;background:#fbfdfc;color:var(--ink);transition:border-color .2s}
+.input-row input[type=text]:focus{border-color:var(--brand)}
+.btn{padding:10px 18px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s;background:#f0f4f3;color:#4c5f5c;white-space:nowrap}
+.btn:hover{background:#e5ecea}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.primary:hover{background:#276a5d}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tip{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.7;background:var(--brand-l);border-radius:9px;padding:9px 11px}
+.tip.warn{background:#fff4e6;color:#9a6420}
+
+/* ===== 字卡切换 ===== */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tab{min-width:46px;height:46px;padding:0 12px;border:1px solid var(--line);background:#fbfdfc;border-radius:11px;font-size:22px;font-family:"KaiTi","STKaiti","楷体",serif;color:#40514e;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .18s}
+.tab:hover{border-color:#bcd6d0}
+.tab.on{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 4px 12px rgba(47,125,110,.25)}
+.tab .idx{font-size:11px;font-family:inherit;opacity:.65}
+
+/* ===== 演示画布 ===== */
+.stage-card{padding:0;overflow:hidden}
+.stage-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.stage-bar .name{font-size:14px;font-weight:700;color:#374a47}
+.stage-bar .tools{display:flex;gap:8px}
+.mini-btn{padding:7px 14px;border-radius:9px;border:1px solid var(--line);background:#fff;color:#5a6b68;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.mini-btn:hover{background:#f4f8f7}
+.mini-btn.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.canvas-wrap{padding:20px;background:linear-gradient(180deg,#f7faf9,#eef4f2);display:flex;justify-content:center}
+
+/* 演示方框：正方形，等比缩放 */
+.writer-box{position:relative;width:100%;max-width:min(440px,72vh);aspect-ratio:1/1;background:#fff;border-radius:12px;box-shadow:0 6px 24px rgba(20,50,45,.1);overflow:hidden}
+/* 田字格衬底 */
+.tian-grid{position:absolute;inset:0;pointer-events:none;border:2px solid #b7c6c2;border-radius:10px;transition:opacity .2s}
+.tian-grid i{position:absolute;background:repeating-linear-gradient(to right,#cbd8d5 0 6px,transparent 6px 12px)}
+.tian-grid .v{top:6%;bottom:6%;left:50%;width:1px}
+.tian-grid .h{left:6%;right:6%;top:50%;height:1px;background:repeating-linear-gradient(to bottom,#cbd8d5 0 6px,transparent 6px 12px)}
+.writer-box.no-grid .tian-grid{opacity:0}
+/* 笔顺 svg 铺满方框（宽度高度由 CSS 覆盖，保证响应式） */
+#bishunTarget{position:absolute;inset:0}
+#bishunTarget svg{width:100%!important;height:100%!important;display:block}
+
+/* 控制条 */
+.ctrl{padding:14px 16px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:14px}
+.ctrl-btns{display:flex;gap:8px;flex-wrap:wrap}
+.ctrl-btns .btn{flex:1;min-width:104px;padding:11px 10px}
+.speed-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;color:#40514e}
+.speed-row input[type=range]{flex:1;min-width:140px;accent-color:var(--brand);cursor:pointer}
+.speed-row .val{font-weight:700;color:var(--brand);min-width:96px;text-align:right}
+.status{font-size:12.5px;color:#b26a12;background:#fff6e8;border:1px solid #ffe6c2;border-radius:9px;padding:9px 12px;line-height:1.6;display:none}
+.status.show{display:block}
+
+/* 全屏投屏模式 */
+.stage-card:fullscreen{background:#fff;padding:0;display:flex;flex-direction:column;justify-content:center;border-radius:0}
+.stage-card:fullscreen .stage-bar{background:#fff}
+.stage-card:fullscreen .canvas-wrap{flex:1;align-items:center;padding:16px}
+.stage-card:fullscreen .writer-box{width:auto;height:78vh;max-width:none;max-height:78vh;aspect-ratio:1/1;margin:0 auto;box-shadow:none}
+.stage-card:fullscreen .ctrl{background:#fff;flex:0 0 auto}
+.stage-card:-webkit-full-screen{background:#fff}
+
+/* ===== A4 描红纸 ===== */
+.paper-area{display:flex;justify-content:center;overflow:hidden}
+.paper-holder{width:100%;display:flex;justify-content:center}
+.paper{width:210mm;min-height:297mm;background:#fff;padding:12mm 15mm 10mm;box-shadow:0 6px 26px rgba(20,50,45,.14);border-radius:1mm;transform-origin:top center;display:flex;flex-direction:column;color:#222}
+.sheet-head{display:flex;align-items:flex-end;justify-content:space-between;height:11mm;flex:0 0 11mm;border-bottom:.4mm solid #b9c6c3;margin-bottom:4mm;font-size:4.2mm;color:#333}
+.sheet-head .t{font-weight:700;letter-spacing:.5mm}
+.sheet-head .meta{font-size:3.4mm;color:#444}
+.prows{flex:1}
+.prow{display:grid;grid-template-columns:repeat(8,1fr);gap:1.4mm;margin-bottom:2.2mm}
+.pcell{position:relative;aspect-ratio:1/1;border:.45mm solid #2b2b2b;display:flex;align-items:center;justify-content:center;
+  background-image:
+    linear-gradient(to right,transparent 49.6%,#aab7b4 49.6%,#aab7b4 50.4%,transparent 50.4%),
+    linear-gradient(to bottom,transparent 49.6%,#aab7b4 49.6%,#aab7b4 50.4%,transparent 50.4%);}
+.pch{font-family:"KaiTi","STKaiti","楷体",serif;font-size:15mm;line-height:1;color:#1a1a1a}
+.pch.light{color:#cbd4d1}
+.paper-foot{margin-top:6mm;font-size:3.2mm;color:#666;display:flex;justify-content:space-between;flex:0 0 auto}
+
+/* ===== 打印 ===== */
+@media print{
+  @page{size:A4;margin:12mm 15mm}
+  body{background:#fff}
+  .head,.card-title,.input-row,.tabs,.tip,.ctrl,.stage-bar,.paper-tools{display:none!important}
+  .wrap{max-width:none;margin:0;padding:0}
+  .card{box-shadow:none;border-radius:0;padding:0;margin:0;display:none}
+  .card.print-card{display:block}
+  .paper-area{padding:0;overflow:visible;display:block}
+  .paper{width:auto;min-height:0;height:auto;padding:0;box-shadow:none;border-radius:0;transform:none!important}
+  .paper .sheet-head{height:9mm;flex:0 0 9mm;margin-bottom:5mm}
+  .prow{margin-bottom:3mm}
+  .paper-tools{display:none}
+}
+
+/* ===== 响应式 ===== */
+@media (max-width:760px){
+  .wrap{padding:14px 12px 32px}
+  .head h2{font-size:18px}
+  .canvas-wrap{padding:12px}
+  .writer-box{max-width:min(100%,60vh)}
+  .ctrl-btns .btn{min-width:88px;font-size:13px;padding:10px 8px}
+  .stage-card:fullscreen .writer-box{height:70vh}
+}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">汉字笔顺演示 · 逐笔动画与田字格描红</h1>
+<div class="wrap">
+  <div class="head">
+    <h2><em>✍️</em>汉字笔顺演示</h2>
+    <p>输入生字，播放标准笔顺动画。可逐笔查看、调速循环，打开田字格衬底，全屏投屏讲课；下方田字格描红页可直接 A4 打印。</p>
+  </div>
+
+  <!-- 输入与字卡 -->
+  <div class="card">
+    <div class="card-title">要演示的字 <span class="hint">可一次输入多个字，点字卡切换</span></div>
+    <div class="input-row">
+      <input type="text" id="charInput" maxlength="40" placeholder="输入汉字，如：天地人 或 春眠不觉晓" autocomplete="off">
+      <button class="btn primary" id="btnApply">更新字卡</button>
+    </div>
+    <div class="tabs" id="charTabs"></div>
+    <div class="tip" id="inputTip">提示：点字卡或按键盘 ← → 可切换当前字；笔画数据来自网络，首次加载某个字需要联网，加载失败时描红打印仍可使用。</div>
+  </div>
+
+  <!-- 演示区 -->
+  <div class="card stage-card" id="stageCard">
+    <div class="stage-bar">
+      <div class="name" id="strokeInfo">等待加载…</div>
+      <div class="tools">
+        <button class="mini-btn on" id="chkGrid" type="button">田字格背景</button>
+        <button class="mini-btn" id="btnFullscreen" type="button">⛶ 全屏投屏</button>
+      </div>
+    </div>
+    <div class="canvas-wrap">
+      <div class="writer-box" id="writerBox">
+        <div class="tian-grid" id="tianGrid"><i class="v"></i><i class="h"></i></div>
+        <div id="bishunTarget"></div>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="status" id="statusMsg"></div>
+      <div class="ctrl-btns">
+        <button class="btn primary" id="btnPlay" type="button">▶ 播放整字</button>
+        <button class="btn" id="btnStep" type="button">→ 逐笔前进</button>
+        <button class="btn" id="btnReplay" type="button">↻ 重播</button>
+        <button class="btn" id="btnLoop" type="button">∞ 循环播放</button>
+      </div>
+      <div class="speed-row">
+        <label for="speedRange">动画速度</label>
+        <input type="range" id="speedRange" min="0.5" max="2" step="0.1" value="1">
+        <span class="val" id="speedVal">中速 1.0×</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 描红打印 -->
+  <div class="card print-card">
+    <div class="card-title">
+      田字格描红页 <span class="hint">每个字一行，首字深色、其余浅灰</span>
+    </div>
+    <div class="paper-area">
+      <div class="paper-holder" id="paperHolder">
+        <div class="paper" id="paper"></div>
+      </div>
+    </div>
+    <div class="paper-tools" style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center">
+      <button class="btn primary" id="btnPrint" type="button">🖨 打印描红页</button>
+      <span class="hint" id="paperTip" style="font-size:12px;color:#6b7a78;line-height:1.6"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var KEY = 'bishun_state_v1';
+  var DEF = { text: '天地人', speed: 1, grid: true };
+  var state = Object.assign({}, DEF);
+  try {
+    var saved = localStorage.getItem(KEY);
+    if (saved) state = Object.assign(state, JSON.parse(saved));
+  } catch (e) { /* 隐私模式下忽略 */ }
+
+  var chars = [];
+  var currentIndex = 0;
+  var writer = null;
+  var strokeCount = 0;
+  var strokePos = 0;
+  var loadToken = 0;
+  var speedTimer = null;
+  var dataCache = {}; // 笔画数据缓存，避免重建时重复请求
+
+  var el = {
+    input: document.getElementById('charInput'),
+    tabs: document.getElementById('charTabs'),
+    target: document.getElementById('bishunTarget'),
+    box: document.getElementById('writerBox'),
+    status: document.getElementById('statusMsg'),
+    info: document.getElementById('strokeInfo'),
+    speed: document.getElementById('speedRange'),
+    speedVal: document.getElementById('speedVal'),
+    btnApply: document.getElementById('btnApply'),
+    btnPlay: document.getElementById('btnPlay'),
+    btnStep: document.getElementById('btnStep'),
+    btnReplay: document.getElementById('btnReplay'),
+    btnLoop: document.getElementById('btnLoop'),
+    btnFull: document.getElementById('btnFullscreen'),
+    chkGrid: document.getElementById('chkGrid'),
+    btnPrint: document.getElementById('btnPrint'),
+    paper: document.getElementById('paper'),
+    holder: document.getElementById('paperHolder'),
+    paperTip: document.getElementById('paperTip')
+  };
+
+  // 只保留汉字，去掉空白与标点
+  function parseChars(raw) {
+    var arr = Array.from(String(raw || ''));
+    var out = [];
+    arr.forEach(function (ch) {
+      if (/[\u3400-\u9fff]/.test(ch) && out.indexOf(ch) < 0) out.push(ch);
+    });
+    return out.slice(0, 12);
+  }
+
+  function speedLabel(v) {
+    var name = v < 0.85 ? '慢速' : (v < 1.35 ? '中速' : '快速');
+    return name + ' ' + v.toFixed(1) + '×';
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function setStatus(msg) {
+    if (!msg) {
+      el.status.classList.remove('show');
+      el.status.textContent = '';
+      return;
+    }
+    el.status.textContent = msg;
+    el.status.classList.add('show');
+  }
+
+  function updateInfo() {
+    var ch = chars[currentIndex];
+    if (!ch) {
+      el.info.textContent = '尚未输入汉字';
+      return;
+    }
+    var txt = '「' + ch + '」共 ' + strokeCount + ' 笔';
+    if (strokeCount) {
+      txt += strokePos ? ' · 已演示第 ' + strokePos + ' 笔' : ' · 尚未开始';
+    }
+    el.info.textContent = txt;
+  }
+
+  // 生成字卡
+  function renderTabs() {
+    el.tabs.innerHTML = '';
+    if (!chars.length) return;
+    chars.forEach(function (ch, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tab' + (i === currentIndex ? ' on' : '');
+      b.innerHTML = '<span>' + ch + '</span><span class="idx">' + (i + 1) + '</span>';
+      b.addEventListener('click', function () {
+        if (currentIndex === i) return;
+        selectChar(i);
+      });
+      el.tabs.appendChild(b);
+    });
+  }
+
+  // 切换当前字：刷新字卡高亮并重新加载
+  function selectChar(i) {
+    if (!chars.length) return;
+    if (i < 0) i = chars.length - 1;
+    if (i >= chars.length) i = 0;
+    currentIndex = i;
+    Array.prototype.forEach.call(el.tabs.children, function (t, k) {
+      t.classList.toggle('on', k === i);
+    });
+    loadCurrent();
+  }
+
+  // 笔画数据按字缓存；失败时清掉缓存，方便重试
+  function getCharData(ch) {
+    if (!dataCache[ch]) {
+      dataCache[ch] = window.HanziWriter.loadCharacterData(ch).catch(function (err) {
+        delete dataCache[ch];
+        throw err;
+      });
+    }
+    return dataCache[ch];
+  }
+
+  // 创建 hanzi-writer 实例
+  function buildWriter(ch) {
+    if (!window.HanziWriter) return;
+    el.target.innerHTML = '';
+    try {
+      writer = window.HanziWriter.create('bishunTarget', ch, {
+        width: 400,
+        height: 400,
+        padding: 8,
+        showOutline: true,
+        strokeColor: '#1f2d2b',
+        outlineColor: '#dbe5e2',
+        strokeAnimationSpeed: state.speed,
+        delayBetweenStrokes: 500,
+        charDataLoader: function (ch2, onComplete, onError) {
+          getCharData(ch2).then(onComplete).catch(onError);
+        }
+      });
+    } catch (e) {
+      writer = null;
+      setStatus('笔顺组件初始化失败，请刷新页面重试；下方描红页不受影响。');
+      return;
+    }
+    updateInfo();
+  }
+
+  // 加载当前字的笔画数据后再创建实例，便于准确提示失败
+  function loadCurrent() {
+    var ch = chars[currentIndex];
+    strokePos = 0;
+    strokeCount = 0;
+    writer = null;
+    el.target.innerHTML = '';
+    updateInfo();
+    renderPaper();
+
+    if (!ch) {
+      setStatus('请先在上方输入框里输入汉字。');
+      return;
+    }
+    if (!window.HanziWriter) {
+      setStatus('笔顺组件未能从网络加载（可能是网络被拦截），描红打印仍可正常使用，请联网后刷新页面。');
+      return;
+    }
+    var token = ++loadToken;
+    setStatus('正在加载「' + ch + '」的笔画数据…');
+    getCharData(ch).then(function (data) {
+      if (token !== loadToken) return;
+      strokeCount = data && data.strokes ? data.strokes.length : 0;
+      buildWriter(ch);
+      setStatus('');
+      updateInfo();
+    }).catch(function () {
+      if (token !== loadToken) return;
+      setStatus('「' + ch + '」的笔画数据加载失败（请检查网络后重试）。下方的描红页仍然可以打印。');
+    });
+  }
+
+  // ===== 按钮事件 =====
+  el.btnApply.addEventListener('click', function () {
+    var next = parseChars(el.input.value);
+    if (!next.length) {
+      setStatus('没有识别到汉字，请输入中文汉字（标点与空格会自动忽略）。');
+      return;
+    }
+    chars = next;
+    if (chars.length <= 12) el.input.value = chars.join('');
+    currentIndex = 0;
+    state.text = chars.join('');
+    save();
+    renderTabs();
+    loadCurrent();
+  });
+
+  el.input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') el.btnApply.click();
+  });
+
+  el.btnPlay.addEventListener('click', function () {
+    if (!writer) return;
+    strokePos = 0;
+    updateInfo();
+    writer.animateCharacter({ onComplete: function () { strokePos = strokeCount; updateInfo(); } });
+  });
+
+  el.btnStep.addEventListener('click', function () {
+    if (!writer || !strokeCount) return;
+    strokePos = strokePos >= strokeCount ? 1 : strokePos + 1;
+    try { writer.animateStroke(strokePos - 1); } catch (e) { /* 越界保护 */ }
+    updateInfo();
+  });
+
+  el.btnReplay.addEventListener('click', function () {
+    if (!writer) return;
+    strokePos = 0;
+    updateInfo();
+    writer.animateCharacter({ onComplete: function () { strokePos = strokeCount; updateInfo(); } });
+  });
+
+  el.btnLoop.addEventListener('click', function () {
+    if (!writer) return;
+    strokePos = 0;
+    updateInfo();
+    writer.loopCharacterAnimation();
+  });
+
+  el.speed.addEventListener('input', function () {
+    var v = parseFloat(el.speed.value) || 1;
+    state.speed = v;
+    el.speedVal.textContent = speedLabel(v);
+    save();
+    // 速度是创建时的参数，需重建实例；防抖避免拖动时频繁重建
+    clearTimeout(speedTimer);
+    speedTimer = setTimeout(function () {
+      if (chars[currentIndex]) buildWriter(chars[currentIndex]);
+    }, 400);
+  });
+
+  el.chkGrid.addEventListener('click', function () {
+    state.grid = !state.grid;
+    el.chkGrid.classList.toggle('on', state.grid);
+    el.box.classList.toggle('no-grid', !state.grid);
+    save();
+  });
+
+  el.btnFull.addEventListener('click', function () {
+    var card = document.getElementById('stageCard');
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (card.requestFullscreen) card.requestFullscreen();
+      else if (card.webkitRequestFullscreen) card.webkitRequestFullscreen();
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }
+  });
+
+  document.addEventListener('fullscreenchange', function () {
+    el.btnFull.textContent = document.fullscreenElement ? '✕ 退出全屏' : '⛶ 全屏投屏';
+  });
+
+  // 键盘左右方向键切换字卡（输入框内不拦截）
+  document.addEventListener('keydown', function (e) {
+    if (e.target === el.input) return;
+    if (chars.length < 2) return;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      selectChar(currentIndex + (e.key === 'ArrowRight' ? 1 : -1));
+    }
+  });
+
+  el.btnPrint.addEventListener('click', function () {
+    window.print();
+  });
+
+  // ===== 描红纸渲染 =====
+  function renderPaper() {
+    var MAX = 9;
+    var list = chars.slice(0, MAX);
+    if (!list.length) list = ['天'];
+
+    var head = '<div class="sheet-head"><span class="t">汉字描红练习</span>' +
+               '<span class="meta">姓名：____________　　日期：____________</span></div>';
+
+    var rows = list.map(function (ch) {
+      var cells = '';
+      for (var i = 0; i < 8; i++) {
+        cells += '<div class="pcell"><span class="pch' + (i === 0 ? '' : ' light') + '">' + ch + '</span></div>';
+      }
+      return '<div class="prow">' + cells + '</div>';
+    }).join('');
+
+    var foot = '<div class="paper-foot"><span>每个字先描首字，再按笔顺独立书写。</span><span>共 ' + list.length + ' 字</span></div>';
+
+    el.paper.innerHTML = head + '<div class="prows">' + rows + '</div>' + foot;
+
+    if (chars.length > MAX) {
+      el.paperTip.textContent = '单页最多排 ' + MAX + ' 个字，当前已截取前 ' + MAX + ' 个，可分两页打印。';
+    } else {
+      el.paperTip.textContent = '按 A4 纵向排版，每个字占一行共 8 格。';
+    }
+    fitPaper();
+  }
+
+  // A4 预览等比缩放
+  function fitPaper() {
+    var wrapW = el.holder.clientWidth - 4;
+    var paperW = 210 * (96 / 25.4);
+    var s = Math.min(1, wrapW / paperW);
+    el.paper.style.transform = 'scale(' + s + ')';
+    el.paper.style.marginBottom = (297 * (96 / 25.4)) * (s - 1) + 'px';
+  }
+
+  window.addEventListener('resize', fitPaper);
+
+  // ===== 初始化 =====
+  el.input.value = state.text;
+  chars = parseChars(state.text);
+  if (!chars.length) { chars = ['天']; state.text = '天'; }
+  el.speed.value = state.speed;
+  el.speedVal.textContent = speedLabel(state.speed);
+  el.chkGrid.classList.toggle('on', state.grid);
+  el.box.classList.toggle('no-grid', !state.grid);
+  renderTabs();
+  loadCurrent();
+})();
+</script>
+</body>
+</html>

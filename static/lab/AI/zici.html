@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>找词字阵 · 词语隐藏网格/答案与 A4 打印 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/zici.html">
+<meta name="description" content="找词字阵生成器：输入词语或英文单词，一键生成横竖斜向隐藏的找词游戏，支持 10×10 至 15×15 网格、显示答案高亮路径，并可 A4 打印练习页与答案页。支持自定义网格大小、词语方向与难度，可隐藏答案或显示高亮路径，适合语文识字、英语单词与课堂小组竞赛。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#1f2d2b;--muted:#6b7a78;--line:#e3ebe8;
+  --brand:#2f7d6e;--brand-l:#eaf5f2;--bg:#f2f6f5;--card:#fff;--radius:14px;
+}
+body{font-family:-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+/* ===== 骨架 ===== */
+.wrap{max-width:1080px;margin:0 auto;padding:22px 18px 48px}
+.head{margin-bottom:16px}
+.head h2{font-size:22px;font-weight:800;letter-spacing:.4px;display:flex;align-items:center;gap:8px}
+.head h2 em{font-style:normal;font-size:26px}
+.head p{font-size:13px;color:var(--muted);margin-top:7px;line-height:1.75}
+.layout{display:flex;gap:16px;align-items:flex-start}
+.panel{flex:0 0 320px;width:320px}
+.board-area{flex:1;min-width:0}
+
+.card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 4px 20px rgba(20,50,45,.07);margin-bottom:16px}
+.card-title{font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.card-title .hint{font-size:12px;font-weight:400;color:var(--muted)}
+
+/* ===== 表单 ===== */
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;color:#40514e;margin-bottom:7px}
+textarea{width:100%;min-height:170px;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;line-height:1.8;font-family:inherit;outline:none;color:var(--ink);background:#fbfdfc;transition:border-color .2s}
+textarea:focus{border-color:var(--brand)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:62px;padding:9px 6px;border:1px solid var(--line);background:#fbfdfc;border-radius:9px;font-size:13px;color:#5a6b68;cursor:pointer;font-family:inherit;transition:all .18s}
+.seg button:hover{border-color:#bcd6d0}
+.seg button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.btn{width:100%;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s;margin-top:12px}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.primary:hover{background:#276a5d}
+.btn.ghost{background:#f0f4f3;color:#4c5f5c}
+.btn.ghost:hover{background:#e5ecea}
+.tip{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.7;background:var(--brand-l);border-radius:9px;padding:9px 11px}
+.tip.warn{background:#fff4e6;color:#9a6420}
+
+/* ===== 棋盘 ===== */
+.board-card{display:flex;flex-direction:column;align-items:center}
+.board-top{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.board-top .info{font-size:13px;color:#4c5f5c}
+.board-top .ops{display:flex;gap:8px}
+.op-btn{padding:8px 16px;border-radius:9px;border:1px solid var(--line);background:#fff;color:#5a6b68;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.op-btn:hover{background:#f4f8f7}
+.op-btn.on{background:var(--brand);border-color:var(--brand);color:#fff}
+
+.grid-wrap{width:100%;display:flex;justify-content:center}
+.grid{display:grid;gap:2px;padding:3px;width:min(100%,540px);aspect-ratio:1/1;
+  grid-template-columns:repeat(var(--n),1fr);grid-template-rows:repeat(var(--n),1fr);
+  background:#dfe8e5;border-radius:12px;box-shadow:0 6px 22px rgba(20,50,45,.09);--fs:16px}
+.cell{display:flex;align-items:center;justify-content:center;background:#fff;border-radius:4px;
+  font-family:"KaiTi","STKaiti","Courier New",monospace;font-size:var(--fs);line-height:1;color:#33413e;
+  transition:background .2s,color .2s;user-select:none}
+.cell.hl{font-weight:700;color:#1c2a27}
+
+/* ===== 词表 ===== */
+.words-box{width:100%;margin-top:16px;border-top:1px dashed var(--line);padding-top:14px}
+.words-box h3{font-size:13px;color:#40514e;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.words-box h3 .cnt{font-weight:400;color:var(--muted);font-size:12px}
+.word-list{display:flex;flex-wrap:wrap;gap:8px}
+.word{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;background:#f2f7f5;color:#33413e;font-size:14px;letter-spacing:.5px}
+.word .no{font-size:11px;color:#93a5a1;font-family:inherit}
+.word.miss{background:#fff1f0;color:#a4544a}
+.word.miss::after{content:'（未放入）';font-size:11px;color:#b97b72}
+
+/* ===== 打印专用页 ===== */
+.print-sheets{display:none}
+.paper{background:#fff;color:#222;padding:0;margin:0 auto;page-break-after:always}
+.paper:last-child{page-break-after:auto}
+.p-head{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:.4mm solid #333;padding-bottom:2mm;margin-bottom:5mm;font-size:4.4mm;font-weight:700}
+.p-head .meta{font-size:3.4mm;font-weight:400;color:#444}
+.p-grid{display:grid;gap:0;width:180mm;border:.5mm solid #333;
+  grid-template-columns:repeat(var(--n),1fr);grid-template-rows:repeat(var(--n),1fr)}
+.p-grid .pc{display:flex;align-items:center;justify-content:center;
+  border:.2mm solid #b9c4c1;aspect-ratio:1/1;
+  font-family:"KaiTi","STKaiti","Courier New",monospace;
+  font-size:calc(180mm / var(--n) * .54);line-height:1;color:#1a1a1a}
+.p-grid .pc{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.p-grid .pc.hl{font-weight:700}
+.p-words{margin-top:6mm;font-size:3.6mm}
+.p-words b{display:inline-block;margin-right:4mm}
+.p-words span{display:inline-block;margin-right:7mm;line-height:2;letter-spacing:.3mm}
+.p-note{margin-top:4mm;font-size:2.9mm;color:#777}
+
+/* ===== 打印 ===== */
+@media print{
+  @page{size:A4 portrait;margin:12mm 15mm}
+  body{background:#fff}
+  .wrap{max-width:none;padding:0}
+  .head,.layout,.card,.tip{display:none!important}
+  .print-sheets{display:block}
+  .paper{width:auto;margin:0;padding:0}
+  .p-grid{width:180mm;border:.55mm solid #111}
+  .pc{border:.25mm solid #9aa6a3;color:#000}
+  .pc.hl{background:#e8e8e8}
+}
+
+/* ===== 响应式 ===== */
+@media (max-width:900px){
+  .layout{flex-direction:column}
+  .panel{flex:none;width:100%}
+  .board-area{width:100%}
+  .grid{width:min(100%,460px)}
+}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">找词字阵 · 词语隐藏网格与答案</h1>
+<div class="wrap">
+  <div class="head">
+    <h2><em>🔍</em>找词字阵</h2>
+    <p>把词语藏进字阵，让学生在横竖斜向里找出它们。可显示答案高亮路径，也能一键打印练习页与答案页。</p>
+  </div>
+
+  <div class="layout">
+    <!-- 左侧设置 -->
+    <aside class="panel">
+      <div class="card">
+        <div class="card-title">词库 <span class="hint">每行一个词</span></div>
+        <div class="field">
+          <textarea id="wordInput" placeholder="每行输入一个词语或英文单词&#10;中文按单字填格，英文按字母填格"></textarea>
+        </div>
+        <div class="field">
+          <label>网格尺寸</label>
+          <div class="seg" id="segSize">
+            <button data-v="10">10×10</button>
+            <button data-v="12">12×12</button>
+            <button data-v="15">15×15</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>隐藏方向</label>
+          <div class="seg" id="segDir">
+            <button data-v="hv">仅横竖</button>
+            <button data-v="diag">横竖加斜向</button>
+          </div>
+        </div>
+        <button class="btn primary" id="btnGenerate">🎲 重新生成</button>
+        <button class="btn ghost" id="btnAnswer">👁 显示答案</button>
+        <div class="tip" id="tip">生成后点「重新生成」可换一版布局；设置会自动保存在本机。</div>
+        <button class="btn primary" id="btnPrint" style="margin-top:8px">🖨 打印练习页 + 答案页</button>
+      </div>
+    </aside>
+
+    <!-- 右侧棋盘 -->
+    <main class="board-area">
+      <div class="card board-card">
+        <div class="board-top">
+          <div class="info" id="boardInfo">等待生成…</div>
+          <div class="ops">
+            <button class="op-btn" id="btnPrint2">打印</button>
+            <button class="op-btn" id="btnAnswer2">显示答案</button>
+          </div>
+        </div>
+        <div class="grid-wrap">
+          <div class="grid" id="grid"></div>
+        </div>
+        <div class="words-box">
+          <h3>词表 <span class="cnt" id="wordCount"></span></h3>
+          <div class="word-list" id="wordList"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- 打印用的两页（屏幕上隐藏） -->
+<div class="print-sheets" id="printSheets"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var KEY = 'zici_state_v1';
+  var DEF_WORDS = '春暖花开\n鸟语花香\n万紫千红\n生机勃勃\n书声琅琅\n勤奋好学\n志存高远\n脚踏实地\n一丝不苟\n温故知新';
+  var DEF = { words: DEF_WORDS, size: 10, diag: false };
+  var state = Object.assign({}, DEF);
+  try {
+    var saved = localStorage.getItem(KEY);
+    if (saved) state = Object.assign(state, JSON.parse(saved));
+  } catch (e) { /* 隐私模式忽略 */ }
+
+  var puzzle = { grid: [], places: [], skipped: [], n: 10, words: [] };
+  var showAnswer = false;
+
+  // 用黄金角生成互不相同的浅色底，保证每个词颜色可区分
+  function answerFill(i) {
+    return 'hsl(' + ((i * 41) % 360) + ', 72%, 87%)';
+  }
+
+  var el = {
+    input: document.getElementById('wordInput'),
+    segSize: document.getElementById('segSize'),
+    segDir: document.getElementById('segDir'),
+    grid: document.getElementById('grid'),
+    info: document.getElementById('boardInfo'),
+    wordList: document.getElementById('wordList'),
+    wordCount: document.getElementById('wordCount'),
+    tip: document.getElementById('tip'),
+    btnGenerate: document.getElementById('btnGenerate'),
+    btnAnswer: document.getElementById('btnAnswer'),
+    btnAnswer2: document.getElementById('btnAnswer2'),
+    btnPrint: document.getElementById('btnPrint'),
+    btnPrint2: document.getElementById('btnPrint2'),
+    printSheets: document.getElementById('printSheets')
+  };
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // 解析词库：中文按单字、英文按字母，统一大写英文
+  function parseWords() {
+    var lines = String(state.words || '').split(/\r?\n/);
+    var out = [];
+    var seen = {};
+    lines.forEach(function (line) {
+      var raw = line.replace(/\s+/g, '').replace(/[，。、；：？！,.;:?!"'()\[\]]/g, '');
+      if (!raw) return;
+      var cells;
+      if (/^[A-Za-z]+$/.test(raw)) {
+        cells = raw.toUpperCase().split('');
+      } else {
+        cells = Array.from(raw).filter(function (c) { return /[\u3400-\u9fffA-Za-z]/.test(c); })
+          .map(function (c) { return /[A-Za-z]/.test(c) ? c.toUpperCase() : c; });
+      }
+      if (!cells.length) return;
+      var text = cells.join('');
+      if (seen[text]) return;
+      seen[text] = true;
+      out.push({ text: text, cells: cells });
+    });
+    return out;
+  }
+
+  function shuffled(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  // ===== 生成字阵 =====
+  function buildPuzzle() {
+    var n = state.size;
+    var words = parseWords();
+    var dirs = [[0, 1], [1, 0]];
+    if (state.diag) dirs.push([1, 1], [1, -1]);
+
+    var grid = [];
+    for (var r = 0; r < n; r++) {
+      var row = [];
+      for (var c = 0; c < n; c++) row.push('');
+      grid.push(row);
+    }
+
+    var places = [];
+    var skipped = [];
+
+    // 长词优先放入，布局更稳
+    var ordered = words.slice().sort(function (a, b) { return b.cells.length - a.cells.length; });
+
+    ordered.forEach(function (w) {
+      var len = w.cells.length;
+      if (len > n) { skipped.push(w.text); return; }
+
+      var done = false;
+      for (var attempt = 0; attempt < 200 && !done; attempt++) {
+        var d = dirs[Math.floor(Math.random() * dirs.length)];
+        var r0 = Math.floor(Math.random() * n);
+        var c0 = Math.floor(Math.random() * n);
+
+        // 边界检查
+        var rEnd = r0 + d[0] * (len - 1);
+        var cEnd = c0 + d[1] * (len - 1);
+        if (rEnd < 0 || rEnd >= n || cEnd < 0 || cEnd >= n) continue;
+
+        // 冲突检查：空格或同字可共用
+        var ok = true;
+        for (var i = 0; i < len; i++) {
+          var v = grid[r0 + d[0] * i][c0 + d[1] * i];
+          if (v && v !== w.cells[i]) { ok = false; break; }
+        }
+        if (!ok) continue;
+
+        // 写入
+        var coords = [];
+        for (var k = 0; k < len; k++) {
+          var rr = r0 + d[0] * k;
+          var cc = c0 + d[1] * k;
+          grid[rr][cc] = w.cells[k];
+          coords.push([rr, cc]);
+        }
+        places.push({ text: w.text, coords: coords, dir: d });
+        done = true;
+      }
+      if (!done) skipped.push(w.text);
+    });
+
+    // 空白填充：只用词库里出现过的字/字母，避免干扰
+    var pool = [];
+    var poolSeen = {};
+    words.forEach(function (w) {
+      w.cells.forEach(function (ch) {
+        if (!poolSeen[ch]) { poolSeen[ch] = true; pool.push(ch); }
+      });
+    });
+    if (!pool.length) pool = ['春', '天', '花', '月'];
+
+    for (var ri = 0; ri < n; ri++) {
+      for (var ci = 0; ci < n; ci++) {
+        if (!grid[ri][ci]) grid[ri][ci] = pool[Math.floor(Math.random() * pool.length)];
+      }
+    }
+
+    puzzle = { grid: grid, places: places, skipped: skipped, n: n, words: words };
+    showAnswer = false;
+    updateAnswerBtns();
+    render();
+  }
+
+  // 取某格的颜色（属于第一个覆盖它的词）；useAnswer 为 false 时不返回颜色
+  function cellColor(r, c, useAnswer) {
+    if (!useAnswer) return '';
+    for (var i = 0; i < puzzle.places.length; i++) {
+      var p = puzzle.places[i];
+      for (var k = 0; k < p.coords.length; k++) {
+        if (p.coords[k][0] === r && p.coords[k][1] === c) return answerFill(i);
+      }
+    }
+    return '';
+  }
+
+  function gridHTML(forPrint, withAnswer) {
+    var html = '';
+    for (var r = 0; r < puzzle.n; r++) {
+      for (var c = 0; c < puzzle.n; c++) {
+        var ch = puzzle.grid[r][c];
+        var color = cellColor(r, c, withAnswer);
+        var cls = forPrint ? 'pc' : 'cell';
+        if (color) cls += ' hl';
+        var style = color ? ' style="background:' + color + '"' : '';
+        html += '<div class="' + cls + '"' + style + '>' + esc(ch) + '</div>';
+      }
+    }
+    return html;
+  }
+
+  function render() {
+    var n = puzzle.n;
+    el.grid.style.setProperty('--n', n);
+    el.grid.innerHTML = gridHTML(false, showAnswer);
+    fitFont();
+
+    // 词表打乱顺序
+    var placedTexts = puzzle.places.map(function (p) { return p.text; });
+    var list = shuffled(puzzle.words);
+    el.wordList.innerHTML = list.map(function (w, i) {
+      var miss = placedTexts.indexOf(w.text) < 0;
+      return '<span class="word' + (miss ? ' miss' : '') + '"><em class="no" style="font-style:normal">' +
+        (i + 1) + '.</em>' + esc(w.text) + '</span>';
+    }).join('');
+    el.wordCount.textContent = '共 ' + puzzle.words.length + ' 个词，已放入 ' + placedTexts.length + ' 个';
+
+    // 提示信息
+    if (puzzle.skipped.length) {
+      el.tip.className = 'tip warn';
+      el.tip.textContent = '有 ' + puzzle.skipped.length + ' 个词没能放入（' + puzzle.skipped.join('、') +
+        '），可能是网格太小或方向受限。可以调大网格、允许斜向，或缩短词语后重新生成。';
+    } else {
+      el.tip.className = 'tip';
+      el.tip.textContent = '共放入 ' + placedTexts.length + ' 个词。生成后点「重新生成」可换一版布局；设置会自动保存在本机。';
+    }
+
+    el.info.textContent = puzzle.n + '×' + puzzle.n + ' 字阵 · ' +
+      (state.diag ? '横竖 + 斜向' : '仅横竖') + ' · 已放 ' + placedTexts.length + '/' + puzzle.words.length + ' 词';
+
+    renderPrint();
+  }
+
+  // 屏幕字号随格子大小自适应
+  function fitFont() {
+    var w = el.grid.getBoundingClientRect().width;
+    if (!w) return;
+    var fs = Math.max(9, w / puzzle.n * 0.56);
+    el.grid.style.setProperty('--fs', fs.toFixed(1) + 'px');
+  }
+
+  // 打印用两页：练习页 + 答案页
+  function renderPrint() {
+    var head1 = '<div class="p-head"><span>找词字阵 · 练习</span><span class="meta">姓名：__________　日期：__________　用时：______</span></div>';
+    var head2 = '<div class="p-head"><span>找词字阵 · 答案</span><span class="meta">共 ' + puzzle.n + '×' + puzzle.n + ' 格</span></div>';
+
+    var placedTexts = puzzle.places.map(function (p) { return p.text; });
+    var wordsPrint = puzzle.words.map(function (w, i) {
+      var miss = placedTexts.indexOf(w.text) < 0;
+      return '<span>' + (i + 1) + '. ' + esc(w.text) + (miss ? '（未放入）' : '') + '</span>';
+    }).join('');
+
+    var note = state.diag ? '提示：词语可能横向、纵向或斜向排列。' : '提示：词语只横向或纵向排列。';
+
+    // 练习页：网格不带高亮；答案页：网格带高亮路径
+    var practice = '<div class="paper">' + head1 + '<div class="p-grid" style="--n:' + puzzle.n + '">' + gridHTML(true, false) + '</div>' +
+      '<div class="p-words"><b>词表：</b>' + wordsPrint + '</div>' +
+      '<div class="p-note">' + note + '</div></div>';
+
+    var answer = '<div class="paper">' + head2 + '<div class="p-grid" style="--n:' + puzzle.n + '">' + gridHTML(true, true) + '</div>' +
+      '<div class="p-words"><b>答案：</b>' + wordsPrint + '</div>' +
+      '<div class="p-note">' + note + '</div></div>';
+
+    el.printSheets.innerHTML = practice + answer;
+  }
+
+  function updateAnswerBtns() {
+    var txt = showAnswer ? '🙈 隐藏答案' : '👁 显示答案';
+    el.btnAnswer.textContent = txt;
+    el.btnAnswer2.textContent = showAnswer ? '隐藏答案' : '显示答案';
+    el.btnAnswer.classList.toggle('on', showAnswer);
+    el.btnAnswer2.classList.toggle('on', showAnswer);
+  }
+
+  function toggleAnswer() {
+    showAnswer = !showAnswer;
+    updateAnswerBtns();
+    render();
+  }
+
+  // ===== 事件 =====
+  function bindSeg(id, key, isNum) {
+    document.getElementById(id).addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b) return;
+      state[key] = isNum ? Number(b.dataset.v) : b.dataset.v;
+      Array.prototype.forEach.call(document.querySelectorAll('#' + id + ' button'), function (btn) {
+        btn.classList.toggle('on', btn.dataset.v === String(b.dataset.v));
+      });
+      save();
+      buildPuzzle();
+    });
+  }
+
+  el.input.addEventListener('input', function () {
+    state.words = el.input.value;
+    save();
+  });
+
+  // 方向：横竖 / 加斜向（布尔值，单独绑定）
+  document.getElementById('segDir').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.diag = (b.dataset.v === 'diag');
+    Array.prototype.forEach.call(document.querySelectorAll('#segDir button'), function (btn) {
+      btn.classList.toggle('on', btn.dataset.v === b.dataset.v);
+    });
+    save();
+    buildPuzzle();
+  });
+
+  el.btnGenerate.addEventListener('click', function () {
+    state.words = el.input.value;
+    save();
+    buildPuzzle();
+  });
+
+  el.btnAnswer.addEventListener('click', toggleAnswer);
+  el.btnAnswer2.addEventListener('click', toggleAnswer);
+  el.btnPrint.addEventListener('click', function () { window.print(); });
+  el.btnPrint2.addEventListener('click', function () { window.print(); });
+
+  window.addEventListener('resize', fitFont);
+
+  // ===== 初始化 =====
+  el.input.value = state.words;
+  Array.prototype.forEach.call(document.querySelectorAll('#segSize button'), function (b) {
+    b.classList.toggle('on', Number(b.dataset.v) === state.size);
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#segDir button'), function (b) {
+    b.classList.toggle('on', (b.dataset.v === 'diag') === !!state.diag);
+  });
+  bindSeg('segSize', 'size', true);
+  buildPuzzle();
+  updateAnswerBtns();
+})();
+</script>
+</body>
+</html>

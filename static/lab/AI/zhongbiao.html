@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>钟表认读练习纸 · 认读钟面时间或画指针 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/zhongbiao.html">
+<meta name="description" content="在线钟表认读练习纸生成器：随机生成 SVG 钟面（12 数字、60 刻度、时针分针齐全），可选整点、半点、5 分整或任意分钟，支持读钟写时间与给时间画指针两种题型，A4 每行 3 或 4 个钟面并附答案页，一键打印一年级认识时间练习。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --main:#2b5f8a;
+  --main-light:#4a86b4;
+  --panel:#f6f9fc;
+  --edge:#e2ecf5;
+  --text:#333;
+  --mute:#8a9aa8;
+}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#eef2f6;color:var(--text);height:100vh;display:flex;overflow:hidden}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* ===== 左侧配置面板 ===== */
+.sidebar{width:312px;flex-shrink:0;background:#fff;box-shadow:2px 0 14px rgba(0,0,0,.07);padding:16px;overflow-y:auto;z-index:5}
+.logo{font-size:18px;font-weight:700;color:var(--main);display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.sec{margin-bottom:12px;padding:12px;background:var(--panel);border:1px solid var(--edge);border-radius:12px}
+.sec-title{font-size:13px;font-weight:700;color:var(--main);margin-bottom:8px}
+.hint{font-size:12px;color:var(--mute);margin-top:8px;line-height:1.6}
+.seg{display:flex;gap:6px}
+.seg label{flex:1;text-align:center;padding:7px 0;border:1.5px solid #d8e5f0;border-radius:8px;cursor:pointer;font-size:13px;background:#fff;transition:all .15s}
+.seg label:has(input:checked){background:var(--main);border-color:var(--main);color:#fff;font-weight:600}
+.seg input{display:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.op-chip{display:flex;align-items:center;padding:6px 12px;border:1.5px solid #d8e5f0;border-radius:18px;cursor:pointer;font-size:13px;background:#fff;user-select:none;transition:all .15s}
+.op-chip:has(input:checked){background:var(--main);border-color:var(--main);color:#fff}
+.op-chip input{display:none}
+.switch-row{display:flex;align-items:center;gap:8px;font-size:13px;color:#444;cursor:pointer}
+.btn{width:100%;padding:11px 0;border:none;border-radius:22px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-bottom:8px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.btn-main{background:linear-gradient(135deg,#2b5f8a,#4a86b4);color:#fff}
+.btn-print{background:#fff;color:var(--main);border:2px solid var(--main)}
+.save-hint{font-size:11px;color:#aaa;text-align:center;margin-top:4px}
+
+/* ===== 右侧 A4 预览 ===== */
+.preview-area{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;align-items:center}
+.slot{margin-bottom:22px}
+.paper{width:210mm;min-height:297mm;background:#fff;padding:14mm 16mm;box-shadow:0 4px 26px rgba(0,0,0,.16);transform-origin:top left}
+.p-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid var(--main);padding-bottom:6px}
+.p-title{font-size:26px;font-weight:800;color:var(--main);letter-spacing:4px}
+.p-meta{font-size:14px;color:#333}
+.fill{display:inline-block;width:66px;border-bottom:1.5px solid #555;margin:0 10px 0 4px}
+.p-sub{font-size:12px;color:#999;margin:6px 0 10mm}
+
+/* ===== 钟面网格 ===== */
+.clock-grid{display:grid;grid-template-columns:repeat(var(--cols,3),1fr);column-gap:6mm;row-gap:6mm;justify-items:center;align-items:start}
+.cc{display:flex;flex-direction:column;align-items:center;break-inside:avoid}
+.ck{width:var(--cw,46mm);height:var(--cw,46mm);display:block}
+.cline{margin-top:2mm;height:8mm;display:flex;align-items:center;justify-content:center;gap:3px;font-size:15px;color:#444}
+.blk{display:inline-block;width:24px;border-bottom:1.6px solid #444;height:18px}
+.colon{font-weight:700;color:#444}
+.time-label{font-size:17px;font-weight:800;color:var(--main);letter-spacing:1px}
+.draw-hint{font-size:11px;color:#999;margin-top:1mm}
+
+/* ===== 提示条 ===== */
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--main);color:#fff;padding:10px 22px;border-radius:22px;font-size:14px;opacity:0;transition:all .3s;pointer-events:none;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== 移动端：上下堆叠 ===== */
+@media (max-width:900px){
+  body{display:block;height:auto;overflow:auto}
+  .sidebar{width:100%;box-shadow:0 2px 10px rgba(0,0,0,.06);border-bottom:1px solid #e6e6e6}
+  .preview-area{height:auto;padding:12px 8px}
+}
+
+/* ===== 打印样式：只打印纸面 ===== */
+@media print{
+  @page{size:A4;margin:12mm}
+  body{display:block;height:auto;overflow:visible;background:#fff}
+  .sidebar,.toast,.save-hint{display:none!important}
+  .preview-area{overflow:visible;display:block;padding:0}
+  .slot{width:auto!important;height:auto!important;margin:0}
+  .paper{transform:none!important;box-shadow:none;width:auto;min-height:0;padding:0;margin:0}
+  .answer-paper{page-break-before:always}
+}
+</style>
+</head>
+<body>
+<h1 class="sr-only">钟表认读练习纸生成器</h1>
+
+<!-- 左侧配置面板 -->
+<aside class="sidebar">
+  <div class="logo">🕐 钟表认读练习纸</div>
+
+  <!-- 时间范围 -->
+  <div class="sec">
+    <div class="sec-title">⏰ 时间范围</div>
+    <div class="seg" style="flex-wrap:wrap">
+      <label><input type="radio" name="range" value="hour"><span>整点</span></label>
+      <label><input type="radio" name="range" value="half"><span>半点</span></label>
+      <label><input type="radio" name="range" value="five"><span>5 分整</span></label>
+      <label><input type="radio" name="range" value="any"><span>任意分钟</span></label>
+    </div>
+    <div class="hint" id="rangeHint"></div>
+  </div>
+
+  <!-- 题型 -->
+  <div class="sec">
+    <div class="sec-title">📝 题型</div>
+    <label class="switch-row"><input type="checkbox" id="hideHandsChk"><span>隐藏指针（给时间画指针）</span></label>
+    <div class="hint">不勾选为「看钟面写时间」；勾选后钟面不画指针，题目给出时间，学生自己画。</div>
+  </div>
+
+  <!-- 题量 -->
+  <div class="sec">
+    <div class="sec-title">🔢 每页题数</div>
+    <div class="seg">
+      <label><input type="radio" name="count" value="6"><span>6 个</span></label>
+      <label><input type="radio" name="count" value="8"><span>8 个</span></label>
+      <label><input type="radio" name="count" value="12"><span>12 个</span></label>
+    </div>
+  </div>
+
+  <!-- 每行个数 -->
+  <div class="sec">
+    <div class="sec-title">📐 每行钟面</div>
+    <div class="seg">
+      <label><input type="radio" name="perRow" value="3"><span>3 个</span></label>
+      <label><input type="radio" name="perRow" value="4"><span>4 个</span></label>
+    </div>
+  </div>
+
+  <!-- 秒针 -->
+  <div class="sec">
+    <div class="sec-title">⏱️ 秒针</div>
+    <label class="switch-row"><input type="checkbox" id="secondChk"><span>显示秒针（默认关闭）</span></label>
+  </div>
+
+  <!-- 答案页 -->
+  <div class="sec">
+    <label class="switch-row"><input type="checkbox" id="answerChk"><span>附参考答案页（另起一页）</span></label>
+  </div>
+
+  <button class="btn btn-main" id="regenBtn">🔄 重新出题</button>
+  <button class="btn btn-print" id="printBtn">🖨️ 打印</button>
+  <div class="save-hint">配置自动保存在本机浏览器</div>
+</aside>
+
+<!-- 右侧 A4 预览 -->
+<main class="preview-area" id="previewArea">
+  <div class="slot"><div class="paper" id="paperMain"></div></div>
+  <div class="slot" id="slotAns"><div class="paper answer-paper" id="paperAns"></div></div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+var KEY='zhongbiao_cfg_v1';
+
+/* 默认配置：整点、8 个、每行 3 个、不显示秒针、附答案 */
+var cfg={
+  range:'hour',
+  count:8,
+  perRow:3,
+  answer:true,
+  hideHands:false,
+  second:false
+};
+
+var clocks=[];   /* 当前题目：{h, m} */
+
+function $(id){return document.getElementById(id);}
+/* 闭区间随机整数 */
+function ri(a,b){return a+Math.floor(Math.random()*(b-a+1));}
+
+function saveCfg(){try{localStorage.setItem(KEY,JSON.stringify(cfg));}catch(e){}}
+function loadCfg(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(!raw)return;
+    var o=JSON.parse(raw);
+    if(!o)return;
+    if(['hour','half','five','any'].indexOf(o.range)>=0)cfg.range=o.range;
+    if([6,8,12].indexOf(o.count)>=0)cfg.count=o.count;
+    if([3,4].indexOf(o.perRow)>=0)cfg.perRow=o.perRow;
+    if(typeof o.answer==='boolean')cfg.answer=o.answer;
+    if(typeof o.hideHands==='boolean')cfg.hideHands=o.hideHands;
+    if(typeof o.second==='boolean')cfg.second=o.second;
+  }catch(e){}
+}
+
+/* ===== 生成不重复的时间（1:00 ~ 12:59） ===== */
+function genTimes(n){
+  var used={},list=[],guard=n*150;
+  while(list.length<n&&guard-->0){
+    var m;
+    if(cfg.range==='hour')m=0;
+    else if(cfg.range==='half')m=30;
+    else if(cfg.range==='five')m=ri(0,11)*5;
+    else m=ri(0,59);
+    var h=ri(1,12);
+    var key=h*60+m;
+    if(used[key])continue;
+    used[key]=1;
+    list.push({h:h,m:m});
+  }
+  return list;
+}
+
+/* 保留一位小数以内，避免坐标出现长浮点数 */
+function px(v){return Math.round(v*100)/100;}
+
+/* 指针：以 12 点为 0°，顺时针旋转 */
+function hand(angle,len,width,color){
+  return '<g transform="rotate('+px(angle)+' 50 50)">'+
+    '<line x1="50" y1="50" x2="50" y2="'+px(50-len)+'" stroke="'+color+'" stroke-width="'+width+'" stroke-linecap="round"/></g>';
+}
+
+/* ===== 生成钟面 SVG ===== */
+function clockSVG(t,withHands){
+  var s='<svg class="ck" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">';
+  /* 表盘 */
+  s+='<circle cx="50" cy="50" r="46" fill="#ffffff" stroke="#2b5f8a" stroke-width="2.6"/>';
+  s+='<circle cx="50" cy="50" r="43.6" fill="none" stroke="#dbe8f2" stroke-width="0.9"/>';
+  /* 60 个刻度，每 5 个加粗 */
+  var i,ang,r1,r2,x1,y1,x2,y2;
+  for(i=0;i<60;i++){
+    ang=i*6*Math.PI/180;
+    var big=(i%5===0);
+    r1=44;r2=big?40.2:42.4;
+    x1=50+r1*Math.sin(ang);y1=50-r1*Math.cos(ang);
+    x2=50+r2*Math.sin(ang);y2=50-r2*Math.cos(ang);
+    s+='<line x1="'+px(x1)+'" y1="'+px(y1)+'" x2="'+px(x2)+'" y2="'+px(y2)+'" stroke="'+(big?'#2b5f8a':'#c6d6e2')+'" stroke-width="'+(big?1.7:0.8)+'"/>';
+  }
+  /* 12 个数字 */
+  for(i=1;i<=12;i++){
+    ang=i*30*Math.PI/180;
+    var nr=33;
+    var nx=50+nr*Math.sin(ang),ny=50-nr*Math.cos(ang);
+    s+='<text x="'+px(nx)+'" y="'+px(ny)+'" font-size="7.8" font-family="Arial,Helvetica,sans-serif" font-weight="'+(i%3===0?'700':'500')+'" fill="#243b53" text-anchor="middle" dominant-baseline="middle">'+i+'</text>';
+  }
+  /* 指针 */
+  if(withHands){
+    var hourAng=(t.h%12)*30+t.m*0.5;
+    var minAng=t.m*6;
+    if(cfg.second)s+=hand(0,33,0.9,'#e07a5f');           /* 秒针指向 12（0 秒） */
+    s+=hand(hourAng,18.5,3.6,'#2b5f8a');                  /* 时针短而粗 */
+    s+=hand(minAng,30,1.9,'#35648c');                     /* 分针细而长 */
+    s+='<circle cx="50" cy="50" r="1.9" fill="#2b5f8a"/>';
+  }else{
+    s+='<circle cx="50" cy="50" r="1.6" fill="#c6d6e2"/>'; /* 画指针题只留中心点 */
+  }
+  s+='</svg>';
+  return s;
+}
+
+function timeText(t){return t.h+':'+(t.m<10?'0':'')+t.m;}
+
+/* 单个钟面格子 */
+function cellHTML(t,idx,ans){
+  var body='';
+  if(cfg.hideHands&&!ans){
+    /* 给时间画指针：钟面留空，下方给出时间 */
+    body=clockSVG(t,false)+'<div class="cline"><span class="time-label">'+timeText(t)+'</span></div>'+
+      '<div class="draw-hint">请在钟面上画出时针和分针</div>';
+  }else if(ans){
+    /* 答案页：画出指针并标注正确时间 */
+    body=clockSVG(t,true)+'<div class="cline"><span class="time-label">'+timeText(t)+'</span></div>';
+  }else{
+    /* 看钟面写时间：钟面有指针，下方留空 */
+    body=clockSVG(t,true)+'<div class="cline"><span class="blk"></span><span class="colon">:</span><span class="blk"></span></div>';
+  }
+  return '<div class="cc" data-no="'+(idx+1)+'">'+body+'</div>';
+}
+
+/* ===== 版面尺寸：按题量与每行个数推算钟面直径 ===== */
+function clockSize(){
+  var rows=Math.ceil(cfg.count/cfg.perRow);
+  var gapMm=6;
+  /* A4 可用宽度约 178mm */
+  var cellW=(178-(cfg.perRow-1)*gapMm)/cfg.perRow;
+  /* 可用高度约 253mm */
+  var rowH=253/rows-gapMm;
+  var size=Math.min(cellW,rowH-14,58);
+  return Math.max(30,size);
+}
+
+function subText(){
+  var rmap={hour:'整点',half:'半点',five:'5 分整',any:'任意分钟'};
+  var mode=cfg.hideHands?'给时间画指针':'看钟面写时间';
+  return rmap[cfg.range]+' · '+mode+' · 共 '+clocks.length+' 个钟面';
+}
+
+function headHTML(title){
+  return '<div class="p-head"><div class="p-title">'+title+'</div>'+
+    '<div class="p-meta">姓名<span class="fill"></span>日期<span class="fill"></span>得分<span class="fill"></span></div></div>'+
+    '<div class="p-sub">'+subText()+'</div>';
+}
+
+function render(){
+  var size=clockSize();
+  var p=$('paperMain');
+  p.style.setProperty('--cw',size+'mm');
+  p.innerHTML=headHTML('钟表认读')+'<div class="clock-grid" style="--cols:'+cfg.perRow+'">'+
+    clocks.map(function(t,i){return cellHTML(t,i,false);}).join('')+'</div>';
+
+  var pa=$('paperAns');
+  pa.style.setProperty('--cw',Math.min(size,44)+'mm');
+  pa.innerHTML=headHTML('参考答案')+'<div class="clock-grid" style="--cols:'+cfg.perRow+'">'+
+    clocks.map(function(t,i){return cellHTML(t,i,true);}).join('')+'</div>';
+
+  $('slotAns').style.display=cfg.answer?'':'none';
+  fitPreview();
+}
+
+/* 预览缩放：A4 适配可视宽度 */
+function fitPreview(){
+  var area=$('previewArea');
+  if(!area)return;
+  var avail=area.clientWidth-44;
+  var papers=document.querySelectorAll('.paper');
+  for(var i=0;i<papers.length;i++){
+    var p=papers[i];
+    if(!p.offsetParent)continue;
+    p.style.transform='none';
+    var pw=p.offsetWidth,ph=p.offsetHeight;
+    if(!pw)continue;
+    var sc=Math.min(1,avail/pw);
+    p.style.transform='scale('+sc+')';
+    p.parentNode.style.width=(pw*sc)+'px';
+    p.parentNode.style.height=(ph*sc)+'px';
+  }
+}
+
+function applyUI(){
+  document.querySelectorAll('input[name=range]').forEach(function(r){r.checked=(r.value===cfg.range);});
+  document.querySelectorAll('input[name=count]').forEach(function(r){r.checked=(+r.value===cfg.count);});
+  document.querySelectorAll('input[name=perRow]').forEach(function(r){r.checked=(+r.value===cfg.perRow);});
+  $('answerChk').checked=cfg.answer;
+  $('hideHandsChk').checked=cfg.hideHands;
+  $('secondChk').checked=cfg.second;
+  updateHint();
+}
+
+function updateHint(){
+  var map={
+    hour:'每个钟面都是整点（分针指着 12）',
+    half:'每个钟面都是半点（分针指着 6）',
+    five:'分钟数为 5 的倍数',
+    any:'1:00 ~ 12:59 内任意时间'
+  };
+  $('rangeHint').textContent=map[cfg.range];
+}
+
+function generate(){
+  clocks=genTimes(cfg.count);
+  if(clocks.length<cfg.count)showToast('该时间范围题量有限，本次共生成 '+clocks.length+' 个钟面');
+  render();
+}
+
+function bindEvents(){
+  document.querySelectorAll('input[name=range]').forEach(function(r){
+    r.addEventListener('change',function(){cfg.range=this.value;saveCfg();updateHint();generate();});
+  });
+  document.querySelectorAll('input[name=count]').forEach(function(r){
+    r.addEventListener('change',function(){cfg.count=+this.value;saveCfg();generate();});
+  });
+  document.querySelectorAll('input[name=perRow]').forEach(function(r){
+    r.addEventListener('change',function(){cfg.perRow=+this.value;saveCfg();render();});
+  });
+  $('hideHandsChk').addEventListener('change',function(){cfg.hideHands=this.checked;saveCfg();render();});
+  $('secondChk').addEventListener('change',function(){cfg.second=this.checked;saveCfg();render();});
+  $('answerChk').addEventListener('change',function(){cfg.answer=this.checked;saveCfg();render();});
+  $('regenBtn').addEventListener('click',generate);
+  $('printBtn').addEventListener('click',function(){window.print();});
+  window.addEventListener('resize',fitPreview);
+}
+
+function showToast(msg){
+  var t=$('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm=setTimeout(function(){t.classList.remove('show');},2400);
+}
+
+/* ===== 启动 ===== */
+loadCfg();
+applyUI();
+bindEvents();
+generate();
+})();
+</script>
+</body>
+</html>

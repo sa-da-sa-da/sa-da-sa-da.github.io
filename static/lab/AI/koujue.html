@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>乘法口诀表 · 九九表/填空练习/口诀卡 A4 打印 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/koujue.html">
+<meta name="description" content="乘法口诀表生成器：一键生成完整九九乘法表（三角形排列）、挖空结果的填空练习（附答案页）与可裁剪对折的乘法口诀卡，支持 1~5 低年级表或 1~9 全表，A4 直接打印，适合小学乘法口诀背诵与默写。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#1f2d2b;--muted:#6b7a78;--line:#e2e9e7;
+  --brand:#2f7d6e;--brand-d:#276a5d;--brand-l:#e9f4f1;--bg:#f3f6f5;--card:#fff;
+}
+body{font-family:-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.app{display:flex;gap:18px;padding:18px;max-width:1360px;margin:0 auto;align-items:flex-start}
+
+/* ===== 左侧控制面板 ===== */
+.panel{width:326px;flex:0 0 326px;background:var(--card);border-radius:14px;padding:18px;box-shadow:0 4px 20px rgba(20,50,45,.07);position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto}
+.panel h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.panel .sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.65}
+.field{margin-bottom:15px}
+.field .lbl{display:block;font-size:13px;font-weight:600;color:#40514e;margin-bottom:7px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:62px;padding:8px 6px;border:1px solid var(--line);background:#fbfdfc;border-radius:9px;font-size:13px;color:#5a6b68;cursor:pointer;transition:all .18s;font-family:inherit}
+.seg button:hover{border-color:#bcd6d0}
+.seg button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.check{display:flex;align-items:center;gap:8px;font-size:13px;color:#40514e;cursor:pointer;padding:5px 0}
+.check input{width:16px;height:16px;accent-color:var(--brand);cursor:pointer}
+.actions{display:flex;gap:8px;margin-top:4px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-d)}
+.btn.ghost{flex:0 0 100px;background:#eff3f2;color:#5a6b68}
+.btn.ghost:hover{background:#e5ecea}
+.panel .meta{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.7}
+.tip{margin-top:10px;font-size:12px;color:#7d6a3a;line-height:1.7;background:#fff7e6;border-radius:9px;padding:9px 11px}
+
+/* ===== 右侧预览 ===== */
+.preview{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;overflow:auto;padding-bottom:36px}
+.stage{width:210mm;height:297mm;transform-origin:top center;margin-bottom:18px}
+.paper{width:210mm;height:297mm;background:#fff;padding:12mm 15mm 10mm;box-shadow:0 8px 30px rgba(20,50,45,.16);border-radius:1mm;display:flex;flex-direction:column;overflow:hidden}
+.sheet-head{flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-between;height:13mm;border-bottom:.35mm solid #c9d2cf;margin-bottom:4mm;padding-bottom:2mm}
+.sheet-head .t{font-size:5mm;font-weight:700;letter-spacing:.6mm;color:#1a1a1a}
+.sheet-head .meta{font-size:3.5mm;color:#3a4744;letter-spacing:.2mm}
+.foot{flex:0 0 auto;text-align:center;font-size:3.2mm;color:#95a5a1;padding-top:2mm;border-top:.25mm solid #e3eae8}
+
+/* ===== 九九表 ===== */
+.mtable{flex:1;display:grid;gap:2mm}
+.mrow{display:grid;gap:1.5mm}
+.mcell{border:.25mm solid #b5c4c0;border-radius:1.2mm;display:flex;align-items:center;justify-content:center;background:#fff;font-family:Arial,Helvetica,sans-serif;font-size:var(--fz);color:#1f2a28;letter-spacing:.1mm;white-space:nowrap}
+.blank{display:inline-block;border-bottom:.3mm solid #4a5a57;height:.9em;margin-left:.8mm}
+
+/* ===== 口诀卡 ===== */
+.cards{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);gap:3mm}
+.card{border:.3mm dashed #8fa3a0;border-radius:2mm;position:relative;display:flex;flex-direction:column;padding:2.5mm;background:#fff}
+.card.empty{border:none}
+.half{flex:1;display:flex;align-items:center;justify-content:center;text-align:center}
+.fold{position:absolute;left:2.5mm;right:2.5mm;top:50%;border-top:.25mm dashed #cddad7}
+.exp{font-size:4.4mm;font-family:Arial,Helvetica,sans-serif;color:#5a6a67;letter-spacing:.2mm}
+.kj{font-size:6.6mm;font-family:"KaiTi","STKaiti","楷体",serif;color:#1f2a28;letter-spacing:.6mm}
+
+/* ===== 打印 ===== */
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .panel{display:none !important}
+  .app{display:block;padding:0;margin:0;max-width:none}
+  .preview{display:block;padding:0;overflow:visible}
+  .stage{width:auto;height:auto;transform:none !important;margin:0 !important}
+  .paper{box-shadow:none;border-radius:0;margin:0;height:296mm;page-break-after:always;break-after:page}
+  .stage:last-child .paper{page-break-after:auto;break-after:auto}
+}
+@media (max-width:900px){
+  .app{flex-direction:column;padding:12px}
+  .panel{width:100%;flex:none;position:static;max-height:none}
+  .preview{width:100%}
+}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">乘法口诀表与口诀卡生成器</h1>
+
+<div class="app">
+  <aside class="panel">
+    <h2>乘法口诀表</h2>
+    <p class="sub">九九表、填空练习、口诀卡三种输出，A4 直接打印；口诀按"几几得几 / 几几十几"规范书写。</p>
+
+    <div class="field">
+      <label class="lbl">输出类型</label>
+      <div class="seg" id="segSheet">
+        <button data-v="full" type="button">完整九九表</button>
+        <button data-v="blank" type="button">填空练习</button>
+        <button data-v="card" type="button">口诀卡</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">表范围</label>
+      <div class="seg" id="segRange">
+        <button data-v="5" type="button">1~5 低年级</button>
+        <button data-v="9" type="button">1~9 全表</button>
+      </div>
+    </div>
+
+    <div class="field" id="ansField">
+      <label class="check"><input type="checkbox" id="chkAnswer"> 附加答案页（填空练习专用）</label>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btnPrint" type="button">打印当前内容</button>
+      <button class="btn ghost" id="btnReset" type="button">恢复默认</button>
+    </div>
+
+    <div class="meta" id="meta">正在生成…</div>
+    <div class="tip" id="tip">口诀规则：积小于 10 用"得"，如"二三得六"；积为 10 及以上不用"得"，如"三四十二"、"二五一十"。</div>
+  </aside>
+
+  <main class="preview" id="preview">
+    <div id="pages"></div>
+  </main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var KEY = 'koujue_state_v1';
+  var DEF = { sheet: 'full', range: '9', answer: false };
+  var state = Object.assign({}, DEF);
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) state = Object.assign(state, JSON.parse(raw));
+  } catch (e) { /* 隐私模式下忽略读写异常 */ }
+
+  var CN = '零一二三四五六七八九';
+  var MM = 96 / 25.4;
+  var BODY_W = 180;   // 纸面可用宽度（mm）
+  var BODY_H = 252;   // 去掉页头页脚后的可用高度（mm）
+
+  var pagesBox = document.getElementById('pages');
+  var preview = document.getElementById('preview');
+  var elMeta = document.getElementById('meta');
+  var ansField = document.getElementById('ansField');
+  var chkAnswer = document.getElementById('chkAnswer');
+  var btnPrint = document.getElementById('btnPrint');
+  var btnReset = document.getElementById('btnReset');
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // 数字转中文：10 写作"一十"，11-19 写作"十几"，如 12→十二、20→二十
+  function numToZh(n) {
+    if (n === 10) return '一十';
+    if (n < 10) return CN.charAt(n);
+    if (n < 20) return '十' + CN.charAt(n % 10);
+    var tens = CN.charAt(Math.floor(n / 10)) + '十';
+    var rest = n % 10;
+    return rest ? tens + CN.charAt(rest) : tens;
+  }
+
+  // 口诀读法：积小于 10 用"得"，否则直接读积
+  function koujue(a, b, p) {
+    return CN.charAt(a) + CN.charAt(b) + (p < 10 ? '得' + numToZh(p) : numToZh(p));
+  }
+
+  // 全部算式对（a 不大于 b，按行递增）
+  function pairs() {
+    var n = Number(state.range);
+    var out = [];
+    for (var b = 1; b <= n; b++) {
+      for (var a = 1; a <= b; a++) out.push({ a: a, b: b, p: a * b });
+    }
+    return out;
+  }
+
+  // 三角形九九表（填入答案 / 挖空）
+  function tableBody(withAnswer) {
+    var n = Number(state.range);
+    var fz = withAnswer ? (n === 9 ? 4.8 : 9) : (n === 9 ? 4.4 : 8.4);
+    var bw = withAnswer ? 0 : (n === 9 ? 5.5 : 11);
+    var rowsHTML = '';
+    for (var b = 1; b <= n; b++) {
+      var cells = '';
+      for (var a = 1; a <= b; a++) {
+        var p = a * b;
+        var content = withAnswer
+          ? '<span class="expr">' + a + '×' + b + '=' + p + '</span>'
+          : '<span class="expr">' + a + '×' + b + '=</span><span class="blank" style="width:' + bw + 'mm"></span>';
+        cells += '<div class="mcell">' + content + '</div>';
+      }
+      rowsHTML += '<div class="mrow" style="grid-template-columns:repeat(' + n + ',1fr)">' + cells + '</div>';
+    }
+    return '<div class="mtable" style="grid-template-rows:repeat(' + n + ',1fr);--fz:' + fz + 'mm">' +
+      rowsHTML + '</div>';
+  }
+
+  // 单张口诀卡：上半算式、下半口诀，中间虚线可对折
+  function cardHTML(o) {
+    return '<div class="card">' +
+      '<div class="half"><span class="exp">' + o.a + ' × ' + o.b + ' = ' + o.p + '</span></div>' +
+      '<div class="fold"></div>' +
+      '<div class="half"><span class="kj">' + koujue(o.a, o.b, o.p) + '</span></div>' +
+      '</div>';
+  }
+
+  function paperHTML(title, body, pageNo, total) {
+    return '<div class="stage"><div class="paper">' +
+      '<div class="sheet-head">' +
+        '<span class="t">' + esc(title) + '</span>' +
+        '<span class="meta">姓名：____________　　日期：____________</span>' +
+      '</div>' +
+      body +
+      '<div class="foot">第 ' + pageNo + ' 页 / 共 ' + total + ' 页</div>' +
+      '</div></div>';
+  }
+
+  // 分页：每组数量尽量平均
+  function paginate(items, per) {
+    var pages = Math.ceil(items.length / per) || 1;
+    var size = Math.ceil(items.length / pages) || 1;
+    var out = [];
+    for (var i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+    return out.length ? out : [[]];
+  }
+
+  function build() {
+    var pages = [];
+    var n = Number(state.range);
+    if (state.sheet === 'card') {
+      var chunks = paginate(pairs(), 12);
+      chunks.forEach(function (chunk, i) {
+        var body = chunk.map(cardHTML).join('');
+        // 补齐空位，保持 3 列 × 4 行 的整版裁切
+        for (var k = chunk.length; k < 12; k++) body += '<div class="card empty"></div>';
+        pages.push({ title: '乘法口诀卡（第 ' + (i + 1) + ' 组）', body: '<div class="cards">' + body + '</div>' });
+      });
+    } else {
+      var withAnswer = state.sheet === 'full';
+      pages.push({
+        title: withAnswer ? '九九乘法表（1~' + n + '）' : '乘法口诀填空练习（1~' + n + '）',
+        body: tableBody(withAnswer)
+      });
+      if (!withAnswer && state.answer) {
+        pages.push({ title: '参考答案（1~' + n + '）', body: tableBody(true) });
+      }
+    }
+
+    var html = '';
+    pages.forEach(function (p, i) {
+      html += paperHTML(p.title, p.body, i + 1, pages.length);
+    });
+    return { html: html, pages: pages.length, count: n * (n + 1) / 2 };
+  }
+
+  function render() {
+    var built = build();
+    pagesBox.innerHTML = built.html;
+
+    if (state.sheet === 'card') {
+      elMeta.textContent = '共 ' + built.count + ' 张口诀卡 · 每页 12 张（3 列 × 4 行）· 共 ' + built.pages + ' 页';
+    } else if (state.sheet === 'blank') {
+      elMeta.textContent = '共 ' + built.count + ' 道填空 · ' + built.pages + ' 页' +
+        (state.answer ? '（含答案页）' : '（未附答案页）');
+    } else {
+      elMeta.textContent = '共 ' + built.count + ' 句口诀 · ' + built.pages + ' 页 · A4 一张';
+    }
+
+    ansField.style.display = state.sheet === 'blank' ? 'block' : 'none';
+    fitScale();
+  }
+
+  function fitScale() {
+    var wrapW = preview.clientWidth - 12;
+    var s = Math.min(1, wrapW / (210 * MM));
+    Array.prototype.forEach.call(pagesBox.querySelectorAll('.stage'), function (st) {
+      st.style.transform = 'scale(' + s + ')';
+      st.style.marginBottom = (297 * MM * (s - 1) + 18) + 'px';
+    });
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function bindActive(id, val) {
+    Array.prototype.forEach.call(document.getElementById(id).querySelectorAll('button'), function (b) {
+      b.classList.toggle('on', b.dataset.v === String(val));
+    });
+  }
+
+  function syncUI() {
+    bindActive('segSheet', state.sheet);
+    bindActive('segRange', state.range);
+    chkAnswer.checked = !!state.answer;
+  }
+
+  // ===== 事件绑定 =====
+  document.getElementById('segSheet').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.sheet = b.dataset.v;
+    save();
+    syncUI();
+    render();
+  });
+
+  document.getElementById('segRange').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.range = b.dataset.v;
+    save();
+    syncUI();
+    render();
+  });
+
+  chkAnswer.addEventListener('change', function () {
+    state.answer = chkAnswer.checked;
+    save();
+    render();
+  });
+
+  btnPrint.addEventListener('click', function () { window.print(); });
+
+  btnReset.addEventListener('click', function () {
+    state = Object.assign({}, DEF);
+    save();
+    syncUI();
+    render();
+  });
+
+  window.addEventListener('resize', fitScale);
+
+  syncUI();
+  render();
+})();
+</script>
+</body>
+</html>

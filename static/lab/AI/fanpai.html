@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>课堂翻牌配对游戏 · 记忆配对课堂竞赛/投屏互动 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/fanpai.html">
+<meta name="description" content="课堂翻牌配对游戏：自定义配对内容（算式-得数、英文-中文、词语-释义），自动洗牌铺开翻牌记忆配对，支持单人计步计时挑战与红蓝双组轮流对战，深色大屏大字号适配投影。可设置翻牌时间与提示音，适合课堂复习、单词记忆与小组竞赛，比分实时更新。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#12151f;color:#e8eaf2;height:100vh;display:flex;overflow:hidden}
+
+/* ===== 左侧配置面板（深色） ===== */
+.sidebar{width:300px;flex-shrink:0;background:#1a1f30;box-shadow:2px 0 16px rgba(0,0,0,.4);padding:16px;overflow-y:auto;z-index:5}
+.logo{font-size:18px;font-weight:700;color:#ffd166;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.sec{margin-bottom:13px;padding:12px;background:#212741;border:1px solid #2e3554;border-radius:12px}
+.sec-title{font-size:13px;font-weight:700;color:#ffd166;margin-bottom:8px}
+.sec-title .cnt{font-size:12px;color:#7c86a8;font-weight:400}
+textarea{width:100%;min-height:150px;padding:10px;border:1.5px solid #333c63;border-radius:8px;font-size:14px;line-height:1.7;resize:vertical;background:#151a2b;color:#e8eaf2}
+textarea::placeholder{color:#5a6384}
+.hint{font-size:11px;color:#7c86a8;margin-top:5px;line-height:1.5}
+/* 模式分段 */
+.seg{display:flex;gap:6px}
+.seg label{flex:1;text-align:center;padding:8px 0;border:1.5px solid #333c63;border-radius:10px;cursor:pointer;font-size:13px;background:#151a2b;color:#aeb6d4;transition:all .15s}
+.seg label:has(input:checked){border-color:#ffd166;color:#ffd166;font-weight:700;background:#2a2f18}
+.seg input{display:none}
+/* 队名 */
+.team-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.team-row .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.team-row .dot.red{background:#ff5d6c;box-shadow:0 0 8px rgba(255,93,108,.7)}
+.team-row .dot.blue{background:#4da3ff;box-shadow:0 0 8px rgba(77,163,255,.7)}
+.team-row input{flex:1;padding:7px 10px;border:1.5px solid #333c63;border-radius:8px;font-size:13px;background:#151a2b;color:#e8eaf2}
+/* 按钮 */
+.btn{width:100%;padding:12px 0;border:none;border-radius:22px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.btn-gold{background:linear-gradient(135deg,#f5b53f,#ffd166);color:#3a2c05;margin-bottom:8px}
+
+/* ===== 右侧游戏区 ===== */
+.game-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+/* 顶部状态栏 */
+.status-bar{display:flex;align-items:center;justify-content:center;gap:14px;padding:14px 20px;flex-wrap:wrap}
+.pill{padding:8px 20px;border-radius:22px;font-size:17px;font-weight:700;background:#1d2338;color:#aeb6d4;border:1.5px solid #2e3554;display:flex;align-items:center;gap:8px}
+.pill b{color:#fff;font-size:20px}
+.team-pill{transition:all .2s}
+.team-pill.red{border-color:#5a2a33}
+.team-pill.blue{border-color:#28415f}
+.team-pill.active.red{background:#ff5d6c;color:#fff;border-color:#ff5d6c;box-shadow:0 0 18px rgba(255,93,108,.45)}
+.team-pill.active.blue{background:#4da3ff;color:#fff;border-color:#4da3ff;box-shadow:0 0 18px rgba(77,163,255,.45)}
+.again-btn{padding:8px 22px;border-radius:22px;border:1.5px solid #ffd166;background:transparent;color:#ffd166;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s}
+.again-btn:hover{background:#ffd166;color:#3a2c05}
+/* 牌桌 */
+.table-wrap{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:10px 24px 26px}
+#grid{display:grid;gap:14px;width:100%;max-width:980px}
+/* 翻牌卡片 */
+.card{aspect-ratio:4/3;perspective:900px;cursor:pointer}
+.card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .45s}
+.card.open .card-inner,.card.matched .card-inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;display:flex;align-items:center;justify-content:center;padding:8px;text-align:center;word-break:break-all}
+.face.front{background:linear-gradient(145deg,#262e4e,#1a2036);border:2px solid #3a4474;color:#5d6b9f;font-size:min(4.5vw,44px);font-weight:800}
+.card:not(.open):not(.matched):hover .face.front{border-color:#ffd166;color:#ffd166}
+.face.back{background:#f4f7ff;color:#1c2438;transform:rotateY(180deg);font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+/* 配对成功变色：单人绿色 / 对战分红蓝 */
+.card.matched .face.back{background:linear-gradient(145deg,#2e8f5e,#46b97e);color:#fff;border:2px solid #63d69c;box-shadow:0 0 20px rgba(70,185,126,.5)}
+.card.matched.red .face.back{background:linear-gradient(145deg,#d94b5c,#ff7a88);border-color:#ff9aa5;box-shadow:0 0 20px rgba(255,93,108,.5)}
+.card.matched.blue .face.back{background:linear-gradient(145deg,#3a7fd4,#6db4ff);border-color:#93c6ff;box-shadow:0 0 20px rgba(77,163,255,.5)}
+
+/* 成绩结算浮层 */
+.overlay{position:fixed;inset:0;background:rgba(8,10,18,.82);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100}
+.overlay.show{display:flex}
+.win-box{background:#1d2338;border:1.5px solid #3a4474;border-radius:20px;padding:36px 48px;text-align:center;max-width:86%;animation:pop .45s ease}
+@keyframes pop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+.win-emoji{font-size:64px}
+.win-title{font-size:30px;font-weight:800;color:#ffd166;margin:12px 0 8px;letter-spacing:2px}
+.win-detail{font-size:19px;color:#c3cae6;line-height:1.8;margin-bottom:22px}
+.win-detail .vs-red{color:#ff8b96;font-weight:700}
+.win-detail .vs-blue{color:#8ec2ff;font-weight:700}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(10px);background:#ffd166;color:#3a2c05;padding:10px 22px;border-radius:22px;font-size:14px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;z-index:200}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:860px){
+  body{flex-direction:column;overflow:auto;height:auto}
+  .sidebar{width:100%;box-shadow:none;border-bottom:2px solid #2e3554}
+  .game-area{min-height:85vh}
+}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">课堂翻牌配对游戏</h1>
+
+<!-- 左侧配置面板 -->
+<aside class="sidebar">
+  <div class="logo">🎴 课堂翻牌配对</div>
+
+  <!-- 配对集输入 -->
+  <div class="sec">
+    <div class="sec-title">📝 配对集 <span class="cnt" id="pairCnt">0 对</span></div>
+    <textarea id="pairsInput" spellcheck="false" placeholder="每行一对：左词,右词&#10;例如：6×7,42 或 apple,苹果"></textarea>
+    <div class="hint">支持 算式-得数、英文-中文、词语-释义；取前 10 对，至少 4 对。配对集自动保存到本机。</div>
+  </div>
+
+  <!-- 模式选择 -->
+  <div class="sec">
+    <div class="sec-title">🎮 游戏模式</div>
+    <div class="seg" id="modeSeg">
+      <label><input type="radio" name="mode" value="single"><span>单人挑战</span></label>
+      <label><input type="radio" name="mode" value="versus"><span>双组对战</span></label>
+    </div>
+    <div id="teamNames">
+      <div class="team-row"><span class="dot red"></span><input type="text" id="redName" maxlength="8" placeholder="红队队名"></div>
+      <div class="team-row"><span class="dot blue"></span><input type="text" id="blueName" maxlength="8" placeholder="蓝队队名"></div>
+    </div>
+  </div>
+
+  <button class="btn btn-gold" id="startBtn">🎲 开始新一局</button>
+  <div class="hint" style="text-align:center">对战模式：配对成功得 1 分并继续翻牌，失败换对方；每局自动轮换先手队伍。</div>
+</aside>
+
+<!-- 右侧游戏区 -->
+<main class="game-area">
+  <!-- 状态栏 -->
+  <div class="status-bar" id="statusBar"></div>
+  <!-- 牌桌 -->
+  <div class="table-wrap"><div id="grid"></div></div>
+</main>
+
+<!-- 结算浮层 -->
+<div class="overlay" id="winOverlay">
+  <div class="win-box">
+    <div class="win-emoji" id="winEmoji">🎉</div>
+    <div class="win-title" id="winTitle">挑战完成！</div>
+    <div class="win-detail" id="winDetail"></div>
+    <button class="btn btn-gold" style="width:auto;padding:12px 40px" id="winAgainBtn">🔄 再来一局</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+var PAIRS_KEY='fanpai_pairs_v1';
+var CFG_KEY='fanpai_cfg_v1';
+
+/* 预填示例：乘法算式 - 得数 6 对 */
+var SAMPLE_PAIRS='6×7,42\n8×9,72\n7×8,56\n6×9,54\n4×7,28\n9×9,81';
+
+var config={mode:'single',redName:'红队',blueName:'蓝队'};
+var round=0; /* 局数计数：用于双组对战每局轮换先手 */
+
+var game={
+  pairs:[],cards:[],cols:4,
+  first:null,lock:false,
+  mode:'single',turn:'red',score:{red:0,blue:0},
+  moves:0,matched:0,
+  startTime:null,timerInt:null
+};
+
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function ri(a,b){return a+Math.floor(Math.random()*(b-a+1))}
+
+function saveCfg(){try{localStorage.setItem(CFG_KEY,JSON.stringify(config))}catch(e){}}
+function savePairs(){try{localStorage.setItem(PAIRS_KEY,$('pairsInput').value)}catch(e){}}
+function loadStore(){
+  try{
+    var raw=localStorage.getItem(CFG_KEY);
+    if(raw)Object.assign(config,JSON.parse(raw));
+  }catch(e){}
+  try{
+    var p=localStorage.getItem(PAIRS_KEY);
+    $('pairsInput').value=(p!==null&&p!=='')?p:SAMPLE_PAIRS;
+  }catch(e){
+    $('pairsInput').value=SAMPLE_PAIRS;
+  }
+}
+
+/* ===== 配对集解析：每行"左词,右词"（中英文逗号 / 制表符均可） ===== */
+function parsePairs(){
+  var pairs=[];
+  $('pairsInput').value.split(/\r?\n/).forEach(function(line){
+    var parts=line.split(/[,，\t]/).map(function(s){return s.trim();}).filter(Boolean);
+    if(parts.length>=2)pairs.push({l:parts[0],r:parts[1]});
+  });
+  return pairs;
+}
+function updatePairCnt(){
+  var n=parsePairs().length;
+  var el=$('pairCnt');
+  el.textContent=n+' 对';
+  el.style.color=(n>=4&&n<=10)?'#8fe3a8':'#ff8b96';
+  return n;
+}
+
+/* 根据牌数自动选列数：优先能整除的列数，版面更整齐 */
+function chooseCols(n){
+  var prefs=[4,5,6,3];
+  for(var i=0;i<prefs.length;i++){if(n%prefs[i]===0)return prefs[i];}
+  return 4;
+}
+/* 依据文本长度调整牌面字号 */
+function fitFont(t){
+  var L=t.length;
+  if(L<=2)return 30;
+  if(L<=4)return 24;
+  if(L<=6)return 19;
+  if(L<=9)return 16;
+  return 13;
+}
+
+/* ===== 开局：洗牌铺开 ===== */
+function startGame(){
+  var pairs=parsePairs();
+  if(pairs.length<4){showToast('配对至少需要 4 对，请补充配对集');return;}
+  if(pairs.length>10){pairs=pairs.slice(0,10);showToast('最多取前 10 对参与本局');}
+  readCfgFromUI();
+  game.pairs=pairs;
+  game.mode=config.mode;
+  game.cards=[];
+  pairs.forEach(function(p,i){
+    game.cards.push({pairId:i,text:p.l,open:false,matched:false,el:null});
+    game.cards.push({pairId:i,text:p.r,open:false,matched:false,el:null});
+  });
+  /* Fisher-Yates 洗牌 */
+  for(var i=game.cards.length-1;i>0;i--){
+    var j=ri(0,i),tmp=game.cards[i];game.cards[i]=game.cards[j];game.cards[j]=tmp;
+  }
+  game.cols=chooseCols(game.cards.length);
+  game.first=null;game.lock=false;
+  game.moves=0;game.matched=0;
+  game.score={red:0,blue:0};
+  game.startTime=null;
+  if(game.timerInt){clearInterval(game.timerInt);game.timerInt=null;}
+  /* 双组对战每局轮换先手 */
+  round++;
+  game.turn=(round%2===1)?'red':'blue';
+  $('winOverlay').classList.remove('show');
+  renderGrid();
+  renderStatus();
+  startClock();
+}
+
+function readCfgFromUI(){
+  config.mode=document.querySelector('input[name=mode]:checked').value;
+  var r=$('redName').value.trim(),b=$('blueName').value.trim();
+  config.redName=r||'红队';
+  config.blueName=b||'蓝队';
+  saveCfg();
+}
+
+function renderGrid(){
+  var g=$('grid');
+  g.innerHTML='';
+  g.style.gridTemplateColumns='repeat('+game.cols+',1fr)';
+  game.cards.forEach(function(c,i){
+    var el=document.createElement('div');
+    el.className='card';
+    el.innerHTML='<div class="card-inner">'+
+      '<div class="face front">?</div>'+
+      '<div class="face back" style="font-size:'+fitFont(c.text)+'px">'+esc(c.text)+'</div>'+
+    '</div>';
+    el.addEventListener('click',function(){onCard(i);});
+    c.el=el;c.open=false;c.matched=false;
+    g.appendChild(el);
+  });
+}
+
+/* ===== 翻牌核心逻辑 ===== */
+function onCard(i){
+  var c=game.cards[i];
+  if(game.lock||c.matched||c.open)return;
+  ensureAudio();
+  sFlip();
+  c.open=true;
+  c.el.classList.add('open');
+  /* 单人模式：首次翻牌开始计时 */
+  if(game.mode==='single'&&!game.startTime){game.startTime=Date.now();}
+  if(game.first===null){game.first=i;return;}
+
+  var a=game.first;
+  game.first=null;
+  if(game.mode==='single'){game.moves++;}
+
+  if(game.cards[a].pairId===c.pairId){
+    /* 配对成功：保持翻开并变色 */
+    c.matched=true;game.cards[a].matched=true;
+    c.el.classList.add('matched');
+    game.cards[a].el.classList.add('matched');
+    if(game.mode==='versus'){
+      c.el.classList.add(game.turn);
+      game.cards[a].el.classList.add(game.turn);
+      game.score[game.turn]++;
+      /* 得分方继续翻牌，不换人 */
+    }
+    game.matched++;
+    sMatch();
+    renderStatus();
+    if(game.matched===game.pairs.length){setTimeout(win,650);}
+  }else{
+    /* 不匹配：1 秒后盖回，对战模式换对方 */
+    game.lock=true;
+    sMiss();
+    var ta=game.cards[a];
+    setTimeout(function(){
+      c.open=false;ta.open=false;
+      c.el.classList.remove('open');
+      ta.el.classList.remove('open');
+      game.lock=false;
+      if(game.mode==='versus'){
+        game.turn=(game.turn==='red')?'blue':'red';
+        renderStatus();
+      }
+    },1000);
+  }
+}
+
+/* ===== 状态栏渲染 ===== */
+function renderStatus(){
+  var bar=$('statusBar');
+  var done='已配对 <b>'+game.matched+'</b> / '+game.pairs.length;
+  if(game.mode==='single'){
+    bar.innerHTML=
+      '<div class="pill">👣 步数 <b>'+game.moves+'</b></div>'+
+      '<div class="pill">⏱ 用时 <b id="clock">00:00</b></div>'+
+      '<div class="pill">'+done+'</div>'+
+      '<button class="again-btn" id="againBtn">🔄 再来一局</button>';
+  }else{
+    var redAct=game.turn==='red'?' active red':'';
+    var blueAct=game.turn==='blue'?' active blue':'';
+    bar.innerHTML=
+      '<div class="pill team-pill red'+redAct+'">🔴 '+esc(config.redName)+' <b>'+game.score.red+'</b></div>'+
+      '<div class="pill">🎲 '+done+'</div>'+
+      '<div class="pill team-pill blue'+blueAct+'">🔵 '+esc(config.blueName)+' <b>'+game.score.blue+'</b></div>'+
+      '<button class="again-btn" id="againBtn">🔄 再来一局</button>';
+  }
+  $('againBtn').addEventListener('click',startGame);
+  if(game.mode==='single')updateClock();
+}
+function startClock(){
+  if(game.mode!=='single')return;
+  if(game.timerInt){clearInterval(game.timerInt);}
+  game.timerInt=setInterval(updateClock,500);
+}
+function updateClock(){
+  var el=$('clock');
+  if(!el)return;
+  var s=game.startTime?Math.floor((Date.now()-game.startTime)/1000):0;
+  var m=Math.floor(s/60),ss=s%60;
+  el.textContent=(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;
+}
+
+/* ===== 结算 ===== */
+function win(){
+  var title,detail;
+  if(game.mode==='single'){
+    if(game.timerInt){clearInterval(game.timerInt);game.timerInt=null;}
+    var s=game.startTime?Math.floor((Date.now()-game.startTime)/1000):0;
+    var m=Math.floor(s/60),ss=s%60;
+    var timeStr=(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;
+    var n=game.pairs.length;
+    var grade;
+    if(game.moves===n)grade='完美记忆，一次全对！🏆';
+    else if(game.moves<=Math.ceil(n*1.5))grade='超级棒的记忆力！🌟';
+    else grade='挑战成功，继续加油！💪';
+    title='挑战完成！';
+    detail='共翻 <b>'+game.moves+'</b> 步 · 用时 <b>'+timeStr+'</b><br>'+grade;
+  }else{
+    var r=game.score.red,b=game.score.blue;
+    if(r>b){title=esc(config.redName)+'获胜！';$('winEmoji').textContent='🔴🎉';}
+    else if(b>r){title=esc(config.blueName)+'获胜！';$('winEmoji').textContent='🔵🎉';}
+    else{title='平局！';$('winEmoji').textContent='🤝';}
+    detail='<span class="vs-red">'+esc(config.redName)+' '+r+'</span> ： <span class="vs-blue">'+b+' '+esc(config.blueName)+'</span>';
+  }
+  $('winTitle').innerHTML=title;
+  $('winDetail').innerHTML=detail;
+  $('winOverlay').classList.add('show');
+  sWin();
+}
+
+/* ===== 音效：Web Audio 合成，无外部资源 ===== */
+var audioCtx=null;
+function ensureAudio(){
+  if(audioCtx)return;
+  try{
+    var AC=window.AudioContext||window.webkitAudioContext;
+    if(AC)audioCtx=new AC();
+  }catch(e){}
+}
+function beep(freq,at,dur,type,vol){
+  if(!audioCtx)return;
+  var o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type=type||'sine';o.frequency.value=freq;
+  g.gain.setValueAtTime(0.0001,at);
+  g.gain.exponentialRampToValueAtTime(vol||0.25,at+0.015);
+  g.gain.exponentialRampToValueAtTime(0.0001,at+dur);
+  o.connect(g);g.connect(audioCtx.destination);
+  o.start(at);o.stop(at+dur+0.05);
+}
+function sFlip(){if(audioCtx)beep(520,audioCtx.currentTime,0.07,'square',0.12)}
+function sMatch(){
+  if(!audioCtx)return;
+  var t=audioCtx.currentTime;
+  beep(660,t,0.12,'sine',0.3);
+  beep(880,t+0.12,0.22,'sine',0.3);
+}
+function sMiss(){if(audioCtx)beep(170,audioCtx.currentTime,0.25,'sawtooth',0.18)}
+function sWin(){
+  if(!audioCtx)return;
+  var t=audioCtx.currentTime;
+  [523,659,784,1046].forEach(function(f,i){beep(f,t+i*0.14,0.24,'triangle',0.3);});
+}
+
+function showToast(msg){
+  var t=$('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm=setTimeout(function(){t.classList.remove('show')},2400);
+}
+
+/* ===== 控件绑定 ===== */
+function applyCfgToUI(){
+  document.querySelectorAll('input[name=mode]').forEach(function(r){
+    r.checked=(r.value===config.mode);
+  });
+  $('redName').value=config.redName;
+  $('blueName').value=config.blueName;
+  toggleTeamRows();
+}
+function toggleTeamRows(){
+  var mode=document.querySelector('input[name=mode]:checked').value;
+  $('teamNames').style.display=mode==='versus'?'':'none';
+}
+function bindEvents(){
+  $('pairsInput').addEventListener('input',function(){savePairs();updatePairCnt();});
+  document.querySelectorAll('input[name=mode]').forEach(function(r){
+    r.addEventListener('change',function(){saveCfg();toggleTeamRows();});
+  });
+  $('redName').addEventListener('input',saveCfg);
+  $('blueName').addEventListener('input',saveCfg);
+  $('startBtn').addEventListener('click',startGame);
+  $('winAgainBtn').addEventListener('click',startGame);
+}
+
+/* ===== 启动 ===== */
+loadStore();
+applyCfgToUI();
+bindEvents();
+updatePairCnt();
+/* 首屏先用示例配对自动铺一局，方便直接投屏演示 */
+var initPairs=parsePairs();
+if(initPairs.length>=4&&initPairs.length<=10){startGame();}
+else{renderStatus();}
+})();
+</script>
+</body>
+</html>

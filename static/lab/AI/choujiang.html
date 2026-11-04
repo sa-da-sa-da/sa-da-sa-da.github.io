@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>课堂盲盒抽奖器 · 自定义奖品+礼花音效 投屏开盒 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/choujiang.html">
+<meta name="description" content="课堂盲盒抽奖器：自定义奖品清单，生成一排盲盒，点击开盒有礼花与欢呼音效，可切换奖品与控制开盒顺序。支持一次设置多个奖项与中奖名额，抽中后可继续或重新开始，适合期末表彰、课堂激励与班会活动，页面自带投屏模式与音效开关，数据只存本机。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#241a2e;--muted:#7a6c88;--line:#efe6f6;
+  --brand:#7c3aed;--brand2:#f59e0b;--bg:#f7f2fb;--card:#fff;
+}
+body{font-family:-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.app{display:flex;gap:18px;padding:18px;max-width:1400px;margin:0 auto;align-items:flex-start}
+/* ===== 控制面板 ===== */
+.panel{width:320px;flex:0 0 320px;background:var(--card);border-radius:14px;padding:18px;box-shadow:0 4px 20px rgba(90,50,130,.08);position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto}
+.panel h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.panel .sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:13px;font-weight:600;color:#4a3c58;margin-bottom:7px}
+textarea{width:100%;min-height:140px;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;line-height:1.7;font-family:inherit;outline:none;color:var(--ink);background:#fdfbff;transition:border-color .2s}
+textarea:focus{border-color:var(--brand)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:56px;padding:8px 6px;border:1px solid var(--line);background:#fdfbff;border-radius:9px;font-size:13px;color:#5f5170;cursor:pointer;transition:all .18s;font-family:inherit}
+.seg button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.actions{display:flex;gap:8px;margin-top:4px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.primary:hover{background:#6b2fd6}
+.btn.ghost{background:#f2ecf8;color:#5f5170}
+.tip{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.7;background:#f4edfd;border-radius:9px;padding:9px 11px}
+/* ===== 主区 ===== */
+.main{flex:1;min-width:0}
+.board{background:linear-gradient(160deg,#2a1e3d,#3c2a56);border-radius:18px;padding:20px;box-shadow:0 10px 34px rgba(50,25,80,.24);position:relative;overflow:hidden}
+.board::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 0%,rgba(124,58,237,.35),transparent 55%),radial-gradient(circle at 85% 100%,rgba(245,158,11,.22),transparent 50%);pointer-events:none}
+.board-head{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.board-title{color:#fff;font-size:20px;font-weight:800;letter-spacing:1px}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:20px;padding:7px 15px;color:#d9cbea;font-size:13px;font-weight:600}
+.stat b{color:#ffd166;font-size:16px}
+.grid{position:relative;z-index:2;display:grid;gap:12px}
+.box{aspect-ratio:1/1;border-radius:16px;background:linear-gradient(150deg,#8b5cf6,#6d28d9);border:2px solid rgba(255,255,255,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;transition:transform .25s,box-shadow .25s,background .25s;position:relative;overflow:hidden;user-select:none}
+.box:hover:not(.open){transform:translateY(-4px) scale(1.03);box-shadow:0 12px 26px rgba(124,58,237,.5)}
+.box .q{font-size:clamp(22px,4vw,38px);font-weight:900;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.25)}
+.box .prize{font-size:clamp(13px,1.8vw,19px);font-weight:800;color:#3a2405;background:#ffd166;border-radius:10px;padding:8px 10px;line-height:1.35;word-break:break-word}
+.box.open{background:linear-gradient(150deg,#3a2f52,#2a2140);border-color:rgba(255,209,102,.45);cursor:default;animation:pop .4s}
+.box.empty{background:linear-gradient(150deg,#4a4258,#38323f);border-color:rgba(255,255,255,.1);cursor:default}
+.box.empty .prize{background:#a9a2b5;color:#2f2838}
+@keyframes pop{0%{transform:scale(.85)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+.box.just-open{box-shadow:0 0 0 3px #ffd166,0 0 30px rgba(255,209,102,.7)}
+/* 礼花粒子 */
+.particle{position:fixed;width:9px;height:9px;border-radius:50%;pointer-events:none;z-index:999;animation:fly .9s ease-out forwards}
+@keyframes fly{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
+/* 结果条 */
+.result-bar{position:relative;z-index:2;margin-top:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:12px 16px;min-height:54px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.result-bar .lab{color:#bfaede;font-size:13px;font-weight:700;flex:0 0 auto}
+.chip{background:rgba(255,209,102,.16);border:1px solid rgba(255,209,102,.4);color:#ffd166;border-radius:14px;padding:4px 11px;font-size:12.5px;font-weight:600}
+.chip.sorry{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);color:#a9a2b5}
+.all-done{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(20,10,35,.7);z-index:500}
+.all-done.show{display:flex}
+.all-done .box2{background:#2f2346;border:2px solid #ffd166;border-radius:20px;padding:34px 44px;text-align:center;color:#ffd166;font-size:26px;font-weight:800;letter-spacing:2px;animation:pop .4s}
+@media print{
+  .panel,.board::after{display:none}
+  body{background:#fff}
+}
+@media (max-width:900px){
+  .app{flex-direction:column;padding:12px}
+  .panel{width:100%;flex:none;position:static;max-height:none}
+}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">课堂盲盒抽奖器 · 自定义奖品与礼花音效</h1>
+<div class="app">
+  <aside class="panel">
+    <h2>课堂盲盒抽奖器</h2>
+    <p class="sub">把奖品写进去，让学生自己点开盲盒。适合课堂奖励、随机点名、活动暖场。</p>
+
+    <div class="field">
+      <label>奖品 / 盲盒内容（每行一个）</label>
+      <textarea id="txt" placeholder="例：&#10;免写一次作业&#10;小零食一份&#10;当一天小组长"></textarea>
+    </div>
+
+    <div class="field">
+      <label>盒子数量</label>
+      <div class="seg" id="segCount">
+        <button data-r="2" data-c="3">2×3</button>
+        <button data-r="3" data-c="4">3×4</button>
+        <button data-r="3" data-c="5">3×5</button>
+        <button data-r="4" data-c="5">4×5</button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btnReset">重新洗牌</button>
+      <button class="btn ghost" id="btnOpenAll">全部打开</button>
+    </div>
+
+    <div class="tip">奖品少于盒子数量时，剩余盒子会放「谢谢参与」。盒子顺序每次重新洗牌都会变。</div>
+  </aside>
+
+  <main class="main">
+    <div class="board">
+      <div class="board-head">
+        <div class="board-title">开 盲 盒</div>
+        <div class="stats">
+          <div class="stat">已开 <b id="stOpen">0</b></div>
+          <div class="stat">共 <b id="stTotal">0</b></div>
+        </div>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="result-bar">
+        <span class="lab">已开出：</span>
+        <span id="resList" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="all-done" id="allDone"><div class="box2" id="allDoneText">全部开完啦</div></div>
+
+<script>
+(function(){
+  'use strict';
+
+  var KEY = 'cj_state_v1';
+  var DEF = {
+    prizes: '免写一次作业\n小零食一份\n当一天小组长\n挑选座位一次\n加分 5 分\n作业本一个\n课前点歌一首\n谢谢参与',
+    rows: 3,
+    cols: 4
+  };
+  var state = Object.assign({}, DEF);
+  var boxes = [];        // [{prize, open}]
+  try {
+    var s = localStorage.getItem(KEY);
+    if (s){
+      var obj = JSON.parse(s);
+      state = Object.assign(state, obj.state || {});
+      boxes = obj.boxes || [];
+    }
+  } catch (e) {}
+
+  var grid = document.getElementById('grid');
+  var elText = document.getElementById('txt');
+  var stOpen = document.getElementById('stOpen');
+  var stTotal = document.getElementById('stTotal');
+  var resList = document.getElementById('resList');
+  var allDone = document.getElementById('allDone');
+  var allDoneText = document.getElementById('allDoneText');
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function prizeList(){
+    return (state.prizes || '').split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+  }
+
+  function buildBoxes(){
+    var total = state.rows * state.cols;
+    var prizes = prizeList();
+    var arr = [];
+    for (var i = 0; i < total; i++){
+      arr.push(i < prizes.length ? prizes[i] : '谢谢参与');
+    }
+    for (var j = arr.length - 1; j > 0; j--){
+      var k = Math.floor(Math.random() * (j + 1));
+      var t = arr[j]; arr[j] = arr[k]; arr[k] = t;
+    }
+    boxes = arr.map(function(p){ return { prize: p, open: false }; });
+    save();
+    render();
+  }
+
+  function save(){
+    try { localStorage.setItem(KEY, JSON.stringify({ state: state, boxes: boxes })); } catch (e) {}
+  }
+
+  // 简易礼花：从点击位置向外飞散 18 个彩色粒子
+  function confetti(x, y){
+    var colors = ['#ffd166','#ff6b6b','#4dabf7','#63e6be','#b197fc','#ff922b'];
+    for (var i = 0; i < 18; i++){
+      var p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = x + 'px';
+      p.style.top = y + 'px';
+      p.style.background = colors[i % colors.length];
+      var ang = Math.random() * Math.PI * 2;
+      var dist = 60 + Math.random() * 110;
+      p.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
+      p.style.setProperty('--dy', (Math.sin(ang) * dist - 20) + 'px');
+      document.body.appendChild(p);
+      setTimeout(function(el){ return function(){ el.remove(); }; }(p), 950);
+    }
+  }
+
+  // 开盒音效：一段上行的叮咚
+  function sound(){
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      var ctx = new AC();
+      var t = ctx.currentTime;
+      [0, 0.09, 0.18].forEach(function(off, i){
+        var o = ctx.createOscillator();
+        var g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = 660 + i * 180;
+        g.gain.setValueAtTime(0.001, t + off);
+        g.gain.exponentialRampToValueAtTime(0.25, t + off + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t + off + 0.16);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t + off); o.stop(t + off + 0.18);
+      });
+      setTimeout(function(){ ctx.close(); }, 600);
+    } catch (e) {}
+  }
+
+  function render(){
+    grid.style.gridTemplateColumns = 'repeat(' + state.cols + ', 1fr)';
+    grid.innerHTML = boxes.map(function(b, i){
+      var cls = 'box' + (b.open ? (b.prize === '谢谢参与' ? ' empty open' : ' open') : '');
+      var inner = b.open
+        ? '<div class="prize">' + esc(b.prize) + '</div>'
+        : '<div class="q">?</div>';
+      return '<div class="' + cls + '" data-i="' + i + '">' + inner + '</div>';
+    }).join('');
+
+    var opened = boxes.filter(function(b){ return b.open; });
+    stOpen.textContent = opened.length;
+    stTotal.textContent = boxes.length;
+
+    resList.innerHTML = opened.length
+      ? opened.map(function(b){
+          var ok = b.prize !== '谢谢参与';
+          return '<span class="chip' + (ok ? '' : ' sorry') + '">' + esc(b.prize) + '</span>';
+        }).join('')
+      : '<span style="color:#8f80a8;font-size:13px">还没有开盒</span>';
+  }
+
+  function openBox(i, silent){
+    var b = boxes[i];
+    if (!b || b.open) return;
+    b.open = true;
+    save();
+    render();
+    var el = grid.querySelector('[data-i="' + i + '"]');
+    if (el && !silent){
+      el.classList.add('just-open');
+      var r = el.getBoundingClientRect();
+      confetti(r.left + r.width / 2, r.top + r.height / 2);
+      sound();
+      setTimeout(function(){ el.classList.remove('just-open'); }, 700);
+    }
+    checkDone();
+  }
+
+  function checkDone(){
+    if (boxes.length && boxes.every(function(b){ return b.open; })){
+      allDoneText.textContent = '全部开完啦';
+      allDone.classList.add('show');
+      setTimeout(function(){ allDone.classList.remove('show'); }, 1600);
+    }
+  }
+
+  // ===== 事件 =====
+  grid.addEventListener('click', function(e){
+    var box = e.target.closest('.box');
+    if (!box) return;
+    openBox(Number(box.dataset.i));
+  });
+
+  var timer = null;
+  elText.addEventListener('input', function(){
+    clearTimeout(timer);
+    timer = setTimeout(function(){
+      state.prizes = elText.value;
+      save();
+      if (!boxes.length) buildBoxes();
+      else render();
+    }, 220);
+  });
+
+  document.getElementById('segCount').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    state.rows = Number(b.dataset.r);
+    state.cols = Number(b.dataset.c);
+    Array.prototype.forEach.call(document.querySelectorAll('#segCount button'), function(x){
+      x.classList.toggle('on', x === b);
+    });
+    save();
+    buildBoxes();
+  });
+
+  document.getElementById('btnReset').addEventListener('click', buildBoxes);
+
+  document.getElementById('btnOpenAll').addEventListener('click', function(){
+    boxes.forEach(function(b, i){
+      if (!b.open) setTimeout(function(){ openBox(i, true); }, i * 60);
+    });
+  });
+
+  // 初始化
+  elText.value = state.prizes;
+  Array.prototype.forEach.call(document.querySelectorAll('#segCount button'), function(x){
+    x.classList.toggle('on', Number(x.dataset.r) === state.rows && Number(x.dataset.c) === state.cols);
+  });
+  if (!boxes.length) buildBoxes();
+  else render();
+})();
+</script>
+</body>
+</html>

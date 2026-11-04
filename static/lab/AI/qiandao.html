@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家长会签到表 · 可配置名单/空白签到表 A4 打印 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/qiandao.html">
+<meta name="description" content="家长会签到表生成器：自定义标题、班级、时间、地点与主持人，支持粘贴学生名单自动分页或空白行签到，每页 20/25 行可选，底部统计应到人数，A4 纵向直接打印。支持签名栏宽度、页脚说明与行数自定义，可导出 PDF 存档，适合家长会、开放日与家校活动签到。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#20302c;--muted:#6b7a78;--line:#e3ebe8;
+  --brand:#2f7d6e;--brand-d:#26695b;--brand-l:#eaf4f1;
+  --bg:#f2f6f4;--card:#fff;
+}
+body{font-family:-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.app{display:flex;gap:18px;padding:18px;max-width:1400px;margin:0 auto;align-items:flex-start}
+
+/* ===== 左侧控制面板 ===== */
+.panel{width:340px;flex:0 0 340px;background:var(--card);border-radius:16px;padding:18px;box-shadow:0 6px 24px rgba(20,50,45,.08);position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto}
+.panel h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.panel .sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+.field{margin-bottom:14px}
+.field>label{display:block;font-size:13px;font-weight:600;color:#40514e;margin-bottom:7px}
+.field>label .count{font-weight:400;color:var(--muted);font-size:12px;margin-left:4px}
+.row2{display:flex;gap:10px}
+.row2 .field{flex:1}
+input[type=text],textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:14px;font-family:inherit;outline:none;color:var(--ink);background:#fbfdfc;transition:border-color .18s}
+input[type=text]:focus,textarea:focus{border-color:var(--brand)}
+textarea{min-height:130px;resize:vertical;line-height:1.75;font-size:13.5px}
+.hint{font-size:12px;color:var(--muted);line-height:1.6;margin-top:6px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:74px;padding:8px 6px;border:1px solid var(--line);background:#fbfdfc;border-radius:9px;font-size:13px;color:#5a6b68;cursor:pointer;transition:all .18s;font-family:inherit}
+.seg button:hover{border-color:#bcd6d0}
+.seg button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.actions{display:flex;gap:8px;margin-top:2px}
+.actions .btn{flex:1}
+.btn{padding:11px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-d)}
+.btn.ghost{background:#f0f4f3;color:#5a6b68}
+.btn.ghost:hover{background:#e5ecea}
+.tip{margin-top:12px;font-size:12px;color:#4c615c;line-height:1.75;background:var(--brand-l);border-radius:9px;padding:9px 11px}
+
+/* ===== 右侧预览区 ===== */
+.preview{flex:1;min-width:0;overflow:auto;padding-bottom:40px}
+.papers{display:flex;flex-direction:column;align-items:center;gap:18px}
+.paper{width:210mm;min-height:297mm;background:#fff;padding:12mm 14mm 10mm;border-radius:2mm;box-shadow:0 10px 34px rgba(20,50,45,.16);display:flex;flex-direction:column;--rowh:9mm;--fs:3.5mm}
+.sheet-head{text-align:center;margin-bottom:4mm}
+.sheet-head h1{font-size:8mm;font-weight:700;letter-spacing:2mm;color:#1d2b27;line-height:1.3}
+.info{display:flex;flex-wrap:wrap;justify-content:center;gap:2mm 7mm;font-size:3.4mm;color:#3b4a46;margin-top:3mm;padding-bottom:3mm;border-bottom:.4mm solid #9aa9a5}
+.info .val{display:inline-block;min-width:20mm;padding:0 1mm;text-align:center;border-bottom:.3mm solid #b9c6c2}
+.qt{width:100%;table-layout:fixed;border-collapse:collapse;flex:0 0 auto}
+.qt th,.qt td{border:.32mm solid #7d8c88;padding:var(--pad,1mm) 1.6mm;font-size:var(--fs);line-height:1.4;color:#26332f;word-break:break-all}
+.qt thead th{height:8mm;background:#eef4f1;font-weight:700;font-size:calc(var(--fs) * .95);letter-spacing:.2mm}
+.qt tbody td{height:var(--rowh)}
+.qt td.idx{text-align:center;color:#5a6b68;font-size:calc(var(--fs) * .92)}
+.qt td.nm{font-weight:600}
+.qt .rel{font-weight:400;color:#7c8b87;font-size:.85em}
+.sheet-foot{margin-top:auto;padding-top:4mm;display:flex;justify-content:space-between;align-items:baseline;font-size:3.6mm;color:#33433f}
+.sheet-foot .stat b{font-weight:700}
+.sheet-foot .pg{font-size:3mm;color:#7c8b87}
+.empty{width:210mm;min-height:120mm;background:#fff;border-radius:14px;box-shadow:0 6px 24px rgba(20,50,45,.1);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
+
+/* ===== 移动端 ===== */
+@media (max-width:900px){
+  .app{flex-direction:column;padding:12px;gap:12px}
+  .panel{width:100%;flex:none;position:static;max-height:none}
+  .preview{width:100%;overflow-x:auto}
+  .empty{width:100%}
+}
+
+/* ===== 打印 ===== */
+@media print{
+  @page{size:A4 portrait;margin:10mm}
+  html,body{background:#fff}
+  .app{display:block;padding:0;margin:0;max-width:none}
+  .panel,.empty{display:none!important}
+  .preview{display:block;padding:0;overflow:visible}
+  .papers{display:block;gap:0}
+  .paper{width:auto;min-height:274mm;padding:0;margin:0;box-shadow:none;border-radius:0}
+  .paper:not(:last-child){page-break-after:always;break-after:page}
+  .qt tr{page-break-inside:avoid}
+  .info,.sheet-head{page-break-after:avoid}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">家长会签到表 · 名单导入与 A4 打印</h1>
+<div class="app">
+  <aside class="panel">
+    <h2>家长会签到表</h2>
+    <p class="sub">填好会议信息，生成可打印的签到表。名单与设置只存在你的浏览器里。</p>
+
+    <div class="field">
+      <label for="fTitle">标题</label>
+      <input type="text" id="fTitle" placeholder="家长会签到表">
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label for="fClass">班级</label>
+        <input type="text" id="fClass" placeholder="如：三年级二班">
+      </div>
+      <div class="field">
+        <label for="fHost">主持人</label>
+        <input type="text" id="fHost" placeholder="如：班主任">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="fTime">时间</label>
+      <input type="text" id="fTime" placeholder="如：11月14日 19:00">
+    </div>
+
+    <div class="field">
+      <label for="fLocation">地点</label>
+      <input type="text" id="fLocation" placeholder="如：本班教室">
+    </div>
+
+    <div class="field">
+      <label>表格模式</label>
+      <div class="seg" id="modeSeg">
+        <button type="button" data-mode="roster" class="on">名单模式</button>
+        <button type="button" data-mode="blank">空白模式</button>
+      </div>
+    </div>
+
+    <div class="field" id="rosterField">
+      <label for="roster">学生名单<span class="count" id="rosterCount"></span></label>
+      <textarea id="roster" spellcheck="false" placeholder="张小明,爸爸&#10;李思远,妈妈&#10;王雨萱"></textarea>
+      <p class="hint">每行一位；可用英文逗号或顿号补上家长称谓，不写则只打印学生姓名。</p>
+    </div>
+
+    <div class="field" id="blankField" hidden>
+      <label>空白行数</label>
+      <div class="seg" id="rowsSeg">
+        <button type="button" data-rows="20" class="on">20 行</button>
+        <button type="button" data-rows="30">30 行</button>
+        <button type="button" data-rows="40">40 行</button>
+      </div>
+    </div>
+
+    <div class="field" id="perField">
+      <label>每页行数</label>
+      <div class="seg" id="perSeg">
+        <button type="button" data-per="20" class="on">20 行（宽松）</button>
+        <button type="button" data-per="25">25 行（紧凑）</button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btnGenerate" type="button">生成签到表</button>
+      <button class="btn ghost" id="btnPrint" type="button">打印 A4</button>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" id="btnReset" type="button">恢复默认设置</button>
+    </div>
+
+    <div class="tip">
+      名单模式会自动按每页行数分页，并在末页补齐空行；空白模式适合现场临时签到或家长人数不确定的场合。
+    </div>
+  </aside>
+
+  <main class="preview">
+    <div class="papers" id="papers"></div>
+  </main>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var KEY = 'qiandao.v1';
+
+function $(id){ return document.getElementById(id); }
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+var els = {
+  fTitle: $('fTitle'),
+  fClass: $('fClass'),
+  fHost: $('fHost'),
+  fTime: $('fTime'),
+  fLocation: $('fLocation'),
+  modeSeg: $('modeSeg'),
+  rosterField: $('rosterField'),
+  roster: $('roster'),
+  rosterCount: $('rosterCount'),
+  blankField: $('blankField'),
+  rowsSeg: $('rowsSeg'),
+  perField: $('perField'),
+  perSeg: $('perSeg'),
+  btnGenerate: $('btnGenerate'),
+  btnPrint: $('btnPrint'),
+  btnReset: $('btnReset'),
+  papers: $('papers')
+};
+
+var DEFAULTS = {
+  title: '家长会签到表',
+  cls: '三年级二班',
+  time: '',
+  location: '本班教室',
+  host: '班主任',
+  mode: 'roster',
+  rosterText: '',
+  blankRows: 20,
+  perPage: 20
+};
+
+var state = loadState();
+
+function loadState(){
+  var base = {
+    title: DEFAULTS.title,
+    cls: DEFAULTS.cls,
+    time: DEFAULTS.time,
+    location: DEFAULTS.location,
+    host: DEFAULTS.host,
+    mode: DEFAULTS.mode,
+    rosterText: DEFAULTS.rosterText,
+    blankRows: DEFAULTS.blankRows,
+    perPage: DEFAULTS.perPage
+  };
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(raw){
+      var o = JSON.parse(raw);
+      ['title','cls','time','location','host','rosterText'].forEach(function(k){
+        if(typeof o[k] === 'string') base[k] = o[k];
+      });
+      if(o.mode === 'blank' || o.mode === 'roster') base.mode = o.mode;
+      if(o.blankRows === 20 || o.blankRows === 30 || o.blankRows === 40) base.blankRows = o.blankRows;
+      if(o.perPage === 20 || o.perPage === 25) base.perPage = o.perPage;
+    }
+  }catch(e){
+    console.warn('读取本地设置失败：', e);
+  }
+  return base;
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }catch(e){
+    /* 隐私模式写入失败时忽略 */
+  }
+}
+
+/* 名单解析：每行 "学生名,家长称谓" */
+function parseRoster(){
+  return state.rosterText.split(/\r?\n/).map(function(line){
+    var parts = line.split(/[,，、\t]+/);
+    var name = (parts[0] || '').trim();
+    var rel = parts.length > 1 ? parts.slice(1).join(' ').trim() : '';
+    return { name: name, rel: rel };
+  }).filter(function(item){ return item.name.length > 0; });
+}
+
+/* 表头信息行：留白也要打印下划线，便于手写 */
+function valueOrBlank(v, minLen){
+  var t = String(v || '').trim();
+  if(!t){
+    return '<span class="val">' + new Array((minLen || 8) + 1).join('&nbsp;') + '</span>';
+  }
+  return '<span class="val">' + esc(t) + '</span>';
+}
+
+function buildHead(){
+  var title = state.title.trim() || '家长会签到表';
+  var infoItems = [
+    '<span>班级：' + valueOrBlank(state.cls, 10) + '</span>',
+    '<span>时间：' + valueOrBlank(state.time, 14) + '</span>',
+    '<span>地点：' + valueOrBlank(state.location, 12) + '</span>',
+    '<span>主持人：' + valueOrBlank(state.host, 8) + '</span>'
+  ].join('');
+  return '<div class="sheet-head"><h1>' + esc(title) + '</h1><div class="info">' + infoItems + '</div></div>';
+}
+
+/* 生成一页表格：rows 为学生对象数组（可为空对象占位） */
+function buildTable(rows, startNo, rowh, fs, pad){
+  var body = rows.map(function(item, i){
+    var no = startNo + i;
+    if(!item || !item.name){
+      return '<tr><td class="idx">' + no + '</td><td class="nm"></td><td></td><td></td><td></td></tr>';
+    }
+    var rel = item.rel ? '<span class="rel">（' + esc(item.rel) + '）</span>' : '';
+    return '<tr><td class="idx">' + no + '</td><td class="nm">' + esc(item.name) + rel +
+      '</td><td></td><td></td><td></td></tr>';
+  }).join('');
+
+  return '<table class="qt" style="--rowh:' + rowh + 'mm;--fs:' + fs + 'mm;--pad:' + (pad || 1) + 'mm">' +
+    '<colgroup><col style="width:10%"><col style="width:26%"><col style="width:24%"><col style="width:24%"><col style="width:16%"></colgroup>' +
+    '<thead><tr><th>序号</th><th>学生姓名</th><th>家长签名</th><th>联系方式</th><th>备注</th></tr></thead>' +
+    '<tbody>' + body + '</tbody></table>';
+}
+
+function footHtml(expected, page, total){
+  var stat = expected === null
+    ? '应到 ______ 人，实到 ______ 人'
+    : '应到 <b>' + expected + '</b> 人，实到 ______ 人';
+  var pg = total > 1 ? '<span class="pg">第 ' + page + ' 页 / 共 ' + total + ' 页</span>' : '';
+  return '<div class="sheet-foot"><span class="stat">' + stat + '</span>' + pg + '</div>';
+}
+
+/* 名单模式：按每页行数切分并补齐空行 */
+function renderRosterPages(){
+  var list = parseRoster();
+  var per = state.perPage;
+  var total = Math.max(1, Math.ceil(list.length / per));
+  var rowh = per === 25 ? 8.2 : 10.2;
+  var fs = per === 25 ? 3.2 : 3.5;
+  var html = '';
+
+  for(var page = 1; page <= total; page++){
+    var chunk = list.slice((page - 1) * per, page * per);
+    /* 末页补齐空行，保证表格满页对齐 */
+    while(chunk.length < per) chunk.push({ name: '', rel: '' });
+    var expected = list.length ? Math.min(per, Math.max(0, list.length - (page - 1) * per)) : null;
+    html += '<div class="paper">' + buildHead() +
+      buildTable(chunk, (page - 1) * per + 1, rowh, fs, per === 25 ? 0.8 : 1) +
+      footHtml(expected, page, total) + '</div>';
+  }
+  return html;
+}
+
+/* 空白模式：单页指定行数 */
+function renderBlankPage(){
+  var rows = state.blankRows;
+  var rowh = rows === 40 ? 4.9 : (rows === 30 ? 6.9 : 10.2);
+  var fs = rows === 40 ? 3.0 : (rows === 30 ? 3.3 : 3.5);
+  /* 行数越多，单元格内边距越小，保证整页放下 */
+  var pad = rows === 40 ? 0.5 : (rows === 30 ? 0.9 : 1);
+  var list = [];
+  for(var i = 0; i < rows; i++) list.push({ name: '', rel: '' });
+  return '<div class="paper">' + buildHead() +
+    buildTable(list, 1, rowh, fs, pad) +
+    footHtml(null, 1, 1) + '</div>';
+}
+
+function render(){
+  els.papers.innerHTML = state.mode === 'blank' ? renderBlankPage() : renderRosterPages();
+  els.rosterCount.textContent = parseRoster().length + ' 人';
+  /* 模式联动：切换显示对应设置项 */
+  els.rosterField.hidden = state.mode === 'blank';
+  els.blankField.hidden = state.mode !== 'blank';
+  els.perField.hidden = state.mode === 'blank';
+}
+
+/* ===== 分段按钮选中态 ===== */
+function markSeg(container, attr, value){
+  var btns = container.querySelectorAll('button');
+  for(var i = 0; i < btns.length; i++){
+    var isOn = btns[i].dataset[attr] === String(value);
+    btns[i].classList.toggle('on', isOn);
+  }
+}
+
+/* ===== 事件绑定 ===== */
+var textBindings = [
+  ['fTitle', 'title'],
+  ['fClass', 'cls'],
+  ['fTime', 'time'],
+  ['fLocation', 'location'],
+  ['fHost', 'host']
+];
+textBindings.forEach(function(pair){
+  var el = els[pair[0]];
+  el.addEventListener('input', function(){
+    state[pair[1]] = el.value;
+    saveState();
+    /* 标题与信息行变化时即时重绘 */
+    render();
+  });
+});
+
+els.roster.addEventListener('input', function(){
+  state.rosterText = els.roster.value;
+  saveState();
+  render();
+});
+
+els.modeSeg.addEventListener('click', function(e){
+  var btn = e.target.closest('button[data-mode]');
+  if(!btn) return;
+  state.mode = btn.dataset.mode;
+  markSeg(els.modeSeg, 'mode', state.mode);
+  saveState();
+  render();
+});
+
+els.rowsSeg.addEventListener('click', function(e){
+  var btn = e.target.closest('button[data-rows]');
+  if(!btn) return;
+  state.blankRows = parseInt(btn.dataset.rows, 10);
+  markSeg(els.rowsSeg, 'rows', state.blankRows);
+  saveState();
+  render();
+});
+
+els.perSeg.addEventListener('click', function(e){
+  var btn = e.target.closest('button[data-per]');
+  if(!btn) return;
+  state.perPage = parseInt(btn.dataset.per, 10);
+  markSeg(els.perSeg, 'per', state.perPage);
+  saveState();
+  render();
+});
+
+els.btnGenerate.addEventListener('click', function(){
+  render();
+});
+
+els.btnPrint.addEventListener('click', function(){
+  window.print();
+});
+
+els.btnReset.addEventListener('click', function(){
+  if(!confirm('确定恢复默认设置？当前填写的信息与名单会清空。')) return;
+  state = {
+    title: DEFAULTS.title,
+    cls: DEFAULTS.cls,
+    time: DEFAULTS.time,
+    location: DEFAULTS.location,
+    host: DEFAULTS.host,
+    mode: DEFAULTS.mode,
+    rosterText: DEFAULTS.rosterText,
+    blankRows: DEFAULTS.blankRows,
+    perPage: DEFAULTS.perPage
+  };
+  saveState();
+  syncInputs();
+  render();
+});
+
+/* ===== 初始化 ===== */
+function syncInputs(){
+  els.fTitle.value = state.title;
+  els.fClass.value = state.cls;
+  els.fTime.value = state.time;
+  els.fLocation.value = state.location;
+  els.fHost.value = state.host;
+  els.roster.value = state.rosterText;
+  markSeg(els.modeSeg, 'mode', state.mode);
+  markSeg(els.rowsSeg, 'rows', state.blankRows);
+  markSeg(els.perSeg, 'per', state.perPage);
+}
+
+syncInputs();
+render();
+
+})();
+</script>
+</body>
+</html>

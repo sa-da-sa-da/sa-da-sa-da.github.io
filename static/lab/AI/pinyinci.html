@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>看拼音写词语 · 拼音田字格练习纸 A4 打印 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/pinyinci.html">
+<meta name="description" content="看拼音写词语练习纸生成器：输入词语清单，自动标注带声调拼音并生成田字格空格，支持看拼音写词语、看汉字写拼音两种题型，可选每页 6/8/10 行与答案页，A4 直接打印。支持按课文或单元批量导入词语，可选是否显示拼音与页眉信息，适合单元复习与期末字词过关。">
+<script src="https://cdn.jsdelivr.net/npm/pinyin-pro/dist/index.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#1f2d2b;--muted:#6b7a78;--line:#e2e9e7;
+  --brand:#2f7d6e;--brand-d:#276a5d;--brand-l:#e9f4f1;--bg:#f3f6f5;--card:#fff;
+}
+body{font-family:-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.app{display:flex;gap:18px;padding:18px;max-width:1360px;margin:0 auto;align-items:flex-start}
+
+/* ===== 左侧控制面板 ===== */
+.panel{width:330px;flex:0 0 330px;background:var(--card);border-radius:14px;padding:18px;box-shadow:0 4px 20px rgba(20,50,45,.07);position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto}
+.panel h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.panel .sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.65}
+.field{margin-bottom:16px}
+.field .lbl{display:block;font-size:13px;font-weight:600;color:#40514e;margin-bottom:7px}
+textarea{width:100%;min-height:150px;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;line-height:1.8;font-family:inherit;outline:none;color:var(--ink);background:#fbfdfc;transition:border-color .2s}
+textarea:focus{border-color:var(--brand)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:60px;padding:8px 6px;border:1px solid var(--line);background:#fbfdfc;border-radius:9px;font-size:13px;color:#5a6b68;cursor:pointer;transition:all .18s;font-family:inherit}
+.seg button:hover{border-color:#bcd6d0}
+.seg button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.check{display:flex;align-items:center;gap:8px;font-size:13px;color:#40514e;cursor:pointer;padding:5px 0}
+.check input{width:16px;height:16px;accent-color:var(--brand);cursor:pointer}
+.actions{display:flex;gap:8px;margin-top:4px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-d)}
+.btn.ghost{flex:0 0 96px;background:#f0f4f3;color:#5a6b68}
+.btn.ghost:hover{background:#e5ecea}
+.meta{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.7}
+.tip{margin-top:10px;font-size:12px;color:#8a6420;line-height:1.7;background:#fff7e6;border-radius:9px;padding:9px 11px}
+.tip.err{color:#c0392b;background:#fdf0ee}
+
+/* ===== 右侧预览 ===== */
+.preview{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;overflow:auto;padding-bottom:36px}
+.stage{width:210mm;height:297mm;transform-origin:top center;margin-bottom:18px}
+/* ===== A4 纸面 ===== */
+.paper{
+  width:210mm;height:297mm;background:#fff;padding:12mm 15mm 10mm;
+  box-shadow:0 8px 30px rgba(20,50,45,.16);border-radius:1mm;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.head{flex:0 0 auto;border-bottom:.35mm solid #c9d2cf;padding-bottom:2.5mm;margin-bottom:4mm}
+.h-title{text-align:center;font-size:6.2mm;font-weight:700;letter-spacing:1.2mm;color:#1a1a1a}
+.h-meta{display:flex;justify-content:space-between;font-size:3.6mm;color:#333;margin-top:3.5mm;letter-spacing:.2mm}
+.rows{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.row{display:flex;align-items:center;height:var(--rh);flex:0 0 var(--rh)}
+.no{width:9mm;flex:0 0 9mm;font-size:4mm;color:#54655f;text-align:center}
+.cells{display:flex;gap:2mm;flex:1;min-width:0}
+.cell{width:var(--cw);flex:0 0 var(--cw)}
+.py{height:calc(var(--cw) * .32);font-size:calc(var(--cw) * .25);line-height:calc(var(--cw) * .32);text-align:center;color:#2c2c2c;font-family:"Times New Roman",Georgia,serif;white-space:nowrap;overflow:hidden}
+.gf{width:var(--cw);height:var(--cw);position:relative;border:.4mm solid #232323;background:#fff}
+.gf svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+/* 看汉字写拼音：汉字 + 拼音横线 */
+.cell.hz{display:flex;flex-direction:column;align-items:center}
+.ch{font-family:"KaiTi","STKaiti","楷体","Kaiti SC",serif;font-size:calc(var(--cw) * .62);line-height:calc(var(--cw) * .76);color:#1a1a1a;height:calc(var(--cw) * .76)}
+.pline{width:calc(var(--cw) * .88);height:calc(var(--cw) * .46);border-bottom:.3mm solid #555}
+/* ===== 答案页 ===== */
+.ans{flex:1;display:grid;grid-template-columns:repeat(2,1fr);gap:4mm 10mm;align-content:start}
+.ans-item{display:flex;align-items:baseline;gap:2.5mm;border-bottom:.25mm dashed #dbe3e1;padding-bottom:1.6mm}
+.ans-item .n{font-size:3.6mm;color:#8a9996;min-width:6mm}
+.ans-item .w{font-family:"KaiTi","STKaiti","楷体",serif;font-size:5.6mm;letter-spacing:1mm;color:#1a1a1a}
+.ans-item .p{font-size:3.3mm;color:#7c8d8a;font-family:"Times New Roman",Georgia,serif}
+.foot{flex:0 0 auto;text-align:center;font-size:3.2mm;color:#94a5a1;padding-top:2mm;border-top:.25mm solid #e3eae8}
+.foot .mark{display:none}
+
+/* ===== 打印 ===== */
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .panel{display:none !important}
+  .app{display:block;padding:0;margin:0;max-width:none}
+  .preview{display:block;padding:0;overflow:visible}
+  .stage{width:auto;height:auto;transform:none !important;margin:0 !important}
+  .paper{box-shadow:none;border-radius:0;margin:0;page-break-after:always;break-after:page}
+  .stage:last-child .paper{page-break-after:auto;break-after:auto}
+}
+@media (max-width:900px){
+  .app{flex-direction:column;padding:12px}
+  .panel{width:100%;flex:none;position:static;max-height:none}
+  .preview{width:100%}
+}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">看拼音写词语 · 拼音田字格练习纸</h1>
+<div class="app">
+  <aside class="panel">
+    <h2>看拼音写词语</h2>
+    <p class="sub">每行一个词语，自动注音并排成田字格练习纸，A4 直接打印。</p>
+
+    <div class="field">
+      <label class="lbl">词语清单（每行一个）</label>
+      <textarea id="txtWords" placeholder="春天&#10;碧绿&#10;太阳"></textarea>
+    </div>
+
+    <div class="field">
+      <label class="lbl">题型</label>
+      <div class="seg" id="segType">
+        <button data-v="py2hz" type="button">看拼音写词语</button>
+        <button data-v="hz2py" type="button">看汉字写拼音</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">每页题数</label>
+      <div class="seg" id="segRows">
+        <button data-v="6" type="button">6 行</button>
+        <button data-v="8" type="button">8 行</button>
+        <button data-v="10" type="button">10 行</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="check"><input type="checkbox" id="chkAnswer"> 附加答案页（显示正确汉字与拼音）</label>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btnPrint" type="button">打印练习纸</button>
+      <button class="btn ghost" id="btnReset" type="button">恢复示例</button>
+    </div>
+
+    <div class="meta" id="meta">共 0 个词语</div>
+    <div class="tip" id="tip">提示：多音字取默认读音，可按需在词语中改用常见写法。</div>
+  </aside>
+
+  <main class="preview" id="preview">
+    <div id="pages"></div>
+  </main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var KEY = 'pyc_state_v1';
+  var DEF = {
+    words: '春天\n碧绿\n太阳\n老师\n白云\n大海\n树叶\n朋友',
+    type: 'py2hz',
+    rows: 8,
+    answer: false
+  };
+  var state = Object.assign({}, DEF);
+  try {
+    var saved = localStorage.getItem(KEY);
+    if (saved) state = Object.assign(state, JSON.parse(saved));
+  } catch (e) { /* 隐私模式下忽略读写异常 */ }
+
+  var MM = 96 / 25.4;             // 1mm 对应的 CSS 像素
+  var BODY_H = 261;               // 纸面内可排版高度（mm）
+  var BODY_W = 170;               // 去掉题号后的可用宽度（mm）
+
+  var elWords = document.getElementById('txtWords');
+  var elSegType = document.getElementById('segType');
+  var elSegRows = document.getElementById('segRows');
+  var chkAnswer = document.getElementById('chkAnswer');
+  var btnPrint = document.getElementById('btnPrint');
+  var btnReset = document.getElementById('btnReset');
+  var elMeta = document.getElementById('meta');
+  var elTip = document.getElementById('tip');
+  var preview = document.getElementById('preview');
+  var pagesBox = document.getElementById('pages');
+
+  var pyCache = {};
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // 取词语中每个字的带声调拼音（非汉字返回空）
+  function pinyinArray(word) {
+    if (pyCache[word]) return pyCache[word];
+    var chars = Array.from(word);
+    var arr = [];
+    try {
+      if (window.pinyinPro) {
+        arr = window.pinyinPro.pinyin(word, { type: 'array' }) || [];
+      }
+    } catch (e) { arr = []; }
+    var out = chars.map(function (ch, i) {
+      if (!/\p{Script=Han}/u.test(ch)) return '';
+      var p = arr[i];
+      return p ? String(p) : '';
+    });
+    pyCache[word] = out;
+    return out;
+  }
+
+  // 解析词语清单
+  function getWords() {
+    return (state.words || '').split(/\r?\n/)
+      .map(function (s) { return s.trim(); })
+      .filter(function (s) { return s.length > 0; })
+      .slice(0, 80);
+  }
+
+  // 田字格虚线（十字辅助线）
+  function gridLines() {
+    var st = 'stroke="#a3aeab" stroke-width="1.1" stroke-dasharray="5 4"';
+    return '<svg viewBox="0 0 100 100" preserveAspectRatio="none">' +
+      '<line x1="50" y1="0" x2="50" y2="100" ' + st + '/>' +
+      '<line x1="0" y1="50" x2="100" y2="50" ' + st + '/>' +
+      '</svg>';
+  }
+
+  // 依据最大字数与每页行数推算格宽（mm）
+  function calcCellWidth(maxChars, rows) {
+    var widthLimit = BODY_W / Math.max(1, maxChars);
+    var rowH = BODY_H / rows;
+    var byHeight;
+    if (state.type === 'py2hz') {
+      // 拼音行 + 方格 ≈ 1.34 倍格宽，另留 4mm 行间空隙
+      byHeight = (rowH - 4) / 1.34;
+    } else {
+      // 汉字 + 拼音横线 ≈ 1.22 倍格宽，另留 6mm 行间空隙
+      byHeight = (rowH - 6) / 1.22;
+    }
+    var cap = state.type === 'py2hz' ? 22 : 26;
+    return Math.max(7, Math.min(widthLimit, byHeight, cap));
+  }
+
+  // 单个题目格
+  function cellHTML(word, idx) {
+    var chars = Array.from(word);
+    var pys = pinyinArray(word);
+    var ch = chars[idx] || '';
+    if (state.type === 'py2hz') {
+      return '<div class="cell">' +
+        '<div class="py">' + esc(pys[idx] || '') + '</div>' +
+        '<div class="gf">' + gridLines() + '</div>' +
+        '</div>';
+    }
+    return '<div class="cell hz">' +
+      '<div class="ch">' + esc(ch) + '</div>' +
+      '<div class="pline"></div>' +
+      '</div>';
+  }
+
+  // 一道题（一行）
+  function rowHTML(word, no) {
+    var chars = Array.from(word);
+    return '<div class="row">' +
+      '<div class="no">' + no + '.</div>' +
+      '<div class="cells">' + chars.map(function (c, i) { return cellHTML(word, i); }).join('') + '</div>' +
+      '</div>';
+  }
+
+  // 纸面页头
+  function headHTML(title) {
+    return '<div class="head">' +
+      '<div class="h-title">' + esc(title) + '</div>' +
+      '<div class="h-meta">' +
+        '<span>姓名：______________</span>' +
+        '<span>班级：______________</span>' +
+        '<span>得分：____________</span>' +
+      '</div>' +
+      '</div>';
+  }
+
+  function paperHTML(inner, pageNo, pageTotal, cw, rowH) {
+    return '<div class="stage"><div class="paper" style="--cw:' + cw.toFixed(2) + 'mm;--rh:' + rowH.toFixed(2) + 'mm">' +
+      inner +
+      '<div class="foot">第 ' + pageNo + ' 页 / 共 ' + pageTotal + ' 页</div>' +
+      '</div></div>';
+  }
+
+  function buildPages() {
+    var words = getWords();
+    var rows = state.rows;
+    var maxChars = 1;
+    words.forEach(function (w) {
+      maxChars = Math.max(maxChars, Array.from(w).length);
+    });
+
+    var cw = calcCellWidth(maxChars, rows);
+    var rowH = BODY_H / rows;
+
+    // 题目分页
+    var quizChunks = [];
+    for (var i = 0; i < words.length; i += rows) {
+      quizChunks.push(words.slice(i, i + rows));
+    }
+    // 答案分页（两列排版，一页可放 2 倍行数）
+    var ansChunks = [];
+    if (state.answer) {
+      var perAns = rows * 2;
+      for (var j = 0; j < words.length; j += perAns) {
+        ansChunks.push(words.slice(j, j + perAns));
+      }
+    }
+
+    var total = quizChunks.length + ansChunks.length;
+    var html = '';
+    var pageNo = 0;
+
+    var title = state.type === 'py2hz' ? '看拼音写词语' : '看汉字写拼音';
+
+    quizChunks.forEach(function (chunk, ci) {
+      pageNo++;
+      var startNo = ci * rows + 1;
+      var body = chunk.map(function (w, k) { return rowHTML(w, startNo + k); }).join('');
+      html += paperHTML(headHTML(title) + '<div class="rows">' + body + '</div>', pageNo, total, cw, rowH);
+    });
+
+    ansChunks.forEach(function (chunk, ai) {
+      pageNo++;
+      var startNo = ai * rows * 2 + 1;
+      var items = chunk.map(function (w, k) {
+        var pys = pinyinArray(w).filter(function (p) { return p; }).join(' ');
+        return '<div class="ans-item">' +
+          '<span class="n">' + (startNo + k) + '.</span>' +
+          '<span class="w">' + esc(w) + '</span>' +
+          '<span class="p">' + esc(pys) + '</span>' +
+          '</div>';
+      }).join('');
+      html += paperHTML(headHTML('参考答案（' + title + '）') + '<div class="ans">' + items + '</div>', pageNo, total, cw, rowH);
+    });
+
+    return { html: html, words: words.length, pages: total };
+  }
+
+  function render() {
+    var built = buildPages();
+    pagesBox.innerHTML = built.html;
+
+    elMeta.textContent = '共 ' + built.words + ' 个词语 · ' + built.pages + ' 页（含答案页 ' +
+      (state.answer ? '，已开启' : '，未开启') + '）';
+
+    if (!built.words) {
+      elMeta.textContent = '还没有词语，请在上方输入，每行一个。';
+    }
+
+    fitScale();
+  }
+
+  // 预览等比缩放，打印时还原 1:1
+  function fitScale() {
+    var wrapW = preview.clientWidth - 12;
+    var s = Math.min(1, wrapW / (210 * MM));
+    var stages = pagesBox.querySelectorAll('.stage');
+    Array.prototype.forEach.call(stages, function (st) {
+      st.style.transform = 'scale(' + s + ')';
+      st.style.marginBottom = (297 * MM * (s - 1) + 18) + 'px';
+    });
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function bindActive(id, val) {
+    var btns = document.getElementById(id).querySelectorAll('button');
+    Array.prototype.forEach.call(btns, function (b) {
+      b.classList.toggle('on', b.dataset.v === val);
+    });
+  }
+
+  function syncUI() {
+    elWords.value = state.words;
+    chkAnswer.checked = !!state.answer;
+    bindActive('segType', state.type);
+    bindActive('segRows', String(state.rows));
+  }
+
+  function checkLib() {
+    if (window.pinyinPro) {
+      elTip.className = 'tip';
+      elTip.textContent = '提示：多音字取默认读音，可按需在词语中改用常见写法。';
+    } else {
+      elTip.className = 'tip err';
+      elTip.textContent = '拼音库加载失败（网络异常），拼音将显示为空，请刷新页面重试。';
+    }
+  }
+
+  // ===== 事件绑定 =====
+  var timer = null;
+  elWords.addEventListener('input', function () {
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      state.words = elWords.value;
+      save();
+      render();
+    }, 250);
+  });
+
+  elSegType.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.type = b.dataset.v;
+    save();
+    bindActive('segType', state.type);
+    render();
+  });
+
+  elSegRows.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.rows = Number(b.dataset.v);
+    save();
+    bindActive('segRows', String(state.rows));
+    render();
+  });
+
+  chkAnswer.addEventListener('change', function () {
+    state.answer = chkAnswer.checked;
+    save();
+    render();
+  });
+
+  btnPrint.addEventListener('click', function () { window.print(); });
+
+  btnReset.addEventListener('click', function () {
+    state = Object.assign({}, DEF);
+    save();
+    syncUI();
+    render();
+  });
+
+  window.addEventListener('resize', fitScale);
+  window.addEventListener('load', function () {
+    checkLib();
+    pyCache = {};
+    render();
+  });
+
+  syncUI();
+  checkLib();
+  render();
+})();
+</script>
+</body>
+</html>

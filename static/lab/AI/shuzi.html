@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数字描红字帖 · 0-9 田字格/四线格 A4 打印 | 当以读书通世事</title>
+<link rel="canonical" href="https://www.sakaay.com/lab/AI/shuzi.html">
+<meta name="description" content="数字描红字帖生成器：生成 0-9 阿拉伯数字描红，支持田字格与四线格、逐字重复与连续排列两种排版，可配合数量圆点做数数练习，A4 直接打印，适合低年级数学数字书写与认数训练。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#1f2d2b;--muted:#6b7a78;--line:#e2e9e7;
+  --brand:#2f7d6e;--brand-d:#276a5d;--brand-l:#e9f4f1;--bg:#f3f6f5;--card:#fff;
+}
+body{font-family:-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.app{display:flex;gap:18px;padding:18px;max-width:1360px;margin:0 auto;align-items:flex-start}
+
+/* ===== 左侧控制面板 ===== */
+.panel{width:326px;flex:0 0 326px;background:var(--card);border-radius:14px;padding:18px;box-shadow:0 4px 20px rgba(20,50,45,.07);position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto}
+.panel h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.panel .sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.65}
+.field{margin-bottom:15px}
+.field .lbl{display:block;font-size:13px;font-weight:600;color:#40514e;margin-bottom:7px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:62px;padding:8px 6px;border:1px solid var(--line);background:#fbfdfc;border-radius:9px;font-size:13px;color:#5a6b68;cursor:pointer;transition:all .18s;font-family:inherit}
+.seg button:hover{border-color:#bcd6d0}
+.seg button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.check{display:flex;align-items:center;gap:8px;font-size:13px;color:#40514e;cursor:pointer;padding:5px 0}
+.check input{width:16px;height:16px;accent-color:var(--brand);cursor:pointer}
+.check.off{color:#9aa8a5;cursor:not-allowed}
+.actions{display:flex;gap:8px;margin-top:4px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-d)}
+.btn.ghost{flex:0 0 100px;background:#eff3f2;color:#5a6b68}
+.btn.ghost:hover{background:#e5ecea}
+.panel .meta{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.7}
+.tip{margin-top:10px;font-size:12px;color:#7d6a3a;line-height:1.7;background:#fff7e6;border-radius:9px;padding:9px 11px}
+
+/* ===== 右侧预览 ===== */
+.preview{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;overflow:auto;padding-bottom:36px}
+.stage{width:210mm;height:297mm;transform-origin:top center;margin-bottom:18px}
+/* ===== A4 纸面 ===== */
+.paper{width:210mm;height:297mm;background:#fff;padding:12mm 15mm 10mm;box-shadow:0 8px 30px rgba(20,50,45,.16);border-radius:1mm;display:flex;flex-direction:column;overflow:hidden}
+.sheet-head{flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-between;height:13mm;border-bottom:.35mm solid #c9d2cf;margin-bottom:4mm;padding-bottom:2mm}
+.sheet-head .t{font-size:5mm;font-weight:700;letter-spacing:.6mm;color:#1a1a1a}
+.sheet-head .meta{font-size:3.5mm;color:#3a4744;letter-spacing:.2mm}
+.foot{flex:0 0 auto;text-align:center;font-size:3.2mm;color:#95a5a1;padding-top:2mm;border-top:.25mm solid #e3eae8}
+
+/* ===== 数字行 ===== */
+.rows{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.row{display:flex;align-items:center;height:var(--rh);flex:0 0 var(--rh)}
+.cells{display:flex;flex:0 0 auto}
+.cells.center{margin:0 auto}
+
+/* 数量圆点 */
+.dots{width:15mm;flex:0 0 15mm;display:flex;flex-wrap:wrap;gap:1.2mm;align-content:center;padding-right:2mm;box-sizing:border-box}
+.dot{width:2.2mm;height:2.2mm;border-radius:50%;background:#4a5a57;display:block}
+.dot.hollow{background:transparent;border:.25mm solid #4a5a57}
+
+/* 田字格：方格 + 十字虚线 */
+.cell{width:var(--cw);flex:0 0 var(--cw);position:relative}
+.cell.tz{height:var(--cw);border-top:.25mm solid #4a5a57;border-bottom:.25mm solid #4a5a57;border-right:.25mm solid #4a5a57}
+.cells.tz{border-left:.25mm solid #4a5a57}
+.cell.tz::before,.cell.tz::after{content:'';position:absolute;height:0;border-top:.22mm dashed #b9c2c7}
+.cell.tz::before{left:0;right:0;top:50%}
+.cell.tz::after{top:0;bottom:0;left:50%;width:0;height:auto;border-top:none;border-left:.22mm dashed #b9c2c7}
+
+/* 四线格：只有四条横线，无竖线 */
+.cell.fl{height:calc(var(--cw) * 1.35);border-top:.3mm solid #96a3b5;border-bottom:.3mm solid #96a3b5}
+.cell.fl::before,.cell.fl::after{content:'';position:absolute;left:0;right:0;height:0;border-top:.25mm dashed #c2cbd9}
+.cell.fl::before{top:33.333%}
+.cell.fl::after{top:66.666%}
+
+/* 数字 */
+.dg{position:absolute;left:0;width:100%;text-align:center;line-height:1;font-family:"Times New Roman",Arial,Helvetica,serif;color:#1f2a28}
+.cell.tz .dg{font-size:calc(var(--cw) * .95);top:calc(var(--cw) * .04)}
+.cell.fl .dg{font-size:calc(var(--cw) * 1.26);top:calc(var(--cw) * -.16)}
+.dg.trace{color:#bcc5d2}
+
+/* ===== 打印 ===== */
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .panel{display:none !important}
+  .app{display:block;padding:0;margin:0;max-width:none}
+  .preview{display:block;padding:0;overflow:visible}
+  .stage{width:auto;height:auto;transform:none !important;margin:0 !important}
+  .paper{box-shadow:none;border-radius:0;margin:0;height:296mm;page-break-after:always;break-after:page}
+  .stage:last-child .paper{page-break-after:auto;break-after:auto}
+}
+@media (max-width:900px){
+  .app{flex-direction:column;padding:12px}
+  .panel{width:100%;flex:none;position:static;max-height:none}
+  .preview{width:100%}
+}
+</style>
+</head>
+<body>
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">数字描红字帖生成器</h1>
+
+<div class="app">
+  <aside class="panel">
+    <h2>数字描红字帖</h2>
+    <p class="sub">0-9 阿拉伯数字描红，田字格或四线格可选，还能配上数量圆点做认数练习。</p>
+
+    <div class="field">
+      <label class="lbl">格子样式</label>
+      <div class="seg" id="segGrid">
+        <button data-v="tianzi" type="button">田字格</button>
+        <button data-v="fourline" type="button">四线格</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">排版方式</label>
+      <div class="seg" id="segLayout">
+        <button data-v="repeat" type="button">逐字重复</button>
+        <button data-v="seq" type="button">连续排列</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">描红模式</label>
+      <div class="seg" id="segMode">
+        <button data-v="sample" type="button">首字示范</button>
+        <button data-v="trace" type="button">全部描红</button>
+        <button data-v="blank" type="button">空白练习</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="check" id="dotsLabel"><input type="checkbox" id="chkDots"> 每行开头显示数量圆点（数数用）</label>
+      <div class="tip" id="dotsTip" style="display:none">连续排列时每行包含多个数字，圆点无法一一对应，已自动隐藏。</div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">格子大小</label>
+      <div class="seg" id="segSize">
+        <button data-v="12" type="button">小 12mm</button>
+        <button data-v="15" type="button">中 15mm</button>
+        <button data-v="18" type="button">大 18mm</button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btnPrint" type="button">打印字帖</button>
+      <button class="btn ghost" id="btnReset" type="button">恢复默认</button>
+    </div>
+
+    <div class="meta" id="meta">正在生成…</div>
+    <div class="tip" id="tip">田字格适合数字结构练习；四线格中数字占上两格，与英文字母大写占格一致。</div>
+  </aside>
+
+  <main class="preview" id="preview">
+    <div id="pages"></div>
+  </main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var KEY = 'shuzi_state_v1';
+  var DEF = { grid: 'tianzi', layout: 'repeat', mode: 'sample', dots: true, size: 15 };
+  var state = Object.assign({}, DEF);
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) state = Object.assign(state, JSON.parse(raw));
+  } catch (e) { /* 隐私模式下忽略读写异常 */ }
+
+  var MM = 96 / 25.4;
+  var BODY_W = 180;      // 纸面可用宽度（mm）
+  var BODY_H = 252;      // 去掉页头页脚后的可用高度（mm）
+  var DOTS_W = 15;       // 圆点栏宽度（mm）
+
+  var pagesBox = document.getElementById('pages');
+  var preview = document.getElementById('preview');
+  var elMeta = document.getElementById('meta');
+  var chkDots = document.getElementById('chkDots');
+  var dotsLabel = document.getElementById('dotsLabel');
+  var dotsTip = document.getElementById('dotsTip');
+  var btnPrint = document.getElementById('btnPrint');
+  var btnReset = document.getElementById('btnReset');
+
+  // 当前格子样式的 class
+  function gridCls() {
+    return state.grid === 'fourline' ? 'fl' : 'tz';
+  }
+
+  // 行高（含行间留白）
+  function rowHeight() {
+    return state.grid === 'fourline' ? state.size * 1.35 + 3.2 : state.size + 3.2;
+  }
+
+  function rowsPerPage() {
+    return Math.max(3, Math.floor(BODY_H / rowHeight()));
+  }
+
+  // 每行格子数
+  function cellsPerRow() {
+    var dotsOn = state.dots && state.layout === 'repeat';
+    var avail = BODY_W - (dotsOn ? DOTS_W : 0);
+    var n = Math.max(3, Math.floor(avail / state.size));
+    // 连续排列按整组 0-9 取整，保证每行都以 9 收尾，顺序不断裂
+    if (state.layout === 'seq') n = Math.max(10, Math.floor(n / 10) * 10);
+    return n;
+  }
+
+  // 单个数字格
+  function cellHTML(digit, dark) {
+    var cls = 'cell ' + gridCls();
+    if (state.mode === 'blank') return '<div class="' + cls + '"></div>';
+    return '<div class="' + cls + '">' +
+      '<span class="dg' + (dark ? '' : ' trace') + '">' + digit + '</span>' +
+      '</div>';
+  }
+
+  // 数量圆点：0 显示空心圆
+  function dotsHTML(digit) {
+    var html = '';
+    if (digit === 0) {
+      html = '<span class="dot hollow"></span>';
+    } else {
+      for (var i = 0; i < digit; i++) html += '<span class="dot"></span>';
+    }
+    return '<div class="dots">' + html + '</div>';
+  }
+
+  function rowHTML(row) {
+    var cells = '';
+    for (var i = 0; i < row.cells.length; i++) {
+      cells += cellHTML(row.cells[i], state.mode === 'sample' && i === 0);
+    }
+    var centerCls = state.layout === 'seq' ? ' center' : '';
+    return '<div class="row">' +
+      (row.showDots ? dotsHTML(row.digit) : '') +
+      '<div class="cells ' + gridCls() + centerCls + '">' + cells + '</div>' +
+      '</div>';
+  }
+
+  // 组织练习行数据
+  function buildRows() {
+    var per = rowsPerPage();
+    var count = cellsPerRow();
+    var rows = [];
+    var i, r, arr;
+    if (state.layout === 'seq') {
+      // 连续排列：每行从 0 开始按 0-9 顺序循环排满
+      for (r = 0; r < per; r++) {
+        arr = [];
+        for (i = 0; i < count; i++) arr.push(i % 10);
+        rows.push({ showDots: false, digit: 0, cells: arr });
+      }
+    } else {
+      // 逐字重复：0-9 每个数字一行，行内重复
+      for (var d = 0; d < 10; d++) {
+        arr = [];
+        for (i = 0; i < count; i++) arr.push(d);
+        rows.push({ showDots: state.dots, digit: d, cells: arr });
+      }
+    }
+    return rows;
+  }
+
+  function paperHTML(body, pageNo, total) {
+    return '<div class="stage"><div class="paper" style="--cw:' + state.size + 'mm;--rh:' + rowHeight().toFixed(2) + 'mm">' +
+      '<div class="sheet-head">' +
+        '<span class="t">数字描红</span>' +
+        '<span class="meta">姓名：____________　　日期：____________</span>' +
+      '</div>' +
+      '<div class="rows">' + body + '</div>' +
+      '<div class="foot">第 ' + pageNo + ' 页 / 共 ' + total + ' 页</div>' +
+      '</div></div>';
+  }
+
+  // 分页：行数尽量平均，避免最后一页只剩一两行
+  function paginate(items, per) {
+    var pages = Math.ceil(items.length / per) || 1;
+    var size = Math.ceil(items.length / pages) || 1;
+    var out = [];
+    for (var i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+    return out.length ? out : [[]];
+  }
+
+  function build() {
+    var rows = buildRows();
+    var chunks = paginate(rows, rowsPerPage());
+    var html = '';
+    chunks.forEach(function (chunk, i) {
+      html += paperHTML(chunk.map(rowHTML).join(''), i + 1, chunks.length);
+    });
+    return {
+      html: html,
+      pages: chunks.length,
+      rows: rows.length,
+      cells: cellsPerRow()
+    };
+  }
+
+  function render() {
+    var built = build();
+    pagesBox.innerHTML = built.html;
+    elMeta.textContent = (state.layout === 'seq' ? '连续排列 · ' : '逐字重复 · ') +
+      '共 ' + built.rows + ' 行 · 每行 ' + built.cells + ' 格 · ' +
+      (state.grid === 'fourline' ? '四线格' : '田字格') + ' ' + state.size + 'mm · 共 ' + built.pages + ' 页';
+    fitScale();
+  }
+
+  // 连续排列时不显示圆点
+  function syncDots() {
+    var disabled = state.layout === 'seq';
+    chkDots.checked = disabled ? false : !!state.dots;
+    chkDots.disabled = disabled;
+    dotsLabel.classList.toggle('off', disabled);
+    dotsTip.style.display = disabled ? 'block' : 'none';
+  }
+
+  function fitScale() {
+    var wrapW = preview.clientWidth - 12;
+    var s = Math.min(1, wrapW / (210 * MM));
+    Array.prototype.forEach.call(pagesBox.querySelectorAll('.stage'), function (st) {
+      st.style.transform = 'scale(' + s + ')';
+      st.style.marginBottom = (297 * MM * (s - 1) + 18) + 'px';
+    });
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function bindActive(id, val) {
+    Array.prototype.forEach.call(document.getElementById(id).querySelectorAll('button'), function (b) {
+      b.classList.toggle('on', b.dataset.v === String(val));
+    });
+  }
+
+  function syncUI() {
+    bindActive('segGrid', state.grid);
+    bindActive('segLayout', state.layout);
+    bindActive('segMode', state.mode);
+    bindActive('segSize', state.size);
+    syncDots();
+  }
+
+  // ===== 事件绑定 =====
+  document.getElementById('segGrid').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.grid = b.dataset.v;
+    save();
+    syncUI();
+    render();
+  });
+
+  document.getElementById('segLayout').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.layout = b.dataset.v;
+    save();
+    syncUI();
+    render();
+  });
+
+  document.getElementById('segMode').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.mode = b.dataset.v;
+    save();
+    syncUI();
+    render();
+  });
+
+  document.getElementById('segSize').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.size = Number(b.dataset.v);
+    save();
+    syncUI();
+    render();
+  });
+
+  chkDots.addEventListener('change', function () {
+    state.dots = chkDots.checked;
+    save();
+    render();
+  });
+
+  btnPrint.addEventListener('click', function () { window.print(); });
+
+  btnReset.addEventListener('click', function () {
+    state = Object.assign({}, DEF);
+    save();
+    syncUI();
+    render();
+  });
+
+  window.addEventListener('resize', fitScale);
+
+  syncUI();
+  render();
+})();
+</script>
+</body>
+</html>
