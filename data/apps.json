@@ -5,7 +5,7 @@
       {
         "name": "主站",
         "desc": "主站",
-        "icon": "🌐",
+        "icon": "/assets/icon/sakaay-com.ico",
         "url": "https://www.sakaay.com"
       },
       {
@@ -23,38 +23,38 @@
       {
         "name": "AI生图",
         "desc": "基于千问IMAGE模型的AI生图和图像编辑应用",
-        "icon": "🎨",
+        "icon": "/assets/icon/aitu-sakaay-com.svg",
         "url": "https://aitu.sakaay.com"
       },
       {
         "name": "AI编程",
         "desc": "基于阿里云千问大模型的AI辅助青少年编程的工具",
-        "icon": "💻",
+        "icon": "/assets/icon/e-sakaay-com.ico",
         "url": "https://e.sakaay.com"
       },
       {
         "name": "AI知识库",
         "desc": "基于千问大模型的个人 AI 知识库",
-        "icon": "📚",
+        "icon": "/assets/icon/xa-sakaay-com.svg",
         "url": "https://xa.sakaay.com/welcome"
       },
       {
         "name": "Zfile网盘",
         "desc": "在线文件管理与分享",
-        "icon": "☁️",
+        "icon": "/assets/icon/zf-sakaay-com.svg",
         "url": "https://zf.sakaay.com"
       },
       {
         "name": "考试时钟",
         "desc": "考试倒计时大屏 · 考务数据",
-        "icon": "⏰",
+        "icon": "/assets/icon/time-sakaay-com.ico",
         "url": "https://time.sakaay.com/",
         "flip": true
       },
       {
         "name": "itab",
         "desc": "自定义新标签页",
-        "icon": "☁️",
+        "icon": "/assets/icon/go-itab-link.png",
         "url": "https://go.itab.link"
       },
       {
@@ -66,7 +66,7 @@
       {
         "name": "千问",
         "desc": "千问",
-        "icon": "❓",
+        "icon": "/assets/icon/qianwen-com.png",
         "url": "https://www.qianwen.com/"
       },
       {
@@ -95,19 +95,19 @@
       {
         "name": "ChatGPT",
         "desc": "OpenAI 对话",
-        "icon": "🤖",
+        "icon": "/assets/icon/chatgpt-com.png",
         "url": "https://chatgpt.com/"
       },
       {
         "name": "OpenAI",
         "desc": "OpenAI",
-        "icon": "🚀",
+        "icon": "/assets/icon/openai-com.png",
         "url": "https://openai.com/"
       },
       {
         "name": "从文本到ppt",
         "desc": "www.chatba.com",
-        "icon": "chatba",
+        "icon": "/assets/icon/chatba-com.png",
         "iconType": "text",
         "url": "https://www.chatba.com/"
       },
@@ -125,33 +125,33 @@
       {
         "name": "阿里云盘",
         "desc": "阿里云网盘",
-        "icon": "📦",
+        "icon": "/assets/icon/alipan-com.png",
         "url": "https://www.alipan.com/"
       },
       {
         "name": "谷歌云",
         "desc": "谷歌云",
-        "icon": "☁️",
+        "icon": "/assets/icon/cloud-google-com.png",
         "url": "https://cloud.google.com/"
       },
       {
         "name": "AirCode - Build inte",
         "desc": "aircode.io",
-        "icon": "Air",
+        "icon": "/assets/icon/aircode-io.png",
         "iconType": "text",
         "url": "https://aircode.io/"
       },
       {
         "name": "函数计算",
         "desc": "fcnext.console.aliyun.com/overview",
-        "icon": "阿里云",
+        "icon": "/assets/icon/fcnext-console-aliyun-com.svg",
         "iconType": "text",
         "url": "https://fcnext.console.aliyun.com/overview"
       },
       {
         "name": "阿里云网站运维检测平台",
         "desc": "boce.aliyun.com",
-        "icon": "拨测工具",
+        "icon": "/assets/icon/boce-aliyun-com.png",
         "iconType": "text",
         "url": "https://boce.aliyun.com"
       },
@@ -164,7 +164,7 @@
       {
         "name": "查看分享 - 锐捷云盘",
         "desc": "pan.ruijie.com.cn/share/0f46a897cbc29048943f6107e6",
-        "icon": "锐捷网盘",
+        "icon": "/assets/icon/pan-ruijie-com-cn.ico",
         "iconType": "text",
         "url": "https://pan.ruijie.com.cn/share/0f46a897cbc29048943f6107e6?folder_id=275004077007"
       },
@@ -320,13 +320,13 @@
       {
         "name": "腾讯文档",
         "desc": "腾讯文档",
-        "icon": "📄",
+        "icon": "/assets/icon/docs-qq-com.png",
         "url": "https://docs.qq.com/"
       },
       {
         "name": "金山文档",
         "desc": "www.kdocs.cn/latest",
-        "icon": "金山文档",
+        "icon": "/assets/icon/kdocs-cn.png",
         "iconType": "text",
         "url": "https://www.kdocs.cn/latest"
       },
@@ -339,7 +339,7 @@
       {
         "name": "语雀",
         "desc": "www.yuque.com/zhangzhen-jkkhi/kmytgu/nshwp6",
-        "icon": "语雀",
+        "icon": "/assets/icon/yuque-com.png",
         "iconType": "text",
         "url": "https://www.yuque.com/zhangzhen-jkkhi/kmytgu/nshwp6"
       },
@@ -352,7 +352,7 @@
       {
         "name": "BookStack",
         "desc": "书架",
-        "icon": "🔧",
+        "icon": "/assets/icon/bookstack-cn.png",
         "url": "https://bookstack.cn"
       }
     ]
@@ -363,7 +363,7 @@
       {
         "name": "谷歌翻译",
         "desc": "谷歌翻译",
-        "icon": "🌐",
+        "icon": "/assets/icon/translate-google-com.png",
         "url": "https://translate.google.com/"
       },
       {
@@ -381,25 +381,25 @@
       {
         "name": "百度",
         "desc": "百度",
-        "icon": "🔍",
+        "icon": "/assets/icon/baidu-com.png",
         "url": "https://www.baidu.com/"
       },
       {
         "name": "百度翻译",
         "desc": "百度翻译",
-        "icon": "🌐",
+        "icon": "/assets/icon/fanyi-baidu-com.png",
         "url": "https://fanyi.baidu.com"
       },
       {
         "name": "Gmail",
         "desc": "Gmail",
-        "icon": "📧",
+        "icon": "/assets/icon/mail-google-com.png",
         "url": "https://mail.google.com/mail/u/0/#inbox"
       },
       {
         "name": "海鸥",
         "desc": "haioujiasu.cc",
-        "icon": "海鸥",
+        "icon": "/assets/icon/haioujiasu-cc.svg",
         "iconType": "text",
         "url": "https://haioujiasu.cc/#/dashboard"
       },
@@ -418,7 +418,7 @@
       {
         "name": "xfltd",
         "desc": "xfltd.cc",
-        "icon": "xfltd",
+        "icon": "/assets/icon/xfltd-cc.png",
         "iconType": "text",
         "url": "https://xfltd.cc/#/dashboard"
       },
@@ -443,7 +443,7 @@
       {
         "name": "IP批量查询 - 站长工具",
         "desc": "ip.tool.chinaz.com/ipbatch",
-        "icon": "IP批",
+        "icon": "/assets/icon/ip-tool-chinaz-com.png",
         "iconType": "text",
         "url": "https://ip.tool.chinaz.com/ipbatch"
       },
@@ -462,7 +462,7 @@
       {
         "name": "365编辑器",
         "desc": "www.365editor.com/toolsplatform",
-        "icon": "365",
+        "icon": "/assets/icon/365editor-com.png",
         "iconType": "text",
         "url": "https://www.365editor.com/toolsplatform/?f=b&k=weixinshipintiqujihua=pc&bd_vid=10457010710042997831"
       },
@@ -480,91 +480,91 @@
       {
         "name": "郑州教育信息",
         "desc": "郑州教育信息",
-        "icon": "🏫",
+        "icon": "/assets/icon/zzedu-net-cn.ico",
         "url": "https://www.zzedu.net.cn/"
       },
       {
         "name": "河南专技在线",
         "desc": "河南专技在线",
-        "icon": "📖",
+        "icon": "/assets/icon/hnzj-ghlearning-com.png",
         "url": "https://hnzj.ghlearning.com/"
       },
       {
         "name": "豫教通",
         "desc": "豫教通",
-        "icon": "📘",
+        "icon": "/assets/icon/basic-henan-smartedu-cn.ico",
         "url": "https://basic.henan.smartedu.cn/"
       },
       {
         "name": "智慧中小学",
         "desc": "智慧中小学",
-        "icon": "🌐",
+        "icon": "/assets/icon/smartedu-cn.png",
         "url": "https://www.smartedu.cn/"
       },
       {
         "name": "继续教育",
         "desc": "继续教育",
-        "icon": "🎓",
+        "icon": "/assets/icon/hnzjgl-gov-cn.png",
         "url": "https://www.hnzjgl.gov.cn/"
       },
       {
         "name": "河南教师教育",
         "desc": "河南教师教育",
-        "icon": "👩‍🏫",
+        "icon": "/assets/icon/hateacher-cn.png",
         "url": "https://www.hateacher.cn/"
       },
       {
         "name": "学科网",
         "desc": "学科网",
-        "icon": "📑",
+        "icon": "/assets/icon/zxxk-com.png",
         "url": "https://www.zxxk.com/"
       },
       {
         "name": "智学网",
         "desc": "智学网",
-        "icon": "📊",
+        "icon": "/assets/icon/zhixue-com.ico",
         "url": "https://www.zhixue.com/login.html"
       },
       {
         "name": "正确云",
         "desc": "正确教育资源平台",
-        "icon": "✅",
+        "icon": "/assets/icon/zqy-com.ico",
         "url": "https://www.zqy.com/"
       },
       {
         "name": "全国教师管理系统",
         "desc": "教师信息维护与职称评审（河南入口）",
-        "icon": "👨‍💼",
+        "icon": "/assets/icon/jiaoshi-jyt-henan-gov-cn.svg",
         "url": "http://jiaoshi.jyt.henan.gov.cn/"
       },
       {
         "name": "郑州教科研",
         "desc": "郑州教科研",
-        "icon": "🔬",
+        "icon": "/assets/icon/zzedu-net-cn.ico",
         "url": "https://www.zzedu.net.cn/zzjyky/"
       },
       {
         "name": "百度文库",
         "desc": "百度文库",
-        "icon": "📄",
+        "icon": "/assets/icon/wenku-baidu-com.png",
         "url": "https://wenku.baidu.com/"
       },
       {
         "name": "知网",
         "desc": "知网",
-        "icon": "📰",
+        "icon": "/assets/icon/cfed-cnki-net.ico",
         "url": "https://cfed.cnki.net/"
       },
       {
         "name": "u空间",
         "desc": "u空间",
-        "icon": "🏠",
+        "icon": "/assets/icon/uws-ruijie-com-cn.ico",
         "url": "https://uws.ruijie.com.cn/#/Download"
       },
       {
         "name": "郑州航天",
         "desc": "syjy.zzedu.net.cn/htcxds/index.action",
-        "icon": "郑州航天",
+        "icon": "/assets/icon/syjy-zzedu-net-cn.svg",
         "iconType": "text",
         "url": "http://syjy.zzedu.net.cn/"
       },
@@ -589,126 +589,126 @@
       {
         "name": "劳技智能设计",
         "desc": "劳技智能设计",
-        "icon": "🔧",
+        "icon": "/assets/icon/aild-org-cn.png",
         "url": "http://aild.org.cn/"
       },
       {
         "name": "3D One",
         "desc": "3D One",
-        "icon": "🎨",
+        "icon": "/assets/icon/i3done-com.ico",
         "url": "https://www.i3done.com/"
       },
       {
         "name": "世界机器人",
         "desc": "世界机器人大会",
-        "icon": "🤖",
+        "icon": "/assets/icon/worldrobotconference-com.png",
         "url": "https://www.worldrobotconference.com/"
       },
       {
         "name": "航天创新",
         "desc": "全国青少年航天创新大赛",
-        "icon": "🚀",
+        "icon": "/assets/icon/nysic-declare-htgjjl-com.png",
         "url": "https://nysic.declare.htgjjl.com/"
       },
       {
         "name": "通信科技创新",
         "desc": "通信科技创新",
-        "icon": "📡",
+        "icon": "/assets/icon/ict-edu-org-cn.svg",
         "url": "https://www.ict-edu.org.cn/"
       },
       {
         "name": "信技创新",
         "desc": "信技创新",
-        "icon": "💡",
+        "icon": "/assets/icon/s-noc-net-cn.png",
         "url": "http://s.noc.net.cn/"
       },
       {
         "name": "信息素养",
         "desc": "全国青少年信息素养大赛",
-        "icon": "🤖",
+        "icon": "/assets/icon/ceic-kpcb-org-cn.png",
         "url": "https://ceic.kpcb.org.cn/"
       },
       {
         "name": "青科赛",
         "desc": "青科赛",
-        "icon": "🔬",
+        "icon": "/assets/icon/qgqks-cngef-org-cn.png",
         "url": "https://qgqks.cngef.org.cn/"
       },
       {
         "name": "NOI",
         "desc": "NOI 全国青少年信息学奥林匹克竞赛",
-        "icon": "💻",
+        "icon": "/assets/icon/noi-cn.svg",
         "url": "https://www.noi.cn/"
       },
       {
         "name": "蓝桥杯",
         "desc": "蓝桥杯",
-        "icon": "🏆",
+        "icon": "/assets/icon/dasai-lanqiao-cn.png",
         "url": "https://dasai.lanqiao.cn/"
       },
       {
         "name": "青科创赛",
         "desc": "青科创赛",
-        "icon": "🌟",
+        "icon": "/assets/icon/cyscc-org.png",
         "url": "https://cyscc.org/castic/#/home"
       },
       {
         "name": "省机器人",
         "desc": "省机器人",
-        "icon": "🤖",
+        "icon": "/assets/icon/harc-cc.svg",
         "url": "https://www.harc.cc/"
       },
       {
         "name": "洛谷",
         "desc": "洛谷",
-        "icon": "📊",
+        "icon": "/assets/icon/luogu-com-cn.png",
         "url": "https://www.luogu.com.cn/problem/list?keyword=noi%20online"
       },
       {
         "name": "LeetCode",
         "desc": "LeetCode",
-        "icon": "💻",
+        "icon": "/assets/icon/leetcode-com.ico",
         "url": "https://leetcode.com/"
       },
       {
         "name": "全国青少年航天创新大赛",
         "desc": "nysic.declare.htgjjl.com/index.aspx",
-        "icon": "全国青少年航",
+        "icon": "/assets/icon/nysic-declare-htgjjl-com.png",
         "iconType": "text",
         "url": "http://nysic.declare.htgjjl.com/index.aspx?"
       },
       {
         "name": "激光建模软件",
         "desc": "www.lasermaker.com.cn",
-        "icon": "激光建模软件",
+        "icon": "/assets/icon/lasermaker-com-cn.png",
         "iconType": "text",
         "url": "https://www.lasermaker.com.cn/"
       },
       {
         "name": "VEX报名",
         "desc": "www.robotevents.com",
-        "icon": "VEX报名",
+        "icon": "/assets/icon/robotevents-com.png",
         "iconType": "text",
         "url": "https://www.robotevents.com/"
       },
       {
         "name": "VEX 论坛",
         "desc": "www.vexforum.cn",
-        "icon": "VEX",
+        "icon": "/assets/icon/vexforum-cn.png",
         "iconType": "text",
         "url": "https://www.vexforum.cn/"
       },
       {
         "name": "发明大会",
         "desc": "www.inventionconvention.cn",
-        "icon": "发明大会",
+        "icon": "/assets/icon/inventionconvention-cn.svg",
         "iconType": "text",
         "url": "http://www.inventionconvention.cn/"
       },
       {
         "name": "创想3D",
         "desc": "www.crealitycloud.cn",
-        "icon": "创想3D",
+        "icon": "/assets/icon/crealitycloud-cn.png",
         "iconType": "text",
         "url": "https://www.crealitycloud.cn/"
       },
@@ -721,7 +721,7 @@
       {
         "name": "VEX销售",
         "desc": "www.vexstore.cn",
-        "icon": "VEX",
+        "icon": "/assets/icon/vexstore-cn.png",
         "iconType": "text",
         "url": "https://www.vexstore.cn/"
       },
@@ -734,26 +734,26 @@
       {
         "name": "Purdu",
         "desc": "wiki.purduesigbots.com",
-        "icon": "Wel",
+        "icon": "/assets/icon/wiki-purduesigbots-com.png",
         "iconType": "text",
         "url": "https://wiki.purduesigbots.com/"
       },
       {
         "name": "DFROBOT",
         "desc": "DFROBOT 创客社区",
-        "icon": "🔧",
+        "icon": "/assets/icon/mc-dfrobot-com-cn.png",
         "url": "https://mc.dfrobot.com.cn/"
       },
       {
         "name": "PROS",
         "desc": "普渡大学机器人操作系统",
-        "icon": "📚",
+        "icon": "/assets/icon/pros-cs-purdue-edu.png",
         "url": "https://pros.cs.purdue.edu/"
       },
       {
         "name": "makerworld",
         "desc": "makerworld.com.cn/zh/3d-models",
-        "icon": "makerw",
+        "icon": "/assets/icon/makerworld-com-cn.ico",
         "iconType": "text",
         "url": "https://makerworld.com.cn/zh/3d-models"
       }
@@ -765,13 +765,13 @@
       {
         "name": "知乎",
         "desc": "知乎",
-        "icon": "💭",
+        "icon": "/assets/icon/zhihu-com.png",
         "url": "https://www.zhihu.com/"
       },
       {
         "name": "36氪",
         "desc": "36氪",
-        "icon": "💡",
+        "icon": "/assets/icon/36kr-com.png",
         "url": "https://36kr.com/"
       },
       {
@@ -813,7 +813,7 @@
       {
         "name": "吾爱破解",
         "desc": "吾爱破解",
-        "icon": "🔓",
+        "icon": "/assets/icon/52pojie-cn.png",
         "url": "https://www.52pojie.cn/"
       },
       {
@@ -836,7 +836,7 @@
       {
         "name": "高德地图",
         "desc": "高德地图",
-        "icon": "🗺️",
+        "icon": "/assets/icon/ditu-amap-com.png",
         "url": "https://ditu.amap.com/"
       },
       {
@@ -854,14 +854,14 @@
       {
         "name": "Arkham | Deanony",
         "desc": "www.arkhamintelligence.com",
-        "icon": "Ark",
+        "icon": "/assets/icon/arkhamintelligence-com.png",
         "iconType": "text",
         "url": "https://www.arkhamintelligence.com/"
       },
       {
         "name": "基金交易登录 _ 天天基金网",
         "desc": "login.1234567.com.cn",
-        "icon": "基金交",
+        "icon": "/assets/icon/login-1234567-com-cn.png",
         "iconType": "text",
         "url": "https://login.1234567.com.cn/?direct_url=https%3a%2f%2ftrade.1234567.com.cn%2fMyAssets%2fDefault"
       }
