@@ -24,3 +24,6 @@ Thumbs.db
 # Python 缓存
 __pycache__/
 *.pyc
+/公众号推文/
+.screenshots/
+.github/
