@@ -2,6 +2,7 @@
  * IndexNow 提交（Bing / Yandex / Seznam 共用协议，提交一次即可）
  *
  *   node scripts/indexnow.mjs                 # 提交 sitemap 里的全部 URL
+ *   node scripts/indexnow.mjs --batch 50      # 全量分批提交（推荐，一次几百条会 403）
  *   node scripts/indexnow.mjs --limit 20      # 只提交前 20 条（日常更新用）
  *   node scripts/indexnow.mjs --dry           # 只打印，不发请求
  *   node scripts/indexnow.mjs --url https://www.sakaay.com/xxx/   # 提交单条
@@ -48,25 +49,46 @@ const body = {
   urlList: urls,
 };
 
-console.log(`准备提交 ${urls.length} 条 URL 到 IndexNow（${host}）`);
+// 一次提交几百条会出现 SiteVerificationNotCompleted（403），按 --batch 分批即可。
+//   node scripts/indexnow.mjs --batch 50     # 全量 sitemap，每批 50 条
+const batchSize = Number(getVal('--batch') || 0);
+console.log(`准备提交 ${urls.length} 条 URL 到 IndexNow（${host}）${batchSize ? `，每批 ${batchSize} 条` : ''}`);
 if (has('--dry')) {
   console.log(JSON.stringify(body, null, 2));
   process.exit(0);
 }
 
-const res = await fetch('https://api.indexnow.org/indexnow', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json; charset=utf-8' },
-  body: JSON.stringify(body),
-});
-
-// 预期：200 提交成功；202 已接收待处理；400 格式错误；403 key 校验失败；422 URL 与 host 不匹配；429 请求过多
-console.log('HTTP', res.status, res.statusText);
-const text = await res.text();
-if (text) console.log(text.slice(0, 300));
-if (res.status >= 200 && res.status < 300) {
-  console.log('✅ 已提交。Bing 通常几分钟到几小时内开始抓取；可在必应站长工具「索引」页查看进度。');
+const chunks = [];
+if (batchSize > 0) {
+  for (let i = 0; i < urls.length; i += batchSize) chunks.push(urls.slice(i, i + batchSize));
 } else {
-  console.log('❌ 提交失败，请对照上面的状态码排查（403 多为 key 文件无法访问，422 多为域名不匹配）。');
-  process.exitCode = 1;
+  chunks.push(urls);
 }
+
+let done = 0;
+let failed = 0;
+for (let i = 0; i < chunks.length; i++) {
+  const res = await fetch('https://api.indexnow.org/indexnow', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    body: JSON.stringify({ ...body, urlList: chunks[i] }),
+  });
+  const text = await res.text();
+  // 预期：200 提交成功；202 已接收待处理；400 格式错误；403 站点验证未完成；422 域名不匹配；429 请求过多
+  if (res.status >= 200 && res.status < 300) {
+    done += chunks[i].length;
+    if (chunks.length > 1) console.log(`  批次 ${i + 1}/${chunks.length}：HTTP ${res.status}，${chunks[i].length} 条`);
+  } else {
+    failed += chunks[i].length;
+    console.log(`  批次 ${i + 1}/${chunks.length} 失败：HTTP ${res.status} ${text.slice(0, 160)}`);
+  }
+  if (i < chunks.length - 1) await new Promise((r) => setTimeout(r, 1500));
+}
+
+if (chunks.length === 1) {
+  console.log(done ? '✅ 已提交。' : '❌ 提交失败。');
+  console.log('Bing 通常几分钟到几小时内开始抓取；可在必应站长工具「索引」页查看进度。');
+} else {
+  console.log(`✅ 完成：成功 ${done} 条${failed ? `，失败 ${failed} 条` : ''}`);
+}
+if (failed) process.exitCode = 1;

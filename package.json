@@ -14,7 +14,7 @@
     "seo:static": "node scripts/seo-static.mjs",
     "seo:gate": "node scripts/seo-gate.mjs",
     "seo:check": "node scripts/site-check.mjs public",
-    "seo:indexnow": "node scripts/indexnow.mjs",
+    "seo:indexnow": "node scripts/indexnow.mjs --batch 50",
     "preview": "hugo server --port 1313 --disableFastRender --renderToDisk --cleanDestinationDir",
     "new": "hugo new content"
   },
