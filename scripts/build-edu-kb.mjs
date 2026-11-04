@@ -35,22 +35,29 @@ const md = [
   '',
   '1. 把 `edu-resources.md` 加入 WorkBuddy 的「资料库」（或腾讯网盘资料库 / ima 知识库），作为长期备课上下文；',
   '2. 需要更新资源时，改 `data/edu_resources.json` 后跑 `pnpm edu:kb`，再把新文件同步进资料库；',
-  '3. 推荐提示词（可直接复制）：',
-  '   - 「基于资源库，为高一《数据与计算》第 4 章『走进智能时代』设计 2 课时教案，列出用到的资源链接与具体用途。」',
-  '   - 「给零基础学生排一条 6 周的 Python + micro:bit 学习路径，只用库内免费资源，写清每周目标与对应链接。」',
-  '   - 「筛出适合高中、教师备课、官方免费的资源，输出成表格（名称 / 链接 / 用途）。」',
-  '   - 「对照 2025—2028 竞赛白名单，找出信息技术相关且面向普通高中的赛事，并说明备赛资源从哪找。」',
-  '   - 「把资源库里 AI 通识类的内容整理成一份家长能读懂的推文大纲，标注每个结论的出处链接。」',
+  '3. 推荐提示词（可直接复制，网页版也有一键复制按钮）：',
+  ...data.prompts.map((p) => `   - **${p.title}（${p.scene}）**：${p.text}`),
   '',
   `## 筛选口径`,
   '',
   data.note,
   '',
-  `共 ${data.groups.length} 组 / ${data.groups.reduce((n, g) => n + g.items.length, 0)} 条资源。`,
+  `共 ${data.groups.length} 组 / ${data.groups.reduce((n, g) => n + g.items.length, 0)} 条资源；${data.paths.length} 条学习路径、${data.prompts.length} 张提示词卡片。`,
   '',
   '---',
   '',
+  '## 学习路径（把资源串成能照着走的课）',
+  '',
 ];
+
+for (const p of data.paths) {
+  md.push(`### ${p.icon} ${p.title}`, '');
+  md.push(`- 目标：${p.goal}`);
+  md.push(`- 适用：${p.audience}`);
+  p.steps.forEach((s, i) => md.push(`${i + 1}. **${s.label}** → 用「${s.resource}」：${s.note}`));
+  md.push('');
+}
+md.push('---', '');
 
 for (const [gi, g] of data.groups.entries()) {
   md.push(`## ${gi + 1}. ${g.icon} ${g.title}`, '');
@@ -89,7 +96,7 @@ const llms = [
   '## 主要内容',
   '',
   `- [首页](${SITE}/): 最新文章、分区入口`,
-  `- [教育教学资源库](${SITE}/teach/resources/): 按学段与课堂用途整理的免费资源清单（${data.groups.length} 组 / ${data.groups.reduce((n, g) => n + g.items.length, 0)} 条，复核于 ${data.updated}）`,
+  `- [教育教学资源库](${SITE}/teach/resources/): 按学段与课堂用途整理的免费资源清单（${data.groups.length} 组 / ${data.groups.reduce((n, g) => n + g.items.length, 0)} 条，复核于 ${data.updated}），含 ${data.paths.length} 条学习路径与 ${data.prompts.length} 张可复制的 WorkBuddy 提示词`,
   `- [网站导航](${SITE}/nav/): 常用站点与自建服务，数据与 nav.sakaay.com 同步`,
   `- [会考在线练习](${SITE}/exammination/online-practice/): 高中信息技术会考分套练习`,
   `- [试题答案](${SITE}/exammination/examination-practice/): 会考复习题答案`,

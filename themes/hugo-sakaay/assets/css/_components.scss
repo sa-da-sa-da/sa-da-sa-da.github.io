@@ -224,6 +224,49 @@
   border-top: 1px solid var(--border-color);
 }
 
+.edu-section { margin: 2.4rem 0; }
+.edu-section-title {
+  font-size: 1.15rem; font-weight: 600; margin-bottom: 1rem;
+  padding-left: 10px; border-left: 4px solid var(--primary-color);
+}
+.edu-section-desc {
+  font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;
+  a { color: var(--primary-color); }
+}
+.edu-path-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+.edu-path-card {
+  padding: 1.1rem 1.2rem; border-radius: 12px;
+  border: 1px solid var(--border-color); background: var(--card-bg);
+  h3 { display: flex; align-items: center; gap: 8px; font-size: 1rem; margin: 0 0 0.6rem; }
+}
+.edu-path-icon { font-size: 1.2rem; }
+.edu-path-goal { margin: 0 0 0.3rem; font-size: 0.86rem; line-height: 1.6; }
+.edu-path-audience { margin: 0 0 0.8rem; font-size: 0.74rem; color: var(--text-muted); }
+.edu-path-steps {
+  margin: 0; padding-left: 1.2rem; font-size: 0.8rem; line-height: 1.65;
+  li { margin-bottom: 0.6rem; }
+  strong { display: block; color: var(--primary-color); font-weight: 600; }
+}
+.edu-path-res { display: inline-block; margin-right: 6px; font-weight: 600; }
+.edu-path-note { display: block; color: var(--text-muted); }
+.edu-prompt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0.9rem; }
+.edu-prompt-card {
+  padding: 0.9rem 1rem; border-radius: 12px;
+  border: 1px solid var(--border-color); background: var(--card-bg);
+  p { margin: 0.6rem 0 0; font-size: 0.8rem; line-height: 1.7; color: var(--text-muted); }
+}
+.edu-prompt-head {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  strong { font-size: 0.9rem; }
+  span { font-size: 0.72rem; color: var(--text-muted); }
+}
+.edu-copy {
+  margin-left: auto; padding: 4px 10px; font-size: 0.72rem; cursor: pointer;
+  border-radius: 999px; border: 1px solid var(--border-color);
+  background: var(--tk-fill-color-light); color: var(--text-color);
+  &:hover { color: var(--primary-color); border-color: var(--primary-color); }
+}
+
 // ---------- 目录页（catalogue）----------
 .catalogue-list { display: flex; flex-direction: column; gap: 6px; margin: 1rem 0 1.5rem; }
 .catalogue-item {

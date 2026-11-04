@@ -12,6 +12,30 @@
 
   <div class="resource-intro">{{ .Content }}</div>
 
+  {{ with $data.paths }}
+  <section class="edu-section">
+    <h2 class="edu-section-title">🧭 学习路径（照着走就能学）</h2>
+    <div class="edu-path-grid">
+      {{ range . }}
+      <article class="edu-path-card">
+        <h3><span class="edu-path-icon">{{ .icon }}</span>{{ .title }}</h3>
+        <p class="edu-path-goal">{{ .goal }}</p>
+        <p class="edu-path-audience">适用：{{ .audience }}</p>
+        <ol class="edu-path-steps">
+          {{ range .steps }}
+          <li>
+            <strong>{{ .label }}</strong>
+            <span class="edu-path-res">{{ .resource }}</span>
+            <span class="edu-path-note">{{ .note }}</span>
+          </li>
+          {{ end }}
+        </ol>
+      </article>
+      {{ end }}
+    </div>
+  </section>
+  {{ end }}
+
   {{ if gt (len $groups) 1 }}
   <nav class="nav-jump" aria-label="分组跳转">
     {{ range $i, $g := $groups }}
@@ -46,6 +70,25 @@
           </span>
         </span>
       </a>
+      {{ end }}
+    </div>
+  </section>
+  {{ end }}
+
+  {{ with $data.prompts }}
+  <section class="edu-section">
+    <h2 class="edu-section-title">💬 复制给 WorkBuddy 的提示词</h2>
+    <p class="edu-section-desc">先把 <a href="/edu-resources.md">Markdown 知识库</a> 导入 WorkBuddy 资料库，再粘下面任意一条；AI 会只用库里的真实链接作答。</p>
+    <div class="edu-prompt-grid">
+      {{ range . }}
+      <article class="edu-prompt-card">
+        <div class="edu-prompt-head">
+          <strong>{{ .title }}</strong>
+          <span>{{ .scene }}</span>
+          <button type="button" class="edu-copy" data-copy="{{ .text }}">复制</button>
+        </div>
+        <p>{{ .text }}</p>
+      </article>
       {{ end }}
     </div>
   </section>

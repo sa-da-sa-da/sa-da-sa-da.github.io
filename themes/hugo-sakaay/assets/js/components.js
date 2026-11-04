@@ -1593,6 +1593,24 @@ function initLogin() {
 
 // ------------------------------------------------------------------ 启动
 
+// 资源页：一键复制提示词到剪贴板，直接粘进 WorkBuddy
+function initEduCopy() {
+  document.querySelectorAll('.edu-copy').forEach(function (btn) {
+    btn.addEventListener('click', async function () {
+      const text = btn.dataset.copy || '';
+      try {
+        await navigator.clipboard.writeText(text);
+        const old = btn.textContent;
+        btn.textContent = '已复制 ✓';
+        setTimeout(function () { btn.textContent = old; }, 1600);
+      } catch (e) {
+        btn.textContent = '请手动选中';
+        setTimeout(function () { btn.textContent = '复制'; }, 1600);
+      }
+    });
+  });
+}
+
 export function initComponents() {
   document.querySelectorAll('.sk-question').forEach(renderQuestionBlock);
   document.querySelectorAll('.sk-python').forEach(renderPython);
@@ -1613,6 +1631,7 @@ export function initComponents() {
   document.querySelectorAll('.sk-moments').forEach(renderMoments);
   document.querySelectorAll('.sk-timeline').forEach(renderTimeline);
   initNavFilter();
+  initEduCopy();
   initLogin();
   initProductDetail();
 }
