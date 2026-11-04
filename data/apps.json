@@ -60,7 +60,7 @@
       {
         "name": "豆包",
         "desc": "豆包",
-        "icon": "/assets/icon/logo-icon-white-bg.png",
+        "icon": "🤖",
         "url": "https://www.doubao.com/"
       },
       {
@@ -72,19 +72,19 @@
       {
         "name": "阿里云",
         "desc": "阿里云",
-        "icon": "/assets/icon/aliyun.ico",
+        "icon": "☁️",
         "url": "https://www.aliyun.com/"
       },
       {
         "name": "哔哩哔哩",
         "desc": "哔哩哔哩",
-        "icon": "/assets/icon/bilibili.png",
+        "icon": "📺",
         "url": "https://www.bilibili.com/"
       },
       {
         "name": "抖音",
         "desc": "抖音",
-        "icon": "/assets/icon/douyin.ico",
+        "icon": "🎵",
         "url": "https://www.douyin.com/"
       }
     ]

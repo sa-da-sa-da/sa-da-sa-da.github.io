@@ -17,6 +17,9 @@ uglyURLs = false
 defaultContentLanguageInSubdir = false
 enableRobotsTXT = true
 enableGitInfo = true
+# 允许发布日期在今天稍后（未来时间）的内容：工具文档按小时排了发布时间，
+# 默认 buildFuture=false 会把它们全部排除，导致线上缺页
+buildFuture = true
 # 摘要自动截取长度
 summaryLength = 120
 
