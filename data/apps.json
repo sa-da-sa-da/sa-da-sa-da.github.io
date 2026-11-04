@@ -573,13 +573,6 @@
         "desc": "vpn.snnu.edu.cn",
         "icon": "https://files.itab.link/icons/5a2a4981b8c00172a2e5b95e.png",
         "url": "https://vpn.snnu.edu.cn"
-      },
-      {
-        "name": "华师培训",
-        "desc": "ecnu.edueva.org",
-        "icon": "华师培训",
-        "iconType": "text",
-        "url": "https://ecnu.edueva.org/"
       }
     ]
   },
