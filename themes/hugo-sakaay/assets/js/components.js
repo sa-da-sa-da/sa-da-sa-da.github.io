@@ -1558,6 +1558,8 @@ function renderCustomStudio(box) {
 function initNavFilter() {
   const input = document.getElementById('navSearch');
   if (!input) return;
+  // 资源页有「学段筛选」，搜索与筛选要合并判断，交给 initEduFilter 统一处理
+  if (document.querySelector('.edu-filter')) return;
   input.addEventListener('input', function () {
     const q = input.value.trim().toLowerCase();
     document.querySelectorAll('.nav-card-item').forEach(function (card) {
@@ -1592,6 +1594,42 @@ function initLogin() {
 }
 
 // ------------------------------------------------------------------ 启动
+
+// 资源页：搜索与学段筛选合并判断（两个条件都命中才显示）
+function initEduFilter() {
+  const input = document.getElementById('navSearch');
+  const chips = Array.from(document.querySelectorAll('.edu-filter'));
+  if (!chips.length) return;
+  let stage = '';
+
+  const apply = function () {
+    const q = ((input && input.value) || '').trim().toLowerCase();
+    document.querySelectorAll('.resource-card').forEach(function (card) {
+      const text = ((card.dataset.name || '') + (card.dataset.desc || '')).toLowerCase();
+      const stageOk = !stage || (card.dataset.stage || '').indexOf(stage) > -1;
+      card.style.display = stageOk && (!q || text.indexOf(q) > -1) ? '' : 'none';
+    });
+    document.querySelectorAll('.nav-group').forEach(function (group) {
+      const visible = Array.prototype.some.call(
+        group.querySelectorAll('.resource-card'),
+        function (card) { return card.style.display !== 'none'; }
+      );
+      group.style.display = visible ? '' : 'none';
+    });
+    const jump = document.querySelector('.nav-jump');
+    if (jump) jump.style.display = q || stage ? 'none' : '';
+  };
+
+  if (input) input.addEventListener('input', apply);
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chips.forEach(function (c) { c.classList.remove('is-active'); });
+      chip.classList.add('is-active');
+      stage = chip.dataset.stage || '';
+      apply();
+    });
+  });
+}
 
 // 资源页：一键复制提示词到剪贴板，直接粘进 WorkBuddy
 function initEduCopy() {
@@ -1631,6 +1669,7 @@ export function initComponents() {
   document.querySelectorAll('.sk-moments').forEach(renderMoments);
   document.querySelectorAll('.sk-timeline').forEach(renderTimeline);
   initNavFilter();
+  initEduFilter();
   initEduCopy();
   initLogin();
   initProductDetail();

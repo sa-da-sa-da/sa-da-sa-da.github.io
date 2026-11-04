@@ -1,8 +1,8 @@
 {
   "checked": "2026-11-05",
-  "total": 23,
-  "ok": 20,
-  "warn": 3,
+  "total": 33,
+  "ok": 28,
+  "warn": 5,
   "fail": 0,
   "items": {
     "https://basic.smartedu.cn/": {
@@ -140,6 +140,66 @@
     "/llms.txt": {
       "name": "llms.txt（站点 AI 索引）",
       "group": "AI 助教与备课工作流",
+      "code": 200,
+      "status": "ok"
+    },
+    "https://www.officeplus.cn/": {
+      "name": "OfficePlus（微软官方模板）",
+      "group": "课件素材与版权安全",
+      "code": 200,
+      "status": "ok"
+    },
+    "https://www.pexels.com/zh-cn/": {
+      "name": "Pexels（中文）",
+      "group": "课件素材与版权安全",
+      "code": 403,
+      "status": "warn"
+    },
+    "https://pixabay.com/zh/": {
+      "name": "Pixabay（中文）",
+      "group": "课件素材与版权安全",
+      "code": 403,
+      "status": "warn"
+    },
+    "https://www.iconfont.cn/": {
+      "name": "iconfont 阿里图标库",
+      "group": "课件素材与版权安全",
+      "code": 200,
+      "status": "ok"
+    },
+    "https://www.51pptmoban.com/": {
+      "name": "51PPT 模板网",
+      "group": "课件素材与版权安全",
+      "code": 200,
+      "status": "ok"
+    },
+    "https://phet.colorado.edu/zh_CN/": {
+      "name": "PhET 互动仿真（中文）",
+      "group": "虚拟仿真与开放课程",
+      "code": 200,
+      "status": "ok"
+    },
+    "https://www.nobook.com/": {
+      "name": "NOBOOK 虚拟实验",
+      "group": "虚拟仿真与开放课程",
+      "code": 200,
+      "status": "ok"
+    },
+    "https://www.icourse163.org/course/CCNU-1205894801": {
+      "name": "信息素养：中小学教师先修课",
+      "group": "虚拟仿真与开放课程",
+      "code": 200,
+      "status": "ok"
+    },
+    "https://www.icourse163.org/learn/SNNU-1450380165": {
+      "name": "通用技术与人工智能",
+      "group": "虚拟仿真与开放课程",
+      "code": 200,
+      "status": "ok"
+    },
+    "https://higher.smartedu.cn/": {
+      "name": "国家高等教育智慧教育平台",
+      "group": "虚拟仿真与开放课程",
       "code": 200,
       "status": "ok"
     }

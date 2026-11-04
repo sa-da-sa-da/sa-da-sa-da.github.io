@@ -1,0 +1,42 @@
+name: 月度教育教学资源链接巡检
+
+# 每月 1 号 UTC 02:00（北京时间 10:00）跑一次，也可在 Actions 页手动触发。
+# 巡检结果写回 data/edu_link_status.json，资源页会显示最新的链接状态与日期。
+on:
+  schedule:
+    - cron: '0 2 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: edu-link-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取仓库
+        uses: actions/checkout@v4
+
+      - name: 准备 Node（脚本只依赖内置模块，无需安装依赖）
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 巡检资源链接
+        run: node scripts/check-edu-links.mjs
+
+      - name: 提交巡检结果
+        run: |
+          git add data/edu_link_status.json
+          if git diff --cached --quiet; then
+            echo "链接状态无变化，跳过提交"
+          else
+            git -c user.name="github-actions[bot]" \
+                -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+                commit -m "chore(edu): 月度资源链接巡检更新"
+            git push
+          fi

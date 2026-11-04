@@ -13,6 +13,14 @@
     <div class="search-bar">
       <input type="text" id="navSearch" placeholder="搜资源名 / 学段 / 用途 / 标签，例如：AI、高一、备课、micro:bit" autocomplete="off">
     </div>
+    <div class="edu-filters" role="group" aria-label="按学段与对象筛选">
+      <button type="button" class="edu-filter is-active" data-stage="">全部</button>
+      <button type="button" class="edu-filter" data-stage="小学">小学</button>
+      <button type="button" class="edu-filter" data-stage="初中">初中</button>
+      <button type="button" class="edu-filter" data-stage="高中">高中</button>
+      <button type="button" class="edu-filter" data-stage="教师">教师</button>
+      <button type="button" class="edu-filter" data-stage="学生">学生</button>
+    </div>
   </div>
 
   <div class="resource-intro">{{ .Content }}</div>
@@ -62,6 +70,7 @@
       <a class="nav-card-item resource-card" href="{{ .url | safeURL }}"
          data-name="{{ .name }} {{ delimit .tags " " }} {{ .use }} {{ .desc }} {{ .stage }}"
          data-desc="{{ .desc }}"
+         data-stage="{{ .stage }} {{ .audience }}"
          {{- if not $isLocal }} target="_blank" rel="noopener"{{ end }}>
         <span class="nav-card-icon">{{ .icon | default "🔗" }}</span>
         <span class="nav-card-body">
@@ -109,5 +118,20 @@
   {{ end }}
 
   <p class="resource-footnote">{{ $data.note }}</p>
+
+  {{- /* 结构化数据：把资源清单声明成 ItemList，便于搜索引擎与 AI 客户端理解 */ -}}
+  {{- $list := slice -}}
+  {{- $pos := 0 -}}
+  {{- range $g := $groups -}}
+  {{- range $it := $g.items -}}
+  {{- $pos = add $pos 1 -}}
+  {{- $u := $it.url -}}
+  {{- if hasPrefix $u "/" -}}
+  {{- $u = printf "%s%s" site.BaseURL (strings.TrimPrefix "/" $u) -}}
+  {{- end -}}
+  {{- $list = $list | append (dict "@type" "ListItem" "position" $pos "name" $it.name "url" $u "description" $it.desc) -}}
+  {{- end -}}
+  {{- end -}}
+  <script type="application/ld+json">{{ dict "@context" "https://schema.org" "@type" "ItemList" "name" "教育教学资源库" "numberOfItems" $pos "itemListElement" $list | jsonify | safeJS }}</script>
 </div>
 {{ end }}

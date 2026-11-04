@@ -5,7 +5,7 @@
  *   pnpm edu:check                         # 同上
  *
  * 对 data/edu_resources.json 里每条 URL 做一次真实访问：
- *   - 站内 / 开头的链接 → 检查 public/ 产物里文件是否存在
+ *   - 站内 / 开头的链接 → 检查 static/ 源文件是否存在（无需先构建，CI 里可直接跑）
  *   - 外链 → GET 请求，记录 HTTP 状态码
  * 结果写进 data/edu_link_status.json，资源页会读它显示「链接状态」小徽标。
  *
@@ -53,7 +53,7 @@ for (const g of data.groups) {
     let code;
     if (url.startsWith('/')) {
       try {
-        await stat(join(ROOT, 'public', url.replace(/^\//, '')));
+        await stat(join(ROOT, 'static', url.replace(/^\//, '')));
         code = 200;
       } catch {
         code = 404;

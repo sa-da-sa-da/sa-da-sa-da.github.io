@@ -5,7 +5,7 @@
 ## 主要内容
 
 - [首页](https://www.sakaay.com/): 最新文章、分区入口
-- [教育教学资源库](https://www.sakaay.com/teach/resources/): 按学段与课堂用途整理的免费资源清单（6 组 / 23 条，复核于 2026-11-04），含 4 条学习路径与 5 张可复制的 WorkBuddy 提示词
+- [教育教学资源库](https://www.sakaay.com/teach/resources/): 按学段与课堂用途整理的免费资源清单（8 组 / 33 条，复核于 2026-11-05），含 4 条学习路径与 5 张可复制的 WorkBuddy 提示词
 - [网站导航](https://www.sakaay.com/nav/): 常用站点与自建服务，数据与 nav.sakaay.com 同步
 - [会考在线练习](https://www.sakaay.com/exammination/online-practice/): 高中信息技术会考分套练习
 - [试题答案](https://www.sakaay.com/exammination/examination-practice/): 会考复习题答案

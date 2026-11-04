@@ -290,6 +290,19 @@
 .edu-entry-text span { display: block; margin-top: 3px; font-size: 0.78rem; color: var(--text-muted); }
 .edu-entry-arrow { font-size: 1.2rem; color: var(--primary-color); }
 
+.edu-filters {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 1rem; justify-content: center;
+}
+.edu-filter {
+  padding: 5px 14px; font-size: 0.8rem; cursor: pointer;
+  border-radius: 999px; border: 1px solid var(--border-color);
+  background: var(--card-bg); color: var(--text-muted);
+  transition: all 0.2s ease;
+  &:hover { color: var(--primary-color); border-color: var(--primary-color); }
+  &.is-active { color: #fff; background: var(--primary-color); border-color: var(--primary-color); }
+}
+
 // ---------- 目录页（catalogue）----------
 .catalogue-list { display: flex; flex-direction: column; gap: 6px; margin: 1rem 0 1.5rem; }
 .catalogue-item {

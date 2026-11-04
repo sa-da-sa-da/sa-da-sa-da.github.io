@@ -26,4 +26,7 @@ __pycache__/
 *.pyc
 /公众号推文/
 .screenshots/
-.github/
+# .github 下的本地配置不入库，但 Actions 工作流要纳入版本控制
+.github/*
+!.github/workflows/
+!.github/workflows/*.yml
