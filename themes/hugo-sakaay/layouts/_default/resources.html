@@ -1,0 +1,56 @@
+{{ define "main" }}
+{{- $data := site.Data.edu_resources -}}
+{{- $groups := $data.groups -}}
+<div class="full-page">
+  <div class="nav-page-header">
+    <h1>{{ .Title }}</h1>
+    <p class="search-page-desc">免费、可直接用的教学与创客资源 · 链接复核于 {{ $data.updated }}</p>
+    <div class="search-bar">
+      <input type="text" id="navSearch" placeholder="搜资源名 / 学段 / 用途 / 标签，例如：AI、高一、备课、micro:bit" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="resource-intro">{{ .Content }}</div>
+
+  {{ if gt (len $groups) 1 }}
+  <nav class="nav-jump" aria-label="分组跳转">
+    {{ range $i, $g := $groups }}
+    <a href="#nav-group-{{ add $i 1 }}">{{ $g.icon }} {{ $g.title }}</a>
+    {{ end }}
+  </nav>
+  {{ end }}
+
+  {{ range $i, $g := $groups }}
+  <section class="nav-group" id="nav-group-{{ add $i 1 }}">
+    <h2 class="nav-group-title">
+      <span class="resource-group-icon">{{ $g.icon }}</span>
+      {{ $g.title }}
+      <span class="nav-group-count">{{ len $g.items }}</span>
+    </h2>
+    <div class="nav-grid resource-grid">
+      {{ range $g.items }}
+      {{- $isLocal := hasPrefix .url "/" -}}
+      <a class="nav-card-item resource-card" href="{{ .url | safeURL }}"
+         data-name="{{ .name }} {{ delimit .tags " " }} {{ .use }} {{ .desc }} {{ .stage }}"
+         data-desc="{{ .desc }}"
+         {{- if not $isLocal }} target="_blank" rel="noopener"{{ end }}>
+        <span class="nav-card-icon">{{ .icon | default "🔗" }}</span>
+        <span class="nav-card-body">
+          <span class="nav-card-name">{{ .name }}</span>
+          <span class="nav-card-desc">{{ .desc }}</span>
+          <span class="resource-use">{{ .use }}</span>
+          <span class="resource-meta">
+            <span class="resource-stage">{{ .stage }}</span>
+            <span class="resource-audience">{{ .audience }}</span>
+            {{ range .tags }}<span class="resource-tag">{{ . }}</span>{{ end }}
+          </span>
+        </span>
+      </a>
+      {{ end }}
+    </div>
+  </section>
+  {{ end }}
+
+  <p class="resource-footnote">{{ $data.note }}</p>
+</div>
+{{ end }}

@@ -1,0 +1,33 @@
+# sakaay.com — 当以读书通世事
+
+> 高中信息技术教师的教学与创客资源站：信息技术课程、会考题库与在线练习、AI 通识、创客项目、课堂小工具，以及一份可导入 WorkBuddy 资料库的免费教育教学资源库。
+
+## 主要内容
+
+- [首页](https://www.sakaay.com/): 最新文章、分区入口
+- [教育教学资源库](https://www.sakaay.com/teach/resources/): 按学段与课堂用途整理的免费资源清单（6 组 / 23 条，复核于 2026-11-04）
+- [网站导航](https://www.sakaay.com/nav/): 常用站点与自建服务，数据与 nav.sakaay.com 同步
+- [会考在线练习](https://www.sakaay.com/exammination/online-practice/): 高中信息技术会考分套练习
+- [试题答案](https://www.sakaay.com/exammination/examination-practice/): 会考复习题答案
+- [全站文章归档](https://www.sakaay.com/archives/): 按时间浏览全部文章
+
+## 课堂工具（可直接打开使用）
+
+- [创意课堂随机点名器](https://www.sakaay.com/seat-map/class-call.html): 卡牌 / 寻宝 / 转盘 / 扭蛋 / 盲盒五种抽选玩法
+- [班级座位表智能调整系统](https://www.sakaay.com/seat-map/seat-map.html): 智能排座、拖拽交换、导出 Word/Excel
+- [随机点名工具](https://www.sakaay.com/random-roll-call.html): 分组抽选、名单导入、全屏投屏
+- [信息技术会考刷题王](https://www.sakaay.com/lab/AI/xxhk.html): 1078 道真题按考点练习
+- [高考古诗文背诵 60 篇](https://www.sakaay.com/lab/AI/poem60.html): 转盘闯关与情境默写
+- [3D DNA 实验室](https://www.sakaay.com/lab/bio-dna/): 双螺旋与碱基配对交互演示
+- [3D 地形实验室](https://www.sakaay.com/lab/geo-terrain-lab/): 等高线、分层设色与水系汇流
+
+## 给 AI 客户端的资料
+
+- [教育教学资源库（Markdown 知识库）](https://www.sakaay.com/edu-resources.md): 建议导入 WorkBuddy 资料库 / 腾讯网盘资料库；含每条资源的学段、用途、标签与推荐提示词
+- [站点地图](https://www.sakaay.com/sitemap.xml): 全站可索引 URL
+
+## 备注
+
+- 资源库只收录免费、可直接访问、有明确课堂用途的链接；商业与需付费条目不在其中。
+- 资源库内容以 `data/edu_resources.json` 为唯一数据源，页面与知识库文件同步生成。
+- 本站为个人教学记录站，非官方教育平台；引用官方资源请回到原站核对最新说明。

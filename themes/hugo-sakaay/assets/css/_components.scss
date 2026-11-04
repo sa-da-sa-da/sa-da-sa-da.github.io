@@ -189,6 +189,41 @@
   }
 }
 
+// ---------- 教育教学资源库 ----------
+.resource-intro {
+  margin: 0 0 1.6rem; padding: 1rem 1.2rem;
+  border-radius: 12px; border: 1px solid var(--border-color);
+  background: var(--card-bg); color: var(--text-muted);
+  font-size: 0.9rem; line-height: 1.8;
+  p { margin: 0 0 0.6rem; &:last-child { margin-bottom: 0; } }
+  a { color: var(--primary-color); }
+}
+.resource-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.resource-card {
+  align-items: flex-start;
+  .nav-card-icon { margin-top: 2px; }
+  .nav-card-body { min-width: 0; flex: 1; }
+  .nav-card-desc { max-width: none; white-space: normal; line-height: 1.55; }
+}
+.resource-use {
+  display: block; margin-top: 0.5rem;
+  font-size: 0.76rem; line-height: 1.6;
+  color: var(--primary-color);
+}
+.resource-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 0.6rem; }
+.resource-stage, .resource-audience, .resource-tag {
+  font-size: 0.68rem; line-height: 1; padding: 3px 7px; border-radius: 999px;
+  border: 1px solid var(--border-color); color: var(--text-muted);
+  background: var(--tk-fill-color-light);
+}
+.resource-stage { color: var(--primary-color); border-color: var(--primary-color); }
+.resource-group-icon { font-size: 1.05rem; }
+.resource-footnote {
+  margin-top: 2rem; padding-top: 1rem;
+  font-size: 0.76rem; color: var(--text-muted);
+  border-top: 1px solid var(--border-color);
+}
+
 // ---------- 目录页（catalogue）----------
 .catalogue-list { display: flex; flex-direction: column; gap: 6px; margin: 1rem 0 1.5rem; }
 .catalogue-item {
