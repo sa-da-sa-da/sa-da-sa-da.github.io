@@ -1,0 +1,4 @@
+{
+  "seo_release": "2026-11-05T00:00:00+08:00",
+  "note": "全站 SEO 元数据与模板改版发布日。head.html / seo-description.html 是全站模板，一次改动影响所有页面，因此 sitemap 中每页的 lastmod 不会早于这一天。以后做全站级模板改版时更新此日期。"
+}

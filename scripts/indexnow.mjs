@@ -3,6 +3,8 @@
  *
  *   node scripts/indexnow.mjs                 # 提交 sitemap 里的全部 URL
  *   node scripts/indexnow.mjs --batch 50      # 全量分批提交（推荐，一次几百条会 403）
+ *   node scripts/indexnow.mjs --sitemap-url https://www.sakaay.com/sitemap.xml --batch 50
+ *                                            # 读线上 sitemap（CI 用，无需本地构建）
  *   node scripts/indexnow.mjs --limit 20      # 只提交前 20 条（日常更新用）
  *   node scripts/indexnow.mjs --dry           # 只打印，不发请求
  *   node scripts/indexnow.mjs --url https://www.sakaay.com/xxx/   # 提交单条
@@ -28,10 +30,22 @@ const keyLocation = `https://${host}/${key}.txt`;
 
 let urls;
 const single = getVal('--url');
+const sitemapUrl = getVal('--sitemap-url');
 if (single) {
   urls = [single];
 } else {
-  const sm = await readFile('public/sitemap.xml', 'utf8');
+  let sm;
+  if (sitemapUrl) {
+    // CI / 无本地产物时直接读线上 sitemap，提交的就是真实可访问的 URL 集合
+    const res = await fetch(sitemapUrl);
+    if (!res.ok) {
+      console.error(`读取线上 sitemap 失败：HTTP ${res.status} ${sitemapUrl}`);
+      process.exit(1);
+    }
+    sm = await res.text();
+  } else {
+    sm = await readFile('public/sitemap.xml', 'utf8');
+  }
   urls = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].trim());
   const limit = Number(getVal('--limit') || 0);
   if (limit > 0) urls = urls.slice(0, limit);

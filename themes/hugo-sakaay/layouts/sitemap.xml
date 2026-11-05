@@ -1,12 +1,15 @@
 {{ printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | safeHTML }}
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+{{- /* 全站模板改版会影响所有页面的 title/description，但内容 md 的 git 时间没变。
+       用站点级发布日做 lastmod 下限，避免 Bing 因 lastmod 太旧而不重抓。 */ -}}
+{{- $release := time (site.Data.site_release.seo_release) -}}
 {{- range .Pages }}
 {{- if .Permalink }}
   <url>
     <loc>{{ .Permalink }}</loc>
-    {{- if not .Lastmod.IsZero }}
-    <lastmod>{{ safeHTML (.Lastmod.Format "2006-01-02T15:04:05-07:00") }}</lastmod>
-    {{- end }}
+    {{- $lm := .Lastmod -}}
+    {{- if or $lm.IsZero ($lm.Before $release) }}{{ $lm = $release }}{{ end }}
+    <lastmod>{{ safeHTML ($lm.Format "2006-01-02T15:04:05-07:00") }}</lastmod>
     {{- with .Sitemap.ChangeFreq }}
     <changefreq>{{ . }}</changefreq>
     {{- end }}
