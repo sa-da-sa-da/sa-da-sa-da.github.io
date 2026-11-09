@@ -30,3 +30,11 @@ __pycache__/
 .github/*
 !.github/workflows/
 !.github/workflows/*.yml
+公众号推文-样稿/
+公众号推文-重写/
+aigj-wechat-article/
+*.csv
+*.zip
+*.txt
+*.ps1
+*.json
